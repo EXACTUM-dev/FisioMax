@@ -4,15 +4,15 @@
  */
 
 // Importar el archivo de configuración central
-const config = require('./config');
+import config from './config.js';
 
 // Importar los módulos necesarios
-const express = require('express');
-const cors = require('cors');
-const joi = require('joi');
-const morgan = require('morgan');
-const compression = require('compression');
-const helmet = require('helmet');
+import express from 'express';
+import cors from 'cors';
+import joi from 'joi';
+import morgan from 'morgan';
+import compression from 'compression';
+import helmet from 'helmet';
 
 // Inicializar la aplicación Express
 const app = express();
