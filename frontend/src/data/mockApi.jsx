@@ -130,3 +130,48 @@ const roles = [
 export async function getRoles() {
   return roles;
 }
+
+// Mock de campos para formulario de usuario
+export const userFormFields = [
+  {
+    name: "nombre",
+    label: "Nombre",
+    type: "text",
+    placeholder: "Ingresa tu nombre"
+  },
+  {
+    name: "correo",
+    label: "Correo electrónico",
+    type: "email",
+    placeholder: "Ingresa tu correo"
+  }
+];
+
+// Slides para el SideContainer (pueden ser los mismos que heroSlides o personalizados)
+const sideSlides = [
+  {
+    id: "side-1",
+    title: "Slide Lateral 1",
+    subtitle: "Descripción del slide lateral 1",
+    imageUrl: "/src/assets/images/rehabilitacion-suelo-pelvico.jpg",
+    imageAlt: "Imagen slide lateral 1",
+  },
+  {
+    id: "side-2",
+    title: "Slide Lateral 2",
+    subtitle: "Descripción del slide lateral 2",
+    imageUrl: "/src/assets/images/fisioterapia-suelo-pelvico.jpg",
+    imageAlt: "Imagen slide lateral 2",
+  },
+  {
+    id: "side-3",
+    title: "Slide Lateral 3",
+    subtitle: "Descripción del slide lateral 3",
+    imageUrl: "/src/assets/images/fisioterapia-suelo-pelvico.jpg",
+    imageAlt: "Imagen slide lateral 3",
+  },
+];
+
+export async function getSideSlides() {
+  return sideSlides;
+}
