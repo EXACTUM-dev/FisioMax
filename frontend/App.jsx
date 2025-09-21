@@ -4,6 +4,8 @@
  * Handles navigation, data loading and rendering of main components
  */
 import React, { useEffect, useMemo, useState } from "react";
+import FormField from "./src/molecules/form";
+import { userFormFields } from "./src/data/mockApi";
 import Carousel from "./src/organisms/carousel";
 import { Title2 } from "./src/atoms/typography";
 import Sidebar from "./src/molecules/sidebar";
@@ -21,6 +23,18 @@ import {
 
 function App() {
   const [current, setCurrent] = useState("home");
+
+  // Estado para los campos del formulario de usuario
+  const [formValues, setFormValues] = useState(() => {
+    const initial = {};
+    userFormFields.forEach(f => { initial[f.name] = ""; });
+    return initial;
+  });
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues(prev => ({ ...prev, [name]: value }));
+  };
 
   // Loaded from mock API
   const [heroSlides, setHeroSlides] = useState([]);
@@ -121,6 +135,21 @@ function App() {
             },
           ]}
         />
+
+                {/* Formulario de usuario (campos desde mockApi) */}
+        <div className="max-w-md mx-auto">
+          {userFormFields.map(field => (
+            <FormField
+              key={field.name}
+              label={field.label}
+              name={field.name}
+              type={field.type}
+              value={formValues[field.name]}
+              onChange={handleFormChange}
+              placeholder={field.placeholder}
+            />
+          ))}
+        </div>
       </main>
     </div>
   );

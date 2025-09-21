@@ -1,3 +1,4 @@
+
 /**
  * Version: 0.2.0
  * Mock API for demo data (slides, products, users)
@@ -130,3 +131,20 @@ const roles = [
 export async function getRoles() {
   return roles;
 }
+
+
+// Mock de campos para formulario de usuario
+export const userFormFields = [
+  {
+    name: "nombre",
+    label: "Nombre",
+    type: "text",
+    placeholder: "Ingresa tu nombre"
+  },
+  {
+    name: "correo",
+    label: "Correo electrónico",
+    type: "email",
+    placeholder: "Ingresa tu correo"
+  }
+];
