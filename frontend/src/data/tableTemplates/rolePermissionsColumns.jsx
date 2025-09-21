@@ -3,6 +3,7 @@
  * Column factory for a roles/permissions table
  * Keeps DataTable generic; only columns define labels, renders and mobile behavior
  */
+import React from "react";
 import trashIcon from "../../assets/icons/trash-2.png";
 import editIcon from "../../assets/icons/square-pen.png";
 

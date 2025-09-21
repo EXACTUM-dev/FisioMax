@@ -8,7 +8,7 @@ const heroSlides = [
     id: "pelvic-basics",
     title: "Básicos de Piso Pélvico",
     subtitle: "Descubre el arte de la fisioterapia adaptada al piso pélvico",
-    imageUrl: "/frontend/src/assets/images/rehabilitacion-suelo-pelvico.jpg",
+    imageUrl: "/src/assets/images/rehabilitacion-suelo-pelvico.jpg",
     imageAlt: "Sesión de fisioterapia de piso pélvico",
   },
   {
@@ -16,14 +16,14 @@ const heroSlides = [
     title: "Avanzados de Suelo Pélvico",
     subtitle:
       "Texto random para ver como se ve con otro texto un poco más largo aun más largo y un poco más",
-    imageUrl: "/frontend/src/assets/images/fisioterapia-suelo-pelvico.jpg",
+    imageUrl: "/src/assets/images/fisioterapia-suelo-pelvico.jpg",
     imageAlt: "Sesión de fisioterapia de piso pélvico",
   },
   {
     id: "pelvic-3",
     title: "Ejercicios de rehabilitación en casa",
     subtitle: "Rutinas de ejercicios para continuar tu terapia en casa",
-    imageUrl: "/frontend/src/assets/images/fisioterapia-suelo-pelvico.jpg",
+    imageUrl: "/src/assets/images/fisioterapia-suelo-pelvico.jpg",
     imageAlt: "Sesión de fisioterapia de piso pélvico",
   },
 ];
@@ -121,7 +121,7 @@ const roles = [
   {
     id: "r1",
     rol: "Administrador",
-    permisos: ["Usuarios", "Reportes", "Ajustes"],
+    permisos: ["Usuarios", "Reportes", "Ajustes", "Contenido", "Medios"],
   },
   { id: "r2", rol: "Editor", permisos: ["Contenido", "Medios"] },
   { id: "r3", rol: "Invitado", permisos: "Lectura" },

@@ -8,6 +8,7 @@ import Carousel from "./src/organisms/carousel";
 import { Title2 } from "./src/atoms/typography";
 import Sidebar from "./src/molecules/sidebar";
 import DataTable from "./src/organisms/dataTable";
+import DataSwitchContainer from "./src/organisms/dataSwitchContainer";
 import buildUserActionsColumns from "./src/data/tableTemplates/userActionsColumns";
 import buildRolePermissionsColumns from "./src/data/tableTemplates/rolePermissionsColumns";
 import {
@@ -97,17 +98,29 @@ function App() {
         {/* Row carousel */}
         <Carousel slides={rowSlides} variant="row" />
 
-        {/* Users table */}
-        <div className="max-w-[70rem] mx-auto">
-          <Title2 className="mt-10 mb-3">Users</Title2>
-          <DataTable columns={userColumns} data={userRows} />
-        </div>
-
-        {/* Roles & Permissions table */}
-        <div className="max-w-[70rem] mx-auto">
-          <Title2 className="mt-10 mb-3">Roles & Permissions</Title2>
-          <DataTable columns={roleColumns} data={roleRows} />
-        </div>
+        {/* Switchable container with tabs + search (Users / Roles) */}
+        <DataSwitchContainer
+          initialKey="users"
+          views={[
+            {
+              key: "users",
+              label: "Users",
+              type: "table",
+              columns: userColumns,
+              rows: userRows,
+              searchPlaceholder: "Search users...",
+              // Optional: mark action columns as non-searchable in your templates if needed
+            },
+            {
+              key: "roles",
+              label: "Roles & Permissions",
+              type: "table",
+              columns: roleColumns,
+              rows: roleRows,
+              searchPlaceholder: "Search roles...",
+            },
+          ]}
+        />
       </main>
     </div>
   );

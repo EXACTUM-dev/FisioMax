@@ -3,6 +3,7 @@
  * Column factory for a user review/actions table
  * Keeps DataTable generic; only columns define labels, renders and mobile behavior
  */
+import React from "react";
 import pdfIcon from "../../assets/icons/pdf.png";
 import trashIcon from "../../assets/icons/trash-2.png";
 import checkIcon from "../../assets/icons/circle-check.png";
