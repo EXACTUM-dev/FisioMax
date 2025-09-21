@@ -80,9 +80,9 @@ function SidebarLink({ icon, label, open, active, onClick }) {
       {/* Visual indicator for active element */}
       {active &&
         (open ? (
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-1.5 rounded-full bg-blue-600" />
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-1.5 rounded-full bg-brand" />
         ) : (
-          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-6 rounded-full bg-blue-600" />
+          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-6 rounded-full bg-brand" />
         ))}
     </button>
   );
@@ -192,7 +192,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
                 {/* Top indicator for mobile */}
                 <span
                   className={`absolute -top-2 left-1/2 -translate-x-1/2 h-1.5 w-6 rounded-full transition-colors ${
-                    isActive ? "bg-blue-600" : "bg-transparent"
+                    isActive ? "bg-brand" : "bg-transparent"
                   }`}
                 />
                 <button

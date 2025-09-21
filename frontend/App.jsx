@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Carousel from "./src/organisms/carousel";
 import { Title2 } from "./src/atoms/typography";
 import Sidebar from "./src/molecules/sidebar";
+import Button from "./src/atoms/button";
 import DataTable from "./src/organisms/dataTable";
 import DataSwitchContainer from "./src/organisms/dataSwitchContainer";
 import buildUserActionsColumns from "./src/data/tableTemplates/userActionsColumns";
@@ -121,6 +122,12 @@ function App() {
             },
           ]}
         />
+        {/* Brand button at the bottom */}
+        <div className="max-w-[70rem] mx-auto">
+          <div className="flex justify-center py-6">
+            <Button size="sm" label="SOMEFIPP" />
+          </div>
+        </div>
       </main>
     </div>
   );

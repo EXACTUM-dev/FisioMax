@@ -52,7 +52,7 @@ export default function DataTable({ columns = [], data = [] }) {
   return (
     <div className="max-w-[70rem] mx-auto">
       {/* Desktop/Tablet Table View */}
-      <div className="hidden md:block rounded-lg border border-neutral-200 bg-white overflow-hidden">
+      <div className="hidden md:block rounded-[18px] border border-neutral-200 bg-white overflow-hidden">
         <div className="w-full overflow-x-auto">
           <table className="w-full table-fixed">
             {/* Table header */}
