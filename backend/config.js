@@ -4,7 +4,8 @@
  */
 
 // Cargar las variables de entorno si aún no están cargadas.
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 
 /**
  * Objeto de configuración principal de la aplicación.
@@ -44,4 +45,4 @@ const config = {
   }
 };
 
-module.exports = config;
+export default config;
