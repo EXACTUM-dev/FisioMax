@@ -43,6 +43,17 @@ export default function App() {
   const [roleRows, setRoleRows] = useState([]);
   const [sideSlides, setSideSlides] = useState([]);
 
+  // Consumo del backend: ejemplo de fetch a /api/usuarios
+  useEffect(() => {
+    fetch('http://localhost:3000/api/usuarios')
+      .then(res => res.json())
+      .then(data => {
+        console.log('Usuarios desde backend:', data);
+        // Aquí puedes setear el estado si quieres mostrar los usuarios en la UI
+      })
+      .catch(err => console.error('Error al obtener usuarios:', err));
+  }, []);
+
   useEffect(() => {
     let alive = true;
     Promise.all([
