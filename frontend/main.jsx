@@ -7,6 +7,7 @@
  */
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route } from 'react-router'
 import { ClerkProvider } from "@clerk/clerk-react";
 import "./index.css";
 import App from "./App.jsx";
@@ -16,8 +17,8 @@ import App from "./App.jsx";
  * Lanza un error si la clave no está definida, previniendo la ejecución de la app sin autenticación.
  * @const {string}
  */
-const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-if (!publishableKey) {
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Clerk Publishable Key. Please set VITE_CLERK_PUBLISHABLE_KEY in your .env file.");
 }
 
@@ -27,8 +28,10 @@ if (!publishableKey) {
  */
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <ClerkProvider publishableKey={publishableKey}>
-      <App />
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+        <Routes>
+          <Route path="/" element={<App />} />
+        </Routes>
     </ClerkProvider>
   </StrictMode>
 );
