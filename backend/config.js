@@ -1,5 +1,7 @@
 /**
  * @fileoverview Archivo de configuración central de la aplicación.
+ * @version 1.0.0
+ * @author EXACTUM-dev
  * @description Centraliza todas las variables de entorno y configuraciones de la aplicación.
  */
 

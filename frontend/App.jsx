@@ -16,15 +16,9 @@ import DataTable from "./src/organisms/dataTable";
 import DataSwitchContainer from "./src/organisms/dataSwitchContainer";
 import buildUserActionsColumns from "./src/data/tableTemplates/userActionsColumns";
 import buildRolePermissionsColumns from "./src/data/tableTemplates/rolePermissionsColumns";
-import {
-  getHeroSlides,
-  getRowSlides,
-  getProducts,
-  getUsers,
-  getRoles,
-} from "./src/data/mockApi";
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 
-function App() {
+export default function App() {
   const [current, setCurrent] = useState("home");
 
   // Form state (from mockApi field metadata)
@@ -99,95 +93,106 @@ function App() {
   );
 
   return (
-    // Root without flex so the fixed sidebar can overlap and the main margin-left can push content
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <Sidebar current={current} onNavigate={setCurrent} />
+    <>
+      {/* Header de autenticación Clerk */}
+      <header style={{ display: 'flex', justifyContent: 'flex-end', padding: '1rem' }}>
+        <SignedOut>
+          <SignInButton />
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
+      </header>
 
-      {/* Desktop: use CSS var from Sidebar (--sb-w) to push content. Mobile: padding-bottom to avoid bottom bar overlap. */}
-      <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-4">
-        {/* Hero carousel */}
-        <Carousel slides={heroSlides} variant="hero" />
+      {/* UI principal de la app */}
+      <div className="min-h-screen bg-[#FAFAFA]">
+        <Sidebar current={current} onNavigate={setCurrent} />
 
-        <div className="max-w-[70rem] mx-auto">
-          <Title2 className="mt-6 mb-3">Weekly Articles</Title2>
-        </div>
+        {/* Desktop: use CSS var from Sidebar (--sb-w) to push content. Mobile: padding-bottom to avoid bottom bar overlap. */}
+        <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-4">
+          {/* Hero carousel */}
+          <Carousel slides={heroSlides} variant="hero" />
 
-        {/* Row carousel */}
-        <Carousel slides={rowSlides} variant="row" />
-
-        {/* Switchable container with tabs + search (Users / Roles) */}
-        <DataSwitchContainer
-          initialKey="users"
-          views={[
-            {
-              key: "users",
-              label: "Users",
-              type: "table",
-              columns: userColumns,
-              rows: userRows,
-              searchPlaceholder: "Search users...",
-            },
-            {
-              key: "roles",
-              label: "Roles & Permissions",
-              type: "table",
-              columns: roleColumns,
-              rows: roleRows,
-              searchPlaceholder: "Search roles...",
-            },
-          ]}
-        />
-
-        {/* Duplicate example container (if intentional keep; otherwise remove) */}
-        <DataSwitchContainer
-          initialKey="users"
-          views={[
-            {
-              key: "users",
-              label: "Users",
-              type: "table",
-              columns: userColumns,
-              rows: userRows,
-              searchPlaceholder: "Search users...",
-            },
-            {
-              key: "roles",
-              label: "Roles & Permissions",
-              type: "table",
-              columns: roleColumns,
-              rows: roleRows,
-              searchPlaceholder: "Search roles...",
-            },
-          ]}
-        />
-
-        {/* Brand button at the bottom */}
-        <div className="max-w-[70rem] mx-auto">
-          <div className="flex justify-center py-6">
-            <Button size="sm" label="SOMEFIPP" />
+          <div className="max-w-[70rem] mx-auto">
+            <Title2 className="mt-6 mb-3">Weekly Articles</Title2>
           </div>
-        </div>
 
-        {/* User form (fields from mockApi) */}
-        <div className="max-w-md mx-auto">
-          {userFormFields.map((field) => (
-            <FormField
-              key={field.name}
-              label={field.label}
-              name={field.name}
-              type={field.type}
-              value={formValues[field.name]}
-              onChange={handleFormChange}
-              placeholder={field.placeholder}
-            />
-          ))}
-        </div>
-      </main>
-      {/* SideContainer a la derecha */}
-      {/* <SideContainer slides={sideSlides} />
-      <SideContainer slides={sideSlides} />*/}
-    </div>
+          {/* Row carousel */}
+          <Carousel slides={rowSlides} variant="row" />
+
+          {/* Switchable container with tabs + search (Users / Roles) */}
+          <DataSwitchContainer
+            initialKey="users"
+            views={[
+              {
+                key: "users",
+                label: "Users",
+                type: "table",
+                columns: userColumns,
+                rows: userRows,
+                searchPlaceholder: "Search users...",
+              },
+              {
+                key: "roles",
+                label: "Roles & Permissions",
+                type: "table",
+                columns: roleColumns,
+                rows: roleRows,
+                searchPlaceholder: "Search roles...",
+              },
+            ]}
+          />
+
+          {/* Duplicate example container (if intentional keep; otherwise remove) */}
+          <DataSwitchContainer
+            initialKey="users"
+            views={[
+              {
+                key: "users",
+                label: "Users",
+                type: "table",
+                columns: userColumns,
+                rows: userRows,
+                searchPlaceholder: "Search users...",
+              },
+              {
+                key: "roles",
+                label: "Roles & Permissions",
+                type: "table",
+                columns: roleColumns,
+                rows: roleRows,
+                searchPlaceholder: "Search roles...",
+              },
+            ]}
+          />
+
+          {/* Brand button at the bottom */}
+          <div className="max-w-[70rem] mx-auto">
+            <div className="flex justify-center py-6">
+              <Button size="sm" label="SOMEFIPP" />
+            </div>
+          </div>
+
+          {/* User form (fields from mockApi) */}
+          <div className="max-w-md mx-auto">
+            {userFormFields.map((field) => (
+              <FormField
+                key={field.name}
+                label={field.label}
+                name={field.name}
+                type={field.type}
+                value={formValues[field.name]}
+                onChange={handleFormChange}
+                placeholder={field.placeholder}
+              />
+            ))}
+          </div>
+        </main>
+        {/* SideContainer a la derecha */}
+        {/* <SideContainer slides={sideSlides} />
+        <SideContainer slides={sideSlides} />*/}
+      </div>
+    </>
   );
 }
 
-export default App;
