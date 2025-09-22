@@ -62,9 +62,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-//-------------------------
+
+//------------------------- 
 // DEFINICIÓN DE RUTAS
 //-------------------------
+
 /**
  * Ruta de prueba para verificar que el servidor está funcionando.
  * @name GET /
@@ -74,6 +76,19 @@ app.use(express.urlencoded({ extended: true }));
  */
 app.get('/', (req, res) => {
   res.send('¡Servidor de backend funcionando correctamente!');
+});
+
+/**
+ * Endpoint de ejemplo para obtener usuarios.
+ * @name GET /api/usuarios
+ * @function
+ * @returns {Array<Object>} Lista de usuarios en formato JSON.
+ */
+app.get('/api/usuarios', (req, res) => {
+  res.json([
+    { id: 1, nombre: 'Juan', email: 'juan@ejemplo.com' },
+    { id: 2, nombre: 'Ana', email: 'ana@ejemplo.com' }
+  ]);
 });
 
 
