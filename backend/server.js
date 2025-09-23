@@ -1,5 +1,8 @@
 /**
  * @fileoverview Archivo principal del servidor backend de la aplicación.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ * 
  * @description Configura y levanta el servidor Express con middlewares esenciales.
  */
 
@@ -31,7 +34,10 @@ app.use(helmet());
  * Utiliza las configuraciones definidas en config.js.
  * @see {@link https://expressjs.com/en/resources/middleware/cors.html}
  */
-app.use(cors({ origin: config.cors.allowedOrigins }));
+app.use(cors({
+  origin: config.cors.allowedOrigins,
+  credentials: true
+}));
 
 /**
  * Middleware para comprimir las respuestas HTTP.
