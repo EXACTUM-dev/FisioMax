@@ -1,7 +1,12 @@
 # Imagen base ligera de Node
-FROM node:20-alpine
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS base
 
-# Crear directorio de la app
+# Instalar Node.js 20 en Amazon Linux 2023
+RUN dnf install -y tar gzip shadow-utils \
+    && curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - \
+    && dnf install -y nodejs \
+    && dnf clean all
+
 WORKDIR /usr/src/app
 
 # Copiar package.json y lock primero para aprovechar la cache de Docker
