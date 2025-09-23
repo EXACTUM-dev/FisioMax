@@ -7,10 +7,10 @@
  */
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from 'react-router'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
-import "./index.css";
-import App from "./App.jsx";
+import "../index.css";
+import App from "../App.jsx";
 
 /**
  * Clerk Publishable Key obtenida desde las variables de entorno.
@@ -28,10 +28,12 @@ if (!PUBLISHABLE_KEY) {
  */
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+    <BrowserRouter>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
         <Routes>
           <Route path="/" element={<App />} />
         </Routes>
-    </ClerkProvider>
+      </ClerkProvider>
+    </BrowserRouter>
   </StrictMode>
 );

@@ -16,7 +16,7 @@ dotenv.config();
 const config = {
   // Configuración de la aplicación y el servidor.
   app: {
-    port: process.env.PORT || 3000,
+    port: process.env.PORT || 5000,
     env: process.env.NODE_ENV || 'development'
   },
   
@@ -43,7 +43,7 @@ const config = {
 
   // Configuración para CORS.
   cors: {
-    allowedOrigins: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5173']
+    allowedOrigins: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5174']
   }
 };
 

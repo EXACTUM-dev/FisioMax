@@ -1,0 +1,10 @@
+/**
+ * @fileoverview Middleware de autentificación de Clerk con Express.js.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ * 
+ * Verifica el JWT de Clerk y adjunta la información del usuario a la solicitud.
+ */
+import { requireAuth } from '@clerk/clerk-sdk-node';
+
+export default requireAuth();

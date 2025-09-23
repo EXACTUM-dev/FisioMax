@@ -45,7 +45,7 @@ export default function App() {
 
   // Consumo del backend: ejemplo de fetch a /api/usuarios
   useEffect(() => {
-    fetch('http://localhost:3000/api/usuarios')
+    fetch('http://localhost:5000/api/usuarios')
       .then(res => res.json())
       .then(data => {
         console.log('Usuarios desde backend:', data);
