@@ -1,28 +1,28 @@
 /**
- * @fileoverview Vista para el inicio de sesión con Clerk
+ * @fileoverview Vista para el registro de usuarios con Clerk
  * @version 1.0.0
  * @author EXACTUM-dev
  */
 import React from "react";
-import { SignIn } from "@clerk/clerk-react";
+import { SignUp } from "@clerk/clerk-react";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo o título de la aplicación */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">FisioMax</h1>
-          <p className="text-gray-600">Inicia sesión en tu cuenta</p>
+          <p className="text-gray-600">Crea tu cuenta nueva</p>
         </div>
         
-        {/* Componente SignIn de Clerk */}
+        {/* Componente SignUp de Clerk */}
         <div className="bg-white rounded-lg shadow-xl p-8">
-          <SignIn 
-            path="/login" 
+          <SignUp 
+            path="/register" 
             routing="path" 
-            signUpUrl="/register"
-            afterSignInUrl="/"
+            signInUrl="/login"
+            afterSignUpUrl="/"
             appearance={{
               elements: {
                 card: "shadow-none",
@@ -33,11 +33,8 @@ export default function LoginPage() {
                 dividerText: "text-gray-500",
                 formButtonPrimary: "bg-blue-600 hover:bg-blue-700 text-white",
                 footerActionLink: "text-blue-600 hover:text-blue-700",
-                identityPreviewText: "text-gray-700",
-                identityPreviewEditButtonIcon: "text-gray-500",
                 formFieldLabel: "text-gray-700",
-                formFieldInput: "border-gray-300 focus:border-blue-500 focus:ring-blue-500",
-                otpCodeFieldInput: "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                formFieldInput: "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               }
             }}
           />
@@ -46,9 +43,9 @@ export default function LoginPage() {
         {/* Enlaces adicionales */}
         <div className="mt-6 text-center text-sm text-gray-600">
           <p>
-            ¿Necesitas ayuda? {" "}
-            <a href="/support" className="text-blue-600 hover:text-blue-700 font-medium">
-              Contacta soporte
+            ¿Ya tienes una cuenta? {" "}
+            <a href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+              Inicia sesión
             </a>
           </p>
         </div>

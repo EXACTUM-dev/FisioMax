@@ -6,6 +6,7 @@
  * Inicializa la aplicación y verifica la existencia de la Clerk Publishable Key.
  */
 import React, { StrictMode } from "react";
+import ReactDOM from 'react-dom/client';
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
@@ -26,14 +27,12 @@ if (!PUBLISHABLE_KEY) {
  * Renderiza la aplicación principal dentro del elemento root del DOM,
  * envolviendo la app con ClerkProvider para la autenticación.
  */
-createRoot(document.getElementById("root")).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <Routes>
-          <Route path="/" element={<App />} />
-        </Routes>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
       </ClerkProvider>
-    </BrowserRouter>
   </StrictMode>
 );
