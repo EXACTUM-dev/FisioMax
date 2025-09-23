@@ -1,6 +1,6 @@
 /**
  * Version: 0.1.0
- * Reusable checkbox component
+ * Reusable checkBox component
  * Includes consistent styles and improved accessibility
  */
 import React from "react";
