@@ -1,4 +1,4 @@
-# Etapa 1: Build de React
+# Etapa 1: Build de Vite
 FROM node:20-alpine AS build
 
 WORKDIR /usr/src/app
@@ -8,16 +8,18 @@ RUN npm install
 
 COPY . .
 
-# Generar el build optimizado de React
+# Vite genera la carpeta dist
 RUN npm run build
 
 # Etapa 2: Servir con Nginx
 FROM nginx:stable-alpine
 
-# Copiar el build al directorio que Nginx usa por defecto
+# Copiar el build de Vite al directorio por defecto de Nginx
 COPY --from=build /usr/src/app/dist /usr/share/nginx/html
 
-# Exponer puerto de Nginx
+# Copiar la configuración personalizada de Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
