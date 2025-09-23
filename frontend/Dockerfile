@@ -7,9 +7,13 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Copiar package.json y lock primero para aprovechar la cache de Docker
 COPY package*.json ./
+
+# Instalar dependencias de producción
 RUN npm install
 
+# Copiar el resto d código
 COPY . .
 
 # Vite genera la carpeta dist

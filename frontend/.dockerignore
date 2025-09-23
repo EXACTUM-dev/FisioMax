@@ -1,0 +1,26 @@
+# Node modules (no copiarlos, se instalan en el contenedor)
+node_modules
+**/node_modules
+
+# Carpeta de build de Vite
+dist
+
+# Git
+.git
+.gitignore
+.gitmodules
+
+# Archivos de entorno (si los tienes, por seguridad)
+.env
+.env.local
+.env.*.local
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Cachés de NPM / Yarn
+.npm
+.yarn

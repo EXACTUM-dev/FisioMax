@@ -4,7 +4,7 @@
  * Renders a selection checkbox and dynamic cells using column definitions
  */
 import React from "react";
-import Checkbox from "../atoms/checkbox";
+import Checkbox from "../atoms/checkBox";
 
 export default function TableRow({ row, columns, checked, onToggle }) {
   return (
