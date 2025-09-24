@@ -1,40 +1,37 @@
-name: Deploy Frontend to S3
+name: Deploy Frontend (Docker -> ECS)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
     paths:
-      - 'frontend/**'
+      - "frontend/**"
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          node-version: '20'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install dependencies
-        run: npm install
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build frontend
-        run: npm run build
+      - name: Build and push Docker image
+        run: |
+          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.FRONTEND_ECR_REPO }}:${{ github.sha }}
+          docker build -t $IMAGE_URI ./frontend
+          docker push $IMAGE_URI
 
-      - name: Deploy to S3
-        uses: jakejarvis/s3-sync-action@master
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          args: --delete
-        env:
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          SOURCE_DIR: "frontend/dist"
+          task-definition: frontend-task-def.json
+          service: frontend-service
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          wait-for-service-stability: true
