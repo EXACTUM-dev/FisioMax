@@ -2,13 +2,14 @@
  * Version: 0.2.0
  * Mock API for demo data (slides, products, users)
  */
-
+import rehabilitacionImg from '../assets/images/rehabilitacion-suelo-pelvico.jpg'
+import fisioterapiaImg from '../assets/images/fisioterapia-suelo-pelvico.jpg'
 const heroSlides = [
   {
     id: "pelvic-basics",
     title: "Básicos de Piso Pélvico",
     subtitle: "Descubre el arte de la fisioterapia adaptada al piso pélvico",
-    imageUrl: "/src/assets/images/rehabilitacion-suelo-pelvico.jpg",
+    imageUrl: rehabilitacionImg,
     imageAlt: "Sesión de fisioterapia de piso pélvico",
   },
   {
@@ -16,14 +17,14 @@ const heroSlides = [
     title: "Avanzados de Suelo Pélvico",
     subtitle:
       "Texto random para ver como se ve con otro texto un poco más largo aun más largo y un poco más",
-    imageUrl: "/src/assets/images/fisioterapia-suelo-pelvico.jpg",
+    imageUrl: fisioterapiaImg,
     imageAlt: "Sesión de fisioterapia de piso pélvico",
   },
   {
     id: "pelvic-3",
     title: "Ejercicios de rehabilitación en casa",
     subtitle: "Rutinas de ejercicios para continuar tu terapia en casa",
-    imageUrl: "/src/assets/images/fisioterapia-suelo-pelvico.jpg",
+    imageUrl: fisioterapiaImg,
     imageAlt: "Sesión de fisioterapia de piso pélvico",
   },
 ];

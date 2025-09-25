@@ -43,7 +43,7 @@ const config = {
 
   // Configuración para CORS.
   cors: {
-    allowedOrigins: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5174']
+    allowedOrigins: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5173']
   }
 };
 
