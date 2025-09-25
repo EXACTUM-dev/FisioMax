@@ -6,7 +6,15 @@
   "scripts": {
     "start": "node server.js",
     "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
+    "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:security": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/",
+    "test:security:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --watch tests/security/",
+    "test:security:auth": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/auth.test.js",
+    "test:security:validation": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/input-validation.test.js",
+    "test:security:headers": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/headers-security.test.js",
+    "test:security:errors": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/error-handling.test.js",
+    "test:security:config": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/config-security.test.js",
+    "test:security:integration": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/integration-security.test.js"
   },
   "dependencies": {
     "compression": "^1.8.1",
