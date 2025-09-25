@@ -62,7 +62,7 @@ function Dashboard() {
   // Fetch del backend
   useEffect(() => {
     if (isSignedIn && user) {
-      fetch('http://localhost:5000/api/usuarios')
+      fetch('/api/usuarios')
         .then(res => res.json())
         .then(data => {
           console.log('Usuarios desde backend:', data);
