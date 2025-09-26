@@ -124,12 +124,6 @@ app.post('/login', (req, res) => {
  * @param {object} res - Objeto de respuesta de Express.
  * @returns {Array<Object>} Lista de usuarios en formato JSON.
  */
-app.get('/api/usuarios', (req, res) => {
-  console.log("Usuarios");
-  res.json([
-    { id: 1, nombre: 'Juan', email: 'juan@ejemplo.com' },
-    { id: 2, nombre: 'Ana', email: 'ana@ejemplo.com' }
-  ]);
 app.get('/api/usuarios', requireAuth, (req, res) => {
   // req.auth contiene la información del usuario autenticado
   const userId = req.auth?.userId;
