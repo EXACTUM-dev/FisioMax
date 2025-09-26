@@ -11,8 +11,3 @@ export const requireAuth = ClerkExpressRequireAuth({
   secretKey: process.env.CLERK_SECRET_KEY
 });
 
-// Usar en tus rutas:
-app.get('/api/usuarios', requireAuth, (req, res) => {
-  // req.auth contiene la información del usuario
-  const userId = req.auth.userId;
-});

@@ -16,6 +16,7 @@ import joi from 'joi';
 import morgan from 'morgan';
 import compression from 'compression';
 import helmet from 'helmet';
+import { requireAuth } from './src/middlewares/clerkAuth.js';
 
 // Inicializar la aplicación Express
 const app = express();
@@ -84,26 +85,66 @@ app.get('/', (req, res) => {
   res.send('¡Servidor de backend funcionando correctamente!');
 });
 
+//-------------------------
+// RUTAS PÚBLICAS
+//-------------------------
+
 /**
- * Endpoint de ejemplo para obtener usuarios.
- * @name GET /api/usuarios
+ * Ruta pública de login - No requiere autenticación.
+ * @name POST /login
  * @function
- * @returns {Array<Object>} Lista de usuarios en formato JSON.
+ * @param {object} req - Objeto de solicitud de Express.
+ * @param {object} res - Objeto de respuesta de Express.
  */
-app.get('/api/usuarios', (req, res) => {
-  res.json([
-    { id: 1, nombre: 'Juan', email: 'juan@ejemplo.com' },
-    { id: 2, nombre: 'Ana', email: 'ana@ejemplo.com' }
-  ]);
+app.post('/login', (req, res) => {
+  // Aquí iría la lógica de autenticación con Clerk
+  // Por ahora devolvemos una respuesta de ejemplo
+  res.json({
+    message: 'Endpoint de login - Acceso público',
+    timestamp: new Date().toISOString()
+  });
 });
 
+//-------------------------
+// RUTAS PROTEGIDAS
+//-------------------------
+
+/**
+ * Endpoint protegido para obtener usuarios - Requiere autenticación.
+ * @name GET /api/usuarios
+ * @function
+ * @param {object} req - Objeto de solicitud de Express.
+ * @param {object} res - Objeto de respuesta de Express.
+ * @returns {Array<Object>} Lista de usuarios en formato JSON.
+ */
+app.get('/api/usuarios', requireAuth, (req, res) => {
+  // req.auth contiene la información del usuario autenticado
+  const userId = req.auth?.userId;
+  
+  res.json({
+    message: 'Lista de usuarios obtenida exitosamente',
+    data: [
+      { id: 1, nombre: 'Juan', email: 'juan@ejemplo.com' },
+      { id: 2, nombre: 'Ana', email: 'ana@ejemplo.com' }
+    ],
+    authenticatedUserId: userId,
+    timestamp: new Date().toISOString()
+  });
+});
+
+
+// Exportar la aplicación para uso en pruebas
+export { app };
 
 //-------------------------
 // INICIAR EL SERVIDOR
 //-------------------------
 /**
  * Inicia el servidor y lo pone a escuchar en el puerto especificado.
+ * Solo se ejecuta si el archivo se ejecuta directamente (no en pruebas).
  */
-app.listen(config.app.port, () => {
-  console.log(`Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`);
-});
+if (process.env.NODE_ENV !== 'test' && import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(config.app.port, () => {
+    console.log(`Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`);
+  });
+}

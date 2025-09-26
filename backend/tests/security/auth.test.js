@@ -26,15 +26,31 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas de prueba protegidas y públicas
+// Rutas de prueba que coinciden con server.js
 app.get('/api/public', (req, res) => {
   res.json({ message: 'Ruta pública accesible' });
 });
 
-app.get('/api/protected', requireAuth, (req, res) => {
-  res.json({ 
-    message: 'Ruta protegida', 
-    userId: req.auth?.userId 
+// Ruta pública de login (como en server.js)
+app.post('/login', (req, res) => {
+  res.json({
+    message: 'Endpoint de login - Acceso público',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Ruta protegida de usuarios (como en server.js)
+app.get('/api/usuarios', requireAuth, (req, res) => {
+  const userId = req.auth?.userId;
+  
+  res.json({
+    message: 'Lista de usuarios obtenida exitosamente',
+    data: [
+      { id: 1, nombre: 'Juan', email: 'juan@ejemplo.com' },
+      { id: 2, nombre: 'Ana', email: 'ana@ejemplo.com' }
+    ],
+    authenticatedUserId: userId,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -57,38 +73,48 @@ describe('🔐 Pruebas de Seguridad - Autenticación', () => {
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Ruta pública accesible');
     });
+
+    test('debe permitir acceso a /login sin autenticación', async () => {
+      const response = await request(app)
+        .post('/login')
+        .send({ email: 'test@example.com', password: 'password123' });
+      
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Endpoint de login - Acceso público');
+      expect(response.body).toHaveProperty('timestamp');
+    });
   });
 
   describe('Rutas Protegidas', () => {
-    test('debe denegar acceso a rutas protegidas sin token JWT', async () => {
+    test('debe denegar acceso a /api/usuarios sin token JWT', async () => {
       const response = await request(app)
-        .get('/api/protected');
+        .get('/api/usuarios');
       
       expect(response.status).toBe(401);
     });
 
-    test('debe denegar acceso con token JWT inválido', async () => {
+    test('debe denegar acceso a /api/usuarios con token JWT inválido', async () => {
       const response = await request(app)
-        .get('/api/protected')
+        .get('/api/usuarios')
         .set('Authorization', 'Bearer token_invalido');
       
       expect(response.status).toBe(401);
     });
 
-    test('debe denegar acceso con token JWT malformado', async () => {
+    test('debe denegar acceso a /api/usuarios con token JWT malformado', async () => {
       const response = await request(app)
-        .get('/api/protected')
+        .get('/api/usuarios')
         .set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid');
       
       expect(response.status).toBe(401);
     });
 
-    test('debe denegar acceso con token JWT expirado', async () => {
+    test('debe denegar acceso a /api/usuarios con token JWT expirado', async () => {
       // Token JWT expirado (exp: 1000000000)
       const expiredToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyXzEyMyIsImV4cCI6MTAwMDAwMDAwMH0.invalid';
       
       const response = await request(app)
-        .get('/api/protected')
+        .get('/api/usuarios')
         .set('Authorization', `Bearer ${expiredToken}`);
       
       expect(response.status).toBe(401);

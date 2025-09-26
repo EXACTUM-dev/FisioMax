@@ -12,6 +12,7 @@ Este directorio contiene un conjunto completo de pruebas de seguridad para el ba
 - **`error-handling.test.js`** - Pruebas de manejo seguro de errores
 - **`config-security.test.js`** - Pruebas de configuración de seguridad
 - **`integration-security.test.js`** - Pruebas de integración end-to-end
+- **`routes-security.test.js`** - Pruebas específicas para las rutas de FisioMax
 
 ## 🎯 Áreas de Seguridad Cubiertas
 
@@ -81,6 +82,9 @@ npm test -- tests/security/config-security.test.js
 
 # Pruebas de integración
 npm test -- tests/security/integration-security.test.js
+
+# Pruebas de rutas específicas
+npm test -- tests/security/routes-security.test.js
 ```
 
 ### Ejecutar en modo watch:
