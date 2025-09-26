@@ -56,6 +56,7 @@ const config = {
 
   // CORS configuration
   cors: {
+<<<<<<< HEAD
     // If CORS_ORIGINS is not set, allow common local dev ports
     allowedOrigins: parseCsvEnv(process.env.CORS_ORIGINS, [
       "http://localhost:3000",
@@ -63,6 +64,10 @@ const config = {
       "http://localhost:5174",
     ]),
   },
+=======
+    allowedOrigins: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5173']
+  }
+>>>>>>> develop
 };
 
 export default config;

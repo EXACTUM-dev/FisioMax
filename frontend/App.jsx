@@ -1,15 +1,18 @@
 /**
- * Version: 0.3.2
+ * Version: 0.3.4
  * Main component of the FisioMax application with Clerk authentication
- * Handles routing for login and register pages with protected route logic
+ * Handles routing for login, register, video, email and exercises pages with protected route logic
  */
 
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+
 import LoginPage from "./src/pages/login";
 import RegisterPage from "./src/pages/register";
 import ExerciseTestPage from "./src/pages/exerciseTestPage";
+import VideoPage from "./src/pages/video";
+import EmailPage from "./src/pages/email";
 
 // ProtectedRoute: if signed in, render children; otherwise, redirect to /login
 function ProtectedRoute({ children }) {
@@ -52,7 +55,7 @@ function ProtectedLogin() {
       <main className="p-6">
         {user && (
           <p className="text-gray-700">
-            Welcome, {user.firstName || user.emailAddresses[0].emailAddress}
+            Welcome, {user.firstName || user.emailAddresses?.[0]?.emailAddress}
           </p>
         )}
       </main>
@@ -65,6 +68,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/video" element={<VideoPage />} />
+      <Route path="/email" element={<EmailPage />} />
       <Route
         path="/"
         element={
@@ -73,7 +78,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      {/* Nueva ruta para la página de prueba de ejercicios */}
       <Route
         path="/exercises"
         element={
