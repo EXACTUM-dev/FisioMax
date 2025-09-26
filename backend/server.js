@@ -92,10 +92,36 @@ app.get("/", (req, res) => {
   res.send("¡Servidor de backend funcionando correctamente!");
 });
 
+//-------------------------
+// RUTAS PÚBLICAS
+//-------------------------
+
 /**
- * Endpoint de ejemplo para obtener usuarios.
+ * Ruta pública de login - No requiere autenticación.
+ * @name POST /login
+ * @function
+ * @param {object} req - Objeto de solicitud de Express.
+ * @param {object} res - Objeto de respuesta de Express.
+ */
+app.post("/login", (req, res) => {
+  // Aquí iría la lógica de autenticación con Clerk
+  // Por ahora devolvemos una respuesta de ejemplo
+  res.json({
+    message: "Endpoint de login - Acceso público",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+//-------------------------
+// RUTAS PROTEGIDAS
+//-------------------------
+
+/**
+ * Endpoint protegido para obtener usuarios - Requiere autenticación.
  * @name GET /api/usuarios
  * @function
+ * @param {object} req - Objeto de solicitud de Express.
+ * @param {object} res - Objeto de respuesta de Express.
  * @returns {Array<Object>} Lista de usuarios en formato JSON.
  */
 app.get("/api/usuarios", (req, res) => {
@@ -184,11 +210,15 @@ Enviado desde: ${req.headers.host}
   }
 });
 
+// Exportar la aplicación para uso en pruebas
+export { app };
+
 //-------------------------
 // INICIAR EL SERVIDOR
 //-------------------------
 /**
  * Inicia el servidor y lo pone a escuchar en el puerto especificado.
+ * Solo se ejecuta si el archivo se ejecuta directamente (no en pruebas).
  */
 app.listen(config.app.port, () => {
   console.log(
