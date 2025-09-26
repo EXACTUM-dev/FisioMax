@@ -2,20 +2,21 @@
  * @fileoverview Archivo principal del servidor backend de la aplicación.
  * @version 1.0.0
  * @author EXACTUM-dev
- * 
+ *
  * @description Configura y levanta el servidor Express con middlewares esenciales.
  */
 
 // Importar el archivo de configuración central
-import config from './config.js';
+import config from "./config.js";
 
 // Importar los módulos necesarios
-import express from 'express';
-import cors from 'cors';
-import joi from 'joi';
-import morgan from 'morgan';
-import compression from 'compression';
-import helmet from 'helmet';
+import express from "express";
+import cors from "cors";
+import joi from "joi";
+import morgan from "morgan";
+import compression from "compression";
+import helmet from "helmet";
+import exerciseRoutes from "./src/routes/exerciseRoutes.js";
 
 // Inicializar la aplicación Express
 const app = express();
@@ -34,10 +35,12 @@ app.use(helmet());
  * Utiliza las configuraciones definidas en config.js.
  * @see {@link https://expressjs.com/en/resources/middleware/cors.html}
  */
-app.use(cors({
-  origin: config.cors.allowedOrigins,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: config.cors.allowedOrigins,
+    credentials: true,
+  })
+);
 
 /**
  * Middleware para comprimir las respuestas HTTP.
@@ -51,8 +54,7 @@ app.use(compression());
  * Útil para el registro y la depuración del servidor.
  * @see {@link https://expressjs.com/en/resources/middleware/morgan.html}
  */
-app.use(morgan('combined'));
-
+app.use(morgan("combined"));
 
 //--------------------------------
 // MIDDLEWARE PARA PROCESAR DATOS
@@ -67,9 +69,7 @@ app.use(express.json());
  */
 app.use(express.urlencoded({ extended: true }));
 
-
-
-//------------------------- 
+//-------------------------
 // DEFINICIÓN DE RUTAS
 //-------------------------
 
@@ -80,8 +80,8 @@ app.use(express.urlencoded({ extended: true }));
  * @param {object} req - Objeto de solicitud de Express.
  * @param {object} res - Objeto de respuesta de Express.
  */
-app.get('/', (req, res) => {
-  res.send('¡Servidor de backend funcionando correctamente!');
+app.get("/", (req, res) => {
+  res.send("¡Servidor de backend funcionando correctamente!");
 });
 
 /**
@@ -90,13 +90,15 @@ app.get('/', (req, res) => {
  * @function
  * @returns {Array<Object>} Lista de usuarios en formato JSON.
  */
-app.get('/api/usuarios', (req, res) => {
+app.get("/api/usuarios", (req, res) => {
   res.json([
-    { id: 1, nombre: 'Juan', email: 'juan@ejemplo.com' },
-    { id: 2, nombre: 'Ana', email: 'ana@ejemplo.com' }
+    { id: 1, nombre: "Juan", email: "juan@ejemplo.com" },
+    { id: 2, nombre: "Ana", email: "ana@ejemplo.com" },
   ]);
 });
 
+// Define API routes
+app.use("/api/exercises", exerciseRoutes);
 
 //-------------------------
 // INICIAR EL SERVIDOR
@@ -105,5 +107,7 @@ app.get('/api/usuarios', (req, res) => {
  * Inicia el servidor y lo pone a escuchar en el puerto especificado.
  */
 app.listen(config.app.port, () => {
-  console.log(`Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`);
+  console.log(
+    `Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`
+  );
 });

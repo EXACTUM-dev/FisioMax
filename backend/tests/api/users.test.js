@@ -1,13 +1,18 @@
+/**
+ * Version: 0.1.0
+ * Users API test
+ * Verifies that the users endpoint correctly returns user data
+ */
 import request from "supertest";
 import express from "express";
 import cors from "cors";
 
-// Configuración mínima para pruebas
+// Minimal test configuration
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Mock de la ruta de usuarios para pruebas
+// Mock users endpoint for testing
 app.get("/api/usuarios", (req, res) => {
   res.json([
     { id: 1, nombre: "Juan", email: "juan@ejemplo.com" },
@@ -15,8 +20,8 @@ app.get("/api/usuarios", (req, res) => {
   ]);
 });
 
-describe("API de Usuarios", () => {
-  test("GET /api/usuarios devuelve lista de usuarios", async () => {
+describe("Users API", () => {
+  test("GET /api/usuarios returns list of users", async () => {
     const response = await request(app).get("/api/usuarios");
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(2);
