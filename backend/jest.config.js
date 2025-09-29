@@ -5,4 +5,5 @@ export default {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   testMatch: ["**/tests/**/*.js", "**/?(*.)+(spec|test).js"],
+  setupFiles: ["./tests/security/setup.js"]  // Agregar esta línea
 };

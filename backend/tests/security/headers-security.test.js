@@ -14,48 +14,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 
 // Configurar app de prueba con middlewares de seguridad
-const app = express();
-
-// Middlewares de seguridad
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  crossOriginEmbedderPolicy: false
-}));
-
-app.use(cors({
-  origin: ['http://localhost:5174', 'https://fisiomax.com'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-app.use(compression());
-app.use(morgan('combined'));
-app.use(express.json());
-
-// Rutas de prueba
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Test endpoint' });
-});
-
-app.post('/api/test', (req, res) => {
-  res.json({ message: 'POST test endpoint' });
-});
-
-app.get('/api/sensitive', (req, res) => {
-  res.json({ 
-    message: 'Datos sensibles',
-    data: 'información confidencial'
-  });
-});
-
+const { app } = await import('../../server.js');
 describe('🔒 Pruebas de Seguridad - Headers y Configuración', () => {
 
   describe('Headers de Seguridad con Helmet', () => {

@@ -19,6 +19,7 @@
     "test:security:server": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/server-routes.test.js"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.896.0",
     "@clerk/clerk-sdk-node": "^4.13.23",
     "@aws-sdk/client-ses": "^3.896.0",
     "compression": "^1.8.1",
@@ -30,9 +31,9 @@
     "morgan": "^1.10.1"
   },
   "devDependencies": {
+
     "@babel/core": "^7.28.4",
     "@babel/preset-env": "^7.28.3",
-    "@eslint/js": "^9.35.0",
     "babel-jest": "^30.1.2",
     "cross-env": "^10.0.0",
 
