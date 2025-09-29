@@ -139,6 +139,7 @@ app.get('/api/usuarios', requireAuth, (req, res) => {
     authenticatedUserId: userId,
     timestamp: new Date().toISOString()
   });
+  });
 app.post('/login', (req, res) => {
   // Aquí iría la lógica de autenticación con Clerk
   // Por ahora devolvemos una respuesta de ejemplo
