@@ -203,6 +203,133 @@ Enviado desde: ${req.headers.host}
         });
     }
 });
+app.get('/api/admin', requireAuth, (req, res) => {
+  // Simular verificación de rol admin
+  const userRoles = req.auth?.sessionClaims?.metadata?.roles || [];
+  if (!userRoles.includes('admin')) {
+    return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  res.json({ message: 'Panel de administración' });
+});
+
+// Rutas de prueba que generan diferentes tipos de errores
+app.get('/api/error/validation', (req, res, next) => {
+  const error = new Error('Datos inválidos');
+  error.name = 'ValidationError';
+  next(error);
+});
+
+app.get('/api/error/unauthorized', (req, res, next) => {
+  const error = new Error('Token inválido');
+  error.name = 'UnauthorizedError';
+  next(error);
+});
+
+app.get('/api/error/forbidden', (req, res, next) => {
+  const error = new Error('Sin permisos');
+  error.name = 'ForbiddenError';
+  next(error);
+});
+
+app.get('/api/error/internal', (req, res, next) => {
+  const error = new Error('Error de base de datos');
+  next(error);
+});
+
+app.get('/api/error/timeout', (req, res, next) => {
+  const error = new Error('Timeout de conexión');
+  error.code = 'ETIMEDOUT';
+  next(error);
+});
+
+app.get('/api/error/async', async (req, res, next) => {
+  try {
+    // Simular operación asíncrona que falla
+    await new Promise((resolve, reject) => {
+      setTimeout(() => reject(new Error('Error asíncrono')), 100);
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Test endpoint' });
+});
+
+app.post('/api/test', (req, res) => {
+  res.json({ message: 'POST test endpoint' });
+});
+app.post('/api/error/body-parser', (req, res) => {
+  // Esta ruta puede fallar si el body no se puede parsear
+  res.json({ message: 'Body parseado correctamente' });
+});
+app.get('/api/sensitive', (req, res) => {
+  res.json({ 
+    message: 'Datos sensibles',
+    data: 'información confidencial'
+  });
+});
+
+// Middleware para manejar errores de parsing de JSON
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    // Error de JSON malformado
+    return res.status(400).json({
+      error: 'Datos de entrada inválidos',
+      timestamp: new Date().toISOString()
+    });
+  }
+  if (err.type === 'entity.too.large') {
+    // Payload demasiado grande
+    return res.status(413).json({
+      error: 'Payload demasiado grande',
+      timestamp: new Date().toISOString()
+    });
+  }
+  next(err);
+});
+
+// Middleware de manejo de errores seguro
+const secureErrorHandler = (err, req, res, next) => {
+  // Log del error para debugging interno (sin exponer al cliente)
+  console.error('Error interno:', {
+    message: err.message,
+    stack: err.stack,
+    timestamp: new Date().toISOString(),
+    path: req.path,
+    method: req.method
+  });
+
+  // Determinar el tipo de error
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      error: 'Datos de entrada inválidos',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({
+      error: 'No autorizado',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  if (err.name === 'ForbiddenError') {
+    return res.status(403).json({
+      error: 'Acceso denegado',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Error genérico para errores internos del servidor
+  res.status(500).json({
+    error: 'Error interno del servidor',
+    timestamp: new Date().toISOString()
+  });
+};
+// Aplicar middleware de manejo de errores
+app.use(secureErrorHandler);
 
 //-------------------------
 // INICIAR EL SERVIDOR
@@ -216,3 +343,4 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`);
   });
 }
+export { app };
