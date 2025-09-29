@@ -17,6 +17,8 @@ import buildUserActionsColumns from "./src/data/tableTemplates/userActionsColumn
 import buildRolePermissionsColumns from "./src/data/tableTemplates/rolePermissionsColumns";
 import LoginPage from "./src/pages/login";
 import RegisterPage from "./src/pages/register";
+import VideoPage from "./src/pages/video";
+import EmailPage from "./src/pages/email";
 
 // Componente para rutas protegidas
 function ProtectedRoute({ children }) {
@@ -60,7 +62,7 @@ function Dashboard() {
   // Fetch del backend
   useEffect(() => {
     if (isSignedIn && user) {
-      fetch('http://localhost:5000/api/usuarios')
+      fetch('/api/usuarios')
         .then(res => res.json())
         .then(data => {
           console.log('Usuarios desde backend:', data);
@@ -219,6 +221,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/video" element={<VideoPage />} />
+      <Route path="/email" element={<EmailPage />} />
       <Route
         path="/"
         element={

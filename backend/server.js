@@ -17,7 +17,7 @@ import morgan from 'morgan';
 import compression from 'compression';
 import helmet from 'helmet';
 import { requireAuth } from './src/middlewares/clerkAuth.js';
-
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 // Inicializar la aplicación Express
 const app = express();
 
@@ -68,7 +68,13 @@ app.use(express.json());
  */
 app.use(express.urlencoded({ extended: true }));
 
-
+/**
+ * Configuracion del servicio SES
+ */
+// Configurar SES
+const sesClient = new SESClient({
+    region: 'us-east-2', // Cambia por tu región
+});
 
 //------------------------- 
 // DEFINICIÓN DE RUTAS
@@ -118,6 +124,7 @@ app.post('/login', (req, res) => {
  * @returns {Array<Object>} Lista de usuarios en formato JSON.
  */
 app.get('/api/usuarios', requireAuth, (req, res) => {
+  console.log("Usuarios");
   // req.auth contiene la información del usuario autenticado
   const userId = req.auth?.userId;
   
@@ -132,9 +139,81 @@ app.get('/api/usuarios', requireAuth, (req, res) => {
   });
 });
 
+/**
+ * Endpoint de ejemplo para enviar correos.
+ * @name GET /api/usuarios
+ * @function
+ * @returns {Array<Object>} Mensaje de operacion exitosa/error.
+ */
+/*app.post('/api/contacto', async (req, res) => {
+  try {
+    const { nombre, email, mensaje } = req.body;
+    console.log("Mensaje enviado correctamente");
+    res.json({ success: true, message: 'Mensaje enviado correctamente' });
+  } catch (error) {
+    console.log("Mensaje enviado incorrectamente")
+    res.json({ success: false, message: 'Error al enviar el mensaje' });
+  }
+});
+*/
+app.post('/api/contacto', async (req, res) => {
+    try {
+        const { nombre, email, mensaje } = req.body;
 
-// Exportar la aplicación para uso en pruebas
-export { app };
+        // Validar campos requeridos
+        if (!nombre || !email || !mensaje) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Todos los campos son requeridos'
+            });
+        }
+        const params = {
+            Source: 'trujillo_jaime@outlook.com', // Email verificado en SES
+            Destination: {
+                ToAddresses: [email], // Tu email real
+            },
+            Message: {
+                Subject: {
+                    Data: `Nuevo mensaje de contacto de ${nombre}`,
+                    Charset: 'UTF-8'
+                },
+                Body: {
+                    Text: {
+                        Data: `
+Nombre: ${nombre}
+Email: ${email}
+Mensaje: ${mensaje}
+
+Enviado desde: ${req.headers.host}
+                        `,
+                        Charset: 'UTF-8'
+                    },
+                    Html: {
+                        Data: `
+<h3>Nuevo mensaje de contacto</h3>
+<p><strong>Nombre:</strong> ${nombre}</p>
+<p><strong>Email:</strong> ${email}</p>
+<p><strong>Mensaje:</strong> ${mensaje}</p>
+<p><strong>Enviado desde:</strong> ${req.headers.host}</p>
+                        `,
+                        Charset: 'UTF-8'
+                    }
+                }
+            }
+        };
+
+        const command = new SendEmailCommand(params);
+        await sesClient.send(command);
+
+        res.json({ success: true, message: 'Mensaje enviado correctamente' });
+    } catch (error) {
+        console.error('Error enviando email:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error al enviar el mensaje. Intenta nuevamente.'
+        });
+    }
+});
 
 //-------------------------
 // INICIAR EL SERVIDOR
