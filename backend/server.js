@@ -18,7 +18,6 @@ import compression from 'compression';
 import helmet from 'helmet';
 import { requireAuth } from './src/middlewares/clerkAuth.js';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import { requireAuth } from './src/middlewares/clerkAuth.js';
 
 // Inicializar la aplicación Express
 const app = express();
@@ -383,4 +382,3 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`);
   });
 }
-export { app };
