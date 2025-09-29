@@ -145,17 +145,6 @@ app.get('/api/usuarios', requireAuth, (req, res) => {
  * @function
  * @returns {Array<Object>} Mensaje de operacion exitosa/error.
  */
-/*app.post('/api/contacto', async (req, res) => {
-  try {
-    const { nombre, email, mensaje } = req.body;
-    console.log("Mensaje enviado correctamente");
-    res.json({ success: true, message: 'Mensaje enviado correctamente' });
-  } catch (error) {
-    console.log("Mensaje enviado incorrectamente")
-    res.json({ success: false, message: 'Error al enviar el mensaje' });
-  }
-});
-*/
 app.post('/api/contacto', async (req, res) => {
     try {
         const { nombre, email, mensaje } = req.body;
@@ -222,7 +211,7 @@ Enviado desde: ${req.headers.host}
  * Inicia el servidor y lo pone a escuchar en el puerto especificado.
  * Solo se ejecuta si el archivo se ejecuta directamente (no en pruebas).
  */
-if (process.env.NODE_ENV !== 'test' && import.meta.url === `file://${process.argv[1]}`) {
+if (process.env.NODE_ENV !== 'test') {
   app.listen(config.app.port, () => {
     console.log(`Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`);
   });
