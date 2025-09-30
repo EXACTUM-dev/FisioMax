@@ -193,6 +193,6 @@ app.listen(config.app.port, () => {
   );
 });
 
-import usuariosRoutes from "./src/routes/usuarios.js";
+import usuariosRoutes from "./src/routes/usuarios.routes.js";
 
 app.use("/usuarios", usuariosRoutes);
