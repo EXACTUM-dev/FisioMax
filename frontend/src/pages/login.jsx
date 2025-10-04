@@ -8,45 +8,43 @@ import { SignIn } from "@clerk/clerk-react";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo o título de la aplicación */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">FisioMax</h1>
-          <p className="text-gray-600">Inicia sesión en tu cuenta</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex flex-col items-center w-full max-w-md">
+        {/* Logo/avatar */}
+        <div className="flex justify-center mb-[-40px] z-10">
+          <img
+            src="/SOMEFIPPlogo.png"
+            alt="Logo"
+            className="w-20 h-20 rounded-full border-4 border-white shadow-lg bg-white"
+          />
         </div>
-        
-        {/* Componente SignIn de Clerk */}
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <SignIn 
-            path="/login" 
-            routing="path" 
+        {/* Card */}
+        <div className="bg-white rounded-xl shadow-lg p-8 pt-16 w-full">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-1">
+              Bienvenido a la SOMEFIPP
+            </h2>
+          </div>
+          {/* Clerk SignIn */}
+          <SignIn
+            path="/login"
+            routing="path"
             signUpUrl="/register"
             afterSignInUrl="/"
             appearance={{
               elements: {
                 card: "shadow-none",
-                headerTitle: "hidden",
-                headerSubtitle: "hidden",
-                socialButtonsBlockButton: "bg-white hover:bg-gray-50 text-gray-600 border border-gray-300",
-                dividerLine: "bg-gray-300",
-                dividerText: "text-gray-500",
-                formButtonPrimary: "bg-blue-600 hover:bg-blue-700 text-white",
-                footerActionLink: "text-blue-600 hover:text-blue-700",
-                identityPreviewText: "text-gray-700",
-                identityPreviewEditButtonIcon: "text-gray-500",
-                formFieldLabel: "text-gray-700",
-                formFieldInput: "border-gray-300 focus:border-blue-500 focus:ring-blue-500",
-                otpCodeFieldInput: "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              }
+                formButtonPrimary: "bg-black hover:bg-gray-800 text-white rounded-md py-2",
+                formFieldInput: "border-gray-300 rounded-md",
+                formFieldLabel: "text-gray-700 font-medium",
+              },
             }}
           />
         </div>
-        
-        {/* Enlaces adicionales */}
+        {/* Enlace soporte */}
         <div className="mt-6 text-center text-sm text-gray-600">
           <p>
-            ¿Necesitas ayuda? {" "}
+            ¿Necesitas ayuda?{" "}
             <a href="/support" className="text-blue-600 hover:text-blue-700 font-medium">
               Contacta soporte
             </a>
