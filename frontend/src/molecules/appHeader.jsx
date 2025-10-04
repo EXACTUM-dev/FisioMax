@@ -35,14 +35,6 @@ export default function AppHeader({ user }) {
               Sociedad Mexicana de Fisioterapeutas de Piso Pélvico
             </p>
           </div>
-
-          {/* Derecha: UserButton */}
-          <div className="flex items-center justify-end">
-            <UserButton
-              afterSignOutUrl="/login"
-              appearance={{ elements: { avatarBox: "h-10 w-10" } }}
-            />
-          </div>
         </div>
       </div>
     </header>

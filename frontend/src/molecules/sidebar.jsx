@@ -6,6 +6,8 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+// Confirmation modal for logout
+import ConfirmModal from "../molecules/confirmationModal";
 
 // Icon resources
 import logoSrc from "../assets/icons/SOMEFIPPlogo.png";
@@ -91,6 +93,7 @@ function SidebarLink({ icon, label, open, active, onClick }) {
 export default function Sidebar({ current = "home", onNavigate }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(current);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { signOut } = useClerk();
   const navigate = useNavigate();
 
@@ -122,7 +125,8 @@ export default function Sidebar({ current = "home", onNavigate }) {
   const handleNavigate = (key) => {
     if (key === "logout") {
       // Logout con redirección a /login
-      signOut({ redirectUrl: "/login" });
+      setShowLogoutModal(true)
+      //signOut({ redirectUrl: "/login" });
       return;
     }
 
@@ -245,6 +249,18 @@ export default function Sidebar({ current = "home", onNavigate }) {
           })}
         </ul>
       </nav>
+      <ConfirmModal
+        open={showLogoutModal}
+        title="¿Cerrar sesión?"
+        message="¿Estás seguro que deseas cerrar sesión?"
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          setShowLogoutModal(false);
+          signOut({ redirectUrl: "/login" });
+        }}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </>
   );
 }

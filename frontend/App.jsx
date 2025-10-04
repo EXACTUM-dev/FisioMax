@@ -31,8 +31,22 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/video" element={<VideoPage />} />
-      <Route path="/email" element={<EmailPage />} />
+      <Route
+        path="/video"
+        element={
+          <ProtectedRoute>
+            <VideoPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/email"
+        element={
+          <ProtectedRoute>
+            <EmailPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/ajustes/perfil/*"
         element={
