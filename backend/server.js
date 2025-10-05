@@ -18,6 +18,7 @@ import compression from "compression";
 import helmet from "helmet";
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import usuariosRoutes from "./src/routes/usuarios.routes.js";
 
 // Inicializar la aplicación Express
 const app = express();
@@ -382,14 +383,12 @@ export { app };
  * Inicia el servidor y lo pone a escuchar en el puerto especificado.
  * Solo se ejecuta si el archivo se ejecuta directamente (no en pruebas).
  */
+
+app.use("/usuarios", usuariosRoutes);
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
     console.log(
       `Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`
     );
   });
-
-  import usuariosRoutes from "./src/routes/usuarios.routes.js";
-
-  app.use("/usuarios", usuariosRoutes);
 }
