@@ -7,10 +7,6 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Vars para el build de Vite
-ARG VITE_CLERK_PUBLISHABLE_KEY
-ENV VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
-
 # Copiar package.json y lock primero para aprovechar la cache de Docker
 COPY package*.json ./
 
