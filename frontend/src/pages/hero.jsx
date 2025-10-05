@@ -3,6 +3,7 @@
  * Responsive lateral navigation with self-contained routing + Clerk logout
  * Desktop (expandable on hover) + Mobile (bottom bar)
  */
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 
