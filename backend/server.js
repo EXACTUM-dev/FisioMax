@@ -18,6 +18,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 import { requireAuth } from './src/middlewares/clerkAuth.js';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import authRoutes from './src/routes/auth.route.js';
 
 // Inicializar la aplicación Express
 const app = express();
@@ -291,6 +292,9 @@ app.get('/api/error/async', async (req, res, next) => {
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Test endpoint' });
 });
+
+// Montar rutas de autenticación
+app.use('/api', authRoutes);
 
 app.post('/api/test', (req, res) => {
   res.json({ message: 'POST test endpoint' });
