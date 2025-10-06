@@ -206,7 +206,7 @@ app.use((error, req, res, next) => {
 /**
  * Middleware para rutas no encontradas
  */
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: 'Ruta no encontrada'

@@ -15,7 +15,7 @@ export default function MembershipApplicationPage() {
     // Mi perfil
     nombres: "Angélica",
     apellidos: "Hernández Callejas",
-    telefono: "771 128 5154",
+    telefono: "771 122 5154",
     email: "angynas@gmail.com",
     
     // Datos de domicilio
@@ -207,37 +207,38 @@ export default function MembershipApplicationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Header con logo */}
-      <div className="bg-white border-b border-gray-200 py-4">
+      <div className="border-gray-200 py-4">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                <div className="w-4 h-4 bg-green-600 rounded-full"></div>
-              </div>
-            </div>
-            <h1 className="text-xl font-semibold text-gray-800">
+          <div className="flex items-center justify-center">
+            <img 
+              src="../assets/icons/SOMEFIPPlogo.png"
+              className="w-12 h-12 rounded-full object-cover"
+            />
+            <h1 className="text-center text-x font-semibold text-gray-800">
               Sociedad Mexicana de Fisioterapia en Piso Pélvico
             </h1>
           </div>
         </div>
       </div>
 
+      
+
       {/* Contenido principal */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="bg-white">
-          <h2 className="text-2xl font-bold text-gray-800 mb-8">Registro de solicitud</h2>
-          
+      <div className=" max-w-4xl mx-auto px-6 py-8">
+        <div className="">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Sección: Mi perfil */}
-            <div className="bg-gray-50 p-6 rounded-lg">
+            <div className="bg-white p-6 rounded-lg">
+              <h2 className="text-center text-2xl font-bold text-gray-800 mb-8" >Registro de solicitud</h2>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Mi perfil</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <FormField
-                    label="Nombre(s) *"
+                    label="Nombre(s)"
                     name="nombres"
+                    required={true}
                     value={formData.nombres}
                     onChange={handleInputChange}
                     placeholder="Ingresa tu(s) nombre(s)"
@@ -278,10 +279,11 @@ export default function MembershipApplicationPage() {
                   {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                 </div>
               </div>
-            </div>
 
-            {/* Sección: Datos de domicilio */}
-            <div className="bg-gray-50 p-6 rounded-lg">
+
+
+              {/* Sección: Datos de domicilio */}
+            <div className="bg-white p-6 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Datos de domicilio</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Dropdown
@@ -340,7 +342,7 @@ export default function MembershipApplicationPage() {
             </div>
 
             {/* Sección: Licenciatura */}
-            <div className="bg-gray-50 p-6 rounded-lg">
+            <div className="bg-white p-6 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Licenciatura</h3>
               <div>
                 <FormField
@@ -354,7 +356,7 @@ export default function MembershipApplicationPage() {
             </div>
 
             {/* Sección: Documentación */}
-            <div className="bg-gray-50 p-6 rounded-lg">
+            <div className="bg-white p-6 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Documentación</h3>
               <div className="space-y-6">
                 <FileUpload
@@ -385,7 +387,7 @@ export default function MembershipApplicationPage() {
 
                 <div className="pt-2">
                   <Button
-                    variant="outline"
+                    variant="newDoc"
                     size="sm"
                     onClick={handleAddDocuments}
                     className="bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -396,23 +398,27 @@ export default function MembershipApplicationPage() {
               </div>
             </div>
 
-            {/* Botones de acción */}
+              {/* Botones de acción */}
             <div className="flex justify-end space-x-4 pt-6">
               <Button
-                variant="outline"
+                variant="cancel"
                 onClick={handleCancel}
-                className="bg-red-500 text-white hover:bg-red-600 border-red-500"
               >
                 Cancelar
               </Button>
               <Button
+                variant="brand"
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-brand text-white hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                
               >
                 {isSubmitting ? 'Enviando...' : 'Enviar'}
               </Button>
             </div>
+
+            </div>
+
+            
           </form>
         </div>
       </div>

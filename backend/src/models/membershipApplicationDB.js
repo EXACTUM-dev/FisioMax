@@ -4,7 +4,7 @@
  * @author EXACTUM-dev
  */
 import mysql from 'mysql2/promise';
-import config from '../config.js';
+import config from '../../config.js';
 
 /**
  * Clase para manejar la conexión a la base de datos
