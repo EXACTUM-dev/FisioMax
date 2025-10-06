@@ -1,64 +1,65 @@
 /**
- * @fileoverview modelo de usuario.
+ * @fileoverview Modelo de usuario para trabajar con correos hasheados en la columna `correo`.
  * @version 1.0.0
  * @author EXACTUM-dev
- * Modelo de usuario para MariaDB/MySQL.
- * Devuelve usuario y roles usando las tablas `Usuario`, `UsuarioRol`, `Rol`.
  */
+
 import mysql from 'mysql2/promise';
+import crypto from 'crypto';
 import config from '../../config.js';
 
+// Crear el pool de conexiones usando la configuración centralizada
+const pool = mysql.createPool(config.db);
 
-const connectionUri = config.database?.url || process.env.DATABASE_URL || process.env.DB_URL;
-const pool = connectionUri
-  ? mysql.createPool(connectionUri)
-  : mysql.createPool({ host: process.env.DB_HOST || '127.0.0.1', user: process.env.DB_USER || 'root', database: process.env.DB_NAME || 'test', waitForConnections: true, connectionLimit: 10 });
-
+// Función para calcular el hash del correo
+function hashEmail(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+  return crypto.createHmac('sha256', process.env.EMAIL_HASH_KEY).update(normalizedEmail).digest('hex');
+}
 
 /**
- * Busca un usuario por email (case-insensitive) usando la columna generated `normalized_email`.
- * Retorna objeto { id, nombres, apellidoP, apellidoM, correo, createdAt, primaryRole, roles: [] }
+ * Busca el correo y el rol principal de un usuario por el correo hasheado.
+ * Retorna objeto { correo, roles: [{ id, name }] }
  */
 export async function findByEmail(email) {
   if (!email) return null;
-  const normalized = email.trim().toLowerCase();
+  const emailHash = hashEmail(email);
   const conn = await pool.getConnection();
   try {
-    // Always use HMAC-based lookup by email_hash
-    const crypto = await import('crypto');
-    const KEY = process.env.EMAIL_HASH_KEY;
-    if (!KEY) throw new Error('EMAIL_HASH_KEY no definida en el entorno');
-    const hash = crypto.createHmac('sha256', KEY).update(normalized).digest('hex');
+    // Obtener correo del usuario
     const [users] = await conn.execute(
-      `SELECT IDUsuario AS id, nombres, apellidoP, apellidoM, correo, createdAt, primaryRole
-       FROM Usuario
-       WHERE email_hash = ?
-       LIMIT 1`,
-      [hash]
+      'SELECT correo FROM Usuario WHERE correo = ? LIMIT 1',
+      [emailHash]
     );
     if (!users || users.length === 0) return null;
+
     const user = users[0];
 
+    // Obtener roles asociados al usuario
     const [rolesRows] = await conn.execute(
       `SELECT r.IDRol AS id, r.nombre AS name
        FROM UsuarioRol ur
        JOIN Rol r ON ur.IDRol = r.IDRol
-       WHERE ur.IDUsuario = ?`,
-      [user.id]
+       WHERE ur.IDUsuario = (
+         SELECT IDUsuario FROM Usuario WHERE correo = ? LIMIT 1
+       )`,
+      [emailHash]
     );
+
     user.roles = rolesRows.map(r => ({ id: r.id, name: r.name }));
-    if (!user.primaryRole) user.primaryRole = user.roles[0]?.name || null;
     return user;
   } finally {
     conn.release();
   }
 }
 
-
+/**
+ * Obtiene roles por correo.
+ * Retorna un arreglo de roles [{ id, name }]
+ */
 export async function getRolesByEmail(email) {
-  const u = await findByEmail(email);
-  return u ? u.roles : [];
+  const user = await findByEmail(email);
+  return user ? user.roles : [];
 }
-
 
 export default { findByEmail, getRolesByEmail };
