@@ -44,7 +44,13 @@ export default function LoginPage() {
         </div>
         
         {/* Enlaces adicionales */}
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
+          <p>
+            ¿No tienes cuenta? {" "}
+            <a href="/solicitud-membresia" className="text-blue-600 hover:text-blue-700 font-medium">
+              Solicita tu membresía
+            </a>
+          </p>
           <p>
             ¿Necesitas ayuda? {" "}
             <a href="/support" className="text-blue-600 hover:text-blue-700 font-medium">

@@ -17,6 +17,8 @@ import morgan from 'morgan';
 import compression from 'compression';
 import helmet from 'helmet';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import membershipApplicationRoutes from './src/routes/membershipApplicationRoutes.js';
+
 // Inicializar la aplicación Express
 const app = express();
 
@@ -178,6 +180,37 @@ Enviado desde: ${req.headers.host}
             message: 'Error al enviar el mensaje. Intenta nuevamente.'
         });
     }
+});
+
+/**
+ * Rutas para solicitudes de membresía SOMEFIPP
+ */
+app.use('/api/membership-applications', membershipApplicationRoutes);
+
+//-------------------------
+// MIDDLEWARE DE MANEJO DE ERRORES
+//-------------------------
+/**
+ * Middleware global para manejo de errores no capturados
+ */
+app.use((error, req, res, next) => {
+  console.error('Error no manejado:', error);
+  
+  res.status(error.status || 500).json({
+    success: false,
+    message: error.message || 'Error interno del servidor',
+    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+  });
+});
+
+/**
+ * Middleware para rutas no encontradas
+ */
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Ruta no encontrada'
+  });
 });
 
 //-------------------------

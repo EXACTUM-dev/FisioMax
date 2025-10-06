@@ -4,7 +4,7 @@
  * Handles navigation, data loading, authentication and rendering of main components
  */
 import React, { useEffect, useMemo, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
 import FormField from "./src/molecules/form";
 import { userFormFields, getHeroSlides, getRowSlides, getProducts, getUsers, getRoles, getSideSlides } from "./src/data/mockApi";
@@ -19,6 +19,7 @@ import LoginPage from "./src/pages/login";
 import RegisterPage from "./src/pages/register";
 import VideoPage from "./src/pages/video";
 import EmailPage from "./src/pages/email";
+import MembershipApplicationPage from "./src/pages/membershipApplication";
 
 // Componente para rutas protegidas
 function ProtectedRoute({ children }) {
@@ -36,6 +37,7 @@ function ProtectedRoute({ children }) {
 function Dashboard() {
   const { user, isLoaded, isSignedIn } = useUser();
   const [current, setCurrent] = useState("home");
+  const navigate = useNavigate();
 
   // Form state
   const [formValues, setFormValues] = useState(() => {
@@ -193,7 +195,11 @@ function Dashboard() {
 
         <div className="max-w-[70rem] mx-auto">
           <div className="flex justify-center py-6">
-            <Button size="sm" label="SOMEFIPP" />
+            <Button 
+              size="sm" 
+              label="Solicitar Membresía SOMEFIPP" 
+              onClick={() => navigate('/solicitud-membresia')}
+            />
           </div>
         </div>
 
@@ -223,6 +229,7 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/video" element={<VideoPage />} />
       <Route path="/email" element={<EmailPage />} />
+      <Route path="/solicitud-membresia" element={<MembershipApplicationPage />} />
       <Route
         path="/"
         element={
