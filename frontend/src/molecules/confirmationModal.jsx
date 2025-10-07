@@ -23,8 +23,17 @@ export default function ConfirmModal({
 }) {
   if (!open) return null;
 
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onCancel();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center border border-slate-200">
         <h2 className="text-lg font-bold text-slate-900 mb-2">{title}</h2>
         <p className="text-slate-600 mb-6">{message}</p>
