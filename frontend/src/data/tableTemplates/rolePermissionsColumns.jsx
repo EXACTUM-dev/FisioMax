@@ -6,6 +6,7 @@
 import React from "react";
 import trashIcon from "../../assets/icons/trash-2.png";
 import editIcon from "../../assets/icons/square-pen.png";
+import ConfirmModal from "../molecules/confirmationModal";
 
 /**
  * Build columns for: Rol, Permisos, Editar, Eliminar
