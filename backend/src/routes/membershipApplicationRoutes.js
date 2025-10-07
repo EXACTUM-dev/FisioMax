@@ -6,11 +6,7 @@
 import express from 'express';
 import multer from 'multer';
 import {
-  createMembershipApplication,
-  getMembershipApplications,
-  getMembershipApplicationById,
-  updateMembershipApplicationStatus,
-  downloadDocument
+  createMembershipApplication
 } from '../controllers/membershipApplicationController.js';
 
 const router = express.Router();
@@ -53,42 +49,8 @@ router.post('/', upload.fields([
   { name: 'constancias', maxCount: 1 }
 ]), createMembershipApplication);
 
-/**
- * @route GET /api/membership-applications
- * @desc Obtener todas las solicitudes de membresía (con filtros y paginación)
- * @access Private (Admin)
- * @query {string} estado - Filtrar por estado (pendiente, aprobada, rechazada, en_revision)
- * @query {number} page - Número de página (default: 1)
- * @query {number} limit - Elementos por página (default: 10)
- */
-router.get('/', getMembershipApplications);
 
-/**
- * @route GET /api/membership-applications/:id
- * @desc Obtener una solicitud específica por ID
- * @access Private (Admin)
- * @param {string} id - ID de la solicitud
- */
-router.get('/:id', getMembershipApplicationById);
 
-/**
- * @route PUT /api/membership-applications/:id/status
- * @desc Actualizar el estado de una solicitud
- * @access Private (Admin)
- * @param {string} id - ID de la solicitud
- * @body {string} estado - Nuevo estado (pendiente, aprobada, rechazada, en_revision)
- * @body {string} notas - Notas adicionales (opcional)
- */
-router.put('/:id/status', updateMembershipApplicationStatus);
-
-/**
- * @route GET /api/membership-applications/:id/documents/:documentType
- * @desc Descargar un documento específico de una solicitud
- * @access Private (Admin)
- * @param {string} id - ID de la solicitud
- * @param {string} documentType - Tipo de documento (titulo, cedula, constancias)
- */
-router.get('/:id/documents/:documentType', downloadDocument);
 
 // Middleware de manejo de errores específico para multer
 router.use((error, req, res, next) => {

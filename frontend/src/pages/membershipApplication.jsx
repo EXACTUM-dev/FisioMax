@@ -13,17 +13,18 @@ import { MEMBERSHIP_API } from "../config/api";
 export default function MembershipApplicationPage() {
   const [formData, setFormData] = useState({
     // Mi perfil
-    nombres: "Angélica",
-    apellidos: "Hernández Callejas",
-    telefono: "771 122 5154",
-    email: "angynas@gmail.com",
+    nombres: "",
+    apellidoP: "",
+    apellidoM: "",
+    telefono: "",
+    email: "",
     
     // Datos de domicilio
-    pais: "México",
-    estado: "Querétaro",
-    ciudad: "Querétaro",
-    colonia: "México",
-    codigoPostal: "42383",
+    pais: "",
+    estado: "",
+    ciudad: "",
+    colonia: "",
+    codigoPostal: "",
     
     // Licenciatura
     licenciatura: "",
@@ -82,10 +83,20 @@ export default function MembershipApplicationPage() {
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: files[0]
-    }));
+    if (files && files[0]) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: files[0]
+      }));
+      
+      // Limpiar error si existe
+      if (errors[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: ""
+        }));
+      }
+    }
   };
 
   const validateForm = () => {
@@ -93,7 +104,8 @@ export default function MembershipApplicationPage() {
     
     // Validar campos requeridos
     if (!formData.nombres.trim()) newErrors.nombres = "El nombre es requerido";
-    if (!formData.apellidos.trim()) newErrors.apellidos = "Los apellidos son requeridos";
+    if (!formData.apellidoP.trim()) newErrors.apellidoP = "El apellido paterno es requerido";
+    if (!formData.apellidoM.trim()) newErrors.apellidoM = "El apellido materno es requerido";
     if (!formData.email.trim()) newErrors.email = "El email es requerido";
     if (!formData.pais) newErrors.pais = "El país es requerido";
     if (!formData.estado) newErrors.estado = "El estado es requerido";
@@ -136,27 +148,30 @@ export default function MembershipApplicationPage() {
       const formDataToSend = new FormData();
       
       // Agregar datos del formulario
-      formDataToSend.append('nombres', formData.nombres);
-      formDataToSend.append('apellidos', formData.apellidos);
-      formDataToSend.append('telefono', formData.telefono);
-      formDataToSend.append('email', formData.email);
+      formDataToSend.append('nombres', formData.nombres.trim());
+      formDataToSend.append('apellidoP', formData.apellidoP.trim());
+      formDataToSend.append('apellidoM', formData.apellidoM.trim());
+      formDataToSend.append('telefono', formData.telefono.trim());
+      formDataToSend.append('email', formData.email.trim().toLowerCase());
       formDataToSend.append('pais', formData.pais);
       formDataToSend.append('estado', formData.estado);
       formDataToSend.append('ciudad', formData.ciudad);
-      formDataToSend.append('colonia', formData.colonia);
-      formDataToSend.append('codigoPostal', formData.codigoPostal);
-      formDataToSend.append('licenciatura', formData.licenciatura);
       
-      // Agregar archivos si existen
-      if (formData.titulo) {
-        formDataToSend.append('titulo', formData.titulo);
+      // Campos opcionales
+      if (formData.colonia) {
+        formDataToSend.append('colonia', formData.colonia.trim());
       }
-      if (formData.cedula) {
-        formDataToSend.append('cedula', formData.cedula);
+      if (formData.codigoPostal) {
+        formDataToSend.append('codigoPostal', formData.codigoPostal.trim());
       }
-      if (formData.constancias) {
-        formDataToSend.append('constancias', formData.constancias);
-      }
+      
+      formDataToSend.append('licenciatura', formData.licenciatura.trim());
+      
+      
+      // Agregar archivos
+      formDataToSend.append('titulo', formData.titulo);
+      formDataToSend.append('cedula', formData.cedula);
+      formDataToSend.append('constancias', formData.constancias);
 
       // Enviar al backend
       const response = await fetch(MEMBERSHIP_API.CREATE, {
@@ -171,7 +186,8 @@ export default function MembershipApplicationPage() {
         // Limpiar formulario
         setFormData({
           nombres: "",
-          apellidos: "",
+          apellidoP: "",
+          apellidoM: "",
           telefono: "",
           email: "",
           pais: "",
@@ -248,13 +264,24 @@ export default function MembershipApplicationPage() {
                 
                 <div>
                   <FormField
-                    label="Apellidos *"
-                    name="apellidos"
-                    value={formData.apellidos}
+                    label="Apellido Paterno *"
+                    name="apellidoP"
+                    value={formData.apellidoP}
                     onChange={handleInputChange}
-                    placeholder="Ingresa tus apellidos"
+                    placeholder="Ingresa tu apellido paterno"
                   />
-                  {errors.apellidos && <p className="text-red-500 text-sm mt-1">{errors.apellidos}</p>}
+                  {errors.apellidoP && <p className="text-red-500 text-sm mt-1">{errors.apellidoP}</p>}
+                </div>
+
+                <div>
+                  <FormField
+                    label="Apellido Materno *"
+                    name="apellidoM"
+                    value={formData.apellidoM}
+                    onChange={handleInputChange}
+                    placeholder="Ingresa tu apellido materno"
+                  />
+                  {errors.apellidoM && <p className="text-red-500 text-sm mt-1">{errors.apellidoM}</p>}
                 </div>
                 
                 <div>
@@ -409,8 +436,7 @@ export default function MembershipApplicationPage() {
               <Button
                 variant="brand"
                 type="submit"
-                disabled={isSubmitting}
-                
+                disabled={isSubmitting} 
               >
                 {isSubmitting ? 'Enviando...' : 'Enviar'}
               </Button>
@@ -423,32 +449,7 @@ export default function MembershipApplicationPage() {
         </div>
       </div>
 
-      {/* Footer con controles de visualización */}
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-2">
-        <div className="flex items-center space-x-4">
-          <button className="p-1 hover:bg-gray-100 rounded">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-            </svg>
-          </button>
-          <span className="text-sm text-gray-600">100%</span>
-          <button className="p-1 hover:bg-gray-100 rounded">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-          <button className="p-1 hover:bg-gray-100 rounded">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </button>
-          <button className="p-1 hover:bg-gray-100 rounded">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      
     </div>
   );
 }

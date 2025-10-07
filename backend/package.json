@@ -9,7 +9,9 @@
     "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
   },
   "dependencies": {
-    "@aws-sdk/client-ses": "^3.896.0",
+    "@aws-sdk/client-s3": "^3.901.0",
+    "@aws-sdk/client-ses": "^3.901.0",
+    "@aws-sdk/s3-request-presigner": "^3.901.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
