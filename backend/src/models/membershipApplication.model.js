@@ -1,5 +1,6 @@
 import db from '../config/db.js';
 import crypto from 'crypto';
+import S3Service from '../services/s3Service.js';
 
 class MembershipApplication {
   constructor(data) {
@@ -18,15 +19,31 @@ class MembershipApplication {
     this.id = null;
   }
 
+  // Guardar solicitud
   async save() {
-    const conn = await db.getConnection();
-    try {
-      const userId = crypto.randomUUID();
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
 
+    const userId = crypto.randomUUID();
+
+    // Subir archivos a S3
+    const cedulaUrl = this.documentos.cedula
+      ? await S3Service.uploadFile(this.documentos.cedula, 'uploads/documents')
+      : null;
+
+    const tituloUrl = this.documentos.titulo
+      ? await S3Service.uploadFile(this.documentos.titulo, 'uploads/documents')
+      : null;
+
+    const constanciasUrl = this.documentos.constancias
+      ? await S3Service.uploadFile(this.documentos.constancias, 'uploads/documents')
+      : null;
+      // Guardar información
       await conn.query(
         `INSERT INTO Usuario 
-        (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, pais, estado, ciudad, colonia, codigoPostal, licenciatura, createdAt, eliminado)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
+        (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, pais, estado, ciudad, colonia, codigoPostal, licenciatura, cedula, titulo, constancias, createdAt, eliminado)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
         [
           userId,
           this.nombres,
@@ -39,12 +56,19 @@ class MembershipApplication {
           this.ciudad,
           this.colonia,
           this.codigoPostal,
-          this.licenciatura
+          this.licenciatura,
+          cedulaUrl,
+          tituloUrl,
+          constanciasUrl
         ]
       );
 
+      await conn.commit();
       this.id = userId;
       return this;
+    } catch (err) {
+      await conn.rollback();
+      throw err;
     } finally {
       conn.release();
     }

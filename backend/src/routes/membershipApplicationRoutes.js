@@ -15,17 +15,15 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  // Permitir solo PDF, DOC y DOCX
+  // Solo permite PDF
   const allowedMimes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    'application/pdf'
   ];
   
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Tipo de archivo no permitido. Solo se aceptan PDF, DOC y DOCX.'), false);
+    cb(new Error('Tipo de archivo no permitido. Solo se aceptan PDF.'), false);
   }
 };
 

@@ -5,10 +5,9 @@
  */
 
 import MembershipApplication from '../models/membershipApplication.model.js';
+import S3Service from '../services/s3Service.js';
 
-/**
- * Controlador para crear una nueva solicitud de membresía
- */
+// Crear una nueva solicitud de membresía
 export const createMembershipApplication = async (req, res) => {
    try {
     const applicationData = {
@@ -44,9 +43,3 @@ export const createMembershipApplication = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error al crear la solicitud' });
   }
 };
-
-
-
-
-
-

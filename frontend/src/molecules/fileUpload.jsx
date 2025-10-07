@@ -9,7 +9,7 @@ export default function FileUpload({
   name, 
   label, 
   required = false, 
-  accept = ".pdf,.doc,.docx", 
+  accept = ".pdf", 
   value, 
   onChange, 
   error 
@@ -113,7 +113,7 @@ export default function FileUpload({
               </p>
             </div>
             <p className="text-xs text-gray-400 mt-2">
-              PDF, DOC, DOCX hasta 10MB
+              PDF hasta 10MB
             </p>
           </div>
         )}
