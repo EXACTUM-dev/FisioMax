@@ -5,7 +5,8 @@
  */
 
 import MembershipApplication from '../models/membershipApplication.model.js';
-import S3Service from '../services/s3Service.js';
+import { sendEmail } from '../services/emailServices.js';
+import S3Service from '../services/s3Service.js'; // si subes archivos a S3
 
 // Crear una nueva solicitud de membresía
 export const createMembershipApplication = async (req, res) => {
@@ -38,12 +39,33 @@ export const createMembershipApplication = async (req, res) => {
       }
     };
 
+    // Guardar solicitud en DB
     const application = new MembershipApplication(applicationData);
     await application.save();
 
+    // Enviar correo a administradores (SES)
+    const adminEmails = ["doculili08@gmail.com"]; // Correo de admin
+    adminEmails.forEach(async (email) => {
+      try {
+        await sendEmail({
+          to: email,
+          subject: "Nueva solicitud de membresía pendiente",
+          html: `
+            <h1>¡Atención!</h1>
+            <p>Se ha registrado una nueva solicitud de membresía.</p>
+            <p><strong>Nombre:</strong> ${req.body.nombres} ${req.body.apellidoP} ${req.body.apellidoM}</p>
+            <p><strong>Email:</strong> ${req.body.email}</p>
+          `
+        });
+      } catch (err) {
+        console.error(`Error enviando correo a ${email}:`, err.message);
+      }
+    });
+
+    // Respuesta al cliente
     res.status(201).json({
       success: true,
-      message: 'Solicitud creada correctamente',
+      message: 'Solicitud creada correctamente y correos enviados a admins',
       data: { IDUsuario: application.id }
     });
 
