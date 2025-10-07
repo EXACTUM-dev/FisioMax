@@ -8,6 +8,7 @@ import FormField from "../molecules/form";
 import FileUpload from "../molecules/fileUpload";
 import Swal from "sweetalert2";
 import { MEMBERSHIP_API } from "../config/api";
+import logo from '../assets/icons/SOMEFIPPlogo.png';
 
 // Componente reutilizable para selects
 const SelectField = ({ label, name, value, onChange, options, required, error }) => (
@@ -212,8 +213,10 @@ export default function MembershipApplicationPage() {
       <div className="border-gray-200 py-4">
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex items-center justify-center">
-            <img src="../assets/icons/SOMEFIPPlogo.png" className="w-12 h-12 rounded-full object-cover" />
-            <h1 className="text-center text-x font-semibold text-gray-800">Sociedad Mexicana de Fisioterapia en Piso Pélvico</h1>
+            <img src={logo} alt="SOMEFIPP Logo" className="w-12 h-12 rounded-full object-cover" />
+            <h1 className="text-center text-xl font-semibold text-gray-800 ml-3">
+              Sociedad Mexicana de Fisioterapia en Piso Pélvico
+            </h1>
           </div>
         </div>
       </div>
@@ -231,13 +234,10 @@ export default function MembershipApplicationPage() {
               <FormField label="Teléfono" name="telefono" value={formData.telefono} onChange={handleInputChange} placeholder="Ingresa tu teléfono" />
               <FormField label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email} />
             </div>
-          </div>
-
-          {/* Datos de domicilio */}
-          <div className="bg-white p-6 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Datos de domicilio</h3>
+          
+            {/* Datos de domicilio */}
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Datos de domicilio</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              
               <SelectField
                 label="País"
                 name="pais"
@@ -284,17 +284,12 @@ export default function MembershipApplicationPage() {
                 placeholder="Ingresa tu código postal"
               />
             </div>
-          </div>
-
 
           {/* Licenciatura */}
-          <div className="bg-white p-6 rounded-lg">
             <FormField label="Licenciatura" name="licenciatura" value={formData.licenciatura} onChange={handleInputChange} placeholder="Ingresa tu licenciatura" />
-          </div>
 
           {/* Documentación */}
-          <div className="bg-white p-6 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Documentación</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-6">Documentación</h3>
             <div className="space-y-6">
               <FileUpload name="titulo" label="Título" required value={formData.titulo} onChange={handleFileChange} error={errors.titulo} />
               <FileUpload name="cedula" label="Cédula" required value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
@@ -306,15 +301,14 @@ export default function MembershipApplicationPage() {
                 </div>
               ))}
               <Button variant="newDoc" size="sm" onClick={handleAddDocuments} className="bg-gray-200 text-gray-700 hover:bg-gray-300" type="button">Agregar documentos</Button>
+
+              {/* Botones */}
+              <div className="flex justify-end space-x-4 pt-6">
+                <Button variant="cancel" onClick={handleCancel}>Cancelar</Button>
+                <Button variant="brand" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Enviando...' : 'Enviar'}</Button>
+              </div>
             </div>
           </div>
-
-          {/* Botones */}
-          <div className="flex justify-end space-x-4 pt-6">
-            <Button variant="cancel" onClick={handleCancel}>Cancelar</Button>
-            <Button variant="brand" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Enviando...' : 'Enviar'}</Button>
-          </div>
-
         </form>
       </div>
     </div>
