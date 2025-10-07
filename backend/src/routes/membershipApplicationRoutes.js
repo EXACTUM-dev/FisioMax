@@ -32,7 +32,6 @@ const upload = multer({
   fileFilter: fileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB máximo por archivo
-    files: 3 // Máximo 3 archivos
   }
 });
 
@@ -41,11 +40,23 @@ const upload = multer({
  * @desc Crear una nueva solicitud de membresía
  * @access Public
  */
-router.post('/', upload.fields([
-  { name: 'titulo', maxCount: 1 },
-  { name: 'cedula', maxCount: 1 },
-  { name: 'constancias', maxCount: 1 }
-]), createMembershipApplication);
+
+router.post('/', upload.any(), (req, res, next) => {
+  // Reorganizar archivos para mandar todos
+  const filesObject = {};
+  
+  if (req.files && Array.isArray(req.files)) {
+    req.files.forEach(file => {
+      if (!filesObject[file.fieldname]) {
+        filesObject[file.fieldname] = [];
+      }
+      filesObject[file.fieldname].push(file);
+    });
+  }
+  
+  req.files = filesObject;
+  next();
+}, createMembershipApplication);
 
 
 
@@ -57,18 +68,6 @@ router.use((error, req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'El archivo es demasiado grande. El tamaño máximo permitido es 10MB.'
-      });
-    }
-    if (error.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({
-        success: false,
-        message: 'Demasiados archivos. El máximo permitido es 3 archivos.'
-      });
-    }
-    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
-      return res.status(400).json({
-        success: false,
-        message: 'Campo de archivo inesperado.'
       });
     }
   }

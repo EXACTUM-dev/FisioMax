@@ -9,6 +9,7 @@ import FormField from "../molecules/form";
 import FileUpload from "../molecules/fileUpload";
 import Dropdown from "../molecules/dropdown";
 import { MEMBERSHIP_API } from "../config/api";
+import Swal from "sweetalert2";
 
 export default function MembershipApplicationPage() {
   const [formData, setFormData] = useState({
@@ -34,6 +35,9 @@ export default function MembershipApplicationPage() {
     cedula: null,
     constancias: null
   });
+
+  const [extraDocs, setExtraDocs] = useState([]);
+
 
   // Opciones para los dropdowns
   const paises = [
@@ -83,19 +87,18 @@ export default function MembershipApplicationPage() {
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
-    if (files && files[0]) {
-      setFormData(prev => ({
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: files && files.length > 0 ? files[0] : null,
+    }));
+
+    // Limpiar error si existe
+    if (errors[name]) {
+      setErrors(prev => ({
         ...prev,
-        [name]: files[0]
+        [name]: ""
       }));
-      
-      // Limpiar error si existe
-      if (errors[name]) {
-        setErrors(prev => ({
-          ...prev,
-          [name]: ""
-        }));
-      }
     }
   };
 
@@ -173,6 +176,13 @@ export default function MembershipApplicationPage() {
       formDataToSend.append('cedula', formData.cedula);
       formDataToSend.append('constancias', formData.constancias);
 
+      // Agregar documentos adicionales
+      extraDocs.forEach((doc, index) => {
+        if (doc.file) {
+          formDataToSend.append(`extraDoc${index + 1}`, doc.file);
+        }
+      });
+
       // Enviar al backend
       const response = await fetch(MEMBERSHIP_API.CREATE, {
         method: 'POST',
@@ -182,7 +192,13 @@ export default function MembershipApplicationPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('¡Solicitud enviada correctamente! Te hemos enviado un email de confirmación.');
+        Swal.fire({
+        icon: "success",
+        title: "¡Solicitud enviada!",
+        text: "Tu solicitud fue registrada correctamente. Te hemos enviado un correo de confirmación.",
+        confirmButtonColor: "#2563eb",
+      });
+
         // Limpiar formulario
         setFormData({
           nombres: "",
@@ -202,24 +218,84 @@ export default function MembershipApplicationPage() {
         });
         setErrors({});
       } else {
-        alert(`Error al enviar la solicitud: ${result.message}`);
+        Swal.fire({
+        icon: "error",
+        title: "Error al enviar",
+        text: result.message || "Hubo un problema con tu solicitud. Intenta nuevamente.",
+        confirmButtonColor: "#dc2626",
+      });
+
       }
     } catch (error) {
       console.error('Error enviando solicitud:', error);
-      alert('Error de conexión. Por favor, intenta nuevamente.');
+      Swal.fire({
+      icon: "error",
+      title: "Error de conexión",
+      text: "No se pudo conectar con el servidor. Por favor, intenta nuevamente más tarde.",
+      confirmButtonColor: "#dc2626",
+    });
+
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    // Lógica para cancelar
-    console.log("Solicitud cancelada");
+    Swal.fire({
+      icon: "warning",
+      title: "¿Estás seguro?",
+      text: "Se perderán todos los datos ingresados.",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Sí, cancelar",
+      cancelButtonText: "No, continuar"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Limpiar formulario
+        setFormData({
+          nombres: "",
+          apellidoP: "",
+          apellidoM: "",
+          telefono: "",
+          email: "",
+          pais: "",
+          estado: "",
+          ciudad: "",
+          colonia: "",
+          codigoPostal: "",
+          licenciatura: "",
+          titulo: null,
+          cedula: null,
+          constancias: null
+        });
+        setExtraDocs([]);
+        setErrors({});
+        
+        Swal.fire({
+          icon: "success",
+          title: "Formulario cancelado",
+          text: "Se han limpiado todos los campos.",
+          confirmButtonColor: "#2563eb",
+        });
+      }
+    });
   };
 
   const handleAddDocuments = () => {
-    // Lógica para agregar documentos adicionales
-    console.log("Agregar documentos");
+    setExtraDocs((prev) => [
+      ...prev,
+      { id: Date.now(), file: null } // id único para cada documento
+    ]);
+  };
+
+  const handleExtraFileChange = (id, e) => {
+    const file = e.target.files && e.target.files.length > 0 ? e.target.files[0] : null;
+    setExtraDocs((prev) =>
+      prev.map((doc) =>
+        doc.id === id ? { ...doc, file } : doc
+      )
+    );
   };
 
   return (
@@ -412,18 +488,43 @@ export default function MembershipApplicationPage() {
                   onChange={handleFileChange}
                 />
 
+                
+                {/* Campos dinámicos */}
+                {extraDocs.map((doc, index) => (
+                  <div key={doc.id} className="relative">
+                    <FileUpload
+                      name={`extra-${doc.id}`}
+                      label={`Documento adicional ${index + 1}`}
+                      required={false}
+                      value={doc.file}  // ← ESTO ES CRÍTICO
+                      onChange={(e) => handleExtraFileChange(doc.id, e)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setExtraDocs(prev => prev.filter(d => d.id !== doc.id))}
+                      className="absolute top-0 right-0 text-red-500 hover:text-red-700 text-sm mt-1 mr-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+
+
+
                 <div className="pt-2">
                   <Button
                     variant="newDoc"
                     size="sm"
                     onClick={handleAddDocuments}
                     className="bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    type="button"
                   >
                     Agregar documentos
                   </Button>
                 </div>
               </div>
             </div>
+
 
               {/* Botones de acción */}
             <div className="flex justify-end space-x-4 pt-6">

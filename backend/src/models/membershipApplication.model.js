@@ -21,24 +21,25 @@ class MembershipApplication {
 
   // Guardar solicitud
   async save() {
-  const conn = await db.getConnection();
-  try {
-    await conn.beginTransaction();
+    const conn = await db.getConnection();
+    try {
+      await conn.beginTransaction();
 
-    const userId = crypto.randomUUID();
+      const userId = crypto.randomUUID();
 
-    // Subir archivos a S3
-    const cedulaUrl = this.documentos.cedula
-      ? await S3Service.uploadFile(this.documentos.cedula, 'uploads/documents')
-      : null;
+      // Subir archivos a S3
+      const cedulaUrl = this.documentos.cedula
+        ? await S3Service.uploadFile(this.documentos.cedula, 'uploads/documents')
+        : null;
 
-    const tituloUrl = this.documentos.titulo
-      ? await S3Service.uploadFile(this.documentos.titulo, 'uploads/documents')
-      : null;
+      const tituloUrl = this.documentos.titulo
+        ? await S3Service.uploadFile(this.documentos.titulo, 'uploads/documents')
+        : null;
 
-    const constanciasUrl = this.documentos.constancias
-      ? await S3Service.uploadFile(this.documentos.constancias, 'uploads/documents')
-      : null;
+      const constanciasUrl = this.documentos.constancias
+        ? await S3Service.uploadFile(this.documentos.constancias, 'uploads/documents')
+        : null;
+
       // Guardar información
       await conn.query(
         `INSERT INTO Usuario 
@@ -62,6 +63,21 @@ class MembershipApplication {
           constanciasUrl
         ]
       );
+
+      // Subir y guardar documentos adicionales
+      if (this.documentos.extra && this.documentos.extra.length > 0) {
+        for (const extraDoc of this.documentos.extra) {
+          const extraDocUrl = await S3Service.uploadFile(extraDoc, 'uploads/documents');
+          
+          // Guardar URL del documento adicional en tabla separada
+          await conn.query(
+            `INSERT INTO DocumentosAdicionales 
+            (IDUsuario, nombreArchivo, urlArchivo, createdAt) 
+            VALUES (?, ?, ?, NOW())`,
+            [userId, extraDoc.originalname, extraDocUrl]
+          );
+        }
+      }
 
       await conn.commit();
       this.id = userId;

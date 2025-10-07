@@ -15,6 +15,7 @@ export default function FileUpload({
   error 
 }) {
   const [dragActive, setDragActive] = useState(false);
+  const [inputKey, setInputKey] = useState(Date.now());
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -34,6 +35,7 @@ export default function FileUpload({
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       onChange({ target: { name, files: [file] } });
+      setInputKey(Date.now());
     }
   };
 
@@ -45,6 +47,7 @@ export default function FileUpload({
 
   const removeFile = () => {
     onChange({ target: { name, files: [] } });
+    setInputKey(Date.now());
   };
 
   return (
@@ -65,6 +68,7 @@ export default function FileUpload({
         onDrop={handleDrop}
       >
         <input
+          key={inputKey}
           type="file"
           name={name}
           onChange={handleFileChange}

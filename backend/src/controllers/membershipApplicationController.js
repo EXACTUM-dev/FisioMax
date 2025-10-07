@@ -9,7 +9,15 @@ import S3Service from '../services/s3Service.js';
 
 // Crear una nueva solicitud de membresía
 export const createMembershipApplication = async (req, res) => {
-   try {
+  try {
+    // Obtener documentos adicionales
+    const extraDocs = [];
+    Object.keys(req.files || {}).forEach(key => {
+      if (key.startsWith('extraDoc')) {
+        extraDocs.push(req.files[key][0]);
+      }
+    });
+
     const applicationData = {
       nombres: req.body.nombres,
       apellidoP: req.body.apellidoP,
@@ -25,7 +33,8 @@ export const createMembershipApplication = async (req, res) => {
       documentos: {
         titulo: req.files?.titulo?.[0] || null,
         cedula: req.files?.cedula?.[0] || null,
-        constancias: req.files?.constancias?.[0] || null
+        constancias: req.files?.constancias?.[0] || null,
+        extra: extraDocs
       }
     };
 
@@ -40,6 +49,10 @@ export const createMembershipApplication = async (req, res) => {
 
   } catch (error) {
     console.error('Error creando solicitud:', error);
-    res.status(500).json({ success: false, message: 'Error al crear la solicitud' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al crear la solicitud',
+      error: error.message 
+    });
   }
 };
