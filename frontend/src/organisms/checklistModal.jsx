@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import Button from "../atoms/button";
-import { Title1 } from "../atoms/typography";
 import { Title2 } from "../atoms/typography";
-import { Title3 } from "../atoms/typography";
-import { Title4 } from "../atoms/typography";
 import CheckBox from "../atoms/checkBox";
 import FieldBox from "../molecules/form";
+import DataTable from "../organisms/dataTable";
 import helmetIcon from "../assets/icons/helmet.png";
 
 /**
@@ -23,8 +21,11 @@ export default function ChecklistModal({
   open,
   title = "Modificar Rol",
   roleName: initialRoleName = "Administrador",
-  privileges = [
-    { id: 1, label: "Iniciar Sesión", checked: true },
+  tableColumns = [
+    { key: "id", label: "ID", headAlign: "left", align: "left" },
+    { key: "label", label: "Permiso", headAlign: "left", align: "left" },
+  ],
+  tableData = [{ id: 1, label: "Iniciar Sesión", checked: true },
     { id: 2, label: "Cerrar Sesión", checked: true },
     { id: 3, label: "Crear Usuarios", checked: true },
     { id: 4, label: "Editar Usuarios", checked: true },
@@ -47,7 +48,7 @@ export default function ChecklistModal({
 }) {
   const [roleName, setRoleName] = useState(initialRoleName);
   const [checkedPrivileges, setCheckedPrivileges] = useState(
-    privileges.reduce((acc, priv) => {
+    tableData.reduce((acc, priv) => {
       acc[priv.id] = priv.checked ?? true;
       return acc;
     }, {})
@@ -74,13 +75,12 @@ export default function ChecklistModal({
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-10 border border-slate-200 relative">
         {/* Botón cerrar */}
         <Button
-          label="×"
-          variant="outline"
+          label="X"
+          variant="ghost"
           onClick={onCancel}
           radius="xl"
-          className="absolute top-6 right-6 w-10 h-10 !p-0 text-2xl font-bold"
+          className="absolute top-1 right-1 w-12 h-12 !p-0 text-5xl font-bold !border-0 !bg-transparent hover:!bg-gray-100 !text-gray-500 hover:!text-gray-700 !rounded-none"
         />
-
         {/* Layout de dos columnas */}
         <div className="flex gap-12">
           {/* Columna izquierda - Formulario */}
@@ -107,34 +107,10 @@ export default function ChecklistModal({
           {/* Columna derecha - Checklist */}
           <div className="flex-1 min-w-[320px]">
             <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
-              {/* Header del checklist */}
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-300">
-                <span className="text-base font-semibold text-slate-600">
-                  PERMISOS
-                </span>
-                <span className="text-base font-semibold text-slate-600">
-                  USUARIO
-                </span>
-              </div>
-
-              {/* Lista de privilegios con scroll */}
-              <div className="space-y-3 max-h-[32rem] overflow-y-auto pr-2">
-                {privileges.map((privilege, index) => (
-                  <div
-                    key={privilege.id}
-                    className="flex items-center justify-between py-2"
-                  >
-                    <span className="text-base text-slate-700">
-                      {index + 1}. {privilege.label}
-                    </span>
-                    <CheckBox
-                      checked={!!checkedPrivileges[privilege.id]}
-                      onChange={() => handleToggle(privilege.id)}
-                      className="w-6 h-6"
-                    />
-                  </div>
-                ))}
-              </div>
+            {/* DataTable con scroll independiente */}
+            <div className="bg-white rounded-lg border border-slate-200 max-h-[32rem] overflow-y-auto p-2">
+              <DataTable columns={tableColumns} data={tableData} />
+            </div>
             </div>
           </div>
         </div>
