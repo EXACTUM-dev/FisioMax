@@ -4,7 +4,7 @@
  * Permite visualizar, editar y eliminar roles del sistema
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 
 // Molecules
@@ -16,46 +16,62 @@ import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import ChecklistModal from "../organisms/checklistModal";
 
 // Data y utils
-import { getRoles } from "../data/mockApi";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
+import { useRoles } from "../hooks/useRoles";
 
 export default function RolesPage() {
-  const { user, isLoaded } = useUser();
-  const [current, setCurrent] = useState("roles"); // Marcamos "roles" como activo en sidebar
-  const [roleRows, setRoleRows] = useState([]);
+  const { user, isLoaded: isClerkLoaded } = useUser();
+  const [current, setCurrent] = useState("roles");
 
   // Estado para el modal
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(null);
+  const [editingRole, setEditingRole] = useState(null);
+  const [editingPrivileges, setEditingPrivileges] = useState([]);
+  const [roleName, setRoleName] = useState("");
 
-  // Cargar datos de roles
-  useEffect(() => {
-    let alive = true;
-    getRoles().then((roles) => {
-      if (!alive) return;
-      setRoleRows(roles);
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
+  // Usar el hook personalizado
+  const {
+    roles,
+    loading,
+    error,
+    loadRoleById,
+    updateRoleWithPrivileges,
+    deleteRoleById,
+  } = useRoles();
 
   // Manejadores para el modal
-  const handleEditRole = (role) => {
-    setSelectedRole(role);
-    setModalOpen(true);
+  const handleEditRole = async (role) => {
+    try {
+      const roleData = await loadRoleById(role.id);
+      setEditingRole(roleData);
+      setRoleName(roleData.name);
+      setEditingPrivileges(roleData.privileges || []);
+      setModalOpen(true);
+    } catch (err) {
+      console.error("Error cargando rol para edición:", err);
+    }
   };
 
-  const handleModalConfirm = () => {
-    // Aquí iría la lógica para guardar cambios al rol
-    console.log("Guardando cambios al rol:", selectedRole);
-    setModalOpen(false);
-    setSelectedRole(null);
+  const handleModalConfirm = async (newRoleName, selectedPrivileges) => {
+    if (!editingRole?.id) return;
+
+    try {
+      await updateRoleWithPrivileges(
+        editingRole.id,
+        newRoleName,
+        selectedPrivileges
+      );
+
+      setModalOpen(false);
+      setEditingRole(null);
+    } catch (err) {
+      console.error("Error actualizando rol:", err);
+    }
   };
 
   const handleModalCancel = () => {
     setModalOpen(false);
-    setSelectedRole(null);
+    setEditingRole(null);
   };
 
   // Columnas para tabla de roles con comportamiento de modal
@@ -63,13 +79,12 @@ export default function RolesPage() {
     () =>
       buildRolePermissionsColumns({
         onEdit: handleEditRole,
-        onDelete: (row) =>
-          setRoleRows((prev) => prev.filter((r) => r.id !== row.id)),
+        onDelete: (row) => deleteRoleById(row.id),
       }),
-    []
+    [deleteRoleById]
   );
 
-  if (!isLoaded) {
+  if (!isClerkLoaded || loading) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
@@ -80,15 +95,27 @@ export default function RolesPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 font-medium">Error: {error}</p>
+          <button
+            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onClick={() => window.location.reload()}
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      {/* Header refactorizado como molécula; responde a sidebar y deja margen inferior */}
       <AppHeader user={user} />
-
-      {/* Sidebar fija */}
       <Sidebar current={current} onNavigate={setCurrent} />
 
-      {/* Main con margen que responde a la sidebar */}
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-2xl font-semibold mb-6">
@@ -103,7 +130,7 @@ export default function RolesPage() {
                 label: "Roles & Permisos",
                 type: "table",
                 columns: roleColumns,
-                rows: roleRows,
+                rows: roles,
                 searchPlaceholder: "Buscar roles...",
               },
             ]}
@@ -111,17 +138,17 @@ export default function RolesPage() {
         </div>
 
         {/* Modal de edición */}
-        <ChecklistModal
-          open={modalOpen}
-          title={`Editar Rol: ${selectedRole?.rol || ""}`}
-          message={`Actualiza los permisos para el rol ${
-            selectedRole?.rol || ""
-          }`}
-          confirmLabel="Guardar Cambios"
-          cancelLabel="Cancelar"
-          onConfirm={handleModalConfirm}
-          onCancel={handleModalCancel}
-        />
+        {editingRole && (
+          <ChecklistModal
+            open={modalOpen}
+            title={`Editar Rol: ${editingRole?.rol || ""}`}
+            roleName={roleName}
+            tableData={editingPrivileges}
+            confirmLabel="Guardar Cambios"
+            onConfirm={handleModalConfirm}
+            onCancel={handleModalCancel}
+          />
+        )}
       </main>
     </div>
   );
