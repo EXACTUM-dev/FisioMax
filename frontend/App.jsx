@@ -13,6 +13,7 @@ import RegisterPage from "./src/pages/register";
 import VideoPage from "./src/pages/video";
 import EmailPage from "./src/pages/email";
 import ProfilePage from "./src/pages/profile";
+import Panel from "./src/pages/panel";
 
 // Rutas protegidas con Clerk (solo login usa Clerk)
 function ProtectedRoute({ children }) {
@@ -52,6 +53,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/panel"
+        element={
+          <ProtectedRoute>
+            <Panel />
           </ProtectedRoute>
         }
       />
