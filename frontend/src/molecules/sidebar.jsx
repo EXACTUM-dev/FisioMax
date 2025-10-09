@@ -105,7 +105,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
   const links = useMemo(
     () => [
       { key: "home", label: "Inicio", icon: houseSrc },
-      { key: "bolt", label: "Gestión", icon: boltSrc },
+      { key: "bolt", label: "Panel de", icon: boltSrc },
       { key: "profile", label: "Perfil", icon: profileSrc },
       { key: "logout", label: "Cerrar sesión", icon: logoutSrc },
     ],
@@ -117,7 +117,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
     () => ({
       home: "/",
       profile: "/ajustes/perfil",
-      // bolt: "/gestion", // Descomenta si tienes esta ruta
+      bolt: "/panel",
     }),
     []
   );
