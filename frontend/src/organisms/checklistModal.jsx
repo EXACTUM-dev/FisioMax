@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Modal from "../molecules/modal";
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
@@ -55,6 +55,84 @@ export default function ChecklistModal({
       return acc;
     }, {})
   );
+  // Refs para los elementos focuseables
+  const inputRef = useRef(null);
+  const tableRef = useRef(null);
+  const buttonRef = useRef(null);
+  const closeButtonRef = useRef(null);
+
+  // Navegación por teclado
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e) => {
+      // ESC - Cerrar modal
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+        return;
+      }
+
+      // Tab - Navegación cíclica
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        
+        const focusableElements = [
+          closeButtonRef.current,
+          inputRef.current,
+          tableRef.current,
+          buttonRef.current
+        ].filter(Boolean);
+
+        const currentIndex = focusableElements.indexOf(document.activeElement);
+        const nextIndex = e.shiftKey 
+          ? (currentIndex - 1 + focusableElements.length) % focusableElements.length
+          : (currentIndex + 1) % focusableElements.length;
+
+        focusableElements[nextIndex]?.focus();
+        return;
+      }
+
+      // Enter en el botón de confirmar
+      if (e.key === 'Enter' && document.activeElement === buttonRef.current) {
+        handleConfirm();
+        return;
+      }
+
+      // Navegación en la tabla con flechas
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && 
+          document.activeElement === tableRef.current) {
+        e.preventDefault();
+        // Aquí puedes implementar navegación entre filas de la tabla
+        console.log('Navegación en tabla con flechas');
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Auto-focus en el input al abrir
+    if (inputRef.current) {
+      setTimeout(() => inputRef.current.focus(), 100);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, onClose]);
+
+  const handleToggle = (id) => {
+    setCheckedPrivileges((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const handleConfirm = () => {
+    const selectedPrivileges = Object.entries(checkedPrivileges)
+      .filter(([_, checked]) => checked)
+      .map(([id]) => id);
+    onConfirm?.(roleName, selectedPrivileges);
+  };
 
   if (!open) return null;
 
@@ -87,17 +165,32 @@ export default function ChecklistModal({
             <div className="flex flex-col items-center justify-center h-full">
               <Title2 className="mb-12">{title}</Title2>
               <FieldBox
+                ref={inputRef}
                 label="Nombre del Rol"
                 value={roleName}
                 onChange={(e) => setRoleName(e.target.value)}
                 placeholder="Ingrese el nombre del rol"
+                onKeyDown={(e) => {
+                  // Enter en el input va al botón
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    buttonRef.current?.focus();
+                  }
+                }}
               />
               <Button
+                ref={buttonRef}
                 label={confirmLabel}
                 variant="brand"
                 onClick={handleConfirm}
                 radius="lg"
                 className="w-full py-3 text-base"
+                onKeyDown={(e) => {
+                  if (e.key === ' ') {
+                    e.preventDefault();
+                    handleConfirm();
+                  }
+                }}
               />
             </div>
           </div>

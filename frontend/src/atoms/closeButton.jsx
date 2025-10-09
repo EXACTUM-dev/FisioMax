@@ -16,7 +16,7 @@ const CloseButton = ({
   size = "md", 
   position = { top: "top-3", right: "right-3" },
   ariaLabel = "Cerrar modal"
-}) => {
+}, ref) => {
   // Configuración de tamaños
   const sizeClasses = {
     sm: "w-6 h-6 text-base",
@@ -32,6 +32,7 @@ const CloseButton = ({
 
   return (
     <button
+      ref={ref}
       onClick={onClose}
       className={`${baseClasses} ${sizeClasses[size]} ${positionClasses} ${className}`}
       aria-label={ariaLabel}
