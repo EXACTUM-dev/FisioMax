@@ -14,6 +14,7 @@ import VideoPage from "./src/pages/video";
 import EmailPage from "./src/pages/email";
 import ProfilePage from "./src/pages/profile";
 import Panel from "./src/pages/panel";
+import RolesPage from "./src/pages/role";
 
 // Rutas protegidas con Clerk (solo login usa Clerk)
 function ProtectedRoute({ children }) {
@@ -70,6 +71,14 @@ export default function App() {
           <ProtectedRoute>
             {/* Única llamada al dashboard: Hero */}
             <Hero />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/roles"
+        element={
+          <ProtectedRoute>
+            <RolesPage />
           </ProtectedRoute>
         }
       />

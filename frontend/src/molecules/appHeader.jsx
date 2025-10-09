@@ -9,6 +9,7 @@ export default function AppHeader({ user }) {
         transition-[margin] duration-300 ease-in-out
         md:ml-[var(--sb-w,80px)]
         mb-5 md:mb-6
+        hidden sm:block
       "
     >
       <div className="px-4 sm:px-6 lg:px-8">
