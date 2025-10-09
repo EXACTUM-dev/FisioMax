@@ -19,6 +19,7 @@ import helmet from "helmet";
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import usuariosRoutes from "./src/routes/usuarios.routes.js";
+import rolesRoutes from "./src/routes/roles.routes.js";
 
 // Inicializar la aplicación Express
 const app = express();
@@ -385,6 +386,7 @@ export { app };
  */
 
 app.use("/usuarios", usuariosRoutes);
+app.use("/api/roles", rolesRoutes);
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
     console.log(
