@@ -28,16 +28,23 @@ export function useRoles() {
     try {
       const token = await getToken();
       const response = await rolesService.getAllRoles(token);
+      
+      // El backend devuelve directamente el array
+      const rolesData = Array.isArray(response) ? response : response.data;
+      
       setRoles(
-        response.data.map((role) => ({
+        rolesData.map((role) => ({
           id: role.IDRol || role.id,
-          rol: role.nombre || role.name,
-          permisos: role.descripcion || role.description,
+          rol: role.nombre || role.rol,
+          permisos: role.privilegiosText || role.descripcion,
+          descripcion: role.descripcion,
+          privileges: role.privileges || []
         }))
       );
     } catch (err) {
       setError(err.message || "Error al cargar roles");
       console.error("Error cargando roles:", err);
+      setRoles([]);
     } finally {
       setLoading(false);
     }

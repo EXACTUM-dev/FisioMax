@@ -1,127 +1,54 @@
 /**
- * Version: 0.3.0
- * Roles controller - Handles role management operations
+ * Version: 1.0.0 SIMPLE
+ * Roles controller - Solo mostrar roles y privilegios
  */
 
-import {
-  findRoleById,
-  updateRoleById,
-  getAllRolesFromDB,
-  updateRolePrivileges,
-} from "../models/roles.model.js";
-import {
-  getRolePrivileges,
-  getAllPrivileges,
-} from "../models/privileges.model.js";
+import { getAllRolesWithPrivileges } from "../models/roles.model.js";
 
 /**
- * Get role by ID for editing with privileges
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
-export async function getRoleById(req, res) {
-  try {
-    const { id } = req.params;
-
-    // Authorization is now handled by middleware
-
-    // Get role data
-    const role = await findRoleById(id);
-    if (!role) {
-      return res.status(404).json({
-        success: false,
-        error: "Role not found",
-      });
-    }
-
-    // Get role privileges
-    const rolePrivileges = await getRolePrivileges(id);
-
-    // Get all available privileges
-    const allPrivileges = await getAllPrivileges();
-
-    // Map privileges for the UI
-    const privileges = allPrivileges.map((privilege) => ({
-      id: privilege.id,
-      name: privilege.name,
-      checked: rolePrivileges.some((rp) => rp.id === privilege.id),
-    }));
-
-    // Return role with mapped privileges
-    res.json({
-      success: true,
-      data: {
-        id: role.IDRol,
-        name: role.nombre,
-        description: role.descripcion,
-        privileges,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching role:", error);
-    res.status(500).json({
-      success: false,
-      error: "Error fetching role",
-    });
-  }
-}
-
-/**
- * Update a role and its privileges
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
-export async function updateRole(req, res) {
-  try {
-    const { id } = req.params;
-    const { name, privileges } = req.body;
-
-    // Authorization is now handled by middleware
-
-    // Validate input
-    if (!name || !Array.isArray(privileges)) {
-      return res.status(400).json({
-        success: false,
-        error: "Name and privileges array are required",
-      });
-    }
-
-    // Update role name
-    await updateRoleById(id, { name });
-
-    // Update role privileges
-    await updateRolePrivileges(id, privileges);
-
-    res.json({
-      success: true,
-      message: "Role updated successfully",
-    });
-  } catch (error) {
-    console.error("Error updating role:", error);
-    res.status(500).json({
-      success: false,
-      error: "Error updating role",
-    });
-  }
-}
-
-/**
- * Get all roles for listing
+ * Get all roles with their privileges for display
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 export async function getAllRoles(req, res) {
   try {
-    const roles = await getAllRolesFromDB();
-    res.json({
-      success: true,
-      data: roles,
-    });
+    const rolesWithPrivileges = await getAllRolesWithPrivileges();
+    
+    // Validar que la respuesta sea un array
+    if (!Array.isArray(rolesWithPrivileges)) {
+      console.error("getAllRolesWithPrivileges did not return an array:", rolesWithPrivileges);
+      return res.status(500).json({
+        success: false,
+        error: "Error al obtener roles",
+        message: "Formato de datos inválido"
+      });
+    }
+    
+    // Formatear para el frontend
+    const rolesFormatted = rolesWithPrivileges.map(role => ({
+      id: role.IDRol,
+      rol: role.nombre,
+      descripcion: role.descripcion,
+      privileges: (role.privileges || []).map(p => ({
+        id: p.IDPrivilegio,
+        name: p.nombre,
+        descripcion: p.descripcion
+      })),
+      // Mostrar privilegios como string para la tabla
+      privilegiosText: (role.privileges || [])
+        .map(p => p.nombre)
+        .join(', ') || 'Sin privilegios',
+      users_count: 0,
+      created_at: role.createdAt
+    }));
+
+    res.json(rolesFormatted);
   } catch (error) {
     console.error("Error fetching roles:", error);
     res.status(500).json({
       success: false,
-      error: "Error fetching roles",
+      error: "Error al obtener roles",
+      message: error.message
     });
   }
 }

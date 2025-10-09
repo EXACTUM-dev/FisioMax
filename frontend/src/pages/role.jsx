@@ -1,10 +1,11 @@
 /**
- * Version: 1.0.0
+ * Version: 1.0.1
  * Página de administración de roles y permisos
  * Permite visualizar, editar y eliminar roles del sistema
+ * FIX: Eliminado DataSwitchContainer duplicado
  */
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 
 // Molecules
@@ -20,8 +21,9 @@ import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsC
 import { useRoles } from "../hooks/useRoles";
 
 export default function RolesPage() {
-  const { user, isLoaded: isClerkLoaded } = useUser();
+  const { user, isLoaded } = useUser();
   const [current, setCurrent] = useState("roles");
+  
 
   // Estado para el modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,14 +31,12 @@ export default function RolesPage() {
   const [editingPrivileges, setEditingPrivileges] = useState([]);
   const [roleName, setRoleName] = useState("");
 
-  // Usar el hook personalizado
   const {
-    roles,
+    roles, 
     loading,
     error,
     loadRoleById,
-    updateRoleWithPrivileges,
-    deleteRoleById,
+    deleteRoleById
   } = useRoles();
 
   // Manejadores para el modal
@@ -44,7 +44,7 @@ export default function RolesPage() {
     try {
       const roleData = await loadRoleById(role.id);
       setEditingRole(roleData);
-      setRoleName(roleData.name);
+      setRoleName(roleData.name || roleData.rol);
       setEditingPrivileges(roleData.privileges || []);
       setModalOpen(true);
     } catch (err) {
@@ -52,26 +52,12 @@ export default function RolesPage() {
     }
   };
 
-  const handleModalConfirm = async (newRoleName, selectedPrivileges) => {
-    if (!editingRole?.id) return;
-
+  const handleDeleteRole = async (role) => {
     try {
-      await updateRoleWithPrivileges(
-        editingRole.id,
-        newRoleName,
-        selectedPrivileges
-      );
-
-      setModalOpen(false);
-      setEditingRole(null);
+      await deleteRoleById(role.id);
     } catch (err) {
-      console.error("Error actualizando rol:", err);
+      console.error("Error eliminando rol:", err);
     }
-  };
-
-  const handleModalCancel = () => {
-    setModalOpen(false);
-    setEditingRole(null);
   };
 
   // Columnas para tabla de roles con comportamiento de modal
@@ -79,12 +65,12 @@ export default function RolesPage() {
     () =>
       buildRolePermissionsColumns({
         onEdit: handleEditRole,
-        onDelete: (row) => deleteRoleById(row.id),
+        onDelete: handleDeleteRole,
       }),
-    [deleteRoleById]
+    []
   );
 
-  if (!isClerkLoaded || loading) {
+  if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
@@ -99,13 +85,7 @@ export default function RolesPage() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500 font-medium">Error: {error}</p>
-          <button
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            onClick={() => window.location.reload()}
-          >
-            Reintentar
-          </button>
+          <p className="text-red-600">Error: {error}</p>
         </div>
       </div>
     );
@@ -130,7 +110,7 @@ export default function RolesPage() {
                 label: "Roles & Permisos",
                 type: "table",
                 columns: roleColumns,
-                rows: roles,
+                rows: roles, 
                 searchPlaceholder: "Buscar roles...",
               },
             ]}
