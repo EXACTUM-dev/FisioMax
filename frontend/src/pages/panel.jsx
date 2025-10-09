@@ -4,8 +4,8 @@
  * @author EXACTUM-dev
  */
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 
 // Atoms
 import Button from "../atoms/button";
@@ -28,11 +28,13 @@ import {
   getRoles,
   getSideSlides,
 } from "../data/mockApi";
-import buildUserActionsColumns from "../data/tableTemplates/userActionsColumns";
+import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
+import { fetchWithClerk } from "../utils/api";
 
 export default function Panel() {
   const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const [current, setCurrent] = useState("panel");
   
     // Estados para datos mostrados en la UI
@@ -77,19 +79,31 @@ useEffect(() => {
 }, []);
   
     // Columnas para tablas
-    const userColumns = useMemo(
-      () =>
-        buildUserActionsColumns({
-          onOpenDocument: (row) => {
-            const url = row?.documentos?.url;
-            if (url) window.open(url, "_blank", "noopener,noreferrer");
-          },
-          onAccept: () => {},
-          onDelete: (row) =>
-            setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
-        }),
-      []
-    );
+    const updateUserRole = useCallback(async (rowId, newRoleObj) => {
+      const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj;
+      const id = rowId?.id || rowId?.IDUsuario || rowId;
+      const prevRows = userRows;
+      setUserRows((prev) => prev.map((u) => ((u.id === id || u.IDUsuario === id) ? { ...u, rol: roleName } : u)));
+      try {
+        const token = await getToken();
+        await fetchWithClerk(`/api/usuarios/${id}/rol`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rol: roleName }),
+        }, token);
+        console.log("Rol actualizado en backend:", roleName);
+      } catch (err) {
+        console.error("Error al actualizar rol en backend:", err);
+        // revertir UI
+        setUserRows(prevRows);
+      }
+    }, [getToken, userRows]);
+  
+    const userColumns = useMemo(() => buildUserRolesColumns({
+      roles: roleRows,
+      onDelete: (row) => setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
+      onChangeRole: (row, chosenRole) => updateUserRole(row.id || row.IDUsuario, chosenRole),
+    }), [roleRows, updateUserRole]);
   
     const roleColumns = useMemo(
       () =>
@@ -100,6 +114,10 @@ useEffect(() => {
         }),
       []
     );
+
+useEffect(() => {
+    console.log("Roles cargados:", roleRows);
+  }, [roleRows]);
 
 if (!isLoaded) {
     return (
