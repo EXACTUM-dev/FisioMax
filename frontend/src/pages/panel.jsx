@@ -26,10 +26,13 @@ import {
   getProducts,
   getUsers,
   getRoles,
+  getSolicitudes,
   getSideSlides,
 } from "../data/mockApi";
 import buildUserActionsColumns from "../data/tableTemplates/userActionsColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
+import buildSolicitudesColumns from "../data/tableTemplates/solicitudesColumns";
+import buildUsuariosTableColumns from "../data/tableTemplates/usuariosTableColumns";
 
 export default function Panel() {
   const { user, isLoaded } = useUser();
@@ -40,6 +43,7 @@ export default function Panel() {
     const [rowSlides, setRowSlides] = useState([]);
     const [userRows, setUserRows] = useState([]);
     const [roleRows, setRoleRows] = useState([]);
+    const [solicitudRows, setSolicitudRows] = useState([]);
     const [, /* sideSlides no visible en UI */ setSideSlides] = useState([]);
     const [, /* products no visibles en Dashboard actual */ setProducts] =
       useState({ columns: [], rows: [] });
@@ -50,12 +54,13 @@ useEffect(() => {
   let alive = true;
   async function fetchData() {
     try {
-      const [hero, row, prod, users, roles, side] = await Promise.all([
+      const [hero, row, prod, users, roles, solicitudes, side] = await Promise.all([
         getHeroSlides(),
         getRowSlides(),
         getProducts(),
         getUsers(),
         getRoles(),
+        getSolicitudes(),
         getSideSlides(),
       ]);
       if (!alive) return;
@@ -64,6 +69,7 @@ useEffect(() => {
       setProducts(prod);
       setUserRows(users);
       setRoleRows(roles);
+      setSolicitudRows(solicitudes);
       setSideSlides(side);
     } catch (err) {
       console.error("Error al cargar datos:", err);
@@ -101,6 +107,32 @@ useEffect(() => {
       []
     );
 
+    const solicitudColumns = useMemo(
+      () =>
+        buildSolicitudesColumns({
+          onOpenDocument: (doc) => {
+            if (doc?.url) window.open(doc.url, "_blank", "noopener,noreferrer");
+          },
+          onAccept: (row) => {
+            console.log("Aceptar solicitud:", row);
+            // Aquí se puede agregar lógica para aceptar la solicitud
+            setSolicitudRows((prev) => prev.filter((r) => r.id !== row.id));
+          },
+          onDelete: (row) =>
+            setSolicitudRows((prev) => prev.filter((r) => r.id !== row.id)),
+        }),
+      []
+    );
+
+    const usuariosTableColumns = useMemo(
+      () =>
+        buildUsuariosTableColumns({
+          onDelete: (row) =>
+            setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
+        }),
+      []
+    );
+
 if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
@@ -124,21 +156,21 @@ if (!isLoaded) {
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
 
         <DataSwitchContainer
-          initialKey="users"
+          initialKey="solicitudes"
           views={[
             {
               key: "solicitudes",
               label: "Solicitudes",
               type: "table",
-              columns: roleColumns,
-              rows: roleRows,
+              columns: userColumns,
+              rows: userRows,
               searchPlaceholder: "Buscar Solicitudes...",
             },
             {
               key: "users",
               label: "Usuarios",
               type: "table",
-              columns: userColumns,
+              columns: usuariosTableColumns,
               rows: userRows,
               searchPlaceholder: "Buscar Usuarios...",
             },

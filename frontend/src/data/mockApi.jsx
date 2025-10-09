@@ -80,22 +80,53 @@ const products = {
 const users = [
   {
     id: "u1",
-    nombre: "Ana Gómez",
-    correo: "ana.gomez@example.com",
-    documentos: { type: "pdf", url: "/docs/ana-gomez.pdf" },
+    nombre: "Test",
+    rol: "Miembro",
+    estadoMembresia: "Activa",
+    correo: "test@example.com",
   },
   {
     id: "u2",
-    nombre: "Luis Pérez",
-    correo: "luis.perez@example.com",
-    documentos: { type: "pdf", url: "/docs/luis-perez.pdf" },
+    nombre: "Mariela Macías Arreguín",
+    rol: "Admin",
+    estadoMembresia: "Activa",
+    correo: "marielatest@example.com",
   },
   {
     id: "u3",
-    nombre: "María López",
-    correo: "maria.lopez@example.com",
-    documentos: { type: "pdf", url: "/docs/maria-lopez.pdf" },
+    nombre: "Ximena Cantera",
+    rol: "Miembro",
+    estadoMembresia: "Inactiva",
+    correo: "ximena.cantera@example.com",
   },
+];
+
+// Solicitudes mock
+const solicitudes = [
+  {
+    id: "s1",
+    nombre: "Test",
+    descripcion: "Fisioterapeuta",
+    correo: "test@example.com",
+    telefono: "741897413",
+    direccion: "México, Chihuahua Felipe Ángeles #3",
+    documentos: [
+      { nombre: "Titulo.pdf", url: "/docs/titulo.pdf" },
+      { nombre: "Diplomado1.pdf", url: "/docs/diplomado1.pdf" },
+      { nombre: "Diplomado2.pdf", url: "/docs/diplomado2.pdf" }
+    ]
+  },
+  {
+    id: "s2",
+    nombre: "James",
+    descripcion: "Estudiante de Fisioterapia para el ejemplo",
+    correo: "james@example.com",
+    telefono: "555123456",
+    direccion: "México, Ciudad de México Av. Reforma #123",
+    documentos: [
+      { nombre: "Credencial.pdf", url: "/docs/credencial.pdf" }
+    ]
+  }
 ];
 
 export async function getHeroSlides() {
@@ -116,6 +147,10 @@ export async function getProducts() {
 
 export async function getUsers() {
   return users;
+}
+
+export async function getSolicitudes() {
+  return solicitudes;
 }
 
 const roles = [

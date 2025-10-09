@@ -16,25 +16,43 @@ import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import ChecklistModal from "../organisms/checklistModal";
 
 // Data y utils
-import { getRoles } from "../data/mockApi";
+import { getRoles, getPermisos } from "../data/mockApi";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
+import buildPermisosTableColumns from "../data/tableTemplates/permisosTableColumns";
+
+// Atoms
+import Button from "../atoms/button";
+
+// Organisms
+import DataTable from "../organisms/dataTable";
 
 export default function RolesPage() {
   const { user, isLoaded } = useUser();
   const [current, setCurrent] = useState("roles"); // Marcamos "roles" como activo en sidebar
   const [roleRows, setRoleRows] = useState([]);
+  const [permisoRows, setPermisoRows] = useState([]);
 
   // Estado para el modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
 
-  // Cargar datos de roles
+  // Cargar datos de roles y permisos
   useEffect(() => {
     let alive = true;
-    getRoles().then((roles) => {
-      if (!alive) return;
-      setRoleRows(roles);
-    });
+    async function fetchData() {
+      try {
+        const [roles, permisos] = await Promise.all([
+          getRoles(),
+          getPermisos(),
+        ]);
+        if (!alive) return;
+        setRoleRows(roles);
+        setPermisoRows(permisos);
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+      }
+    }
+    fetchData();
     return () => {
       alive = false;
     };
@@ -69,6 +87,12 @@ export default function RolesPage() {
     []
   );
 
+  // Columnas para tabla de permisos
+  const permisoColumns = useMemo(
+    () => buildPermisosTableColumns(),
+    []
+  );
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
@@ -91,23 +115,44 @@ export default function RolesPage() {
       {/* Main con margen que responde a la sidebar */}
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold mb-6">
-            Administración de Roles y Permisos
+          <h1 className="text-3xl font-bold mb-8 text-gray-900">
+            Roles y Permisos
           </h1>
 
-          <DataSwitchContainer
-            initialKey="roles"
-            views={[
-              {
-                key: "roles",
-                label: "Roles & Permisos",
-                type: "table",
-                columns: roleColumns,
-                rows: roleRows,
-                searchPlaceholder: "Buscar roles...",
-              },
-            ]}
-          />
+          {/* Sección de Roles */}
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-800">Roles</h2>
+              <Button 
+                size="sm" 
+                label="Crear nuevo rol"
+                onClick={() => console.log("Crear nuevo rol")}
+              />
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <DataTable
+                columns={roleColumns}
+                rows={roleRows}
+                searchPlaceholder="Buscar roles..."
+                showSearch={false}
+              />
+            </div>
+          </div>
+
+          {/* Sección de Permisos */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Permisos</h2>
+            
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <DataTable
+                columns={permisoColumns}
+                rows={permisoRows}
+                searchPlaceholder="Buscar permisos..."
+                showSearch={false}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Modal de edición */}
