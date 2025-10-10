@@ -280,13 +280,14 @@ app.get("/api/sensitive", (req, res) => {
 });
 
 //-------------------------
-// 🚀 REGISTRAR RUTAS MODULARES (DEBE IR ANTES DE MIDDLEWARES DE ERROR)
+// RUTAS
 //-------------------------
 app.use("/usuarios", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
+app.use("/api/privilegios", rolesRoutes);
 
 //-------------------------
-// MIDDLEWARES DE MANEJO DE ERRORES (SIEMPRE AL FINAL)
+// MIDDLEWARES
 //-------------------------
 
 // Middleware para manejar errores de parsing de JSON

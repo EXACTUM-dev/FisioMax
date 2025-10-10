@@ -5,10 +5,9 @@
 
 import express from "express";
 import {
-  getAllRoles,
+  getAllRoles, getAllPrivilegesController
 } from "../controllers/roles.controller.js";
 import { requireAuth } from "../middlewares/clerkAuth.js";
-import { requireRole } from "../middlewares/requireRoles.js";
 
 const router = express.Router();
 
@@ -17,8 +16,8 @@ const router = express.Router();
  * @desc    Get all roles (for listing)
  * @access  Protected (Admin)
  */
-// router.get("/", requireAuth, getAllRoles);
 
-router.get("/", getAllRoles);
+router.get("/privilegios", requireAuth, getAllPrivilegesController);
+router.get("/", requireAuth, getAllRoles);
 
 export default router;

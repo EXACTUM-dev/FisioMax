@@ -1,6 +1,7 @@
 /**
- * Version: 0.3.0
+ * Version: 0.4.0
  * Servicio para la gestión de roles en la aplicación
+ * FIX: Unificado el uso de apiClient y corregido getAllPrivileges
  */
 
 import { apiClient } from "./api";
@@ -12,6 +13,15 @@ import { apiClient } from "./api";
  */
 export const getAllRoles = async (token) => {
   return apiClient.get("/roles", {}, token);
+};
+
+/**
+ * Obtiene todos los privilegios disponibles
+ * @param {string} token - Token de autenticación
+ * @returns {Promise<Array>} - Lista de privilegios
+ */
+export const getAllPrivileges = async (token) => {
+  return apiClient.get("/roles/privilegios", {}, token);
 };
 
 /**
@@ -51,8 +61,6 @@ export const updateRole = async (id, name, privileges, token) => {
  * @returns {Promise<Object>} - Resultado de la eliminación
  */
 export const deleteRole = async (id, token) => {
-  // Esta función es un placeholder para una futura implementación
   console.warn("La función deleteRole no está implementada en el backend");
-  // Simular respuesta exitosa por ahora
   return Promise.resolve({ success: true, message: "Rol eliminado" });
 };

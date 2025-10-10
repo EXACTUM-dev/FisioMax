@@ -1,8 +1,7 @@
 /**
- * Version: 1.0.1
+ * Version: 1.0.3
  * Página de administración de roles y permisos
- * Permite visualizar, editar y eliminar roles del sistema
- * FIX: Eliminado DataSwitchContainer duplicado
+ * FIX: Usa allPrivileges del hook en lugar de extraer de roles
  */
 
 import React, { useMemo, useState } from "react";
@@ -18,13 +17,13 @@ import ChecklistModal from "../organisms/checklistModal";
 
 // Data y utils
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
+import privilagesTable from "../data/tableTemplates/privilagesTableColumns";
 import { useRoles } from "../hooks/useRoles";
 
 export default function RolesPage() {
   const { user, isLoaded } = useUser();
   const [current, setCurrent] = useState("roles");
   
-
   // Estado para el modal
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
@@ -33,11 +32,25 @@ export default function RolesPage() {
 
   const {
     roles, 
+    allPrivileges,
     loading,
     error,
     loadRoleById,
     deleteRoleById
   } = useRoles();
+
+  const formattedPrivileges = useMemo(() => {
+    if (!allPrivileges || allPrivileges.length === 0) return [];
+    
+    return allPrivileges.map(privilege => ({
+      id: privilege.IDPrivilegio || privilege.id,
+      permisos: privilege.nombre || privilege.permisos,
+      name: privilege.nombre || privilege.name,
+      descripcion: privilege.descripcion || privilege.description,
+      description: privilege.descripcion || privilege.description,
+      categoria: privilege.categoria || privilege.category
+    }));
+  }, [allPrivileges]);
 
   // Manejadores para el modal
   const handleEditRole = async (role) => {
@@ -53,11 +66,32 @@ export default function RolesPage() {
   };
 
   const handleDeleteRole = async (role) => {
-    try {
-      await deleteRoleById(role.id);
-    } catch (err) {
-      console.error("Error eliminando rol:", err);
+    if (window.confirm(`¿Estás seguro de eliminar el rol "${role.rol}"?`)) {
+      try {
+        await deleteRoleById(role.id);
+      } catch (err) {
+        console.error("Error eliminando rol:", err);
+        alert("Error al eliminar el rol");
+      }
     }
+  };
+
+  const handleModalConfirm = async (updatedData) => {
+    try {
+      console.log("Guardar cambios:", updatedData);
+      setModalOpen(false);
+      setEditingRole(null);
+    } catch (err) {
+      console.error("Error guardando cambios:", err);
+      alert("Error al guardar los cambios");
+    }
+  };
+
+  const handleModalCancel = () => {
+    setModalOpen(false);
+    setEditingRole(null);
+    setEditingPrivileges([]);
+    setRoleName("");
   };
 
   // Columnas para tabla de roles con comportamiento de modal
@@ -70,12 +104,21 @@ export default function RolesPage() {
     []
   );
 
+  const permissionsColumns = useMemo(
+    () =>
+      privilagesTable({
+        onEdit: handleEditRole,
+        onDelete: handleDeleteRole,
+      }),
+    []
+  );
+
   if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
+          <p className="mt-4 text-gray-600">Cargando roles y privilegios...</p>
         </div>
       </div>
     );
@@ -86,6 +129,12 @@ export default function RolesPage() {
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -107,11 +156,21 @@ export default function RolesPage() {
             views={[
               {
                 key: "roles",
-                label: "Roles & Permisos",
+                label: "Roles",
                 type: "table",
                 columns: roleColumns,
                 rows: roles, 
-                searchPlaceholder: "Buscar roles...",
+                searchPlaceholder: "Buscar roles",
+                emptyMessage: "No hay roles registrados",
+              },
+              {
+                key: "Privilegios",
+                label: "Privilegios",
+                type: "table",
+                columns: permissionsColumns,
+                rows: formattedPrivileges,
+                searchPlaceholder: "Buscar privilegios",
+                emptyMessage: "No hay privilegios disponibles",
               },
             ]}
           />

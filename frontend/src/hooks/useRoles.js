@@ -1,6 +1,7 @@
 /**
- * Version: 0.3.0
+ * Version: 0.5.0
  * Hook para gestionar roles y privilegios
+ * FIX: Ahora carga roles Y privilegios por separado
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -13,6 +14,7 @@ import * as rolesService from "../services/rolesServices";
  */
 export function useRoles() {
   const [roles, setRoles] = useState([]);
+  const [allPrivileges, setAllPrivileges] = useState([]);
   const [selectedRole, setSelectedRole] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -22,37 +24,95 @@ export function useRoles() {
    * Carga todos los roles disponibles
    */
   const loadRoles = useCallback(async () => {
-    setLoading(true);
     setError(null);
 
     try {
       const token = await getToken();
       const response = await rolesService.getAllRoles(token);
       
-      // El backend devuelve directamente el array
+      if (!response) {
+        console.warn('Respuesta vacía del servidor');
+        setRoles([]);
+        return;
+      }
+      
       const rolesData = Array.isArray(response) ? response : response.data;
+      
+      if (!Array.isArray(rolesData)) {
+        console.error('La respuesta no es un array:', rolesData);
+        setRoles([]);
+        return;
+      }
       
       setRoles(
         rolesData.map((role) => ({
           id: role.IDRol || role.id,
           rol: role.nombre || role.rol,
-          permisos: role.privilegiosText || role.descripcion,
-          descripcion: role.descripcion,
+          permisos: role.privilegiosText || role.descripcion || "",
+          descripcion: role.descripcion || "",
           privileges: role.privileges || []
         }))
       );
     } catch (err) {
-      setError(err.message || "Error al cargar roles");
+      const errorMessage = err.message || "Error al cargar roles";
+      setError(errorMessage);
       console.error("Error cargando roles:", err);
       setRoles([]);
-    } finally {
-      setLoading(false);
+    }
+  }, [getToken]);
+
+  const loadAllPrivileges = useCallback(async () => {
+    setError(null);
+
+    try {
+      const token = await getToken();
+      const response = await rolesService.getAllPrivileges(token);
+      
+      if (!response) {
+        setAllPrivileges([]);
+        return;
+      }
+      
+      const privilegesData = Array.isArray(response) ? response : response.data;
+      console.log("Privilegios procesados:", privilegesData);
+      
+      if (!Array.isArray(privilegesData)) {
+        console.error('La respuesta de privilegios no es un array:', privilegesData);
+        setAllPrivileges([]);
+        return;
+      }
+      
+      setAllPrivileges(privilegesData);
+      console.log("Privilegios cargados correctamente:", privilegesData.length);
+    } catch (err) {
+      console.error("Error cargando privilegios:", err);
+      const errorMessage = err.message || "Error al cargar privilegios";
+      setError(errorMessage);
+      setAllPrivileges([]);
     }
   }, [getToken]);
 
   /**
+   * Carga todos los datos (roles y privilegios)
+   */
+  const loadAllData = useCallback(async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadRoles(),
+        loadAllPrivileges()
+      ]);
+    } catch (err) {
+      console.error("Error cargando datos:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadRoles, loadAllPrivileges]);
+
+  /**
    * Carga un rol específico por ID con sus privilegios
    * @param {string} roleId - ID del rol a cargar
+   * @returns {Promise} - Promesa con los datos del rol
    */
   const loadRoleById = useCallback(
     async (roleId) => {
@@ -62,10 +122,19 @@ export function useRoles() {
       try {
         const token = await getToken();
         const response = await rolesService.getRoleById(roleId, token);
-        setSelectedRole(response.data);
+        
+        if (!response) {
+          throw new Error('Respuesta vacía del servidor');
+        }
+        
+        const roleData = response.data || response;
+        setSelectedRole(roleData);
+        return roleData;
       } catch (err) {
-        setError(err.message || "Error al cargar el rol");
+        const errorMessage = err.message || "Error al cargar el rol";
+        setError(errorMessage);
         console.error("Error cargando rol:", err);
+        throw err;
       } finally {
         setLoading(false);
       }
@@ -74,43 +143,7 @@ export function useRoles() {
   );
 
   /**
-   * Actualiza un rol y sus privilegios
-   * @param {string} roleId - ID del rol
-   * @param {string} name - Nuevo nombre del rol
-   * @param {Array<string>} privileges - IDs de los privilegios seleccionados
-   * @returns {Promise} - Promesa con el resultado
-   */
-  const updateRoleWithPrivileges = useCallback(
-    async (roleId, name, privileges) => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const token = await getToken();
-        const result = await rolesService.updateRole(
-          roleId,
-          name,
-          privileges,
-          token
-        );
-
-        // Actualizar la lista de roles localmente
-        await loadRoles();
-
-        return result;
-      } catch (err) {
-        setError(err.message || "Error al actualizar el rol");
-        console.error("Error actualizando rol:", err);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getToken, loadRoles]
-  );
-
-  /**
-   * Elimina un rol (función mockup para la UI)
+   * Elimina un rol
    * @param {string} roleId - ID del rol a eliminar
    */
   const deleteRoleById = useCallback(
@@ -122,11 +155,12 @@ export function useRoles() {
         const token = await getToken();
         await rolesService.deleteRole(roleId, token);
 
-        // Actualizar la lista local eliminando el rol
         setRoles((prev) => prev.filter((role) => role.id !== roleId));
       } catch (err) {
-        setError(err.message || "Error al eliminar el rol");
+        const errorMessage = err.message || "Error al eliminar el rol";
+        setError(errorMessage);
         console.error("Error eliminando rol:", err);
+        throw err;
       } finally {
         setLoading(false);
       }
@@ -134,19 +168,20 @@ export function useRoles() {
     [getToken]
   );
 
-  // Cargar roles al montar el componente
   useEffect(() => {
-    loadRoles();
-  }, [loadRoles]);
+    loadAllData();
+  }, [loadAllData]);
 
   return {
     roles,
+    allPrivileges,
     selectedRole,
     loading,
     error,
     loadRoles,
+    loadAllPrivileges,
+    loadAllData,
     loadRoleById,
-    updateRoleWithPrivileges,
     deleteRoleById,
     setSelectedRole,
   };
