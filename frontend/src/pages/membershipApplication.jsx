@@ -291,16 +291,16 @@ export default function MembershipApplicationPage() {
           {/* Documentación */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-6">Documentación</h3>
             <div className="space-y-6">
-              <FileUpload name="titulo" label="Título" required value={formData.titulo} onChange={handleFileChange} error={errors.titulo} />
+              <FileUpload name="titulo" label="Título/Kardex" required value={formData.titulo} onChange={handleFileChange} error={errors.titulo} />
               <FileUpload name="cedula" label="Cédula" required value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
-              <FileUpload name="constancias" label="Constancias" required={false} value={formData.constancias} onChange={handleFileChange} />
+              <FileUpload name="constancias" label="Constancias pélvicas" required={false} value={formData.constancias} onChange={handleFileChange} />
               {extraDocs.map((doc, i) => (
                 <div key={doc.id} className="relative">
                   <FileUpload name={`extra-${doc.id}`} label={`Documento adicional ${i+1}`} value={doc.file} onChange={(e) => handleExtraFileChange(doc.id, e)} />
                   <button type="button" onClick={() => setExtraDocs(prev => prev.filter(d => d.id !== doc.id))} className="absolute top-0 right-0 text-red-500 hover:text-red-700 text-sm mt-1 mr-1">✕</button>
                 </div>
               ))}
-              <Button variant="newDoc" size="sm" onClick={handleAddDocuments} className="bg-gray-200 text-gray-700 hover:bg-gray-300" type="button">Agregar documentos</Button>
+              <Button variant="newDoc" size="sm" onClick={handleAddDocuments} className="bg-gray-200 text-gray-700 hover:bg-gray-300" type="button">Agregar documentos adicionales</Button>
 
               {/* Botones */}
               <div className="flex justify-end space-x-4 pt-6">
