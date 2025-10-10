@@ -46,86 +46,31 @@ export default function Panel() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
   const [current, setCurrent] = useState("panel");
-  
-    // Estados para datos mostrados en la UI
-    const [heroSlides, setHeroSlides] = useState([]);
-    const [rowSlides, setRowSlides] = useState([]);
-    const [userRows, setUserRows] = useState([]);
-    const [roleRows, setRoleRows] = useState([]);
-    const [solicitudRows, setSolicitudRows] = useState([]);
-    const [, /* sideSlides no visible en UI */ setSideSlides] = useState([]);
-    const [, /* products no visibles en Dashboard actual */ setProducts] =
-      useState({ columns: [], rows: [] });
-  
-const [error, setError] = useState(null);
 
-useEffect(() => {
-  let alive = true;
-  async function fetchData() {
-    try {
-      const [hero, row, prod, users, roles, solicitudes, side] = await Promise.all([
-        getHeroSlides(),
-        getRowSlides(),
-        getProducts(),
-        getUsers(),
-        getRoles(),
-        getSolicitudes(),
-        getSideSlides(),
-      ]);
-      if (!alive) return;
-      setHeroSlides(hero);
-      setRowSlides(row);
-      setProducts(prod);
-      setUserRows(users);
-      setRoleRows(roles);
-      setSolicitudRows(solicitudes);
-      setSideSlides(side);
-    } catch (err) {
-      console.error("Error al cargar datos:", err);
-      setError("Error al cargar datos. Por favor, inténtalo más tarde.");
-    }
-  }
-  fetchData();
-  return () => {
-    alive = false;
-  };
-}, []);
+  // Estados para datos mostrados en la UI
+  const [heroSlides, setHeroSlides] = useState([]);
+  const [rowSlides, setRowSlides] = useState([]);
+  const [userRows, setUserRows] = useState([]);
+  const [roleRows, setRoleRows] = useState([]);
+  const [solicitudRows, setSolicitudRows] = useState([]);
+  const [, /* sideSlides no visible en UI */ setSideSlides] = useState([]);
+  const [, /* products no visibles en Dashboard actual */ setProducts] =
+    useState({ columns: [], rows: [] });
   
-    // Columnas para tablas
-    const userColumns = useMemo(
-      () =>
-        buildUserActionsColumns({
-          onOpenDocument: (row) => {
-            const url = row?.documentos?.url;
-            if (url) window.open(url, "_blank", "noopener,noreferrer");
-          },
-          onAccept: () => {},
-          onDelete: (row) =>
-            setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
-        }),
-      []
-    );
-  
-    const roleColumns = useMemo(
-      () =>
-        buildRolePermissionsColumns({
-          onEdit: () => {},
-          onDelete: (row) =>
-            setRoleRows((prev) => prev.filter((r) => r.id !== row.id)),
-        }),
-      []
-    );
+  const [error, setError] = useState(null);
+
   // Fetch initial data for the panel
   useEffect(() => {
-    let alive = true; // Prevent state updates after unmount
+    let alive = true;
     async function fetchData() {
       try {
-        const [hero, row, prod, users, roles, side] = await Promise.all([
+        const [hero, row, prod, users, roles, solicitudes, side] = await Promise.all([
           getHeroSlides(),
           getRowSlides(),
           getProducts(),
           getUsers(),
           getRoles(),
+          getSolicitudes(),
           getSideSlides(),
         ]);
         if (!alive) return;
@@ -134,10 +79,11 @@ useEffect(() => {
         setProducts(prod);
         setUserRows(users);
         setRoleRows(roles);
+        setSolicitudRows(solicitudes);
         setSideSlides(side);
       } catch (err) {
-        console.error("Error loading data:", err);
-        setError("Error loading data. Please try again later.");
+        console.error("Error al cargar datos:", err);
+        setError("Error al cargar datos. Por favor, inténtalo más tarde.");
       }
     }
     fetchData();
@@ -182,18 +128,7 @@ useEffect(() => {
     [roleRows, updateUserRole]
   );
 
-  // Define columns for the role table
-  const roleColumns = useMemo(
-    () =>
-      buildRolePermissionsColumns({
-        onEdit: () => {},
-        onDelete: (row) =>
-          setRoleRows((prev) => prev.filter((r) => r.id !== row.id)),
-      }),
-    []
-  );
-
-    const solicitudColumns = useMemo(
+  const solicitudColumns = useMemo(
       () =>
         buildSolicitudesColumns({
           onOpenDocument: (doc) => {
@@ -210,19 +145,14 @@ useEffect(() => {
       []
     );
 
-    const usuariosTableColumns = useMemo(
-      () =>
-        buildUsuariosTableColumns({
-          onDelete: (row) =>
-            setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
-        }),
-      []
-    );
-
-if (!isLoaded) {
-useEffect(() => {
-    console.log("Roles cargados:", roleRows);
-  }, [roleRows]);
+  const usuariosTableColumns = useMemo(
+    () =>
+      buildUsuariosTableColumns({
+        onDelete: (row) =>
+          setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
+      }),
+    []
+  );
 
   // Show loading spinner until user data is loaded
   if (!isLoaded) {
@@ -248,7 +178,6 @@ useEffect(() => {
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         {/* Data switcher for toggling between views */}
         <DataSwitchContainer
-          initialKey="solicitudes"
           initialKey="solicitudes"
           views={[
             {
