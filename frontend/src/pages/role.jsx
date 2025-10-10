@@ -165,7 +165,7 @@ export default function RolesPage() {
           confirmLabel="Guardar Cambios"
           cancelLabel="Cancelar"
           onConfirm={handleModalConfirm}
-          onCancel={handleModalCancel}
+          onClose={handleModalCancel}
         />
       </main>
     </div>

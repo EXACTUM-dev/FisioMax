@@ -4,10 +4,17 @@
  * @author EXACTUM-dev
  */
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useUser } from "@clerk/clerk-react";
+/**
+ * Main control panel view.
+ * This component manages the state and layout for the admin panel,
+ * including user and role management.
+ */
 
-// Atoms
+// Import necessary libraries and components
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useUser, useAuth } from "@clerk/clerk-react";
+
+// Import custom components and utilities
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
 
@@ -29,13 +36,15 @@ import {
   getSolicitudes,
   getSideSlides,
 } from "../data/mockApi";
-import buildUserActionsColumns from "../data/tableTemplates/userActionsColumns";
+import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import buildSolicitudesColumns from "../data/tableTemplates/solicitudesColumns";
 import buildUsuariosTableColumns from "../data/tableTemplates/usuariosTableColumns";
+import { fetchWithClerk } from "../utils/api";
 
 export default function Panel() {
   const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const [current, setCurrent] = useState("panel");
   
     // Estados para datos mostrados en la UI
@@ -106,6 +115,83 @@ useEffect(() => {
         }),
       []
     );
+  // Fetch initial data for the panel
+  useEffect(() => {
+    let alive = true; // Prevent state updates after unmount
+    async function fetchData() {
+      try {
+        const [hero, row, prod, users, roles, side] = await Promise.all([
+          getHeroSlides(),
+          getRowSlides(),
+          getProducts(),
+          getUsers(),
+          getRoles(),
+          getSideSlides(),
+        ]);
+        if (!alive) return;
+        setHeroSlides(hero);
+        setRowSlides(row);
+        setProducts(prod);
+        setUserRows(users);
+        setRoleRows(roles);
+        setSideSlides(side);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError("Error loading data. Please try again later.");
+      }
+    }
+    fetchData();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Function to update a user's role
+  const updateUserRole = useCallback(
+    async (rowId, newRoleObj) => {
+      const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj; // Extract role name
+      const id = rowId?.id || rowId?.IDUsuario || rowId; // Extract user ID
+      const prevRows = userRows; // Backup current state for rollback
+      setUserRows((prev) =>
+        prev.map((u) => (u.id === id || u.IDUsuario === id ? { ...u, rol: roleName } : u))
+      );
+      try {
+        const token = await getToken();
+        await fetchWithClerk(`/api/usuarios/${id}/rol`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rol: roleName }),
+        }, token);
+        console.log("Rol actualizado en backend:", roleName);
+      } catch (err) {
+        console.error("Error updating role in backend:", err);
+        setUserRows(prevRows); // Revert UI changes on error
+      }
+    },
+    [getToken, userRows]
+  );
+
+  // Define columns for the user table
+  const userColumns = useMemo(
+    () =>
+      buildUserRolesColumns({
+        roles: roleRows,
+        onDelete: (row) => setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
+        onChangeRole: (row, chosenRole) => updateUserRole(row.id || row.IDUsuario, chosenRole),
+      }),
+    [roleRows, updateUserRole]
+  );
+
+  // Define columns for the role table
+  const roleColumns = useMemo(
+    () =>
+      buildRolePermissionsColumns({
+        onEdit: () => {},
+        onDelete: (row) =>
+          setRoleRows((prev) => prev.filter((r) => r.id !== row.id)),
+      }),
+    []
+  );
 
     const solicitudColumns = useMemo(
       () =>
@@ -134,6 +220,12 @@ useEffect(() => {
     );
 
 if (!isLoaded) {
+useEffect(() => {
+    console.log("Roles cargados:", roleRows);
+  }, [roleRows]);
+
+  // Show loading spinner until user data is loaded
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
@@ -146,16 +238,17 @@ if (!isLoaded) {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      {/* Header refactorizado como molécula; responde a sidebar y deja margen inferior */}
+      {/* Header component with user info */}
       <AppHeader user={user} />
 
-      {/* Sidebar fija */}
+      {/* Sidebar navigation */}
       <Sidebar current={current} onNavigate={setCurrent} />
 
-      {/* Main con margen que responde a la sidebar */}
+      {/* Main content area */}
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
-
+        {/* Data switcher for toggling between views */}
         <DataSwitchContainer
+          initialKey="solicitudes"
           initialKey="solicitudes"
           views={[
             {
@@ -177,14 +270,13 @@ if (!isLoaded) {
           ]}
         />
 
+        {/* Footer with additional actions */}
         <div className="max-w-[70rem] mx-auto">
           <div className="flex justify-center py-6">
             <Button size="sm" label="SOMEFIPP" />
           </div>
         </div>
-
       </main>
     </div>
   );
-
 }
