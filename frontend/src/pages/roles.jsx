@@ -160,7 +160,7 @@ export default function RolesPage() {
             tableData={editingPrivileges}
             confirmLabel="Guardar Cambios"
             onConfirm={handleModalConfirm}
-            onCancel={handleModalCancel}
+            onClose={handleModalCancel}
           />
         )}
       </main>
