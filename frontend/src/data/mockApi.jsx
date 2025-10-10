@@ -163,8 +163,45 @@ const roles = [
   { id: "r3", rol: "Invitado", permisos: "Lectura" },
 ];
 
+const permisos = [
+  {
+    id: "p1",
+    nombre: "Usuarios",
+    descripcion: "Gestión de usuarios del sistema",
+  },
+  {
+    id: "p2",
+    nombre: "Reportes",
+    descripcion: "Acceso a reportes y estadísticas",
+  },
+  {
+    id: "p3",
+    nombre: "Ajustes",
+    descripcion: "Configuración del sistema",
+  },
+  {
+    id: "p4",
+    nombre: "Contenido",
+    descripcion: "Gestión de contenido y publicaciones",
+  },
+  {
+    id: "p5",
+    nombre: "Medios",
+    descripcion: "Gestión de archivos multimedia",
+  },
+  {
+    id: "p6",
+    nombre: "Lectura",
+    descripcion: "Acceso de solo lectura",
+  },
+];
+
 export async function getRoles() {
   return roles;
+}
+
+export async function getPermisos() {
+  return permisos;
 }
 
 // Mock de campos para formulario de usuario
