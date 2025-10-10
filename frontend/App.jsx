@@ -13,7 +13,7 @@ import RegisterPage from "./src/pages/register";
 import VideoPage from "./src/pages/video";
 import EmailPage from "./src/pages/email";
 import ProfilePage from "./src/pages/profile";
-import RolesPage from "./src/pages/role";
+import RolesPage from "./src/pages/roles";
 
 // Rutas protegidas con Clerk (solo login usa Clerk)
 function ProtectedRoute({ children }) {

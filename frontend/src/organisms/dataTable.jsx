@@ -4,7 +4,7 @@
  * Columns are fully dynamic and can include custom renderers and metadata
  */
 import React, { useMemo, useState } from "react";
-import Checkbox from '../atoms/checkBox';
+import Checkbox from "../atoms/checkBox";
 import TableRow from "../molecules/tableRow";
 
 export default function DataTable({ columns = [], data = [] }) {

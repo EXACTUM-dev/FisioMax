@@ -1,7 +1,8 @@
 /**
- * Version: 1.0.0
+ * Version: 1.1.0
  * Column factory for a roles/permissions table
  * Keeps DataTable generic; only columns define labels, renders and mobile behavior
+ * Prevents default navigation behavior for action columns
  */
 import React from "react";
 import trashIcon from "../../assets/icons/trash-2.png";
@@ -55,7 +56,13 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
         <button
           type="button"
           title="Editar"
-          onClick={() => onEdit?.(row)}
+          onClick={(e) => {
+            // Prevent default navigation
+            e.preventDefault();
+            e.stopPropagation();
+            // Call the edit handler
+            onEdit?.(row);
+          }}
           className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
         >
           <img
@@ -75,7 +82,13 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
         <button
           type="button"
           title="Eliminar"
-          onClick={() => onDelete?.(row)}
+          onClick={(e) => {
+            // Prevent default navigation
+            e.preventDefault();
+            e.stopPropagation();
+            // Call the delete handler
+            onDelete?.(row);
+          }}
           className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-red-50"
         >
           <img
