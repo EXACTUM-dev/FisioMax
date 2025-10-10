@@ -4,10 +4,17 @@
  * @author EXACTUM-dev
  */
 
+/**
+ * Main control panel view.
+ * This component manages the state and layout for the admin panel,
+ * including user and role management.
+ */
+
+// Import necessary libraries and components
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
 
-// Atoms
+// Import custom components and utilities
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
 
@@ -48,42 +55,46 @@ export default function Panel() {
   
 const [error, setError] = useState(null);
 
-useEffect(() => {
-  let alive = true;
-  async function fetchData() {
-    try {
-      const [hero, row, prod, users, roles, side] = await Promise.all([
-        getHeroSlides(),
-        getRowSlides(),
-        getProducts(),
-        getUsers(),
-        getRoles(),
-        getSideSlides(),
-      ]);
-      if (!alive) return;
-      setHeroSlides(hero);
-      setRowSlides(row);
-      setProducts(prod);
-      setUserRows(users);
-      setRoleRows(roles);
-      setSideSlides(side);
-    } catch (err) {
-      console.error("Error al cargar datos:", err);
-      setError("Error al cargar datos. Por favor, inténtalo más tarde.");
+  // Fetch initial data for the panel
+  useEffect(() => {
+    let alive = true; // Prevent state updates after unmount
+    async function fetchData() {
+      try {
+        const [hero, row, prod, users, roles, side] = await Promise.all([
+          getHeroSlides(),
+          getRowSlides(),
+          getProducts(),
+          getUsers(),
+          getRoles(),
+          getSideSlides(),
+        ]);
+        if (!alive) return;
+        setHeroSlides(hero);
+        setRowSlides(row);
+        setProducts(prod);
+        setUserRows(users);
+        setRoleRows(roles);
+        setSideSlides(side);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError("Error loading data. Please try again later.");
+      }
     }
-  }
-  fetchData();
-  return () => {
-    alive = false;
-  };
-}, []);
-  
-    // Columnas para tablas
-    const updateUserRole = useCallback(async (rowId, newRoleObj) => {
-      const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj;
-      const id = rowId?.id || rowId?.IDUsuario || rowId;
-      const prevRows = userRows;
-      setUserRows((prev) => prev.map((u) => ((u.id === id || u.IDUsuario === id) ? { ...u, rol: roleName } : u)));
+    fetchData();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Function to update a user's role
+  const updateUserRole = useCallback(
+    async (rowId, newRoleObj) => {
+      const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj; // Extract role name
+      const id = rowId?.id || rowId?.IDUsuario || rowId; // Extract user ID
+      const prevRows = userRows; // Backup current state for rollback
+      setUserRows((prev) =>
+        prev.map((u) => (u.id === id || u.IDUsuario === id ? { ...u, rol: roleName } : u))
+      );
       try {
         const token = await getToken();
         await fetchWithClerk(`/api/usuarios/${id}/rol`, {
@@ -93,33 +104,41 @@ useEffect(() => {
         }, token);
         console.log("Rol actualizado en backend:", roleName);
       } catch (err) {
-        console.error("Error al actualizar rol en backend:", err);
-        // revertir UI
-        setUserRows(prevRows);
+        console.error("Error updating role in backend:", err);
+        setUserRows(prevRows); // Revert UI changes on error
       }
-    }, [getToken, userRows]);
-  
-    const userColumns = useMemo(() => buildUserRolesColumns({
-      roles: roleRows,
-      onDelete: (row) => setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
-      onChangeRole: (row, chosenRole) => updateUserRole(row.id || row.IDUsuario, chosenRole),
-    }), [roleRows, updateUserRole]);
-  
-    const roleColumns = useMemo(
-      () =>
-        buildRolePermissionsColumns({
-          onEdit: () => {},
-          onDelete: (row) =>
-            setRoleRows((prev) => prev.filter((r) => r.id !== row.id)),
-        }),
-      []
-    );
+    },
+    [getToken, userRows]
+  );
+
+  // Define columns for the user table
+  const userColumns = useMemo(
+    () =>
+      buildUserRolesColumns({
+        roles: roleRows,
+        onDelete: (row) => setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
+        onChangeRole: (row, chosenRole) => updateUserRole(row.id || row.IDUsuario, chosenRole),
+      }),
+    [roleRows, updateUserRole]
+  );
+
+  // Define columns for the role table
+  const roleColumns = useMemo(
+    () =>
+      buildRolePermissionsColumns({
+        onEdit: () => {},
+        onDelete: (row) =>
+          setRoleRows((prev) => prev.filter((r) => r.id !== row.id)),
+      }),
+    []
+  );
 
 useEffect(() => {
     console.log("Roles cargados:", roleRows);
   }, [roleRows]);
 
-if (!isLoaded) {
+  // Show loading spinner until user data is loaded
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
@@ -132,17 +151,17 @@ if (!isLoaded) {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      {/* Header refactorizado como molécula; responde a sidebar y deja margen inferior */}
+      {/* Header component with user info */}
       <AppHeader user={user} />
 
-      {/* Sidebar fija */}
+      {/* Sidebar navigation */}
       <Sidebar current={current} onNavigate={setCurrent} />
 
-      {/* Main con margen que responde a la sidebar */}
+      {/* Main content area */}
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
-
+        {/* Data switcher for toggling between views */}
         <DataSwitchContainer
-          initialKey="users"
+          initialKey="solicitudes"
           views={[
             {
               key: "solicitudes",
@@ -163,14 +182,13 @@ if (!isLoaded) {
           ]}
         />
 
+        {/* Footer with additional actions */}
         <div className="max-w-[70rem] mx-auto">
           <div className="flex justify-center py-6">
             <Button size="sm" label="SOMEFIPP" />
           </div>
         </div>
-
       </main>
     </div>
   );
-
 }

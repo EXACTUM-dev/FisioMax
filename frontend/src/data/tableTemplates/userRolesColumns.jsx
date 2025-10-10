@@ -1,17 +1,29 @@
 /**
- * Version: 1.0.0
- * Column factory for users table showing role, membership state and delete action
+ * @fileoverview Template para las columnas de la tabla de usuarios.
+ * Define las columnas para mostrar información de usuarios, incluyendo nombre, rol,
+ * estado de membresía y una acción para eliminar.
+ * @version 1.0.0
+ * @author EXACTUM-dev
  */
+
 import React from "react";
 import RolePicker from "../../molecules/rolePicker";
 import trashIcon from "../../assets/icons/trash-2.png";
 
+/**
+ * Genera las columnas para la tabla de usuarios.
+ * @param {Object} options - Opciones para configurar las columnas.
+ * @param {Array} options.roles - Lista de roles disponibles para asignar.
+ * @param {Function} options.onDelete - Callback para manejar la eliminación de un usuario.
+ * @param {Function} options.onChangeRole - Callback para manejar el cambio de rol de un usuario.
+ * @returns {Array} - Configuración de columnas para la tabla.
+ */
 export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {}) {
   return [
     {
-      key: "nombre",
-      label: "Nombre",
-      className: "w-[40%]",
+      key: "nombre", // Identificador único de la columna
+      label: "Nombre", // Etiqueta visible en la tabla
+      className: "w-[40%]", // Clase CSS para el ancho de la columna
       render: (row) => row?.nombre || row?.name || `${row?.nombres || ''} ${row?.apellidoP || ''}`.trim(),
     },
     {
@@ -19,6 +31,7 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {
       label: "Rol",
       className: "w-[20%] text-center",
       render: (row) => (
+        // Componente interactivo para seleccionar roles
         <RolePicker row={row} roles={roles} onSelect={(r) => onChangeRole?.(row, r)} />
       ),
     },
@@ -32,7 +45,7 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {
       key: "eliminar",
       label: "Eliminar",
       className: "w-[20%] text-right",
-      isAction: true,
+      isAction: true, // Indica que esta columna contiene acciones
       render: (row) => (
         <button
           type="button"
