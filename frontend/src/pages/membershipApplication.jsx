@@ -46,6 +46,9 @@ export default function MembershipApplicationPage() {
     pais: "",
     estado: "",
     ciudad: "",
+    calle: "",
+    numExterior: "",
+    numInterior: "",
     colonia: "",
     codigoPostal: "",
     licenciatura: "",
@@ -131,12 +134,13 @@ export default function MembershipApplicationPage() {
     if (!formData.nombres.trim()) newErrors.nombres = "El nombre es requerido";
     if (!formData.apellidoP.trim()) newErrors.apellidoP = "El apellido paterno es requerido";
     if (!formData.apellidoM.trim()) newErrors.apellidoM = "El apellido materno es requerido";
+    if (!formData.telefono.trim()) newErrors.telefono = "El teléfono es requerido";
     if (!formData.email.trim()) newErrors.email = "El email es requerido";
     if (!formData.pais) newErrors.pais = "El país es requerido";
     if (!formData.estado) newErrors.estado = "El estado es requerido";
     if (!formData.ciudad) newErrors.ciudad = "La ciudad es requerida";
     if (!formData.titulo) newErrors.titulo = "El título es requerido";
-    if (!formData.cedula) newErrors.cedula = "La cédula es requerida";
+    if (!formData.cedula) newErrors.cedula = "La cédula profesional es requerida";
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) newErrors.email = "El formato del email no es válido";
@@ -166,7 +170,7 @@ export default function MembershipApplicationPage() {
 
       if (result.success) {
         Swal.fire({ icon: "success", title: "¡Solicitud enviada!", text: "Tu solicitud fue registrada correctamente.", confirmButtonColor: "#2563eb" });
-        setFormData({ nombres: "", apellidoP: "", apellidoM: "", telefono: "", email: "", pais: "", estado: "", ciudad: "", colonia: "", codigoPostal: "", licenciatura: "", titulo: null, cedula: null, constancias: null });
+        setFormData({ nombres: "", apellidoP: "", apellidoM: "", telefono: "", email: "", pais: "", estado: "", ciudad: "", calle: "", numExterior: "", numInterior: "", colonia: "", codigoPostal: "", licenciatura: "", titulo: null, cedula: null, constancias: null });
         setExtraDocs([]);
         setErrors({});
       } else {
@@ -192,7 +196,7 @@ export default function MembershipApplicationPage() {
       cancelButtonText: "No, continuar"
     }).then(result => {
       if (result.isConfirmed) {
-        setFormData({ nombres: "", apellidoP: "", apellidoM: "", telefono: "", email: "", pais: "", estado: "", ciudad: "", colonia: "", codigoPostal: "", licenciatura: "", titulo: null, cedula: null, constancias: null });
+        setFormData({ nombres: "", apellidoP: "", apellidoM: "", telefono: "", email: "", pais: "", estado: "", ciudad: "", calle: "", numExterior: "", numInterior: "", colonia: "", codigoPostal: "", licenciatura: "", titulo: null, cedula: null, constancias: null });
         setExtraDocs([]);
         setErrors({});
         setStates([]);
@@ -231,12 +235,12 @@ export default function MembershipApplicationPage() {
               <FormField label="Nombre(s)" name="nombres" required value={formData.nombres} onChange={handleInputChange} placeholder="Ingresa tu(s) nombre(s)" error={errors.nombres} />
               <FormField label="Apellido Paterno" name="apellidoP" required value={formData.apellidoP} onChange={handleInputChange} placeholder="Ingresa tu apellido paterno" error={errors.apellidoP} />
               <FormField label="Apellido Materno" name="apellidoM" required value={formData.apellidoM} onChange={handleInputChange} placeholder="Ingresa tu apellido materno" error={errors.apellidoM} />
-              <FormField label="Teléfono" name="telefono" value={formData.telefono} onChange={handleInputChange} placeholder="Ingresa tu teléfono" />
+              <FormField label="Teléfono" name="telefono" required value={formData.telefono} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefono} />
               <FormField label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email} />
             </div>
           
             {/* Datos de domicilio */}
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Datos de domicilio</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Lugar donde prestas tus servicios profesionales</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField
                 label="País"
@@ -275,6 +279,7 @@ export default function MembershipApplicationPage() {
                 onChange={handleInputChange}
                 placeholder="Ingresa tu colonia"
               />
+              
 
               <FormField
                 label="Código Postal"
@@ -282,6 +287,30 @@ export default function MembershipApplicationPage() {
                 value={formData.codigoPostal}
                 onChange={handleInputChange}
                 placeholder="Ingresa tu código postal"
+              />
+
+<FormField
+                label="Calle"
+                name="calle"
+                value={formData.calle}
+                onChange={handleInputChange}
+                placeholder="Ingresa tu calle"
+              />
+
+<FormField
+                label="Num. exterior"
+                name="numExterior"
+                value={formData.numExterior}
+                onChange={handleInputChange}
+                placeholder="Ingresa tu número exterior"
+              />
+
+<FormField
+                label="Num. interior"
+                name="numInterior"
+                value={formData.numInterior}
+                onChange={handleInputChange}
+                placeholder="Ingresa tu número interior"
               />
             </div>
 
@@ -292,7 +321,7 @@ export default function MembershipApplicationPage() {
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-6">Documentación</h3>
             <div className="space-y-6">
               <FileUpload name="titulo" label="Título/Kardex" required value={formData.titulo} onChange={handleFileChange} error={errors.titulo} />
-              <FileUpload name="cedula" label="Cédula" required value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
+              <FileUpload name="cedula" label="Cédula profesional" required value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
               <FileUpload name="constancias" label="Constancias pélvicas" required={false} value={formData.constancias} onChange={handleFileChange} />
               {extraDocs.map((doc, i) => (
                 <div key={doc.id} className="relative">

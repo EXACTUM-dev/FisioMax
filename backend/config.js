@@ -26,6 +26,7 @@ const config = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
+    port: process.env.DB_PORT || 3306,
   },
 
   // Configuración para la autenticación (JWT).
@@ -38,7 +39,8 @@ const config = {
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    s3BucketName: process.env.S3_BUCKET_NAME
+    s3BucketName: process.env.S3_BUCKET_NAME,
+    region: process.env.AWS_REGION
   },
 
   // Configuración para CORS.

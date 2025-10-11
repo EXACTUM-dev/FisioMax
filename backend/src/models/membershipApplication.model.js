@@ -1,17 +1,40 @@
-import db from '../config/db.js';
 import crypto from 'crypto';
 import S3Service from '../services/s3Service.js';
+import db from '../../database/db.js';
 
 class MembershipApplication {
   constructor(data) {
-    this.nombres = data.nombres;
-    this.apellidoP = data.apellidoP;
-    this.apellidoM = data.apellidoM;
-    this.telefono = data.telefono;
-    this.email = data.email;
+    // Validar campos obligatorios
+    if (!data.nombres || data.nombres.trim() === '') {
+      throw new Error('El nombre es obligatorio');
+    }
+    if (!data.apellidoP || data.apellidoP.trim() === '') {
+      throw new Error('El apellido paterno es obligatorio');
+    }
+    if (!data.apellidoM || data.apellidoM.trim() === '') {
+      throw new Error('El apellido materno es obligatorio');
+    }
+    if (!data.telefono || data.telefono.trim() === '') {
+      throw new Error('El teléfono es obligatorio');
+    }
+    if (!data.email || data.email.trim() === '') {
+      throw new Error('El email es obligatorio');
+    }
+    if (!data.documentos?.cedula) {
+      throw new Error('La cédula es obligatoria');
+    }
+
+    this.nombres = data.nombres.trim();
+    this.apellidoP = data.apellidoP.trim();
+    this.apellidoM = data.apellidoM.trim();
+    this.telefono = data.telefono.trim();
+    this.email = data.email.trim();
     this.pais = data.pais;
     this.estado = data.estado;
     this.ciudad = data.ciudad;
+    this.calle = data.calle || null;
+    this.numExterior = data.numExterior || null;
+    this.numInterior = data.numInterior || null;
     this.colonia = data.colonia || null;
     this.codigoPostal = data.codigoPostal || null;
     this.licenciatura = data.licenciatura || null;
@@ -25,7 +48,7 @@ class MembershipApplication {
     try {
       await conn.beginTransaction();
 
-      const userId = crypto.randomUUID();
+      const userId = crypto.randomUUID().replace(/-/g, '');
 
       // Subir archivos a S3
       const cedulaUrl = this.documentos.cedula
@@ -42,9 +65,9 @@ class MembershipApplication {
 
       // Guardar información
       await conn.query(
-        `INSERT INTO Usuario 
-        (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, pais, estado, ciudad, colonia, codigoPostal, licenciatura, cedula, titulo, constancias, createdAt, eliminado)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
+        `INSERT INTO usuario 
+        (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, pais, estado, ciudad, colonia, codigoPostal, licenciatura, calle, numexterior, numinterior, cedula, titulo, constancias, createdAt, eliminado)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
         [
           userId,
           this.nombres,
@@ -58,6 +81,9 @@ class MembershipApplication {
           this.colonia,
           this.codigoPostal,
           this.licenciatura,
+          this.calle,
+          this.numExterior,
+          this.numInterior,
           cedulaUrl,
           tituloUrl,
           constanciasUrl

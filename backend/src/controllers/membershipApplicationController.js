@@ -36,7 +36,10 @@ export const createMembershipApplication = async (req, res) => {
         cedula: req.files?.cedula?.[0] || null,
         constancias: req.files?.constancias?.[0] || null,
         extra: extraDocs
-      }
+      },
+      calle: req.body.calle,
+      numexterior: req.body.numexterior,
+      numinterior: req.body.numinterior
     };
 
     // Guardar solicitud en DB
