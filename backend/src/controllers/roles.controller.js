@@ -8,11 +8,11 @@ import {
   updateRoleById,
   getAllRolesFromDB,
   updateRolePrivileges,
-} from "../models/role.model.js";
+} from "../models/roles.model.js";
 import {
   getRolePrivileges,
   getAllPrivileges,
-} from "../models/privilege.model.js";
+} from "../models/privileges.model.js";
 
 /**
  * Get role by ID for editing with privileges

@@ -78,10 +78,16 @@ export async function updateRolePrivileges(roleId, privileges) {
 
     // Insert new privileges
     for (const privilegeId of privileges) {
-      await connection.query(
-        "INSERT INTO rolprivilegios (IDPrivilegio, IDRol) VALUES (?, ?)",
-        [privilegeId, roleId]
+      const [result] = await connection.query(
+        "UPDATE rolprivilegios SET eliminado = 0, deletedAt = NULL WHERE IDRol = ? AND IDPrivilegio = ?",
+        [roleId, privilegeId]
       );
+      if (result.affectedRows === 0) {
+        await connection.query(
+          "INSERT INTO rolprivilegios (IDPrivilegio, IDRol) VALUES (?, ?)",
+          [privilegeId, roleId]
+        );
+      }
     }
 
     await connection.commit();

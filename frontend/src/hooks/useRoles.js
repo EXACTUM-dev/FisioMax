@@ -1,5 +1,5 @@
 /**
- * Version: 0.3.0
+ * Version: 0.4.0
  * Hook para gestionar roles y privilegios
  */
 
@@ -19,7 +19,7 @@ export function useRoles() {
   const { getToken } = useAuth();
 
   /**
-   * Carga todos los roles disponibles
+   * Load all roles
    */
   const loadRoles = useCallback(async () => {
     setLoading(true);
@@ -27,9 +27,9 @@ export function useRoles() {
 
     try {
       const token = await getToken();
-      const response = await rolesService.getAllRoles(token);
+      const response = await rolesService.getAllRoles(token); // { success, data: [ ... ] }
       setRoles(
-        response.data.map((role) => ({
+        (response?.data ?? []).map((role) => ({
           id: role.IDRol || role.id,
           rol: role.nombre || role.name,
           permisos: role.descripcion || role.description,
@@ -44,8 +44,8 @@ export function useRoles() {
   }, [getToken]);
 
   /**
-   * Carga un rol específico por ID con sus privilegios
-   * @param {string} roleId - ID del rol a cargar
+   * Load a role by ID (returns the role object as API format)
+   * Returns: { id, name, description, privileges: [{id,name,checked}] }
    */
   const loadRoleById = useCallback(
     async (roleId) => {
@@ -54,11 +54,19 @@ export function useRoles() {
 
       try {
         const token = await getToken();
-        const response = await rolesService.getRoleById(roleId, token);
-        setSelectedRole(response.data);
+        const response = await rolesService.getRoleById(roleId, token); // { success, data: {...} }
+
+        if (response && response.success && response.data) {
+          setSelectedRole(response.data);
+          return response.data; // Return the role object directly
+        } else {
+          console.error("Respuesta inválida:", response);
+          throw new Error("No se pudo cargar el rol");
+        }
       } catch (err) {
         setError(err.message || "Error al cargar el rol");
         console.error("Error cargando rol:", err);
+        throw err;
       } finally {
         setLoading(false);
       }
@@ -67,11 +75,7 @@ export function useRoles() {
   );
 
   /**
-   * Actualiza un rol y sus privilegios
-   * @param {string} roleId - ID del rol
-   * @param {string} name - Nuevo nombre del rol
-   * @param {Array<string>} privileges - IDs de los privilegios seleccionados
-   * @returns {Promise} - Promesa con el resultado
+   * Update role and its privileges
    */
   const updateRoleWithPrivileges = useCallback(
     async (roleId, name, privileges) => {
@@ -87,9 +91,7 @@ export function useRoles() {
           token
         );
 
-        // Actualizar la lista de roles localmente
         await loadRoles();
-
         return result;
       } catch (err) {
         setError(err.message || "Error al actualizar el rol");
@@ -103,8 +105,7 @@ export function useRoles() {
   );
 
   /**
-   * Elimina un rol (función mockup para la UI)
-   * @param {string} roleId - ID del rol a eliminar
+   * Delete role (UI placeholder)
    */
   const deleteRoleById = useCallback(
     async (roleId) => {
@@ -114,8 +115,6 @@ export function useRoles() {
       try {
         const token = await getToken();
         await rolesService.deleteRole(roleId, token);
-
-        // Actualizar la lista local eliminando el rol
         setRoles((prev) => prev.filter((role) => role.id !== roleId));
       } catch (err) {
         setError(err.message || "Error al eliminar el rol");
@@ -127,7 +126,6 @@ export function useRoles() {
     [getToken]
   );
 
-  // Cargar roles al montar el componente
   useEffect(() => {
     loadRoles();
   }, [loadRoles]);

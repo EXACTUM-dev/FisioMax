@@ -4,7 +4,7 @@ import CloseButton from "../atoms/closeButton";
 
 /**
  * Modal base reutilizable
- * 
+ *
  * Props:
  * - open: boolean
  * - onClose: () => void
@@ -23,7 +23,7 @@ export default function Modal({
   position = "center",
   closeOnOverlayClick = true,
   showCloseButton = true,
-  className = ""
+  className = "",
 }) {
   if (!open) return null;
 
@@ -32,13 +32,13 @@ export default function Modal({
     md: "max-w-md",
     lg: "max-w-lg",
     xl: "max-w-4xl",
-    full: "max-w-full mx-4"
+    full: "max-w-full mx-4",
   };
 
   const positionClasses = {
     center: "items-center justify-center",
     top: "items-start justify-center pt-8",
-    bottom: "items-end justify-center pb-8"
+    bottom: "items-end justify-center pb-8",
   };
 
   const handleOverlayClick = (e) => {
@@ -48,22 +48,22 @@ export default function Modal({
   };
 
   return (
-    <div 
+    <div
       className={`fixed inset-0 z-50 flex ${positionClasses[position]} bg-black/30 transition-opacity`}
       onClick={handleOverlayClick}
     >
-        {/* Contenedor relativo para posicionar el CloseButton */}
+      {/* Contenedor relativo para posicionar el CloseButton */}
       <div className="relative">
         {showCloseButton && (
-          <CloseButton 
+          <CloseButton
             onClose={onClose}
             size="lg"
             position={{ top: "top-1", right: "right-1" }}
           />
         )}
         {/* Contenedor del modal con scroll */}
-      <div 
-        className={`
+        <div
+          className={`
           bg-white rounded-2xl shadow-xl w-full 
           ${sizeClasses[size]} 
           p-10 border border-slate-200 relative
@@ -71,10 +71,10 @@ export default function Modal({
           animate-in fade-in-0 zoom-in-95 duration-200
           ${className}
         `}
-      >
-        {children}
+        >
+          {children}
+        </div>
       </div>
-    </div>
     </div>
   );
 }

@@ -1,10 +1,9 @@
 /**
- * Version: 1.0.0
- * Página de administración de roles y permisos
- * Permite visualizar, editar y eliminar roles del sistema
+ * Version: 1.1.0
+ * Role management page: list, edit via modal
  */
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 
 // Molecules
@@ -15,7 +14,7 @@ import AppHeader from "../molecules/appHeader";
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import ChecklistModal from "../organisms/checklistModal";
 
-// Data y utils
+// Data & utils
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import { useRoles } from "../hooks/useRoles";
 
@@ -23,13 +22,12 @@ export default function RolesPage() {
   const { user, isLoaded: isClerkLoaded } = useUser();
   const [current, setCurrent] = useState("roles");
 
-  // Estado para el modal
+  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [editingPrivileges, setEditingPrivileges] = useState([]);
   const [roleName, setRoleName] = useState("");
 
-  // Usar el hook personalizado
   const {
     roles,
     loading,
@@ -39,27 +37,43 @@ export default function RolesPage() {
     deleteRoleById,
   } = useRoles();
 
-  // Manejadores para el modal
-  const handleEditRole = async (role) => {
+  // Row action handler (optional, for future actions)
+  const handleRowAction = (col, row) => {
+    if (col.key === "editar") {
+      handleEditRole(row);
+    } else if (col.key === "eliminar") {
+      deleteRoleById(row.id);
+    }
+  };
+
+  // Open edit modal and load role data
+  const handleEditRole = async (rowRole) => {
     try {
-      const roleData = await loadRoleById(role.id);
+      const roleData = await loadRoleById(rowRole.id); // {id,name,description,privileges[]}
+      // Map backend privileges -> table rows expected by modal
+      const mappedPrivileges = (roleData.privileges ?? []).map((p) => ({
+        id: p.id,
+        label: p.name, // ChecklistModal expects 'label'
+        checked: !!p.checked,
+      }));
+
       setEditingRole(roleData);
-      setRoleName(roleData.name);
-      setEditingPrivileges(roleData.privileges || []);
+      setRoleName(roleData.name || "");
+      setEditingPrivileges(mappedPrivileges);
       setModalOpen(true);
     } catch (err) {
       console.error("Error cargando rol para edición:", err);
     }
   };
 
-  const handleModalConfirm = async (newRoleName, selectedPrivileges) => {
+  const handleModalConfirm = async (newRoleName, selectedPrivilegeIds) => {
     if (!editingRole?.id) return;
 
     try {
       await updateRoleWithPrivileges(
         editingRole.id,
         newRoleName,
-        selectedPrivileges
+        selectedPrivilegeIds
       );
 
       setModalOpen(false);
@@ -74,7 +88,7 @@ export default function RolesPage() {
     setEditingRole(null);
   };
 
-  // Columnas para tabla de roles con comportamiento de modal
+  // Table columns
   const roleColumns = useMemo(
     () =>
       buildRolePermissionsColumns({
@@ -132,21 +146,21 @@ export default function RolesPage() {
                 columns: roleColumns,
                 rows: roles,
                 searchPlaceholder: "Buscar roles...",
+                onRowAction: handleRowAction,
               },
             ]}
           />
         </div>
 
-        {/* Modal de edición */}
         {editingRole && (
           <ChecklistModal
             open={modalOpen}
-            title={`Editar Rol: ${editingRole?.rol || ""}`}
+            title={`Editar Rol: ${roleName}`}
             roleName={roleName}
             tableData={editingPrivileges}
             confirmLabel="Guardar Cambios"
             onConfirm={handleModalConfirm}
-            onCancel={handleModalCancel}
+            onClose={handleModalCancel}
           />
         )}
       </main>
