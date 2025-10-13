@@ -84,6 +84,29 @@ const config = {
   },
 };
 
+// Validar configuración de base de datos
+console.log('🔍 Validando configuración de base de datos...');
+console.log('📊 Database Config:', {
+  host: config.db.host,
+  port: config.db.port,
+  user: config.db.user,
+  database: config.db.database,
+  passwordSet: !!config.db.password
+});
+
+// Validar que las variables críticas existan
+const requiredDbVars = ['host', 'user', 'password', 'database'];
+const missingVars = requiredDbVars.filter(key => !config.db[key]);
+
+if (missingVars.length > 0) {
+  console.error('❌ ERROR: Faltan las siguientes variables de entorno de base de datos:');
+  missingVars.forEach(varName => {
+    const envVarName = varName === 'database' ? 'DB_DATABASE' : `DB_${varName.toUpperCase()}`;
+    console.error(`   - ${envVarName}`);
+  });
+  throw new Error(`Configuración de base de datos incompleta. Faltan: ${missingVars.join(', ')}`);
+}
+
 // Método toJSON para NO exponer secretos cuando se serializa
 config.toJSON = function () {
   return {
@@ -107,5 +130,23 @@ config.toJSON = function () {
 };
 // Crea y exporta el pool de conexiones
 export const dbPool = mysql.createPool(config.db);
+// Validar configuración de base de datos
+console.log('🔍 Validando configuración de base de datos...');
+console.log('📊 Database Config:', {
+  host: config.db.host,
+  port: config.db.port,
+  user: config.db.user,
+  database: config.db.database,
+  passwordSet: !!config.db.password
+});
+
+if (missingVars.length > 0) {
+  console.error('❌ ERROR: Faltan las siguientes variables de entorno de base de datos:');
+  missingVars.forEach(varName => {
+    const envVarName = varName === 'database' ? 'DB_DATABASE' : `DB_${varName.toUpperCase()}`;
+    console.error(`   - ${envVarName}`);
+  });
+  throw new Error(`Configuración de base de datos incompleta. Faltan: ${missingVars.join(', ')}`);
+}
 
 export default config;

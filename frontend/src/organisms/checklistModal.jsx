@@ -136,7 +136,7 @@ export default function ChecklistModal({
   );
 
   return (
-    <Modal open={open} onClose={onClose} size="xl" className="p-8">
+    <Modal open={open} onClose={onClose} size="xl" className="p-8" requireConfirmation={true}>
       <div className="flex flex-col md:flex-row gap-6 md:gap-12 w-full">
         {/* Left column - Form */}
         <div className="flex-1 min-w-[320px] flex flex-col justify-center">
