@@ -179,7 +179,7 @@ export default function MembershipApplicationPage() {
 
       if (res.ok) {
         setModalType("success");
-        setModalMessage(result.message || "Tu solicitud de membresía ha sido enviada exitosamente. Recibirás una respuesta en las próximas 48 horas.");
+        setModalMessage(result.message || "Tu solicitud de membresía ha sido enviada exitosamente. .");
         setShowModal(true);
         setFormData({
           nombres: "",
