@@ -1,5 +1,5 @@
 /**
- * Version: 0.3.0
+ * Version: 0.3.1
  * App router: protege rutas y monta Hero como página principal
  */
 import React, { useEffect, useMemo, useState } from "react";
@@ -229,6 +229,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/solicitud-membresia" element={<MembershipApplicationPage />} />
       <Route
         path="/video"
         element={
@@ -246,27 +247,10 @@ export default function App() {
         }
       />
       <Route
-        path="/ajustes/perfil/*"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/"
         element={
           <ProtectedRoute>
-            {/* Única llamada al dashboard: Hero */}
             <Hero />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/roles"
-        element={
-          <ProtectedRoute>
-            <RolesPage />
           </ProtectedRoute>
         }
       />

@@ -16,8 +16,10 @@ import joi from 'joi';
 import morgan from 'morgan';
 import compression from 'compression';
 import helmet from 'helmet';
+// import { requireAuth } from './src/middleware/authMiddleware.js';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import membershipApplicationRoutes from './src/routes/membershipApplicationRoutes.js';
+import usuariosRoutes from '../backend/src/routes/usuarios.routes.js'
 
 // Inicializar la aplicación Express
 const app = express();
@@ -97,10 +99,6 @@ app.get("/", (req, res) => {
 // RUTAS PÚBLICAS
 //-------------------------
 
-//-------------------------
-// RUTAS PÚBLICAS
-//-------------------------
-
 /**
  * Ruta pública de login - No requiere autenticación.
  * @name POST /login
@@ -129,7 +127,8 @@ app.post("/login", (req, res) => {
  * @param {object} res - Objeto de respuesta de Express.
  * @returns {Array<Object>} Lista de usuarios en formato JSON.
  */
-app.get("/api/usuarios", requireAuth, (req, res) => {
+// app.get("/api/usuarios", requireAuth, (req, res) => {
+app.get("/api/usuarios", (req, res) => {
   console.log("Usuarios");
   // req.auth contiene la información del usuario autenticado
   const userId = req.auth?.userId;
@@ -144,6 +143,7 @@ app.get("/api/usuarios", requireAuth, (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
 app.post("/login", (req, res) => {
   // Aquí iría la lógica de autenticación con Clerk
   // Por ahora devolvemos una respuesta de ejemplo
@@ -165,7 +165,8 @@ app.post("/login", (req, res) => {
  * @param {object} res - Objeto de respuesta de Express.
  * @returns {Array<Object>} Lista de usuarios en formato JSON.
  */
-app.get("/api/usuarios", requireAuth, (req, res) => {
+//app.get("/api/usuarios", requireAuth, (req, res) => {
+app.get("/api/usuarios", (req, res) => {
   // req.auth contiene la información del usuario autenticado
   const userId = req.auth?.userId;
 
@@ -244,7 +245,9 @@ Enviado desde: ${req.headers.host}
     });
   }
 });
-app.get("/api/admin", requireAuth, (req, res) => {
+
+//app.get("/api/admin", requireAuth, (req, res) => {
+app.get("/api/admin", (req, res) => {
   // Simular verificación de rol admin
   const userRoles = req.auth?.sessionClaims?.metadata?.roles || [];
   if (!userRoles.includes("admin")) {
@@ -293,6 +296,7 @@ app.get("/api/error/async", async (req, res, next) => {
     next(error);
   }
 });
+
 app.get("/api/test", (req, res) => {
   res.json({ message: "Test endpoint" });
 });
@@ -300,16 +304,25 @@ app.get("/api/test", (req, res) => {
 app.post("/api/test", (req, res) => {
   res.json({ message: "POST test endpoint" });
 });
+
 app.post("/api/error/body-parser", (req, res) => {
   // Esta ruta puede fallar si el body no se puede parsear
   res.json({ message: "Body parseado correctamente" });
 });
+
 app.get("/api/sensitive", (req, res) => {
   res.json({
     message: "Datos sensibles",
     data: "información confidencial",
   });
 });
+
+/**
+ * Rutas para solicitudes de membresía SOMEFIPP
+ */
+app.use('/api/membership-applications', membershipApplicationRoutes);
+
+app.use("/usuarios", usuariosRoutes);
 
 // Middleware para manejar errores de parsing de JSON
 app.use((err, req, res, next) => {
@@ -369,16 +382,9 @@ const secureErrorHandler = (err, req, res, next) => {
     timestamp: new Date().toISOString(),
   });
 };
+
 // Aplicar middleware de manejo de errores
 app.use(secureErrorHandler);
-
-// Exportar la aplicación para uso en pruebas
-export { app };
-
-/**
- * Rutas para solicitudes de membresía SOMEFIPP
- */
-app.use('/api/membership-applications', membershipApplicationRoutes);
 
 //-------------------------
 // MIDDLEWARE DE MANEJO DE ERRORES
@@ -406,6 +412,9 @@ app.use((req, res) => {
   });
 });
 
+// Exportar la aplicación para uso en pruebas
+export { app };
+
 //-------------------------
 // INICIAR EL SERVIDOR
 //-------------------------
@@ -413,8 +422,6 @@ app.use((req, res) => {
  * Inicia el servidor y lo pone a escuchar en el puerto especificado.
  * Solo se ejecuta si el archivo se ejecuta directamente (no en pruebas).
  */
-
-app.use("/usuarios", usuariosRoutes);
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
     console.log(

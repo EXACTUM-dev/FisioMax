@@ -1,11 +1,13 @@
 /**
  * @fileoverview Vista para solicitud de membresía a SOMEFIPP
- * @version 1.0.2
+ * @version 1.0.3
  */
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../atoms/button";
 import FormField from "../molecules/form";
 import FileUpload from "../molecules/fileUpload";
+import Modal from "../molecules/modal";
 import { MEMBERSHIP_API } from "../config/api";
 import logo from '../assets/icons/SOMEFIPPlogo.png';
 
@@ -36,6 +38,8 @@ const SelectField = ({ label, name, value, onChange, options, required, error })
 
 
 export default function MembershipApplicationPage() {
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     nombres: "",
     apellidoP: "",
@@ -50,7 +54,6 @@ export default function MembershipApplicationPage() {
     numInterior: "",
     colonia: "",
     codigoPostal: "",
-    calle: "",
     numeroExterior: "",
     numeroInterior: "",
     licenciatura: "",
@@ -69,6 +72,11 @@ export default function MembershipApplicationPage() {
   const [cities, setCities] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Estados para el modal
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("success");
+  const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -169,12 +177,56 @@ export default function MembershipApplicationPage() {
       const res = await fetch(MEMBERSHIP_API.CREATE, { method: 'POST', body: formDataToSend });
       const result = await res.json();
 
-      
+      if (res.ok) {
+        setModalType("success");
+        setModalMessage(result.message || "Tu solicitud de membresía ha sido enviada exitosamente. Recibirás una respuesta en las próximas 48 horas.");
+        setShowModal(true);
+        setFormData({
+          nombres: "",
+          apellidoP: "",
+          apellidoM: "",
+          telefono: "",
+          email: "",
+          pais: "",
+          estado: "",
+          ciudad: "",
+          calle: "",
+          numExterior: "",
+          numInterior: "",
+          colonia: "",
+          codigoPostal: "",
+          numeroExterior: "",
+          numeroInterior: "",
+          licenciatura: "",
+          instagram: "",
+          linkedin: "",
+          facebook: "",
+          paginaWeb: "",
+          titulo: null,
+          cedula: null,
+          constancias: null
+        });
+        setExtraDocs([]);
+      } else {
+        setModalType("error");
+        setModalMessage(result.message || "Hubo un error al enviar tu solicitud. Por favor, intenta nuevamente.");
+        setShowModal(true);
+      }
     } catch (err) {
       console.error("Error enviando solicitud:", err);
-      
+      setModalType("error");
+      setModalMessage("No se pudo conectar con el servidor. Por favor, verifica tu conexión e intenta nuevamente.");
+      setShowModal(true);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    // Si fue exitosa la solicitud, se manda a la vista del login
+    if (modalType === "success") {
+      navigate("/login");
     }
   };
 
@@ -272,7 +324,7 @@ export default function MembershipApplicationPage() {
             </div>
           
             {/* Datos de domicilio */}
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Lugar donde presentas tus servicios prodesionales</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Ubicación de práctica profesional</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField
                 label="País"
@@ -373,6 +425,48 @@ export default function MembershipApplicationPage() {
           </div>
         </form>
       </div>
+
+      {/* Modal de éxito/error */}
+      <Modal 
+        open={showModal} 
+        onClose={handleCloseModal}
+        size="md"
+        position="center"
+      >
+        <div className="text-center">
+          {/* Icono según el tipo */}
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
+            {modalType === "success" ? (
+              <svg className="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="h-16 w-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+          </div>
+
+          {/* Título */}
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            {modalType === "success" ? "¡Solicitud enviada!" : "Error al enviar"}
+          </h3>
+
+          {/* Mensaje */}
+          <p className="text-gray-600 mb-6">
+            {modalMessage}
+          </p>
+
+          {/* Botón */}
+          <Button 
+            variant="brand" 
+            onClick={handleCloseModal}
+            className="w-full"
+          >
+            {modalType === "success" ? "Entendido" : "Intentar nuevamente"}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

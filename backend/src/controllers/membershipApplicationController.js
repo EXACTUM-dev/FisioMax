@@ -8,6 +8,7 @@ import { sendEmail } from '../services/emailServices.js';
 
 // Crear una nueva solicitud de membresía
 export const createMembershipApplication = async (req, res) => {
+  
   try {
     const extraDocs = [];
     Object.keys(req.files || {}).forEach(key => {
