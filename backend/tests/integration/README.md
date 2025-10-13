@@ -53,6 +53,14 @@ tests/integration/
 - Parsing de JSON y URL-encoded
 - Headers de respuesta
 
+### 6. Prueba de Consulta de Roles (`showRole.test.js`)
+- Verifica que los roles se obtienen correctamente desde la base de datos.
+- Valida campos requeridos en los endpoints relacionados con roles.
+- Comprueba la autorización: acceso con y sin token.
+- Comprueba la respuesta de URLs correctas e incorrectas.
+- Ubicación del archivo: `tests/integration/showRole.test.js`
+
+
 ## Comandos Disponibles
 
 ### Ejecutar todas las pruebas de integración

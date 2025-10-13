@@ -1,9 +1,10 @@
 /**
  * @fileoverview Archivo principal del servidor backend de la aplicación.
- * @version 1.0.0
+ * @version 1.0.1
  * @author EXACTUM-dev
  *
  * @description Configura y levanta el servidor Express con middlewares esenciales.
+ * FIX: Movidas las rutas ANTES de los middlewares de error
  */
 
 // Importar el archivo de configuración central
@@ -19,6 +20,7 @@ import helmet from "helmet";
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import usuariosRoutes from "./src/routes/usuarios.routes.js";
+import rolesRoutes from "./src/routes/roles.routes.js";
 
 // Inicializar la aplicación Express
 const app = express();
@@ -98,10 +100,6 @@ app.get("/", (req, res) => {
 // RUTAS PÚBLICAS
 //-------------------------
 
-//-------------------------
-// RUTAS PÚBLICAS
-//-------------------------
-
 /**
  * Ruta pública de login - No requiere autenticación.
  * @name POST /login
@@ -145,45 +143,10 @@ app.get("/api/usuarios", requireAuth, (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-app.post("/login", (req, res) => {
-  // Aquí iría la lógica de autenticación con Clerk
-  // Por ahora devolvemos una respuesta de ejemplo
-  res.json({
-    message: "Endpoint de login - Acceso público",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-//-------------------------
-// RUTAS PROTEGIDAS
-//-------------------------
-
-/**
- * Endpoint protegido para obtener usuarios - Requiere autenticación.
- * @name GET /api/usuarios
- * @function
- * @param {object} req - Objeto de solicitud de Express.
- * @param {object} res - Objeto de respuesta de Express.
- * @returns {Array<Object>} Lista de usuarios en formato JSON.
- */
-app.get("/api/usuarios", requireAuth, (req, res) => {
-  // req.auth contiene la información del usuario autenticado
-  const userId = req.auth?.userId;
-
-  res.json({
-    message: "Lista de usuarios obtenida exitosamente",
-    data: [
-      { id: 1, nombre: "Juan", email: "juan@ejemplo.com" },
-      { id: 2, nombre: "Ana", email: "ana@ejemplo.com" },
-    ],
-    authenticatedUserId: userId,
-    timestamp: new Date().toISOString(),
-  });
-});
 
 /**
  * Endpoint de ejemplo para enviar correos.
- * @name GET /api/usuarios
+ * @name POST /api/contacto
  * @function
  * @returns {Array<Object>} Mensaje de operacion exitosa/error.
  */
@@ -245,6 +208,7 @@ Enviado desde: ${req.headers.host}
     });
   }
 });
+
 app.get("/api/admin", requireAuth, (req, res) => {
   // Simular verificación de rol admin
   const userRoles = req.auth?.sessionClaims?.metadata?.roles || [];
@@ -294,6 +258,7 @@ app.get("/api/error/async", async (req, res, next) => {
     next(error);
   }
 });
+
 app.get("/api/test", (req, res) => {
   res.json({ message: "Test endpoint" });
 });
@@ -301,16 +266,29 @@ app.get("/api/test", (req, res) => {
 app.post("/api/test", (req, res) => {
   res.json({ message: "POST test endpoint" });
 });
+
 app.post("/api/error/body-parser", (req, res) => {
   // Esta ruta puede fallar si el body no se puede parsear
   res.json({ message: "Body parseado correctamente" });
 });
+
 app.get("/api/sensitive", (req, res) => {
   res.json({
     message: "Datos sensibles",
     data: "información confidencial",
   });
 });
+
+//-------------------------
+// RUTAS
+//-------------------------
+app.use("/usuarios", usuariosRoutes);
+app.use("/api/roles", rolesRoutes);
+app.use("/api/privilegios", rolesRoutes);
+
+//-------------------------
+// MIDDLEWARES
+//-------------------------
 
 // Middleware para manejar errores de parsing de JSON
 app.use((err, req, res, next) => {
@@ -370,6 +348,7 @@ const secureErrorHandler = (err, req, res, next) => {
     timestamp: new Date().toISOString(),
   });
 };
+
 // Aplicar middleware de manejo de errores
 app.use(secureErrorHandler);
 
@@ -383,8 +362,6 @@ export { app };
  * Inicia el servidor y lo pone a escuchar en el puerto especificado.
  * Solo se ejecuta si el archivo se ejecuta directamente (no en pruebas).
  */
-
-app.use("/usuarios", usuariosRoutes);
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
     console.log(

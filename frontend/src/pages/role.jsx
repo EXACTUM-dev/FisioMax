@@ -1,10 +1,10 @@
 /**
- * Version: 1.0.0
+ * Version: 1.0.3
  * Página de administración de roles y permisos
- * Permite visualizar, editar y eliminar roles del sistema
+ * FIX: Usa allPrivileges del hook en lugar de extraer de roles
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 
 // Molecules
@@ -18,6 +18,8 @@ import ChecklistModal from "../organisms/checklistModal";
 // Data y utils
 import { getRoles, getPermisos } from "../data/mockApi";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
+import privilagesTable from "../data/tableTemplates/privilagesTableColumns";
+import { useRoles } from "../hooks/useRoles";
 import buildPermisosTableColumns from "../data/tableTemplates/permisosTableColumns";
 
 // Atoms
@@ -59,21 +61,45 @@ export default function RolesPage() {
   }, []);
 
   // Manejadores para el modal
-  const handleEditRole = (role) => {
-    setSelectedRole(role);
-    setModalOpen(true);
+  const handleEditRole = async (role) => {
+    try {
+      const roleData = await loadRoleById(role.id);
+      setEditingRole(roleData);
+      setRoleName(roleData.name || roleData.rol);
+      setEditingPrivileges(roleData.privileges || []);
+      setModalOpen(true);
+    } catch (err) {
+      console.error("Error cargando rol para edición:", err);
+    }
   };
 
-  const handleModalConfirm = () => {
-    // Aquí iría la lógica para guardar cambios al rol
-    console.log("Guardando cambios al rol:", selectedRole);
-    setModalOpen(false);
-    setSelectedRole(null);
+  const handleDeleteRole = async (role) => {
+    if (window.confirm(`¿Estás seguro de eliminar el rol "${role.rol}"?`)) {
+      try {
+        await deleteRoleById(role.id);
+      } catch (err) {
+        console.error("Error eliminando rol:", err);
+        alert("Error al eliminar el rol");
+      }
+    }
+  };
+
+  const handleModalConfirm = async (updatedData) => {
+    try {
+      console.log("Guardar cambios:", updatedData);
+      setModalOpen(false);
+      setEditingRole(null);
+    } catch (err) {
+      console.error("Error guardando cambios:", err);
+      alert("Error al guardar los cambios");
+    }
   };
 
   const handleModalCancel = () => {
     setModalOpen(false);
-    setSelectedRole(null);
+    setEditingRole(null);
+    setEditingPrivileges([]);
+    setRoleName("");
   };
 
   // Columnas para tabla de roles con comportamiento de modal
@@ -81,8 +107,16 @@ export default function RolesPage() {
     () =>
       buildRolePermissionsColumns({
         onEdit: handleEditRole,
-        onDelete: (row) =>
-          setRoleRows((prev) => prev.filter((r) => r.id !== row.id)),
+        onDelete: handleDeleteRole,
+      }),
+    []
+  );
+
+  const permissionsColumns = useMemo(
+    () =>
+      privilagesTable({
+        onEdit: handleEditRole,
+        onDelete: handleDeleteRole,
       }),
     []
   );
@@ -98,7 +132,23 @@ export default function RolesPage() {
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
+          <p className="mt-4 text-gray-600">Cargando roles y privilegios...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -106,13 +156,9 @@ export default function RolesPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      {/* Header refactorizado como molécula; responde a sidebar y deja margen inferior */}
       <AppHeader user={user} />
-
-      {/* Sidebar fija */}
       <Sidebar current={current} onNavigate={setCurrent} />
 
-      {/* Main con margen que responde a la sidebar */}
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-gray-900">
