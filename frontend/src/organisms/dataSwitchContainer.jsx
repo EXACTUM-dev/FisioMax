@@ -10,7 +10,7 @@ import TabsNav from "../molecules/tabsNav";
 import SearchBar from "../molecules/searchBar";
 
 export default function DataSwitchContainer({
-  views = [], // [{ key, label, type: 'table'|'custom', columns?, rows?, render?, searchPlaceholder?, searchEnabled?, emptyMessage? }]
+  views = [], // [{ key, label, type: 'table'|'custom', columns?, rows?, render?, searchPlaceholder?, searchEnabled?, emptyMessage?, actions? }]
   initialKey, // key of the initial active view
   className = "",
 }) {
@@ -73,15 +73,21 @@ export default function DataSwitchContainer({
         )}
       </div>
 
-      {/* Body: rounded container */}
+      {/* Body: container without background */}
       <div
         id={`panel-${activeKey}`}
         role="tabpanel"
         aria-labelledby={`tab-${activeKey}`}
-        className="rounded-[18px] border border-slate-200 bg-white p-4 md:p-6"
+        className=""
       >
         {activeView.type === "table" ? (
           <>
+            {/* Actions buttons */}
+            {activeView.actions && (
+              <div className="mb-6">
+                {activeView.actions}
+              </div>
+            )}
             <DataTable 
               columns={activeView.columns ?? []} 
               data={filteredRows}

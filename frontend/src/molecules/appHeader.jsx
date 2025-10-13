@@ -40,20 +40,6 @@ export default function AppHeader({ user }) {
               Sociedad Mexicana de Fisioterapeutas de Piso Pélvico
             </p>
           </div>
-
-          {/* Derecha: Botones de acción */}
-          <div className="flex gap-2 justify-end">
-            <Button 
-              size="sm" 
-              label="Registrar usuario" 
-              onClick={() => navigate('/register')}
-            />
-            <Button 
-              size="sm" 
-              label="Roles" 
-              onClick={() => navigate('/roles')}
-            />
-          </div>
         </div>
       </div>
     </header>

@@ -13,6 +13,7 @@
 // Import necessary libraries and components
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 
 // Import custom components and utilities
 import Button from "../atoms/button";
@@ -21,6 +22,7 @@ import { Title2 } from "../atoms/typography";
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
+import ActionButtons from "../molecules/actionButtons";
 
 // Organisms
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
@@ -45,6 +47,7 @@ import { fetchWithClerk } from "../utils/api";
 export default function Panel() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
+  const navigate = useNavigate();
   const [current, setCurrent] = useState("panel");
 
   // Estados para datos mostrados en la UI
@@ -187,6 +190,12 @@ export default function Panel() {
               columns: userColumns,
               rows: userRows,
               searchPlaceholder: "Buscar Solicitudes...",
+              actions: (
+                <ActionButtons 
+                  onRegisterUser={() => navigate("/register")}
+                  onRoles={() => navigate("/roles")}
+                />
+              )
             },
             {
               key: "users",
@@ -195,6 +204,12 @@ export default function Panel() {
               columns: usuariosTableColumns,
               rows: userRows,
               searchPlaceholder: "Buscar Usuarios...",
+              actions: (
+                <ActionButtons 
+                  onRegisterUser={() => navigate("/register")}
+                  onRoles={() => navigate("/roles")}
+                />
+              )
             },
           ]}
         />

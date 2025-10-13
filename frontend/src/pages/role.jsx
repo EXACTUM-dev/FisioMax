@@ -4,12 +4,14 @@
  * FIX: Usa allPrivileges del hook en lugar de extraer de roles
  */
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
+import ActionButtons from "../molecules/actionButtons";
 
 // Organisms
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
@@ -30,19 +32,27 @@ import DataTable from "../organisms/dataTable";
 
 export default function RolesPage() {
   const { user, isLoaded } = useUser();
+  const navigate = useNavigate();
   const [current, setCurrent] = useState("roles"); // Marcamos "roles" como activo en sidebar
   const [roleRows, setRoleRows] = useState([]);
   const [permisoRows, setPermisoRows] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Estado para el modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
+  const [editingRole, setEditingRole] = useState(null);
+  const [roleName, setRoleName] = useState("");
+  const [editingPrivileges, setEditingPrivileges] = useState([]);
 
   // Cargar datos de roles y permisos
   useEffect(() => {
     let alive = true;
     async function fetchData() {
       try {
+        setLoading(true);
+        setError(null);
         const [roles, permisos] = await Promise.all([
           getRoles(),
           getPermisos(),
@@ -52,6 +62,9 @@ export default function RolesPage() {
         setPermisoRows(permisos);
       } catch (err) {
         console.error("Error al cargar datos:", err);
+        setError("Error al cargar los datos");
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
@@ -63,10 +76,11 @@ export default function RolesPage() {
   // Manejadores para el modal
   const handleEditRole = async (role) => {
     try {
-      const roleData = await loadRoleById(role.id);
-      setEditingRole(roleData);
-      setRoleName(roleData.name || roleData.rol);
-      setEditingPrivileges(roleData.privileges || []);
+      // Por ahora usamos los datos del rol directamente
+      setEditingRole(role);
+      setSelectedRole(role);
+      setRoleName(role.name || role.rol);
+      setEditingPrivileges(role.privileges || []);
       setModalOpen(true);
     } catch (err) {
       console.error("Error cargando rol para edición:", err);
@@ -76,7 +90,9 @@ export default function RolesPage() {
   const handleDeleteRole = async (role) => {
     if (window.confirm(`¿Estás seguro de eliminar el rol "${role.rol}"?`)) {
       try {
-        await deleteRoleById(role.id);
+        // Por ahora solo mostramos un mensaje
+        console.log("Eliminar rol:", role.id);
+        alert("Función de eliminar no implementada aún");
       } catch (err) {
         console.error("Error eliminando rol:", err);
         alert("Error al eliminar el rol");
@@ -127,7 +143,7 @@ export default function RolesPage() {
     []
   );
 
-  if (!isLoaded) {
+  if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
@@ -167,8 +183,15 @@ export default function RolesPage() {
 
           {/* Sección de Roles */}
           <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Roles</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Roles</h2>
+            
+            <ActionButtons 
+              onRegisterUser={() => navigate("/register")}
+              onRoles={() => console.log("Ya estás en roles")}
+              showRegisterUser={true}
+              showRoles={false}
+            />
+            <div className="flex justify-end mb-6">
               <Button 
                 size="sm" 
                 label="Crear nuevo rol"

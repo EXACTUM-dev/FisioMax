@@ -10,12 +10,7 @@ import {
   updateRolePrivileges,
   getAllRolesWithPrivileges, 
   getAllPrivileges 
-} from "../models/role.model.js";
-import {
-  getRolePrivileges,
-  getAllPrivileges,
-} from "../models/privilege.model.js";
-
+} from "../models/roles.model.js";
 
 /**
  * Get all roles with their privileges for display

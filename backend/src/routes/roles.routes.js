@@ -11,7 +11,7 @@ import {
   getAllPrivilegesController,
 } from "../controllers/roles.controller.js";
 import { requireAuth } from "../middlewares/clerkAuth.js";
-import { requireRole } from "../middlewares/requireRole.js";
+import { requireRole } from "../middlewares/requireRoles.js";
 
 const router = express.Router();
 
