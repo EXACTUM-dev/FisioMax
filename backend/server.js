@@ -18,7 +18,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 // import { requireAuth } from './src/middleware/authMiddleware.js';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import membershipApplicationRoutes from './src/routes/membershipApplicationRoutes.js';
+import membershipApplicationRoutes from './src/routes/membershipApplication.routes.js';
 import usuariosRoutes from '../backend/src/routes/usuarios.routes.js'
 
 // Inicializar la aplicación Express

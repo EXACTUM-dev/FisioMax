@@ -1,18 +1,21 @@
+/**
+ * version 2.0.0
+ * Model to handle the membership information and modify the database
+ * Includes the creation of the application, save documents in S3 and insert new documents if it's necessary
+ */
+
 import crypto from 'crypto';
 import S3Service from '../services/s3Service.js';
 import db from '../../database/db.js';
 
+
 class MembershipApplication {
   constructor(data) {
-    // Validar campos obligatorios
     if (!data.nombres || data.nombres.trim() === '') {
       throw new Error('El nombre es obligatorio');
     }
     if (!data.apellidoP || data.apellidoP.trim() === '') {
       throw new Error('El apellido paterno es obligatorio');
-    }
-    if (!data.apellidoM || data.apellidoM.trim() === '') {
-      throw new Error('El apellido materno es obligatorio');
     }
     if (!data.telefono || data.telefono.trim() === '') {
       throw new Error('El teléfono es obligatorio');
@@ -49,7 +52,10 @@ class MembershipApplication {
     this.id = null;
   }
 
-  // Guardar solicitud
+  /**
+   * Save new application to the database and upload documents in S3
+   * @returns {Promise<object>} - Message of success or fail
+   */
   async save() {
     const conn = await db.getConnection();
     try {
@@ -57,7 +63,6 @@ class MembershipApplication {
 
       const userId = crypto.randomUUID().replace(/-/g, '');
 
-      // Subir archivos a S3
       const cedulaUrl = this.documentos.cedula
         ? await S3Service.uploadFile(this.documentos.cedula, 'uploads/documents')
         : null;
@@ -70,44 +75,20 @@ class MembershipApplication {
         ? await S3Service.uploadFile(this.documentos.constancias, 'uploads/documents')
         : null;
 
-      // Guardar información
       await conn.query(
         `INSERT INTO Usuario 
         (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, pais, estado, ciudad, colonia, codigoPostal, calle, numeroExterior, numeroInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
-        [
-          userId,
-          this.nombres,
-          this.apellidoP,
-          this.apellidoM,
-          this.email,
-          this.telefono,
-          this.pais,
-          this.estado,
-          this.ciudad,
-          this.colonia,
-          this.codigoPostal,
-          this.calle,
-          this.numeroExterior,
-          this.numeroInterior,
-          this.licenciatura,
-          this.instagram,
-          this.linkedin,
-          this.facebook,
-          this.paginaWeb,
-          cedulaUrl,
-          tituloUrl,
-          constanciasUrl
+        [ 
+          userId, this.nombres, this.apellidoP, this.apellidoM, this.email, this.telefono, this.pais, this.estado, this.ciudad, this.colonia, this.codigoPostal, this.calle, this.numeroExterior, 
+          this.numeroInterior, this.licenciatura, this.instagram, this.linkedin, this.facebook, this.paginaWeb, cedulaUrl, tituloUrl, constanciasUrl
         ]
       );
 
-
-      // Subir y guardar documentos adicionales
       if (this.documentos.extra && this.documentos.extra.length > 0) {
         for (const extraDoc of this.documentos.extra) {
           const extraDocUrl = await S3Service.uploadFile(extraDoc, 'uploads/documents');
           
-          // Guardar URL del documento adicional en tabla separada
           await conn.query(
             `INSERT INTO DocumentosAdicionales 
             (IDUsuario, nombreArchivo, urlArchivo, createdAt) 

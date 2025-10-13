@@ -1,6 +1,7 @@
 /**
- * @fileoverview Vista para solicitud de membresía a SOMEFIPP
- * @version 1.0.3
+ * Version 1.0.3
+ * View to  the membership Application to be part of SOMEFIPP
+ * Includes verification of required fields, modal states, format verifications for some fields, adding extra documents.
  */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +12,7 @@ import Modal from "../molecules/modal";
 import { MEMBERSHIP_API } from "../config/api";
 import logo from '../assets/icons/SOMEFIPPlogo.png';
 
-// Componente reutilizable para selects
+// Dropdown component
 const SelectField = ({ label, name, value, onChange, options, required, error }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -36,7 +37,7 @@ const SelectField = ({ label, name, value, onChange, options, required, error })
   </div>
 );
 
-
+// Principal function to show application's view
 export default function MembershipApplicationPage() {
   const navigate = useNavigate();
   
@@ -73,7 +74,6 @@ export default function MembershipApplicationPage() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Estados para el modal
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
@@ -162,6 +162,7 @@ export default function MembershipApplicationPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Submit application
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -179,33 +180,8 @@ export default function MembershipApplicationPage() {
 
       if (res.ok) {
         setModalType("success");
-        setModalMessage(result.message || "Tu solicitud de membresía ha sido enviada exitosamente. .");
+        setModalMessage(result.message || "Tu solicitud de membresía ha sido enviada exitosamente. Recibirá un mensaje por correo o WhatsApp.");
         setShowModal(true);
-        setFormData({
-          nombres: "",
-          apellidoP: "",
-          apellidoM: "",
-          telefono: "",
-          email: "",
-          pais: "",
-          estado: "",
-          ciudad: "",
-          calle: "",
-          numExterior: "",
-          numInterior: "",
-          colonia: "",
-          codigoPostal: "",
-          numeroExterior: "",
-          numeroInterior: "",
-          licenciatura: "",
-          instagram: "",
-          linkedin: "",
-          facebook: "",
-          paginaWeb: "",
-          titulo: null,
-          cedula: null,
-          constancias: null
-        });
         setExtraDocs([]);
       } else {
         setModalType("error");
@@ -222,20 +198,22 @@ export default function MembershipApplicationPage() {
     }
   };
 
+  // Success modal
   const handleCloseModal = () => {
     setShowModal(false);
-    // Si fue exitosa la solicitud, se manda a la vista del login
     if (modalType === "success") {
       navigate("/login");
     }
   };
 
+  // Add an extra document
   const handleAddDocuments = () => setExtraDocs(prev => [...prev, { id: Date.now(), file: null }]);
   const handleExtraFileChange = (id, e) => {
     const file = e.target.files[0] || null;
     setExtraDocs(prev => prev.map(doc => doc.id === id ? { ...doc, file } : doc));
   };
 
+  // View design
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="border-gray-200 py-4">
@@ -257,158 +235,72 @@ export default function MembershipApplicationPage() {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Mi perfil</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField 
-                label="Nombre(s)" 
-                name="nombres" 
-                required 
-                value={formData.nombres} 
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu(s) nombre(s)" 
-                error={errors.nombres} />
+                label="Nombre(s)" name="nombres" required value={formData.nombres} onChange={handleInputChange} placeholder="Ingresa tu(s) nombre(s)" error={errors.nombres}   
+              />
               <FormField 
-                label="Apellido Paterno" 
-                name="apellidoP" 
-                required 
-                value={formData.apellidoP} 
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu apellido paterno" 
-                error={errors.apellidoP} />
+                label="Apellido Paterno" name="apellidoP" required value={formData.apellidoP} onChange={handleInputChange} placeholder="Ingresa tu apellido paterno" error={errors.apellidoP} 
+              />
               <FormField 
-                label="Apellido Materno" 
-                name="apellidoM" 
-                required 
-                value={formData.apellidoM} 
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu apellido materno" 
-                error={errors.apellidoM} />
+                label="Apellido Materno" name="apellidoM" required value={formData.apellidoM} onChange={handleInputChange} placeholder="Ingresa tu apellido materno" error={errors.apellidoM} 
+              />
               <FormField 
-                label="Correo electrónico" 
-                name="email" 
-                type="email" 
-                required 
-                value={formData.email} 
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu email" 
-                error={errors.email} />
+                label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email}
+              />
               <FormField 
-                label="Teléfono (WhatsApp)" 
-                name="telefono" 
-                required
-                value={formData.telefono} 
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu teléfono" 
-                error={errors.telefono}/>
+                label="Teléfono (WhatsApp)" name="telefono" required value={formData.telefono} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefono}
+              />
               <FormField 
-                label="Facebook" 
-                name="facebook"
-                value={formData.facebook}
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu cuenta de Facebook"/>
+                label="Facebook" name="facebook" value={formData.facebook} onChange={handleInputChange} placeholder="Ingresa tu cuenta de Facebook"
+              />
               <FormField 
-                label="Instagram" 
-                name="instagram" 
-                value={formData.instagram} 
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu cuenta de Instagram"/>
+                label="Instagram" name="instagram" value={formData.instagram} onChange={handleInputChange} placeholder="Ingresa tu cuenta de Instagram"
+              />
               <FormField 
-                label="LinkedIn" 
-                name="linkedin" 
-                value={formData.linkedin} 
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu cuenta de LinkedIn"/>
+                label="LinkedIn" name="linkedin" value={formData.linkedin} onChange={handleInputChange} placeholder="Ingresa tu cuenta de LinkedIn"
+              />
               <FormField 
-                label="Página web" 
-                name="paginaWeb" 
-                value={formData.paginaWeb} 
-                onChange={handleInputChange} 
-                placeholder="Ingresa tu página web"/>
+                label="Página web" name="paginaWeb" value={formData.paginaWeb} onChange={handleInputChange} placeholder="Ingresa tu página web"
+              />
             </div>
           
             {/* Datos de domicilio */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Ubicación de práctica profesional</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField
-                label="País"
-                name="pais"
-                value={formData.pais}
-                onChange={(e) => handlePaisChange(e.target.value)}
-                options={countries}
-                error={errors.pais}
+                label="País" name="pais" value={formData.pais} onChange={(e) => handlePaisChange(e.target.value)} options={countries} error={errors.pais}
               />
-
               <SelectField
-                label="Estado / Provincia"
-                name="estado"
-                value={formData.estado}
-                onChange={(e) => handleEstadoChange(e.target.value)}
-                options={states}
-                error={errors.estado}
+                label="Estado / Provincia" name="estado" value={formData.estado} onChange={(e) => handleEstadoChange(e.target.value)} options={states} error={errors.estado}
               />
-
               <SelectField
-                label="Ciudad"
-                name="ciudad"
-                value={formData.ciudad}
-                onChange={handleInputChange}
-                options={cities}
-                error={errors.ciudad}
+                label="Ciudad" name="ciudad" value={formData.ciudad} onChange={handleInputChange} options={cities} error={errors.ciudad}
               />
-
               <FormField
-                label="Colonia"
-                name="colonia"
-                value={formData.colonia}
-                onChange={handleInputChange}
-                placeholder="Ingresa tu colonia"
+                label="Colonia" name="colonia" value={formData.colonia} onChange={handleInputChange} placeholder="Ingresa tu colonia"
               />
-              
-
               <FormField
-                label="Código Postal"
-                name="codigoPostal"
-                value={formData.codigoPostal}
-                onChange={handleInputChange}
-                placeholder="Ingresa tu código postal"
+                label="Código Postal" name="codigoPostal" value={formData.codigoPostal} onChange={handleInputChange} placeholder="Ingresa tu código postal"
               />
-
               <FormField
-                label="Calle"
-                name="calle"
-                value={formData.calle}
-                onChange={handleInputChange}
-                placeholder="Ingresa tu calle"
+                label="Calle" name="calle" value={formData.calle} onChange={handleInputChange} placeholder="Ingresa tu calle"
               />
-
               <FormField
-                label="Número exterior"
-                name="numeroExterior"
-                value={formData.numeroExterior}
-                onChange={handleInputChange}
-                placeholder="Ingresa tu número exterior"
+                label="Número exterior" name="numeroExterior" value={formData.numeroExterior} onChange={handleInputChange} placeholder="Ingresa tu número exterior"
               />
-
               <FormField
-                label="Número interior"
-                name="numeroInterior"
-                value={formData.numeroInterior}
-                onChange={handleInputChange}
-                placeholder="Ingresa tu número interior"
+                label="Número interior" name="numeroInterior" value={formData.numeroInterior} onChange={handleInputChange} placeholder="Ingresa tu número interior"
               />
             </div>
 
           {/* Licenciatura */}
-            <FormField 
-              label="Licenciatura" 
-              name="licenciatura" 
-              value={formData.licenciatura} 
-              onChange={handleInputChange} 
-              placeholder="Ingresa tu licenciatura" />
+            <FormField label="Licenciatura" name="licenciatura" value={formData.licenciatura} onChange={handleInputChange} placeholder="Ingresa tu licenciatura" />
 
           {/* Documentación */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-6">Documentación</h3>
             <div className="space-y-6">
               <FileUpload name="titulo" label="Título/Kardex" value={formData.titulo} onChange={handleFileChange} error={errors.titulo} />
-              <FileUpload name="cedula" label="Cédula" required value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
-              <FileUpload name="constancias" label="Constancias pélvicas" value={formData.constancias} onChange={handleFileChange} />
+              <FileUpload name="cedula" label="Cédula profesional" required value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
+              <FileUpload name="constancias" label="Constancias pélvicas" value={formData.constancias} onChange={handleFileChange} error={errors.constancias}/>
               {extraDocs.map((doc, i) => (
                 <div key={doc.id} className="relative">
                   <FileUpload name={`extra-${doc.id}`} label={`Documento adicional ${i+1}`} value={doc.file} onChange={(e) => handleExtraFileChange(doc.id, e)} />
@@ -426,15 +318,8 @@ export default function MembershipApplicationPage() {
         </form>
       </div>
 
-      {/* Modal de éxito/error */}
-      <Modal 
-        open={showModal} 
-        onClose={handleCloseModal}
-        size="md"
-        position="center"
-      >
+      <Modal open={showModal} onClose={handleCloseModal} size="md" position="center">
         <div className="text-center">
-          {/* Icono según el tipo */}
           <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
             {modalType === "success" ? (
               <svg className="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -446,23 +331,13 @@ export default function MembershipApplicationPage() {
               </svg>
             )}
           </div>
-
-          {/* Título */}
           <h3 className="text-2xl font-bold text-gray-900 mb-2">
             {modalType === "success" ? "¡Solicitud enviada!" : "Error al enviar"}
           </h3>
-
-          {/* Mensaje */}
           <p className="text-gray-600 mb-6">
             {modalMessage}
           </p>
-
-          {/* Botón */}
-          <Button 
-            variant="brand" 
-            onClick={handleCloseModal}
-            className="w-full"
-          >
+          <Button variant="brand" onClick={handleCloseModal}  className="w-full">
             {modalType === "success" ? "Entendido" : "Intentar nuevamente"}
           </Button>
         </div>

@@ -1,10 +1,9 @@
 /**
- * @fileoverview Configuración de URLs del backend
- * @version 1.0.0
- * @author EXACTUM-dev
+ * version 1.0.1
+ * Configuration to backend's URLs
+ * Includes helper to build the complete URLs
  */
 
-// Configuración de URLs del backend
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
   ENDPOINTS: {
@@ -14,12 +13,16 @@ export const API_CONFIG = {
   }
 };
 
-// Función helper para construir URLs completas
+/**
+ * Helper function to build complete URLs
+ */
 export const buildApiUrl = (endpoint) => {
   return `${API_CONFIG.BASE_URL}${endpoint}`;
 };
 
-// URLs específicas para el formulario de membresía
+/**
+ * Espacific URLs to membership application
+ */
 export const MEMBERSHIP_API = {
   CREATE: buildApiUrl(API_CONFIG.ENDPOINTS.MEMBERSHIP_APPLICATIONS),
   GET_ALL: buildApiUrl(API_CONFIG.ENDPOINTS.MEMBERSHIP_APPLICATIONS),

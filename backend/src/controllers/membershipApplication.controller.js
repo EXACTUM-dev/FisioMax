@@ -1,12 +1,18 @@
 /**
- * version 1.2.0
- * Controlador para solicitudes de membresía SOMEFIPP
+ * version 1.2.1
+ * Controller to handle the membership information request
+ * Includes the creation of the application and the sending of an email about a new request to the admin
  */
 
 import MembershipApplication from '../models/membershipApplication.model.js';
 import { sendEmail } from '../services/emailServices.js';
+import S3Service from '../services/s3Service.js';
 
-// Crear una nueva solicitud de membresía
+/**
+ * Create a new membership application and send an email to admin using SES
+ * @param {object} req - Express request object 
+ * @param {object} res - Express response object 
+ */
 export const createMembershipApplication = async (req, res) => {
   
   try {
@@ -16,6 +22,18 @@ export const createMembershipApplication = async (req, res) => {
         extraDocs.push(req.files[key][0]);
       }
     });
+
+    const cedulaUrl = req.files?.cedula?.[0]
+      ? await S3Service.uploadFile(req.files.cedula[0], 'cedulas')
+      : null;
+
+    const tituloUrl = req.files?.titulo?.[0]
+      ? await S3Service.uploadFile(req.files.titulo[0], 'titulos')
+      : null;
+
+    const constanciasUrl = req.files?.constancias?.[0]
+      ? await S3Service.uploadFile(req.files.constancias[0], 'constancias')
+      : null;
 
     const applicationData = {
       nombres: req.body.nombres,
@@ -37,9 +55,9 @@ export const createMembershipApplication = async (req, res) => {
       facebook: req.body.facebook,
       paginaWeb: req.body.paginaWeb,
       documentos: {
-        titulo: req.files?.titulo?.[0] || null,
-        cedula: req.files?.cedula?.[0] || null,
-        constancias: req.files?.constancias?.[0] || null,
+        titulo: tituloUrl,
+        cedula: cedulaUrl,
+        constancias: constanciasUrl,
         extra: extraDocs
       },
       calle: req.body.calle,
@@ -47,12 +65,10 @@ export const createMembershipApplication = async (req, res) => {
       numinterior: req.body.numinterior
     };
 
-    // Guardar solicitud en DB
     const application = new MembershipApplication(applicationData);
     await application.save();
 
-    // Enviar correo a administradores (SES)
-    const adminEmails = ["doculili08@gmail.com"]; // Correo de admin
+    const adminEmails = ["doculili08@gmail.com"];
     adminEmails.forEach(async (email) => {
       try {
         await sendEmail({
@@ -70,10 +86,9 @@ export const createMembershipApplication = async (req, res) => {
       }
     });
 
-    // Respuesta al cliente
     res.status(201).json({
       success: true,
-      message: 'Solicitud creada correctamente y correos enviados a admins',
+      message: 'Solicitud creada, recibirá un correo o mensaje por WhatsApp por parte de SOMEFIPP',
       data: { IDUsuario: application.id }
     });
 

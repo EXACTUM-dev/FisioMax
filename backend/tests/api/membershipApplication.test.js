@@ -5,7 +5,7 @@
  */
 import request from 'supertest';
 import express from 'express';
-import membershipApplicationRoutes from '../src/routes/membershipApplicationRoutes.js';
+import membershipApplicationRoutes from '../src/routes/membershipApplication.routes.js';
 
 const app = express();
 app.use(express.json());

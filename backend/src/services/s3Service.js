@@ -1,3 +1,9 @@
+/**
+ * version 1.0.0
+ * Upload documents using Amazon S3
+ * Inlcudes basic S3 configuration
+ */
+
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import path from 'path';
@@ -19,13 +25,12 @@ class S3Service {
     };
 
     try {
-      // Subir archivo
       await s3.send(new PutObjectCommand(params));
 
       const url = await getSignedUrl(
         s3,
         new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }),
-        { expiresIn: 3600 } // válida por 1 hora
+        { expiresIn: 3600 }
       );
 
       return url;

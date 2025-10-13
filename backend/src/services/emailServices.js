@@ -1,23 +1,27 @@
 /**
- * @fileoverview Servicio de correo con Amazon SES
- * @version 1.0.0
- * @author EXACTUM-dev
+ * version 1.0.0
+ * Email service using Amazon SES
+ * Inlcudes basic SES configuration
  */
 
 import nodemailer from "nodemailer";
 
-// Configuración de SES
 const transporter = nodemailer.createTransport({
   host: process.env.SES_SMTP_HOST,
   port: parseInt(process.env.SES_SMTP_PORT),
   secure: false,
   auth: {
-    user: process.env.SES_SMTP_USER,     // SMTP username de SES
-    pass: process.env.SES_SMTP_PASSWORD     // SMTP password de SES
+    user: process.env.SES_SMTP_USER,
+    pass: process.env.SES_SMTP_PASSWORD
   }
 });
 
-
+/**
+ * Send an email to admin
+ * @param {object} to - admin email 
+ * @param {object} subject - Propouse of the email
+ * @param {object} html - templete of the email 
+ */
 export const sendEmail = async ({ to, subject, html }) => {
   try {
     const info = await transporter.sendMail({
