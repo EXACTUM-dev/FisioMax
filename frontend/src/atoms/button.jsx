@@ -69,7 +69,7 @@ export default function Button({
 
   const base =
     "inline-flex items-center justify-center font-semibold " +
-    "shadow-sm transition-[transform,filter] " +
+    "shadow-sm transition-[transform,filter] cursor-pointer " +
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 " +
     "active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed";
 

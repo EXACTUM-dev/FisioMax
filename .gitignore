@@ -140,3 +140,7 @@ vite.config.ts.timestamp-*
 
 # Base de datos local
 backend/src/config/db.js
+
+
+#package-lock.json
+package-lock.json

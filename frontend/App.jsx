@@ -1,7 +1,6 @@
 /**
- * Version: 0.2.2
- * Main component of the FisioMax application with Clerk authentication
- * Handles navigation, data loading, authentication and rendering of main components
+ * Version: 0.3.0
+ * App router: protege rutas y monta Hero como página principal
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
@@ -15,13 +14,16 @@ import Button from "./src/atoms/button";
 import DataSwitchContainer from "./src/organisms/dataSwitchContainer";
 import buildUserActionsColumns from "./src/data/tableTemplates/userActionsColumns";
 import buildRolePermissionsColumns from "./src/data/tableTemplates/rolePermissionsColumns";
+
+// Pages
+import Hero from "./src/pages/hero";
 import LoginPage from "./src/pages/login";
 import RegisterPage from "./src/pages/register";
 import VideoPage from "./src/pages/video";
 import EmailPage from "./src/pages/email";
 import MembershipApplicationPage from "./src/pages/membershipApplication";
 
-// Componente para rutas protegidas
+// Rutas protegidas con Clerk (solo login usa Clerk)
 function ProtectedRoute({ children }) {
   return (
     <>
@@ -227,14 +229,44 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/video" element={<VideoPage />} />
-      <Route path="/email" element={<EmailPage />} />
-      <Route path="/solicitud-membresia" element={<MembershipApplicationPage />} />
+      <Route
+        path="/video"
+        element={
+          <ProtectedRoute>
+            <VideoPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/email"
+        element={
+          <ProtectedRoute>
+            <EmailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ajustes/perfil/*"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            {/* Única llamada al dashboard: Hero */}
+            <Hero />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/roles"
+        element={
+          <ProtectedRoute>
+            <RolesPage />
           </ProtectedRoute>
         }
       />

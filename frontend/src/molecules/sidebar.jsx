@@ -1,9 +1,13 @@
 /**
- * Version: 0.1.0
- * Responsive lateral navigation component
- * Includes desktop version (expandable on hover) and mobile (bottom bar)
+ * Version: 0.2.0
+ * Responsive lateral navigation with self-contained routing + Clerk logout
+ * Desktop (expandable on hover) + Mobile (bottom bar)
  */
 import React, { useMemo, useState, useEffect } from "react";
+import { useClerk } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
+// Confirmation modal for logout
+import ConfirmModal from "../molecules/confirmationModal";
 
 // Icon resources
 import logoSrc from "../assets/icons/SOMEFIPPlogo.png";
@@ -14,11 +18,9 @@ import profileSrc from "../assets/icons/circle-user-round.png";
 
 // Main sidebar container component
 function SidebarContainer({ open, setOpen, children, className = "" }) {
-  // Width configuration: closed 80px, open 224px
   const width = open ? 224 : 80;
 
   useEffect(() => {
-    // Updates CSS variable for main content margin
     requestAnimationFrame(() => {
       document.documentElement.style.setProperty("--sb-w", `${width}px`);
     });
@@ -40,7 +42,6 @@ function SidebarContainer({ open, setOpen, children, className = "" }) {
 
 // Internal sidebar body component
 function SidebarBody({ open, children, className = "" }) {
-  // Dynamic horizontal padding based on expansion state
   const padX = open ? "px-3" : "px-0";
   return (
     <div
@@ -59,7 +60,7 @@ function SidebarLink({ icon, label, open, active, onClick }) {
       onClick={onClick}
       title={!open ? label : undefined}
       aria-current={active ? "page" : undefined}
-      className="group relative flex h-12 w-full items-center rounded-md hover:bg-slate-100 transition-colors"
+      className="group relative flex h-12 w-full items-center rounded-md hover:bg-slate-200 hover:shadow-sm transition-all duration-200 hover:scale-[1.02]"
     >
       {/* Fixed and centered icon (80px column) */}
       <div className="absolute left-0 w-[80px] h-full flex justify-center items-center">
@@ -92,6 +93,9 @@ function SidebarLink({ icon, label, open, active, onClick }) {
 export default function Sidebar({ current = "home", onNavigate }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(current);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { signOut } = useClerk();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setActive(current);
@@ -100,16 +104,41 @@ export default function Sidebar({ current = "home", onNavigate }) {
   // Navigation links configuration
   const links = useMemo(
     () => [
-      { key: "home", label: "Home", icon: houseSrc },
-      { key: "bolt", label: "Management", icon: boltSrc },
-      { key: "profile", label: "Profile", icon: profileSrc },
-      { key: "logout", label: "Logout", icon: logoutSrc },
+      { key: "home", label: "Inicio", icon: houseSrc },
+      { key: "bolt", label: "Gestión", icon: boltSrc },
+      { key: "profile", label: "Perfil", icon: profileSrc },
+      { key: "logout", label: "Cerrar sesión", icon: logoutSrc },
     ],
     []
   );
 
+  // Map keys to routes handled here
+  const routeMap = useMemo(
+    () => ({
+      home: "/",
+      profile: "/ajustes/perfil",
+      // bolt: "/gestion", // Descomenta si tienes esta ruta
+    }),
+    []
+  );
+
   const handleNavigate = (key) => {
+    if (key === "logout") {
+      // Logout con redirección a /login
+      setShowLogoutModal(true)
+      //signOut({ redirectUrl: "/login" });
+      return;
+    }
+
     setActive(key);
+
+    // Navegación propia de la sidebar
+    const path = routeMap[key];
+    if (path) {
+      navigate(path, { replace: key === "home" }); // replace para home si deseas
+    }
+
+    // Callback opcional (por compatibilidad)
     onNavigate?.(key);
   };
 
@@ -220,6 +249,18 @@ export default function Sidebar({ current = "home", onNavigate }) {
           })}
         </ul>
       </nav>
+      <ConfirmModal
+        open={showLogoutModal}
+        title="¿Cerrar sesión?"
+        message="¿Estás seguro que deseas cerrar sesión?"
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          setShowLogoutModal(false);
+          signOut({ redirectUrl: "/login" });
+        }}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </>
   );
 }
