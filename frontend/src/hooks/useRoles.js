@@ -75,10 +75,15 @@ export function useRoles() {
   );
 
   /**
-   * Update role and its privileges
+   * Update role with its name, description and privileges
+   * @param {string} roleId - Role ID
+   * @param {string} name - Role name
+   * @param {string} description - Role description
+   * @param {Array<string>} privileges - Array of privilege IDs
+   * @returns {Promise<Object>} - Update result
    */
   const updateRoleWithPrivileges = useCallback(
-    async (roleId, name, privileges) => {
+    async (roleId, name, description, privileges) => {
       setLoading(true);
       setError(null);
 
@@ -87,6 +92,7 @@ export function useRoles() {
         const result = await rolesService.updateRole(
           roleId,
           name,
+          description,
           privileges,
           token
         );

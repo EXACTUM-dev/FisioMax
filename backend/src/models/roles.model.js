@@ -24,25 +24,6 @@ export async function findRoleById(id) {
 }
 
 /**
- * Update role by ID
- * @param {string} id - Role ID to update
- * @param {Object} data - Data to update (name)
- * @returns {Promise<Object>} - Result of the update operation
- */
-export async function updateRoleById(id, { name }) {
-  try {
-    const [result] = await dbPool.query(
-      "UPDATE rol SET nombre = ? WHERE IDRol = ? AND deletedAt IS NULL AND eliminado = 0",
-      [name, id]
-    );
-    return result;
-  } catch (error) {
-    console.error("Database error in updateRoleById:", error);
-    throw error;
-  }
-}
-
-/**
  * Get all roles from database
  * @returns {Promise<Array>} - Array of role objects
  */
@@ -54,6 +35,25 @@ export async function getAllRolesFromDB() {
     return rows;
   } catch (error) {
     console.error("Database error in getAllRolesFromDB:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update role by ID
+ * @param {string} id - Role ID to update
+ * @param {Object} data - Data to update (name, description)
+ * @returns {Promise<Object>} - Result of the update operation
+ */
+export async function updateRoleById(id, { name, description }) {
+  try {
+    const [result] = await dbPool.query(
+      "UPDATE rol SET nombre = ?, descripcion = ? WHERE IDRol = ? AND deletedAt IS NULL AND eliminado = 0",
+      [name, description, id]
+    );
+    return result;
+  } catch (error) {
+    console.error("Database error in updateRoleById:", error);
     throw error;
   }
 }

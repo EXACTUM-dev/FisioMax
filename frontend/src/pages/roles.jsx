@@ -46,14 +46,18 @@ export default function RolesPage() {
     }
   };
 
-  // Open edit modal and load role data
+  /**
+   * Open edit modal and load role data
+   * @param {Object} rowRole - Role object from table row
+   */
   const handleEditRole = async (rowRole) => {
     try {
-      const roleData = await loadRoleById(rowRole.id); // {id,name,description,privileges[]}
-      // Map backend privileges -> table rows expected by modal
+      const roleData = await loadRoleById(rowRole.id);
+
+      // Map backend privileges to modal table format
       const mappedPrivileges = (roleData.privileges ?? []).map((p) => ({
         id: p.id,
-        label: p.name, // ChecklistModal expects 'label'
+        label: p.name,
         checked: !!p.checked,
       }));
 
@@ -66,13 +70,24 @@ export default function RolesPage() {
     }
   };
 
-  const handleModalConfirm = async (newRoleName, selectedPrivilegeIds) => {
+  /**
+   * Handle modal confirmation - update role with new data
+   * @param {string} newRoleName - Updated role name
+   * @param {string} newRoleDescription - Updated role description
+   * @param {Array<string>} selectedPrivilegeIds - Array of selected privilege IDs
+   */
+  const handleModalConfirm = async (
+    newRoleName,
+    newRoleDescription,
+    selectedPrivilegeIds
+  ) => {
     if (!editingRole?.id) return;
 
     try {
       await updateRoleWithPrivileges(
         editingRole.id,
         newRoleName,
+        newRoleDescription,
         selectedPrivilegeIds
       );
 
@@ -157,6 +172,7 @@ export default function RolesPage() {
             open={modalOpen}
             title={`Editar Rol: ${roleName}`}
             roleName={roleName}
+            roleDescription={editingRole.description || ""}
             tableData={editingPrivileges}
             confirmLabel="Guardar Cambios"
             onConfirm={handleModalConfirm}

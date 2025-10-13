@@ -7,26 +7,31 @@ import DataTable from "../organisms/dataTable";
 import Modal from "../molecules/modal";
 
 /**
- * Modal to edit role with a privileges checklist.
- * Props:
- * - open: boolean
- * - title: string
- * - roleName: string
- * - tableData: array [{ id, label, checked }]
- * - confirmLabel: string
- * - onConfirm: (roleName, selectedPrivilegesIds) => void
- * - onCancel: () => void
+ * Modal to edit role with name, description and privileges checklist.
+ * @component
+ * @param {boolean} open - Modal open state
+ * @param {string} title - Modal title
+ * @param {string} roleName - Initial role name
+ * @param {string} roleDescription - Initial role description
+ * @param {Array} tableData - Array of privilege objects [{ id, label, checked }]
+ * @param {string} confirmLabel - Confirm button label
+ * @param {Function} onConfirm - Callback on confirm (roleName, roleDescription, selectedPrivilegesIds)
+ * @param {Function} onClose - Callback on close
  */
 export default function ChecklistModal({
   open,
   title = "Modificar Rol",
   roleName: initialRoleName = "Administrador",
+  roleDescription: initialRoleDescription = "",
   tableData = [],
   confirmLabel = "Modificar Rol",
   onConfirm,
   onClose,
 }) {
   const [roleName, setRoleName] = useState(initialRoleName);
+  const [roleDescription, setRoleDescription] = useState(
+    initialRoleDescription
+  );
   const [checkedPrivileges, setCheckedPrivileges] = useState(() =>
     (tableData || []).reduce((acc, priv) => {
       acc[priv.id] = priv.checked ?? false;
@@ -34,14 +39,19 @@ export default function ChecklistModal({
     }, {})
   );
 
-  // Refs para los elementos focuseables
+  // Refs for focusable elements
   const inputRef = useRef(null);
+  const descriptionRef = useRef(null);
   const tableRef = useRef(null);
   const buttonRef = useRef(null);
   const closeButtonRef = useRef(null);
 
   if (!open) return null;
 
+  /**
+   * Toggle individual privilege selection
+   * @param {string} id - Privilege ID
+   */
   const handleToggle = (id) => {
     setCheckedPrivileges((prev) => ({
       ...prev,
@@ -49,6 +59,9 @@ export default function ChecklistModal({
     }));
   };
 
+  /**
+   * Toggle all privileges selection
+   */
   const handleSelectAll = () => {
     const allChecked = tableData.every((priv) => checkedPrivileges[priv.id]);
     const newState = {};
@@ -58,11 +71,14 @@ export default function ChecklistModal({
     setCheckedPrivileges(newState);
   };
 
+  /**
+   * Handle form confirmation
+   */
   const handleConfirm = () => {
     const selectedPrivileges = Object.entries(checkedPrivileges)
       .filter(([_, checked]) => checked)
       .map(([id]) => id);
-    onConfirm?.(roleName, selectedPrivileges);
+    onConfirm?.(roleName, roleDescription, selectedPrivileges);
   };
 
   const allSelected =
@@ -96,7 +112,7 @@ export default function ChecklistModal({
         headAlign: "left",
         align: "left",
         isAction: true,
-        render: (row, index) => (
+        render: (row) => (
           <div className="flex items-center gap-2">
             <CheckBox
               ariaLabel={`Toggle ${row.label}`}
@@ -122,22 +138,38 @@ export default function ChecklistModal({
   return (
     <Modal open={open} onClose={onClose} size="xl" className="p-8">
       <div className="flex flex-col md:flex-row gap-6 md:gap-12 w-full">
+        {/* Left column - Form */}
         <div className="flex-1 min-w-[320px] flex flex-col justify-center">
           <div className="flex flex-col items-center justify-center h-full">
-            <Title2 className="mb-12">{title}</Title2>
+            <Title2 className="mb-8">{title}</Title2>
+
+            {/* Role name input */}
             <FieldBox
+              ref={inputRef}
               label="Nombre del Rol"
               value={roleName}
               onChange={(e) => setRoleName(e.target.value)}
               placeholder="Ingrese el nombre del rol"
             />
+
+            {/* Role description input */}
+            <FieldBox
+              ref={descriptionRef}
+              label="Descripción del Rol"
+              value={roleDescription}
+              onChange={(e) => setRoleDescription(e.target.value)}
+              placeholder="Ingrese la descripción del rol"
+              className="mt-4"
+            />
+
+            {/* Confirm button */}
             <Button
               ref={buttonRef}
               label={confirmLabel}
               variant="brand"
               onClick={handleConfirm}
               radius="lg"
-              className="w-full py-3 text-base"
+              className="w-full py-3 text-base mt-4"
               onKeyDown={(e) => {
                 if (e.key === " ") {
                   e.preventDefault();
@@ -148,9 +180,8 @@ export default function ChecklistModal({
           </div>
         </div>
 
-        {/* Right: privileges checklist */}
+        {/* Right column - Privileges checklist */}
         <div className="flex-1 min-w-[320px]">
-          {/* DataTable con scroll independiente */}
           <div
             className="bg-white rounded-lg border border-slate-200 max-h-[32rem] overflow-y-auto p-2
               [&::-webkit-scrollbar]:w-3

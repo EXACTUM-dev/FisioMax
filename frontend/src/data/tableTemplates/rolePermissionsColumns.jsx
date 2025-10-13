@@ -21,7 +21,7 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
     },
     {
       key: "permisos",
-      label: "Permisos",
+      label: "descripción",
       className: "w-[40%]",
       // Renders a list of permissions as compact badges (supports string or array)
       render: (row) => {

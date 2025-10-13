@@ -25,18 +25,20 @@ export const getRoleById = async (id, token) => {
 };
 
 /**
- * Actualiza un rol y sus privilegios
- * @param {string} id - ID del rol a actualizar
- * @param {string} name - Nuevo nombre del rol
- * @param {Array<string>} privileges - IDs de los privilegios seleccionados
- * @param {string} token - Token de autenticación
- * @returns {Promise<Object>} - Resultado de la actualización
+ * Update a role with its name, description and privileges
+ * @param {string} id - Role ID to update
+ * @param {string} name - New role name
+ * @param {string} description - New role description
+ * @param {Array<string>} privileges - Array of selected privilege IDs
+ * @param {string} token - Authentication token
+ * @returns {Promise<Object>} - Update operation result
  */
-export const updateRole = async (id, name, privileges, token) => {
+export const updateRole = async (id, name, description, privileges, token) => {
   return apiClient.post(
     `/roles/edit/${id}`,
     {
       name,
+      description,
       privileges,
     },
     {},
