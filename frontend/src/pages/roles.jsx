@@ -6,13 +6,18 @@
 import React, { useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 
+// Atoms
+import Button from "../atoms/Button";
+
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
+import Modal from "../molecules/Modal";
 
 // Organisms
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import ChecklistModal from "../organisms/checklistModal";
+import SuccessErrorModal from "../organisms/successErrorModal";
 
 // Data & utils
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
@@ -28,6 +33,11 @@ export default function RolesPage() {
   const [editingPrivileges, setEditingPrivileges] = useState([]);
   const [roleName, setRoleName] = useState("");
 
+  // Success/Error modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("success"); // "success" | "error"
+  const [modalMessage, setModalMessage] = useState("");
+
   const {
     roles,
     loading,
@@ -37,7 +47,7 @@ export default function RolesPage() {
     deleteRoleById,
   } = useRoles();
 
-  // Row action handler (optional, for future actions)
+  // Row action handler
   const handleRowAction = (col, row) => {
     if (col.key === "editar") {
       handleEditRole(row);
@@ -67,6 +77,9 @@ export default function RolesPage() {
       setModalOpen(true);
     } catch (err) {
       console.error("Error cargando rol para edición:", err);
+      setModalType("error");
+      setModalMessage("No se pudo cargar la información del rol. Por favor, intenta nuevamente.");
+      setShowModal(true);
     }
   };
 
@@ -93,14 +106,32 @@ export default function RolesPage() {
 
       setModalOpen(false);
       setEditingRole(null);
+      
+      // Show success modal
+      setModalType("success");
+      setModalMessage("El rol ha sido actualizado exitosamente.");
+      setShowModal(true);
     } catch (err) {
       console.error("Error actualizando rol:", err);
+      
+      // Show error modal
+      setModalType("error");
+      setModalMessage("No se pudieron guardar los cambios. Por favor, intenta nuevamente.");
+      setShowModal(true);
     }
   };
 
   const handleModalCancel = () => {
     setModalOpen(false);
     setEditingRole(null);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    // Si hubo error, mantener el modal de edición abierto
+    if (modalType === "error" && editingRole) {
+      setModalOpen(true);
+    }
   };
 
   // Table columns
@@ -179,6 +210,15 @@ export default function RolesPage() {
             onClose={handleModalCancel}
           />
         )}
+
+        {/* Modal de éxito/error reutilizable */}
+        <SuccessErrorModal
+          open={showModal}
+          onClose={handleCloseModal}
+          type={modalType}
+          message={modalMessage}
+          title={modalType === "success" ? "¡Cambios guardados!" : "Error al guardar"}
+        />
       </main>
     </div>
   );

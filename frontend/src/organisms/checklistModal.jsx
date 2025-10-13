@@ -11,26 +11,26 @@ import Modal from "../molecules/modal";
  * @component
  * @param {boolean} open - Modal open state
  * @param {string} title - Modal title
- * @param {string} roleName - Initial role name
- * @param {string} roleDescription - Initial role description
+ * @param {string} dataName - Initial role name
+ * @param {string} dataDescription - Initial role description
  * @param {Array} tableData - Array of privilege objects [{ id, label, checked }]
  * @param {string} confirmLabel - Confirm button label
- * @param {Function} onConfirm - Callback on confirm (roleName, roleDescription, selectedPrivilegesIds)
+ * @param {Function} onConfirm - Callback on confirm (dataName, dataDescription, selectedPrivilegesIds)
  * @param {Function} onClose - Callback on close
  */
 export default function ChecklistModal({
   open,
-  title = "Modificar Rol",
-  roleName: initialRoleName = "Administrador",
-  roleDescription: initialRoleDescription = "",
+  title = "Titulo del Modal",
+  dataName: initialDataName = "Subtitulo del Modal",
+  dataDescription: initialDataDescription = "",
   tableData = [],
-  confirmLabel = "Modificar Rol",
+  confirmLabel = "Título del Botón",
   onConfirm,
   onClose,
 }) {
-  const [roleName, setRoleName] = useState(initialRoleName);
-  const [roleDescription, setRoleDescription] = useState(
-    initialRoleDescription
+  const [dataName, setDataName] = useState(initialDataName);
+  const [dataDescription, setDataDescription] = useState(
+    initialDataDescription
   );
   const [checkedPrivileges, setCheckedPrivileges] = useState(() =>
     (tableData || []).reduce((acc, priv) => {
@@ -78,7 +78,7 @@ export default function ChecklistModal({
     const selectedPrivileges = Object.entries(checkedPrivileges)
       .filter(([_, checked]) => checked)
       .map(([id]) => id);
-    onConfirm?.(roleName, roleDescription, selectedPrivileges);
+    onConfirm?.(dataName, dataDescription, selectedPrivileges);
   };
 
   const allSelected =
@@ -147,8 +147,8 @@ export default function ChecklistModal({
             <FieldBox
               ref={inputRef}
               label="Nombre del Rol"
-              value={roleName}
-              onChange={(e) => setRoleName(e.target.value)}
+              value={dataName}
+              onChange={(e) => setDataName(e.target.value)}
               placeholder="Ingrese el nombre del rol"
             />
 
@@ -156,8 +156,8 @@ export default function ChecklistModal({
             <FieldBox
               ref={descriptionRef}
               label="Descripción del Rol"
-              value={roleDescription}
-              onChange={(e) => setRoleDescription(e.target.value)}
+              value={dataDescription}
+              onChange={(e) => setDataDescription(e.target.value)}
               placeholder="Ingrese la descripción del rol"
               className="mt-4"
             />
