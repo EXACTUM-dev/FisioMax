@@ -18,7 +18,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY}
+        VITE_CLERK_PUBLISHABLE_KEY: "pk_test_cXVhbGl0eS13ZWFzZWwtNjMuY2xlcmsuYWNjb3VudHMuZGV2JA"
     container_name: frontend
     ports:
       - "3000:80"
@@ -26,3 +26,30 @@ services:
       - backend
     env_file:
       - .env
+  mysql:
+    image: mysql:8.0
+    container_name: fisiomax_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: fisiomax
+      MYSQL_USER: fisiomax_user
+      MYSQL_PASSWORD: fisio123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: fisiomax_pma
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+volumes:
+  mysql_data:

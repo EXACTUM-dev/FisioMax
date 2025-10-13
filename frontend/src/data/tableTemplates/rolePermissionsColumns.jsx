@@ -63,7 +63,7 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
             // Call the edit handler
             onEdit?.(row);
           }}
-          className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
+          className="inline-flex items-center cursor-pointer justify-center w-8 h-8 rounded hover:bg-blue-50"
         >
           <img
             src={editIcon}

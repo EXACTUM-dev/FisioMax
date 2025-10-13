@@ -12,10 +12,10 @@ import Button from "../atoms/button";
  * - onConfirm: () => void
  * - onCancel: () => void
  */
-export default function ConfirmModal({
+export default function ConfirmationModal({
   open,
-  title = "¿Estás seguro?",
-  message = "Esta acción no se puede deshacer.",
+  title,
+  message,
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   onConfirm,
@@ -31,7 +31,7 @@ export default function ConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center border border-slate-200">

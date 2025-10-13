@@ -1,7 +1,7 @@
 // components/molecules/modal/index.jsx
-import React from "react";
+import React, { useState } from "react";
 import CloseButton from "../atoms/closeButton";
-
+import ConfirmationModal from "../molecules/confirmationModal";
 /**
  * Modal base reutilizable
  *
@@ -23,8 +23,12 @@ export default function Modal({
   position = "center",
   closeOnOverlayClick = true,
   showCloseButton = true,
+  requireConfirmation = false,
+  confirmationTitle = "¿Estás seguro de que deseas salir?",
+  confirmationMessage = "Los cambios no guardados se perderán.",
   className = "",
 }) {
+  const [showConfirmation, setShowConfirmation] = useState(false);
   if (!open) return null;
 
   const sizeClasses = {
@@ -41,40 +45,68 @@ export default function Modal({
     bottom: "items-end justify-center pb-8",
   };
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget && closeOnOverlayClick) {
+  const handleCloseRequest = () => {
+    if (requireConfirmation) {
+      setShowConfirmation(true);
+    } else {
       onClose();
     }
   };
 
+  const handleConfirmClose = () => {
+    setShowConfirmation(false);
+    onClose();
+  };
+
+  const handleCancelClose = () => {
+    setShowConfirmation(false);
+  };
+
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget && closeOnOverlayClick) {
+      handleCloseRequest();
+    }
+  };
+
   return (
-    <div
-      className={`fixed inset-0 z-50 flex ${positionClasses[position]} bg-black/30 transition-opacity`}
-      onClick={handleOverlayClick}
-    >
-      {/* Contenedor relativo para posicionar el CloseButton */}
-      <div className="relative">
-        {showCloseButton && (
-          <CloseButton
-            onClose={onClose}
-            size="lg"
-            position={{ top: "top-1", right: "right-1" }}
-          />
-        )}
-        {/* Contenedor del modal con scroll */}
-        <div
-          className={`
-          bg-white rounded-2xl shadow-xl w-full 
-          ${sizeClasses[size]} 
-          p-10 border border-slate-200 relative
-          overflow-y-auto max-h-[90vh]
-          animate-in fade-in-0 zoom-in-95 duration-200
-          ${className}
-        `}
-        >
-          {children}
+    <>
+      <div
+        className={`fixed inset-0 z-50 flex ${positionClasses[position]} bg-black/30 transition-opacity`}
+        onClick={handleOverlayClick}
+      >
+        {/* Contenedor relativo para posicionar el CloseButton */}
+        <div className="relative">
+          {showCloseButton && (
+            <CloseButton
+              onClose={handleCloseRequest} // Cambiado a handleCloseRequest
+              size="lg"
+              position={{ top: "top-1", right: "right-1" }}
+            />
+          )}
+          {/* Contenedor del modal con scroll */}
+          <div
+            className={`
+            bg-white rounded-2xl shadow-xl w-full 
+            ${sizeClasses[size]} 
+            p-10 border border-slate-200 relative
+            overflow-y-auto max-h-[90vh]
+            animate-in fade-in-0 zoom-in-95 duration-200
+            ${className}
+          `}
+          >
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Modal de confirmación - necesitarías importar o crear este componente */}
+      <ConfirmationModal
+        open={showConfirmation}
+        title={confirmationTitle}
+        message={confirmationMessage}
+        onConfirm={handleConfirmClose}
+        onCancel={handleCancelClose}
+      />
+    </>
   );
 }

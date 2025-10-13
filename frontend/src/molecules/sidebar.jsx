@@ -7,7 +7,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 // Confirmation modal for logout
-import ConfirmModal from "../molecules/confirmationModal";
+import ConfirmationModal from "../molecules/confirmationModal";
 
 // Icon resources
 import logoSrc from "../assets/icons/SOMEFIPPlogo.png";
@@ -249,7 +249,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
           })}
         </ul>
       </nav>
-      <ConfirmModal
+      <ConfirmationModal
         open={showLogoutModal}
         title="¿Cerrar sesión?"
         message="¿Estás seguro que deseas cerrar sesión?"

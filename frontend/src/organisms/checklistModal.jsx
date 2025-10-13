@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef } from "react";
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
-//import CheckBox from "../atoms/checkBox";
+import CheckBox from "../atoms/checkBox";
 import FieldBox from "../molecules/form";
 import DataTable from "../organisms/dataTable";
 import Modal from "../molecules/modal";
@@ -120,7 +120,7 @@ export default function ChecklistModal({
   );
 
   return (
-    <Modal open={open} onClose={onClose} size="xl" className="p-8">
+    <Modal open={open} onClose={onClose} size="xl" className="p-8" requireConfirmation={true}>
       <div className="flex flex-col md:flex-row gap-6 md:gap-12 w-full">
         <div className="flex-1 min-w-[320px] flex flex-col justify-center">
           <div className="flex flex-col items-center justify-center h-full">
