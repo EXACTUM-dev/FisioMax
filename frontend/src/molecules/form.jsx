@@ -1,5 +1,5 @@
 /**
- * Version: 0.1.0
+ * Version: 0.1.1
  * FormField molecule component
  * Componente de campo de formulario reutilizable con label e input
  */
@@ -29,7 +29,7 @@ function FormInput({ type = "text", id, name, value, onChange, placeholder }) {
 	);
 }
 
-export default function FormField({ label, value, onChange, type = "text", placeholder = "", name = "", required = false }) {
+export default function FormField({ label, value, onChange, type = "text", placeholder = "", name = "", required = false, error = "" }) {
 	return (
 		// Main container with label and input
 		<div className="flex flex-col items-start w-full mb-4">
@@ -44,6 +44,7 @@ export default function FormField({ label, value, onChange, type = "text", place
 				onChange={onChange}
 				placeholder={placeholder}
 			/>
+			{error && <p className="mt-1 text-sm text-red-500">{error}</p>}
 		</div>
 	);
 }

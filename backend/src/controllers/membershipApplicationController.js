@@ -1,17 +1,14 @@
 /**
- * @fileoverview Controlador para solicitudes de membresía SOMEFIPP
- * @version 1.0.0
- * @author EXACTUM-dev
+ * version 1.2.0
+ * Controlador para solicitudes de membresía SOMEFIPP
  */
 
 import MembershipApplication from '../models/membershipApplication.model.js';
 import { sendEmail } from '../services/emailServices.js';
-import S3Service from '../services/s3Service.js'; // si subes archivos a S3
 
 // Crear una nueva solicitud de membresía
 export const createMembershipApplication = async (req, res) => {
   try {
-    // Obtener documentos adicionales
     const extraDocs = [];
     Object.keys(req.files || {}).forEach(key => {
       if (key.startsWith('extraDoc')) {
@@ -30,7 +27,14 @@ export const createMembershipApplication = async (req, res) => {
       ciudad: req.body.ciudad,
       colonia: req.body.colonia,
       codigoPostal: req.body.codigoPostal,
+      calle: req.body.calle,                    
+      numeroExterior: req.body.numeroExterior,  
+      numeroInterior: req.body.numeroInterior,
       licenciatura: req.body.licenciatura,
+      instagram: req.body.instagram,
+      linkedin: req.body.linkedin,
+      facebook: req.body.facebook,
+      paginaWeb: req.body.paginaWeb,
       documentos: {
         titulo: req.files?.titulo?.[0] || null,
         cedula: req.files?.cedula?.[0] || null,

@@ -37,7 +37,14 @@ class MembershipApplication {
     this.numInterior = data.numInterior || null;
     this.colonia = data.colonia || null;
     this.codigoPostal = data.codigoPostal || null;
+    this.calle = data.calle || null;
+    this.numeroExterior = data.numeroExterior || null;
+    this.numeroInterior = data.numeroInterior || null;
     this.licenciatura = data.licenciatura || null;
+    this.instagram = data.instagram || null;
+    this.linkedin = data.linkedin || null;
+    this.facebook = data.facebook || null;
+    this.paginaWeb = data.paginaWeb || null;
     this.documentos = data.documentos || {};
     this.id = null;
   }
@@ -65,9 +72,9 @@ class MembershipApplication {
 
       // Guardar información
       await conn.query(
-        `INSERT INTO usuario 
-        (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, pais, estado, ciudad, colonia, codigoPostal, licenciatura, calle, numexterior, numinterior, cedula, titulo, constancias, createdAt, eliminado)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
+        `INSERT INTO Usuario 
+        (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, pais, estado, ciudad, colonia, codigoPostal, calle, numeroExterior, numeroInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
         [
           userId,
           this.nombres,
@@ -80,15 +87,20 @@ class MembershipApplication {
           this.ciudad,
           this.colonia,
           this.codigoPostal,
-          this.licenciatura,
           this.calle,
-          this.numExterior,
-          this.numInterior,
+          this.numeroExterior,
+          this.numeroInterior,
+          this.licenciatura,
+          this.instagram,
+          this.linkedin,
+          this.facebook,
+          this.paginaWeb,
           cedulaUrl,
           tituloUrl,
           constanciasUrl
         ]
       );
+
 
       // Subir y guardar documentos adicionales
       if (this.documentos.extra && this.documentos.extra.length > 0) {
