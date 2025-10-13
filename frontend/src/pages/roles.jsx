@@ -202,8 +202,8 @@ export default function RolesPage() {
           <ChecklistModal
             open={modalOpen}
             title={`Editar Rol: ${roleName}`}
-            roleName={roleName}
-            roleDescription={editingRole.description || ""}
+            dataName={roleName}
+            dataDescription={editingRole.description || ""}
             tableData={editingPrivileges}
             confirmLabel="Guardar Cambios"
             onConfirm={handleModalConfirm}

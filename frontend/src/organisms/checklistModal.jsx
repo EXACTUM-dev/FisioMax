@@ -21,7 +21,7 @@ import Modal from "../molecules/modal";
 export default function ChecklistModal({
   open,
   title = "Titulo del Modal",
-  dataName: initialDataName = "Subtitulo del Modal",
+  dataName: initialDataName = "",
   dataDescription: initialDataDescription = "",
   tableData = [],
   confirmLabel = "Título del Botón",
