@@ -6,13 +6,9 @@
 import React, { useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 
-// Atoms
-import Button from "../atoms/Button";
-
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
-import Modal from "../molecules/Modal";
 
 // Organisms
 import DataSwitchContainer from "../organisms/dataSwitchContainer";

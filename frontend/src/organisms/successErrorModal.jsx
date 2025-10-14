@@ -1,6 +1,6 @@
 import React from "react";
-import Modal from "../molecules/Modal";
-import Button from "../atoms/Button";
+import Modal from "../molecules/modal";
+import Button from "../atoms/button";
 /**
  * Author: Exactum
  * Version: 1.0.0

@@ -84,16 +84,6 @@ const config = {
   },
 };
 
-// Validar configuración de base de datos
-console.log("🔍 Validando configuración de base de datos...");
-console.log("📊 Database Config:", {
-  host: config.db.host,
-  port: config.db.port,
-  user: config.db.user,
-  database: config.db.database,
-  passwordSet: !!config.db.password,
-});
-
 // Validar que las variables críticas existan
 const requiredDbVars = ["host", "user", "database"];
 const missingVars = requiredDbVars.filter((key) => !config.db[key]);
@@ -147,15 +137,6 @@ config.toJSON = function () {
 };
 // Crea y exporta el pool de conexiones
 export const dbPool = mysql.createPool(config.db);
-// Validar configuración de base de datos
-console.log("🔍 Validando configuración de base de datos...");
-console.log("📊 Database Config:", {
-  host: config.db.host,
-  port: config.db.port,
-  user: config.db.user,
-  database: config.db.database,
-  passwordSet: !!config.db.password,
-});
 
 if (missingVars.length > 0) {
   console.error(

@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect} from "react";
 import Button from "../../atoms/button";
 import { Title2 } from "../../atoms/typography";
 import CheckBox from "../../atoms/checkBox";
-import FieldBox from "../../molecules/modal";
+import FieldBox from "../../molecules/form";
 import DataTable from "../../organisms/dataTable";
 import Modal from "../../molecules/modal";
 
