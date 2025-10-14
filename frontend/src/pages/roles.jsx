@@ -74,7 +74,9 @@ export default function RolesPage() {
     } catch (err) {
       console.error("Error cargando rol para edición:", err);
       setModalType("error");
-      setModalMessage("No se pudo cargar la información del rol. Por favor, intenta nuevamente.");
+      setModalMessage(
+        "No se pudo cargar la información del rol. Por favor, intenta nuevamente."
+      );
       setShowModal(true);
     }
   };
@@ -101,17 +103,19 @@ export default function RolesPage() {
       );
       setModalOpen(false);
       setEditingRole(null);
-      
+
       // Show success modal
       setModalType("success");
       setModalMessage("El rol ha sido actualizado exitosamente.");
       setShowModal(true);
     } catch (err) {
       console.error("Error actualizando rol:", err);
-      
+
       // Show error modal
       setModalType("error");
-      setModalMessage("No se pudieron guardar los cambios. Por favor, intenta nuevamente.");
+      setModalMessage(
+        "No se pudieron guardar los cambios. Por favor, intenta nuevamente."
+      );
       setShowModal(true);
     }
   };
@@ -214,7 +218,9 @@ export default function RolesPage() {
           onClose={handleCloseModal}
           type={modalType}
           message={modalMessage}
-          title={modalType === "success" ? "¡Cambios guardados!" : "Error al guardar"}
+          title={
+            modalType === "success" ? "¡Cambios guardados!" : "Error al guardar"
+          }
         />
       </main>
     </div>

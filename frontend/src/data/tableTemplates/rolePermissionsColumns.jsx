@@ -45,11 +45,11 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
           : typeof value === "string" && value.length
           ? value.split(",").map((s) => s.trim())
           : [];
-        
+
         // Return N/A indicator if no permissions available
         if (list.length === 0)
           return <span className="text-slate-500">N/A</span>;
-        
+
         // Render permissions as compact badge elements
         return (
           <div className="flex flex-wrap gap-1.5">
@@ -68,8 +68,8 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
     // Edit action column
     {
       key: "editar",
-      label: "Editar",
-      className: "w-[10%] text-right",
+      label: "Editar Permisos",
+      className: "w-[5%] text-right",
       isAction: true,
       /**
        * Edit action button with event prevention
