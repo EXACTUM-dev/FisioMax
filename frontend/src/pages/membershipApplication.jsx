@@ -102,8 +102,21 @@ export default function MembershipApplicationPage() {
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
-    setFormData(prev => ({ ...prev, [name]: files[0] || null }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+    const file = files[0] || null;
+    
+    setFormData(prev => ({ ...prev, [name]: file }));
+    
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        setErrors(prev => ({ ...prev, [name]: "Solo se aceptan archivos PDF" }));
+      } else if (file.size > 10 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, [name]: "El archivo no puede ser mayor a 10MB" }));
+      }
+    }
   };
 
   const handlePaisChange = async (value) => {
@@ -143,21 +156,40 @@ export default function MembershipApplicationPage() {
     }
   };
 
+  // Validate size, type and upload required documents and information. Also validate email format. 
   const validateForm = () => {
     const newErrors = {};
+    
     if (!formData.nombres) newErrors.nombres = "El nombre es requerido";
     if (!formData.apellidoP) newErrors.apellidoP = "El apellido paterno es requerido";
     if (!formData.email) newErrors.email = "El email es requerido";
     if (!formData.telefono) newErrors.telefono = "El telefono es requerido";
-    if (!formData.cedula) newErrors.cedula = "La cédula es requerida";
-
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) newErrors.email = "El formato del email no es válido";
+    if (!formData.cedula) {
+      newErrors.cedula = "La cédula es requerida";
+    } else if (formData.cedula.type !== 'application/pdf') {
+      newErrors.cedula = "Solo se aceptan archivos PDF";
+    } else if (formData.cedula.size > 10 * 1024 * 1024) {
+      newErrors.cedula = "El archivo no puede ser mayor a 10MB";
+    }
 
-    if (formData.titulo && formData.titulo.size > 10 * 1024 * 1024) newErrors.titulo = "El archivo del título no puede ser mayor a 10MB";
-    if (formData.cedula && formData.cedula.size > 10 * 1024 * 1024) newErrors.cedula = "El archivo de la cédula no puede ser mayor a 10MB";
-    if (formData.constancias && formData.constancias.size > 10 * 1024 * 1024) newErrors.constancias = "El archivo de constancias no puede ser mayor a 10MB";
+    if (formData.titulo) {
+      if (formData.titulo.type !== 'application/pdf') {
+        newErrors.titulo = "Solo se aceptan archivos PDF";
+      } else if (formData.titulo.size > 10 * 1024 * 1024) {
+        newErrors.titulo = "El archivo no puede ser mayor a 10MB";
+      }
+    }
 
+    if (formData.constancias) {
+      if (formData.constancias.type !== 'application/pdf') {
+        newErrors.constancias = "Solo se aceptan archivos PDF";
+      } else if (formData.constancias.size > 10 * 1024 * 1024) {
+        newErrors.constancias = "El archivo no puede ser mayor a 10MB";
+      }
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -208,10 +240,36 @@ export default function MembershipApplicationPage() {
 
   // Add an extra document
   const handleAddDocuments = () => setExtraDocs(prev => [...prev, { id: Date.now(), file: null }]);
+
   const handleExtraFileChange = (id, e) => {
     const file = e.target.files[0] || null;
+    const index = extraDocs.findIndex(doc => doc.id === id);
+  
     setExtraDocs(prev => prev.map(doc => doc.id === id ? { ...doc, file } : doc));
+  
+    if (errors[`extraDoc${index}`]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[`extraDoc${index}`];
+        return newErrors;
+      });
+    }
+
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        setErrors(prev => ({ 
+          ...prev, 
+          [`extraDoc${index}`]: "Solo se aceptan archivos PDF" 
+        }));
+      } else if (file.size > 10 * 1024 * 1024) {
+        setErrors(prev => ({ 
+          ...prev, 
+          [`extraDoc${index}`]: "El archivo no puede ser mayor a 10MB" 
+        }));
+      }
+    }
   };
+
 
   // View design
   return (
@@ -302,11 +360,23 @@ export default function MembershipApplicationPage() {
               <FileUpload name="cedula" label="Cédula profesional" required value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
               <FileUpload name="constancias" label="Constancias pélvicas" value={formData.constancias} onChange={handleFileChange} error={errors.constancias}/>
               {extraDocs.map((doc, i) => (
-                <div key={doc.id} className="relative">
-                  <FileUpload name={`extra-${doc.id}`} label={`Documento adicional ${i+1}`} value={doc.file} onChange={(e) => handleExtraFileChange(doc.id, e)} />
-                  <button type="button" onClick={() => setExtraDocs(prev => prev.filter(d => d.id !== doc.id))} className="absolute top-0 right-0 text-red-500 hover:text-red-700 text-sm mt-1 mr-1">✕</button>
-                </div>
-              ))}
+              <div key={doc.id} className="relative">
+                <FileUpload 
+                  name={`extra-${doc.id}`} 
+                  label={`Documento adicional ${i+1}`} 
+                  value={doc.file} 
+                  onChange={(e) => handleExtraFileChange(doc.id, e)}
+                  error={errors[`extraDoc${i}`]}
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setExtraDocs(prev => prev.filter(d => d.id !== doc.id))} 
+                  className="absolute top-0 right-0 text-red-500 hover:text-red-700 text-sm mt-1 mr-1"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
               <Button variant="newDoc" size="sm" onClick={handleAddDocuments} className="bg-gray-200 text-gray-700 hover:bg-gray-300" type="button">Agregar documentos adicionales</Button>
 
               {/* Botones */}
