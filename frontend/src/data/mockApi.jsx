@@ -76,28 +76,6 @@ const products = {
   ],
 };
 
-// Users mock (moved from App)
-const users = [
-  {
-    id: "u1",
-    nombre: "Ana Gómez",
-    correo: "ana.gomez@example.com",
-    documentos: { type: "pdf", url: "/docs/ana-gomez.pdf" },
-  },
-  {
-    id: "u2",
-    nombre: "Luis Pérez",
-    correo: "luis.perez@example.com",
-    documentos: { type: "pdf", url: "/docs/luis-perez.pdf" },
-  },
-  {
-    id: "u3",
-    nombre: "María López",
-    correo: "maria.lopez@example.com",
-    documentos: { type: "pdf", url: "/docs/maria-lopez.pdf" },
-  },
-];
-
 export async function getHeroSlides() {
   return heroSlides;
 }

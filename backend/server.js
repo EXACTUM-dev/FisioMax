@@ -18,7 +18,7 @@ import compression from "compression";
 import helmet from "helmet";
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import usuariosRoutes from "./src/routes/usuarios.routes.js";
+import usuariosRoutes from "./src/routes/users.routes.js";
 
 // Inicializar la aplicación Express
 const app = express();

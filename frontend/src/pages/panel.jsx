@@ -62,11 +62,12 @@ const [error, setError] = useState(null);
     let alive = true; // Prevent state updates after unmount
     async function fetchData() {
       try {
+        const token = await getToken();
         const [hero, row, prod, users, roles, side] = await Promise.all([
           getHeroSlides(),
           getRowSlides(),
           getProducts(),
-          getUsers(),
+          fetchWithClerk("/api/usuarios", { method: "GET" }, token), // Fetch users from backend
           getRoles(),
           getSideSlides(),
         ]);
@@ -86,7 +87,7 @@ const [error, setError] = useState(null);
     return () => {
       alive = false;
     };
-  }, []);
+  }, [getToken]);
 
   // Fetch roles from the backend
   useEffect(() => {
