@@ -188,16 +188,11 @@ export default function RolesPage() {
             <ActionButtons 
               onRegisterUser={() => navigate("/register")}
               onRoles={() => console.log("Ya estás en roles")}
+              onCreateRole={() => console.log("Crear nuevo rol")}
               showRegisterUser={true}
               showRoles={false}
+              showCreateRole={true}
             />
-            <div className="flex justify-end mb-6">
-              <Button 
-                size="sm" 
-                label="Crear nuevo rol"
-                onClick={() => console.log("Crear nuevo rol")}
-              />
-            </div>
             
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <DataTable

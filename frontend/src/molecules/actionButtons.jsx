@@ -12,15 +12,19 @@ import Button from "../atoms/button";
  * @param {Object} props - Propiedades del componente
  * @param {Function} props.onRegisterUser - Función para manejar el registro de usuario
  * @param {Function} props.onRoles - Función para manejar la navegación a roles
+ * @param {Function} props.onCreateRole - Función para manejar la creación de nuevo rol
  * @param {boolean} props.showRegisterUser - Mostrar botón de registrar usuario (default: true)
  * @param {boolean} props.showRoles - Mostrar botón de roles (default: true)
+ * @param {boolean} props.showCreateRole - Mostrar botón de crear nuevo rol (default: false)
  * @param {string} props.className - Clases CSS adicionales
  */
 export default function ActionButtons({
   onRegisterUser,
   onRoles,
+  onCreateRole,
   showRegisterUser = true,
   showRoles = true,
+  showCreateRole = false,
   className = "",
 }) {
   return (
@@ -30,6 +34,13 @@ export default function ActionButtons({
           size="sm" 
           label="Registrar usuario"
           onClick={onRegisterUser}
+        />
+      )}
+      {showCreateRole && (
+        <Button 
+          size="sm" 
+          label="Crear nuevo rol"
+          onClick={onCreateRole}
         />
       )}
       {showRoles && (
