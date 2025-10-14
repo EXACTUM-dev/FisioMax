@@ -92,6 +92,12 @@ export async function getProducts() {
   return products;
 }
 
+const users = [
+  { id: 1, nombre: "Juan Perez", email: "juan.perez@example.com", roleId: "r1" },
+  { id: 2, nombre: "Ana Gomez", email: "ana.gomez@example.com", roleId: "r2" },
+  { id: 3, nombre: "Luis Martinez", email: "luis.martinez@example.com", roleId: "r3" },
+];
+
 export async function getUsers() {
   return users;
 }

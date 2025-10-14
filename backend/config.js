@@ -84,6 +84,11 @@ const config = {
   },
 };
 
+// Validación de variables de entorno críticas
+if (!process.env.DB_HOST || !process.env.JWT_SECRET || !process.env.CLERK_SECRET_KEY) {
+  throw new Error("Faltan variables de entorno críticas. Verifica el archivo .env");
+}
+
 // Método toJSON para NO exponer secretos cuando se serializa
 config.toJSON = function () {
   return {

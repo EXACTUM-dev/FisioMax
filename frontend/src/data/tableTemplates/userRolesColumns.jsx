@@ -24,7 +24,11 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {
       key: "nombre", // Identificador único de la columna
       label: "Nombre", // Etiqueta visible en la tabla
       className: "w-[40%]", // Clase CSS para el ancho de la columna
-      render: (row) => row?.nombre || row?.name || `${row?.nombres || ''} ${row?.apellidoP || ''}`.trim(),
+      render: (row) => {
+        // Intentar construir nombre completo con nombres, apellidoP y apellidoM
+        const nombreCompleto = `${row?.nombres || ''} ${row?.apellidoP || ''} ${row?.apellidoM || ''}`.trim();
+        return nombreCompleto || row?.nombre || row?.name || '';
+      },
     },
     {
       key: "rol",

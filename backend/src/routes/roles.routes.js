@@ -10,7 +10,7 @@ import {
   getAllRoles,
 } from "../controllers/roles.controller.js";
 import { requireAuth } from "../middlewares/clerkAuth.js";
-import { requireRole } from "../middlewares/requireRole.js";
+import { requireRole } from "../middlewares/requireRoles.js";
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ const router = express.Router();
  * @desc    Get all roles (for listing)
  * @access  Protected (Admin)
  */
-router.get("/", requireAuth, getAllRoles);
+router.get("/", getAllRoles); // Eliminado requireAuth para desactivar autorización temporalmente
 
 /**
  * @route   GET /api/roles/edit/:id

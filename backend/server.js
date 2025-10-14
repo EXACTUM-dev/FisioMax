@@ -19,6 +19,7 @@ import helmet from "helmet";
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import usuariosRoutes from "./src/routes/users.routes.js";
+import rolesRoutes from "./src/routes/roles.routes.js";
 
 // Inicializar la aplicación Express
 const app = express();
@@ -76,7 +77,7 @@ app.use(express.urlencoded({ extended: true }));
  */
 // Configurar SES
 const sesClient = new SESClient({
-  region: "us-east-2", // Cambia por tu región
+  region: config.aws.region, // Cambiado para usar variable de entorno
 });
 
 //-------------------------
@@ -130,20 +131,28 @@ app.post("/login", (req, res) => {
  * @param {object} res - Objeto de respuesta de Express.
  * @returns {Array<Object>} Lista de usuarios en formato JSON.
  */
-app.get("/api/usuarios", requireAuth, (req, res) => {
-  console.log("Usuarios");
-  // req.auth contiene la información del usuario autenticado
-  const userId = req.auth?.userId;
+app.get("/api/usuarios", requireAuth, async (req, res) => {
+  try {
+    const userId = req.auth?.userId;
+    const { dbPool } = await import("./config.js");
+    
+    const [rows] = await dbPool.query(
+      "SELECT IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento FROM usuario"
+    );
 
-  res.json({
-    message: "Lista de usuarios obtenida exitosamente",
-    data: [
-      { id: 1, nombre: "Juan", email: "juan@ejemplo.com" },
-      { id: 2, nombre: "Ana", email: "ana@ejemplo.com" },
-    ],
-    authenticatedUserId: userId,
-    timestamp: new Date().toISOString(),
-  });
+    res.json({
+      message: "Lista de usuarios obtenida exitosamente",
+      data: rows,
+      authenticatedUserId: userId,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error al obtener usuarios:", error);
+    res.status(500).json({ 
+      error: "Error al consultar la base de datos",
+      message: error.message 
+    });
+  }
 });
 app.post("/login", (req, res) => {
   // Aquí iría la lógica de autenticación con Clerk
@@ -154,36 +163,9 @@ app.post("/login", (req, res) => {
   });
 });
 
-//-------------------------
-// RUTAS PROTEGIDAS
-//-------------------------
-
-/**
- * Endpoint protegido para obtener usuarios - Requiere autenticación.
- * @name GET /api/usuarios
- * @function
- * @param {object} req - Objeto de solicitud de Express.
- * @param {object} res - Objeto de respuesta de Express.
- * @returns {Array<Object>} Lista de usuarios en formato JSON.
- */
-app.get("/api/usuarios", requireAuth, (req, res) => {
-  // req.auth contiene la información del usuario autenticado
-  const userId = req.auth?.userId;
-
-  res.json({
-    message: "Lista de usuarios obtenida exitosamente",
-    data: [
-      { id: 1, nombre: "Juan", email: "juan@ejemplo.com" },
-      { id: 2, nombre: "Ana", email: "ana@ejemplo.com" },
-    ],
-    authenticatedUserId: userId,
-    timestamp: new Date().toISOString(),
-  });
-});
-
 /**
  * Endpoint de ejemplo para enviar correos.
- * @name GET /api/usuarios
+ * @name POST /api/contacto
  * @function
  * @returns {Array<Object>} Mensaje de operacion exitosa/error.
  */
@@ -385,6 +367,7 @@ export { app };
  */
 
 app.use("/usuarios", usuariosRoutes);
+app.use("/api/roles", rolesRoutes);
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
     console.log(

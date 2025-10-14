@@ -19,7 +19,6 @@ import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
 
 // Molecules
-import FormField from "../molecules/form";
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 
@@ -28,15 +27,6 @@ import Carousel from "../organisms/carousel";
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 
 // Data y utils
-import {
-  userFormFields,
-  getHeroSlides,
-  getRowSlides,
-  getProducts,
-  getUsers,
-  getRoles,
-  getSideSlides,
-} from "../data/mockApi";
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import { fetchWithClerk } from "../utils/api";
@@ -47,13 +37,8 @@ export default function Panel() {
   const [current, setCurrent] = useState("panel");
   
     // Estados para datos mostrados en la UI
-    const [heroSlides, setHeroSlides] = useState([]);
-    const [rowSlides, setRowSlides] = useState([]);
-    const [userRows, setUserRows] = useState([]);
-    const [roleRows, setRoleRows] = useState([]);
-    const [, /* sideSlides no visible en UI */ setSideSlides] = useState([]);
-    const [, /* products no visibles en Dashboard actual */ setProducts] =
-      useState({ columns: [], rows: [] });
+    const [userRows, setUserRows] = useState([]); // Usuarios desde el backend
+    const [roleRows, setRoleRows] = useState([]); // Roles desde el backend
   
 const [error, setError] = useState(null);
 
@@ -63,24 +48,13 @@ const [error, setError] = useState(null);
     async function fetchData() {
       try {
         const token = await getToken();
-        const [hero, row, prod, users, roles, side] = await Promise.all([
-          getHeroSlides(),
-          getRowSlides(),
-          getProducts(),
-          fetchWithClerk("/api/usuarios", { method: "GET" }, token), // Fetch users from backend
-          getRoles(),
-          getSideSlides(),
-        ]);
+        const usersResponse = await fetchWithClerk("/api/usuarios", { method: "GET" }, token);
         if (!alive) return;
-        setHeroSlides(hero);
-        setRowSlides(row);
-        setProducts(prod);
-        setUserRows(users);
-        setRoleRows(roles);
-        setSideSlides(side);
+        // Extraer el array de usuarios de la respuesta del backend
+        setUserRows(Array.isArray(usersResponse) ? usersResponse : usersResponse?.data || []);
       } catch (err) {
-        console.error("Error loading data:", err);
-        setError("Error loading data. Please try again later.");
+        console.error("Error loading users:", err);
+        setError("Error loading users. Please try again later.");
       }
     }
     fetchData();
@@ -95,9 +69,10 @@ const [error, setError] = useState(null);
     async function fetchData() {
       try {
         const token = await getToken();
-        const roles = await fetchWithClerk('/api/roles', { method: 'GET' }, token);
+        const rolesResponse = await fetchWithClerk('/api/roles', { method: 'GET' }, token);
         if (!alive) return;
-        setRoleRows(roles);
+        // Extraer el array de roles de la respuesta del backend
+        setRoleRows(Array.isArray(rolesResponse) ? rolesResponse : rolesResponse?.data || []);
       } catch (err) {
         console.error("Error loading roles:", err);
         setError("Error loading roles. Please try again later.");
@@ -134,16 +109,23 @@ const [error, setError] = useState(null);
     [getToken, userRows]
   );
 
-  // Map user rows to include role names from roleRows
+  // Map user rows to include role names from roleRows and full names
   const mappedUserRows = useMemo(() => {
+    if (!Array.isArray(userRows)) {
+      console.error("userRows no es un arreglo:", userRows);
+      return [];
+    }
     return userRows.map((user) => {
       const role = roleRows.find((r) => r.IDRol === user.roleId);
+      // Construir el nombre completo con nombres, apellidoP y apellidoM
+      const nombreCompleto = `${user.nombres || ''} ${user.apellidoP || ''} ${user.apellidoM || ''}`.trim();
       return {
         ...user,
+        nombre: nombreCompleto || user.nombre || user.name, // Priorizar nombre completo construido
         roleName: role ? role.nombre : "Sin rol asignado",
       };
     });
-  }, [userRows, roleRows]);
+  }, [userRows, roleRows]); // Validar que userRows sea un arreglo antes de usar map
 
   // Define columns for the user table
   const userColumns = useMemo(
@@ -170,6 +152,10 @@ const [error, setError] = useState(null);
 useEffect(() => {
     console.log("Roles cargados:", roleRows);
   }, [roleRows]);
+
+  useEffect(() => {
+    console.log("Usuarios cargados:", userRows);
+  }, [userRows]);
 
   // Show loading spinner until user data is loaded
   if (!isLoaded) {
@@ -215,13 +201,6 @@ useEffect(() => {
             },
           ]}
         />
-
-        {/* Footer with additional actions */}
-        <div className="max-w-[70rem] mx-auto">
-          <div className="flex justify-center py-6">
-            <Button size="sm" label="SOMEFIPP" />
-          </div>
-        </div>
       </main>
     </div>
   );
