@@ -1,18 +1,26 @@
-/**
- * SuccessErrorModal - Componente reutilizable para mostrar mensajes de éxito o error
- * @param {boolean} open - Controla si el modal está abierto
- * @param {function} onClose - Función a ejecutar al cerrar el modal
- * @param {string} type - Tipo de modal: "success" | "error"
- * @param {string} message - Mensaje a mostrar
- * @param {string} title - Título del modal (opcional)
- * @param {string} confirmLabel - Texto del botón (opcional)
- * @param {string} size - Tamaño del modal (opcional, default: "md")
- */
-
 import React from "react";
 import Modal from "../molecules/Modal";
 import Button from "../atoms/Button";
+/**
+ * Author: Exactum
+ * Version: 1.0.0
+ * Reusable modal component for displaying success and error messages.
+ * Includes customizable icons, titles, and button labels based on message type.
+ */
 
+/**
+ * SuccessErrorModal - Reusable component for displaying success or error messages
+ * @component
+ * @param {Object} props - Component properties
+ * @param {boolean} props.open - Controls whether the modal is open
+ * @param {Function} props.onClose - Callback function to execute when modal closes
+ * @param {"success"|"error"} props.type - Modal type: success or error
+ * @param {string} props.message - Message to display
+ * @param {string} props.title - Modal title (optional)
+ * @param {string} props.confirmLabel - Button text (optional)
+ * @param {"sm"|"md"|"lg"|"xl"} props.size - Modal size (optional, default: "md")
+ * @returns {React.Element} Success/error modal component
+ */
 export default function SuccessErrorModal({
   open,
   onClose,
@@ -22,16 +30,17 @@ export default function SuccessErrorModal({
   confirmLabel,
   size = "md",
 }) {
-  // Valores por defecto según el tipo
+  // Default values based on modal type
   const defaultTitle = type === "success" ? "¡Operación exitosa!" : "Error";
   const defaultConfirmLabel = type === "success" ? "Entendido" : "Intentar nuevamente";
 
   return (
     <Modal open={open} onClose={onClose} size={size} position="center">
       <div className="text-center">
-        {/* Icono según el tipo */}
+        {/* Icon container with conditional rendering based on type */}
         <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
           {type === "success" ? (
+            // Success icon - Checkmark in circle
             <svg
               className="h-16 w-16 text-green-500"
               fill="none"
@@ -46,6 +55,7 @@ export default function SuccessErrorModal({
               />
             </svg>
           ) : (
+            // Error icon - X mark in circle
             <svg
               className="h-16 w-16 text-red-500"
               fill="none"
@@ -62,15 +72,15 @@ export default function SuccessErrorModal({
           )}
         </div>
 
-        {/* Título */}
+        {/* Modal title with fallback to default */}
         <h3 className="text-2xl font-bold text-gray-900 mb-2">
           {title || defaultTitle}
         </h3>
 
-        {/* Mensaje */}
+        {/* Message content */}
         <p className="text-gray-600 mb-6">{message}</p>
 
-        {/* Botón */}
+        {/* Action button with dynamic label */}
         <Button variant="brand" onClick={onClose} className="w-full">
           {confirmLabel || defaultConfirmLabel}
         </Button>

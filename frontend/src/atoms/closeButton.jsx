@@ -1,14 +1,27 @@
 import React from "react";
 
 /**
- * Botón de cerrar (X) para modales y diálogos
+ * Author: Jaime Trujillo
+ * Version: 0.1.0
+ * Reusable checkBox component
+ * Includes consistent styles and improved accessibility
+ */
+
+/**
+ * Close button (X) component for modals and dialogs
  *
- * Props:
- * - onClose: función requerida para manejar el cierre
- * - className: clases adicionales para personalizar
- * - size: "sm" | "md" | "lg" (tamaño del botón)
- * - position: objeto con top, right, left, bottom para posicionamiento
- * - ariaLabel: texto accesible (default: "Cerrar modal")
+ * @param {Object} props - Component properties
+ * @param {Function} props.onClose - Required callback function to handle close events
+ * @param {string} props.className - Additional CSS classes for customization
+ * @param {"sm"|"md"|"lg"} props.size - Button size variant (small, medium, large)
+ * @param {Object} props.position - Positioning object with top, right, left, bottom properties
+ * @param {string} props.position.top - Top positioning class (e.g., "top-3")
+ * @param {string} props.position.right - Right positioning class (e.g., "right-3")
+ * @param {string} props.position.left - Left positioning class (e.g., "left-3")
+ * @param {string} props.position.bottom - Bottom positioning class (e.g., "bottom-3")
+ * @param {string} props.ariaLabel - Accessible label for screen readers (default: "Cerrar modal")
+ * @param {React.Ref} ref - Forwarded ref for the button element
+ * @returns {React.Element} Close button component
  */
 const CloseButton = (
   {
@@ -20,18 +33,18 @@ const CloseButton = (
   },
   ref
 ) => {
-  // Configuración de tamaños
+  // Size configuration mapping
   const sizeClasses = {
     sm: "w-6 h-6 text-base",
     md: "w-8 h-8 text-lg",
     lg: "w-10 h-10 text-xl",
   };
 
-  // Clases base
+  // Base CSS classes for the button
   const baseClasses =
     "absolute flex items-center justify-center font-normal border-0 bg-transparent hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-full transition-colors duration-200 cursor-pointer z-60 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50";
 
-  // Clases de posicionamiento
+  // Position classes derived from position prop
   const positionClasses = `${position.top || ""} ${position.right || ""} ${
     position.left || ""
   } ${position.bottom || ""}`;

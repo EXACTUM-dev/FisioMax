@@ -16,7 +16,7 @@ import Modal from "../molecules/Modal";
 
 // Organisms
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
-import ChecklistModal from "../organisms/checklistModal";
+import ChecklistModal from "../data/modalTemplates/roleModal";
 import SuccessErrorModal from "../organisms/successErrorModal";
 
 // Data & utils
@@ -103,7 +103,6 @@ export default function RolesPage() {
         newRoleDescription,
         selectedPrivilegeIds
       );
-
       setModalOpen(false);
       setEditingRole(null);
       
@@ -205,6 +204,8 @@ export default function RolesPage() {
             dataName={roleName}
             dataDescription={editingRole.description || ""}
             tableData={editingPrivileges}
+            existingRoles={roles}
+            currentRoleId={editingRole.id}
             confirmLabel="Guardar Cambios"
             onConfirm={handleModalConfirm}
             onClose={handleModalCancel}
