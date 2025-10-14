@@ -3,7 +3,7 @@ import { dbPool } from "../../config.js";
 
 export async function getUsuarios(req, res) {
   try {
-    const [rows] = await dbPool.query("SELECT * FROM Usuario");
+    const [rows] = await dbPool.query("SELECT nombres, apellidoP, apellidoM FROM usuario");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: "Error al consultar la base de datos" });
