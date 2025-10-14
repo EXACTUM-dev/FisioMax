@@ -14,15 +14,17 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
 
-// Import custom components and utilities
+// Atoms
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
 
 // Molecules
+import FormField from "../molecules/form";
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 
 // Organisms
+import Carousel from "../organisms/carousel";
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 
 // Data y utils
@@ -86,6 +88,26 @@ const [error, setError] = useState(null);
     };
   }, []);
 
+  // Fetch roles from the backend
+  useEffect(() => {
+    let alive = true; // Prevent state updates after unmount
+    async function fetchData() {
+      try {
+        const token = await getToken();
+        const roles = await fetchWithClerk('/api/roles', { method: 'GET' }, token);
+        if (!alive) return;
+        setRoleRows(roles);
+      } catch (err) {
+        console.error("Error loading roles:", err);
+        setError("Error loading roles. Please try again later.");
+      }
+    }
+    fetchData();
+    return () => {
+      alive = false;
+    };
+  }, [getToken]);
+
   // Function to update a user's role
   const updateUserRole = useCallback(
     async (rowId, newRoleObj) => {
@@ -110,6 +132,17 @@ const [error, setError] = useState(null);
     },
     [getToken, userRows]
   );
+
+  // Map user rows to include role names from roleRows
+  const mappedUserRows = useMemo(() => {
+    return userRows.map((user) => {
+      const role = roleRows.find((r) => r.IDRol === user.roleId);
+      return {
+        ...user,
+        roleName: role ? role.nombre : "Sin rol asignado",
+      };
+    });
+  }, [userRows, roleRows]);
 
   // Define columns for the user table
   const userColumns = useMemo(
@@ -176,7 +209,7 @@ useEffect(() => {
               label: "Usuarios",
               type: "table",
               columns: userColumns,
-              rows: userRows,
+              rows: mappedUserRows,
               searchPlaceholder: "Buscar Usuarios...",
             },
           ]}
