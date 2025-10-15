@@ -84,36 +84,6 @@ const config = {
   },
 };
 
-// Validar que las variables críticas existan
-const requiredDbVars = ["host", "user", "database"];
-const missingVars = requiredDbVars.filter((key) => !config.db[key]);
-
-if (config.db.password === undefined || config.db.password === null) {
-  missingVars.push("password");
-}
-
-if (missingVars.length > 0) {
-  console.error(
-    "❌ ERROR: Faltan las siguientes variables de entorno de base de datos:"
-  );
-  missingVars.forEach((varName) => {
-    const envVarName =
-      varName === "database" ? "DB_DATABASE" : `DB_${varName.toUpperCase()}`;
-    console.error(`   - ${envVarName}`);
-  });
-  throw new Error(
-    `Configuración de base de datos incompleta. Faltan: ${missingVars.join(
-      ", "
-    )}`
-  );
-}
-
-if (config.db.password === "" && config.app.env === "development") {
-  console.warn(
-    "⚠️  ADVERTENCIA: La contraseña de la base de datos está vacía. Esto no es recomendado en producción."
-  );
-}
-
 // Método toJSON para NO exponer secretos cuando se serializa
 config.toJSON = function () {
   return {
@@ -137,21 +107,5 @@ config.toJSON = function () {
 };
 // Crea y exporta el pool de conexiones
 export const dbPool = mysql.createPool(config.db);
-
-if (missingVars.length > 0) {
-  console.error(
-    "❌ ERROR: Faltan las siguientes variables de entorno de base de datos:"
-  );
-  missingVars.forEach((varName) => {
-    const envVarName =
-      varName === "database" ? "DB_DATABASE" : `DB_${varName.toUpperCase()}`;
-    console.error(`   - ${envVarName}`);
-  });
-  throw new Error(
-    `Configuración de base de datos incompleta. Faltan: ${missingVars.join(
-      ", "
-    )}`
-  );
-}
 
 export default config;
