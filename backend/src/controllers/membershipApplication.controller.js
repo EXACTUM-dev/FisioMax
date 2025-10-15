@@ -16,13 +16,14 @@ import S3Service from '../services/s3Service.js';
 export const createMembershipApplication = async (req, res) => {
   
   try {
-    const extraDocs = [];
-    Object.keys(req.files || {}).forEach(key => {
-      if (key.startsWith('extraDoc')) {
-        extraDocs.push(req.files[key][0]);
-      }
-    });
-
+    // Debug: Ver qué está llegando
+    console.log('=== DEBUG INFO ===');
+    console.log('req.body:', req.body);
+    console.log('req.files:', req.files);
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('==================');
+    
+    // Subir archivos a S3
     const cedulaUrl = req.files?.cedula?.[0]
       ? await S3Service.uploadFile(req.files.cedula[0], 'cedulas')
       : null;
@@ -35,11 +36,24 @@ export const createMembershipApplication = async (req, res) => {
       ? await S3Service.uploadFile(req.files.constancias[0], 'constancias')
       : null;
 
+    // Subir documentos adicionales a S3
+    const extraDocs = [];
+    Object.keys(req.files || {}).forEach(key => {
+      if (key.startsWith('extraDoc')) {
+        extraDocs.push(req.files[key][0]);
+      }
+    });
+
+    const extraDocsUrls = await Promise.all(
+      extraDocs.map(file => S3Service.uploadFile(file, 'documentos-extra'))
+    );
+
     const applicationData = {
       nombres: req.body.nombres,
       apellidoP: req.body.apellidoP,
       apellidoM: req.body.apellidoM,
-      telefono: req.body.telefono,
+      telefonoCasa: req.body.telefonoCasa,
+      telefonoWhatsApp: req.body.telefonoWhatsApp,
       email: req.body.email,
       pais: req.body.pais,
       estado: req.body.estado,
@@ -58,7 +72,7 @@ export const createMembershipApplication = async (req, res) => {
         titulo: tituloUrl,
         cedula: cedulaUrl,
         constancias: constanciasUrl,
-        extra: extraDocs
+        extra: extraDocsUrls
       },
       calle: req.body.calle,
       numexterior: req.body.numexterior,
@@ -94,6 +108,16 @@ export const createMembershipApplication = async (req, res) => {
 
   } catch (error) {
     console.error('Error creando solicitud:', error);
+    
+    // Detectar error de duplicado (correo o teléfono ya existente)
+    if (error.code === 'ER_DUP_ENTRY' || error.message.includes('Duplicate entry')) {
+      return res.status(409).json({ 
+        success: false, 
+        message: 'Este usuario ya está registrado',
+        error: 'DUPLICATE_ENTRY'
+      });
+    }
+    
     res.status(500).json({ 
       success: false, 
       message: 'Error al crear la solicitud',

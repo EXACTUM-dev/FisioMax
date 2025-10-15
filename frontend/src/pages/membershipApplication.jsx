@@ -1,18 +1,35 @@
 /**
- * Version 1.0.3
- * View to  the membership Application to be part of SOMEFIPP
- * Includes verification of required fields, modal states, format verifications for some fields, adding extra documents.
+ * @fileoverview Membership application form for SOMEFIPP (Mexican Society of Pelvic Floor Physiotherapy).
+ * @version 1.0.3
+ * @description This component handles the membership application process including:
+ * - Required field validation
+ * - Modal state management for success/error messages
+ * - Format verification for email and file uploads
+ * - Support for additional documents
+ * - Confirmation modal for unsaved data protection
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../atoms/button";
 import FormField from "../molecules/form";
 import FileUpload from "../molecules/fileUpload";
 import Modal from "../molecules/modal";
+import ConfirmModal from "../molecules/confirmationModal";
 import { MEMBERSHIP_API } from "../config/api";
 import logo from '../assets/icons/SOMEFIPPlogo.png';
 
-// Dropdown component
+/**
+ * Select field component for dropdowns.
+ * @param {Object} props - Component props.
+ * @param {string} props.label - Field label.
+ * @param {string} props.name - Field name.
+ * @param {string} props.value - Current value.
+ * @param {Function} props.onChange - Change handler.
+ * @param {Array<{value: string, label: string}>} props.options - Options array.
+ * @param {boolean} props.required - Whether field is required.
+ * @param {string} props.error - Error message.
+ * @returns {JSX.Element} Select field component.
+ */
 const SelectField = ({ label, name, value, onChange, options, required, error }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -37,7 +54,10 @@ const SelectField = ({ label, name, value, onChange, options, required, error })
   </div>
 );
 
-// Principal function to show application's view
+/**
+ * Main membership application page component.
+ * @returns {JSX.Element} Membership application form.
+ */
 export default function MembershipApplicationPage() {
   const navigate = useNavigate();
   
@@ -45,7 +65,8 @@ export default function MembershipApplicationPage() {
     nombres: "",
     apellidoP: "",
     apellidoM: "",
-    telefono: "",
+    telefonoCasa: "",
+    telefonoWhatsApp: "",
     email: "",
     pais: "",
     estado: "",
@@ -77,7 +98,64 @@ export default function MembershipApplicationPage() {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
+  
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+  const isNavigatingRef = useRef(false);
 
+  /**
+   * Checks if the form has any data entered.
+   * @returns {boolean} True if form has data, false otherwise.
+   */
+  const hasFormData = () => {
+    const hasTextData = Object.entries(formData).some(([key, value]) => {
+      if (key === 'titulo' || key === 'cedula' || key === 'constancias') return false;
+      return typeof value === 'string' && value.trim() !== '';
+    });
+    const hasFiles = formData.titulo || formData.cedula || formData.constancias || extraDocs.length > 0;
+    return hasTextData || hasFiles;
+  };
+
+  /**
+   * Detects when user attempts to close the tab/window.
+   * Shows browser confirmation dialog if form has unsaved data.
+   */
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasFormData() && !isNavigatingRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, extraDocs]);
+
+  /**
+   * Detects browser back button navigation.
+   * Shows confirmation modal if form has unsaved data.
+   */
+  useEffect(() => {
+    const handlePopState = () => {
+      if (hasFormData() && !isNavigatingRef.current) {
+        setShowConfirmModal(true);
+        // Temporarily prevent navigation
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+
+    // Add a state to history to detect popstate
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [formData, extraDocs]);
+
+  /**
+   * Fetches countries list on component mount.
+   */
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -88,18 +166,26 @@ export default function MembershipApplicationPage() {
           .sort((a, b) => a.label.localeCompare(b.label));
         setCountries(formatted);
       } catch (err) {
-        console.error("Error obteniendo países:", err);
+        console.error("Error fetching countries:", err);
       }
     };
     fetchCountries();
   }, []);
 
+  /**
+   * Handles input field changes.
+   * @param {Event} e - Input change event.
+   */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
+  /**
+   * Handles file upload changes with validation.
+   * @param {Event} e - File input change event.
+   */
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     const file = files[0] || null;
@@ -119,6 +205,10 @@ export default function MembershipApplicationPage() {
     }
   };
 
+  /**
+   * Handles country selection and fetches states for that country.
+   * @param {string} value - Selected country name.
+   */
   const handlePaisChange = async (value) => {
     setFormData(prev => ({ ...prev, pais: value, estado: "", ciudad: "" }));
     setStates([]);
@@ -133,11 +223,15 @@ export default function MembershipApplicationPage() {
       const formattedStates = data.data?.states?.map(s => ({ value: s.name, label: s.name })) || [];
       setStates(formattedStates);
     } catch (err) {
-      console.error("Error obteniendo estados:", err);
+      console.error("Error fetching states:", err);
       setStates([]);
     }
   };
 
+  /**
+   * Handles state selection and fetches cities for that state.
+   * @param {string} value - Selected state name.
+   */
   const handleEstadoChange = async (value) => {
     setFormData(prev => ({ ...prev, estado: value, ciudad: "" }));
     setCities([]);
@@ -151,19 +245,22 @@ export default function MembershipApplicationPage() {
       const formattedCities = data.data?.map(c => ({ value: c, label: c })) || [];
       setCities(formattedCities);
     } catch (err) {
-      console.error("Error obteniendo ciudades:", err);
+      console.error("Error fetching cities:", err);
       setCities([]);
     }
   };
 
-  // Validate size, type and upload required documents and information. Also validate email format. 
+  /**
+   * Validates form data including required fields, email format, and file uploads.
+   * @returns {boolean} True if form is valid, false otherwise.
+   */
   const validateForm = () => {
     const newErrors = {};
     
     if (!formData.nombres) newErrors.nombres = "El nombre es requerido";
     if (!formData.apellidoP) newErrors.apellidoP = "El apellido paterno es requerido";
     if (!formData.email) newErrors.email = "El email es requerido";
-    if (!formData.telefono) newErrors.telefono = "El telefono es requerido";
+    if (!formData.telefonoWhatsApp) newErrors.telefonoWhatsApp = "El teléfono (WhatsApp) es requerido";
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) newErrors.email = "El formato del email no es válido";
@@ -194,7 +291,10 @@ export default function MembershipApplicationPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Submit application
+  /**
+   * Handles form submission and sends data to the API.
+   * @param {Event} e - Form submit event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -215,6 +315,11 @@ export default function MembershipApplicationPage() {
         setModalMessage(result.message || "Tu solicitud de membresía ha sido enviada exitosamente. Recibirá un mensaje por correo o WhatsApp.");
         setShowModal(true);
         setExtraDocs([]);
+      } else if (res.status === 409) {
+        // Error de usuario duplicado
+        setModalType("error");
+        setModalMessage("Este usuario ya está registrado");
+        setShowModal(true);
       } else {
         setModalType("error");
         setModalMessage(result.message || "Hubo un error al enviar tu solicitud. Por favor, intenta nuevamente.");
@@ -230,7 +335,9 @@ export default function MembershipApplicationPage() {
     }
   };
 
-  // Success modal
+  /**
+   * Closes the success/error modal and navigates to login on success.
+   */
   const handleCloseModal = () => {
     setShowModal(false);
     if (modalType === "success") {
@@ -238,9 +345,67 @@ export default function MembershipApplicationPage() {
     }
   };
 
-  // Add an extra document
+  /**
+   * Confirms exit and clears all form data before navigating to login.
+   */
+  const handleConfirmExit = () => {
+    isNavigatingRef.current = true;
+    setShowConfirmModal(false);
+    
+    // Clear all form data
+    setFormData({
+      nombres: "",
+      apellidoP: "",
+      apellidoM: "",
+      telefonoCasa: "",
+      telefonoWhatsApp: "",
+      email: "",
+      pais: "",
+      estado: "",
+      ciudad: "",
+      calle: "",
+      numExterior: "",
+      numInterior: "",
+      colonia: "",
+      codigoPostal: "",
+      numeroExterior: "",
+      numeroInterior: "",
+      licenciatura: "",
+      instagram: "",
+      linkedin: "",
+      facebook: "",
+      paginaWeb: "",
+      titulo: null,
+      cedula: null,
+      constancias: null
+    });
+    setExtraDocs([]);
+    setErrors({});
+    setStates([]);
+    setCities([]);
+    
+    // Navigate to login
+    navigate("/login");
+  };
+
+  /**
+   * Cancels exit and keeps user on the form.
+   */
+  const handleCancelExit = () => {
+    setShowConfirmModal(false);
+    setPendingNavigation(null);
+  };
+
+  /**
+   * Adds a new extra document field to the form.
+   */
   const handleAddDocuments = () => setExtraDocs(prev => [...prev, { id: Date.now(), file: null }]);
 
+  /**
+   * Handles file change for extra documents with validation.
+   * @param {number} id - Document ID.
+   * @param {Event} e - File input change event.
+   */
   const handleExtraFileChange = (id, e) => {
     const file = e.target.files[0] || null;
     const index = extraDocs.findIndex(doc => doc.id === id);
@@ -271,7 +436,6 @@ export default function MembershipApplicationPage() {
   };
 
 
-  // View design
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="border-gray-200 py-4">
@@ -305,7 +469,10 @@ export default function MembershipApplicationPage() {
                 label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email}
               />
               <FormField 
-                label="Teléfono (WhatsApp)" name="telefono" required value={formData.telefono} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefono}
+                label="Teléfono personal" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}
+              />
+               <FormField 
+                label="Teléfono (WhatsApp)" name="telefonoWhatsApp" required value={formData.telefonoWhatsApp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsApp}
               />
               <FormField 
                 label="Facebook" name="facebook" value={formData.facebook} onChange={handleInputChange} placeholder="Ingresa tu cuenta de Facebook"
@@ -412,6 +579,16 @@ export default function MembershipApplicationPage() {
           </Button>
         </div>
       </Modal>
+
+      <ConfirmModal
+        open={showConfirmModal}
+        title="¿Deseas salir de esta página?"
+        message="Tienes información sin guardar. Si sales ahora, perderás todos los datos ingresados."
+        confirmLabel="Sí, salir"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmExit}
+        onCancel={handleCancelExit}
+      />
     </div>
   );
 }
