@@ -141,12 +141,12 @@ export default function MembershipApplicationPage() {
     const handlePopState = () => {
       if (hasFormData() && !isNavigatingRef.current) {
         setShowConfirmModal(true);
-        // Temporarily prevent navigation
+    
         window.history.pushState(null, '', window.location.href);
       }
     };
 
-    // Add a state to history to detect popstate
+    
     window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', handlePopState);
     
@@ -316,9 +316,9 @@ export default function MembershipApplicationPage() {
         setShowModal(true);
         setExtraDocs([]);
       } else if (res.status === 409) {
-        // Error de usuario duplicado
+    
         setModalType("error");
-        setModalMessage("Este usuario ya está registrado");
+        setModalMessage("Este corero o teléfono ya está registrado");
         setShowModal(true);
       } else {
         setModalType("error");
@@ -352,7 +352,7 @@ export default function MembershipApplicationPage() {
     isNavigatingRef.current = true;
     setShowConfirmModal(false);
     
-    // Clear all form data
+  
     setFormData({
       nombres: "",
       apellidoP: "",
@@ -384,7 +384,7 @@ export default function MembershipApplicationPage() {
     setStates([]);
     setCities([]);
     
-    // Navigate to login
+  
     navigate("/login");
   };
 
@@ -451,7 +451,7 @@ export default function MembershipApplicationPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Mi perfil */}
+          {/* My profile */}
           <div className="bg-white p-6 rounded-lg">
             <h2 className="text-center text-2xl font-bold text-gray-800 mb-8">Registro de solicitud</h2>
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Mi perfil</h3>
@@ -488,7 +488,7 @@ export default function MembershipApplicationPage() {
               />
             </div>
           
-            {/* Datos de domicilio */}
+            {/* Professional practice location section */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Ubicación de práctica profesional</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField
@@ -517,10 +517,10 @@ export default function MembershipApplicationPage() {
               />
             </div>
 
-          {/* Licenciatura */}
+          {/* License section */}
             <FormField label="Licenciatura" name="licenciatura" value={formData.licenciatura} onChange={handleInputChange} placeholder="Ingresa tu licenciatura" />
 
-          {/* Documentación */}
+          {/* Documentation section */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-6">Documentación</h3>
             <div className="space-y-6">
               <FileUpload name="titulo" label="Título/Kardex" value={formData.titulo} onChange={handleFileChange} error={errors.titulo} />
@@ -546,7 +546,7 @@ export default function MembershipApplicationPage() {
             ))}
               <Button variant="newDoc" size="sm" onClick={handleAddDocuments} className="bg-gray-200 text-gray-700 hover:bg-gray-300" type="button">Agregar documentos adicionales</Button>
 
-              {/* Botones */}
+              {/* Submit button section */}
               <div className="flex justify-end space-x-4 pt-6">
                 <Button variant="brand" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Enviando...' : 'Enviar'}</Button>
               </div>

@@ -1,7 +1,11 @@
 /**
- * version 1.2.1
- * Controller to handle the membership information request
- * Includes the creation of the application and the sending of an email about a new request to the admin
+ * @fileoverview Controller to handle membership application requests.
+ * @version 1.2.1
+ * @description Handles the creation of membership applications including:
+ * - File uploads to S3 (cedula, titulo, constancias, extra documents)
+ * - Data validation and storage
+ * - Email notifications to administrators
+ * - Duplicate entry detection
  */
 
 import MembershipApplication from '../models/membershipApplication.model.js';
@@ -9,21 +13,15 @@ import { sendEmail } from '../services/emailServices.js';
 import S3Service from '../services/s3Service.js';
 
 /**
- * Create a new membership application and send an email to admin using SES
- * @param {object} req - Express request object 
- * @param {object} res - Express response object 
+ * Creates a new membership application and sends email notification to admin.
+ * @param {object} req - Express request object containing form data and files.
+ * @param {object} res - Express response object.
+ * @returns {Promise<void>} Sends JSON response with success or error.
  */
 export const createMembershipApplication = async (req, res) => {
   
   try {
-    // Debug: Ver qué está llegando
-    console.log('=== DEBUG INFO ===');
-    console.log('req.body:', req.body);
-    console.log('req.files:', req.files);
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('==================');
-    
-    // Subir archivos a S3
+  
     const cedulaUrl = req.files?.cedula?.[0]
       ? await S3Service.uploadFile(req.files.cedula[0], 'cedulas')
       : null;
@@ -36,7 +34,7 @@ export const createMembershipApplication = async (req, res) => {
       ? await S3Service.uploadFile(req.files.constancias[0], 'constancias')
       : null;
 
-    // Subir documentos adicionales a S3
+   
     const extraDocs = [];
     Object.keys(req.files || {}).forEach(key => {
       if (key.startsWith('extraDoc')) {
@@ -96,7 +94,7 @@ export const createMembershipApplication = async (req, res) => {
           `
         });
       } catch (err) {
-        console.error(`Error enviando correo a ${email}:`, err.message);
+        console.error(`Error sending email to ${email}:`, err.message);
       }
     });
 
@@ -107,9 +105,8 @@ export const createMembershipApplication = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creando solicitud:', error);
+    console.error('Error creating application:', error);
     
-    // Detectar error de duplicado (correo o teléfono ya existente)
     if (error.code === 'ER_DUP_ENTRY' || error.message.includes('Duplicate entry')) {
       return res.status(409).json({ 
         success: false, 

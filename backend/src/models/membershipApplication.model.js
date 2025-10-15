@@ -64,8 +64,7 @@ class MembershipApplication {
 
       const userId = crypto.randomUUID().replace(/-/g, '');
 
-      // Los archivos ya fueron subidos a S3 en el controlador
-      // Aquí solo guardamos las URLs en la base de datos
+     
       const cedulaUrl = this.documentos.cedula || null;
       const tituloUrl = this.documentos.titulo || null;
       const constanciasUrl = this.documentos.constancias || null;
@@ -80,8 +79,6 @@ class MembershipApplication {
         ]
       );
 
-      // Los documentos extra ya fueron subidos a S3 en el controlador
-      // Aquí solo guardamos las URLs en la base de datos
       if (this.documentos.extra && this.documentos.extra.length > 0) {
         for (const extraDocUrl of this.documentos.extra) {
           await conn.query(
