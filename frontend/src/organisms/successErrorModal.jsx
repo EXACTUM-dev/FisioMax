@@ -1,12 +1,13 @@
+/**
+ * @fileoverview Reusable modal component for displaying success and error messages.
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Includes customizable icons, titles, and button labels based on message type.
+ */
+
 import React from "react";
 import Modal from "../molecules/modal";
 import Button from "../atoms/button";
-/**
- * Author: Exactum
- * Version: 1.0.0
- * Reusable modal component for displaying success and error messages.
- * Includes customizable icons, titles, and button labels based on message type.
- */
 
 /**
  * SuccessErrorModal - Reusable component for displaying success or error messages

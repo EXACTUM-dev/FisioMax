@@ -1,9 +1,9 @@
 /**
- * Author: Mauricio Salas
- * Version: 1.1.0
- * Column factory for a roles/permissions table
- * Keeps DataTable generic; only columns define labels, renders and mobile behavior
- * Prevents default navigation behavior for action columns
+ * C@fileoverview Column factory for a roles/permissions table
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Keeps DataTable generic; only columns define labels, renders and mobile behavior
+ * @description Prevents default navigation behavior for action columns
  */
 
 import React from "react";

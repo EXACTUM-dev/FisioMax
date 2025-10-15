@@ -1,13 +1,21 @@
 /**
- * Version: 0.2.0
- * Switchable container with tabs and optional search.
- * For table views, forwards onRowAction to DataTable.
+ * @fileoverview Switchable container with tabs and optional search.
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description For table views, forwards onRowAction to DataTable.
  */
 import React, { useMemo, useState } from "react";
 import DataTable from "./dataTable";
 import TabsNav from "../molecules/tabsNav";
 import SearchBar from "../molecules/searchBar";
-
+/**
+ * DataSwitchContainer component properties.
+ * @typedef {Object} DataSwitchContainer
+ * @property {DataView[]} [views] - Array of view configurations.
+ * @property {string} [initialKey] - Initial active view key.
+ * @property {string} [className] - Additional CSS classes.
+ * @return {React.ReactElement} Switchable data container component.
+ */
 export default function DataSwitchContainer({
   views = [], // [{ key, label, type: 'table'|'custom', columns?, rows?, render?, searchPlaceholder?, searchEnabled?, onRowAction? }]
   initialKey,
@@ -18,9 +26,11 @@ export default function DataSwitchContainer({
 
   const activeView = views.find((v) => v.key === activeKey) ?? views[0] ?? {};
 
+  // Enable search by default for table views, allow override via searchEnabled prop
   const searchEnabled =
     activeView.searchEnabled ?? (activeView.type === "table" ? true : false);
 
+  // Filter rows based on search query for table views  
   const filteredRows = useMemo(() => {
     if (activeView.type !== "table") return [];
     const q = query.trim().toLowerCase();

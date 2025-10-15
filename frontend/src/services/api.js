@@ -1,17 +1,19 @@
 /**
- * Version: 0.3.0
- * Servicio base para comunicación con la API
+ * @fileoverview Base service for the comunication with the API
+ * @author EXACTUM-dev
+ * @version 1.0.0
  */
 
 import { useAuth } from "@clerk/clerk-react";
 
-// URL base para todas las peticiones API
+// Base URL for all API requests
 const API_BASE_URL = "/api";
 
 /**
- * Función para manejar errores de peticiones API
- * @param {Response} response - Respuesta de fetch
- * @returns {Promise} - Promesa con los datos o rechazada con error
+ * Handles API response and throws error for non-OK responses.
+ * @param {Response} response - Fetch API response object.
+ * @returns {Promise} - PParsed JSON response data.
+ * @throws {ApiError} - When response is not OK
  */
 async function handleResponse(response) {
   const data = await response.json();
@@ -30,10 +32,10 @@ async function handleResponse(response) {
 }
 
 /**
- * Construye opciones para fetch con autenticación y otros headers
- * @param {object} options - Opciones adicionales para fetch
- * @param {string} token - Token de autenticación
- * @returns {object} - Opciones configuradas para fetch
+ * Builds fetch options with authentication and default headers.
+ * @param {object} options - Additional fetch options.
+ * @param {string} token - Authentication token.
+ * @returns {object} - Configured fetch options.
  */
 function buildOptions(options = {}, token) {
   const defaultOptions = {
@@ -43,7 +45,7 @@ function buildOptions(options = {}, token) {
     },
   };
 
-  // Agregar token de autenticación si existe
+  // Add authentification token if exist
   if (token) {
     defaultOptions.headers.Authorization = `Bearer ${token}`;
   }
@@ -55,15 +57,16 @@ function buildOptions(options = {}, token) {
 }
 
 /**
- * Cliente API para realizar peticiones HTTP
+ * HTTP client for making authenticated API requests.
+ * @type {Object}
  */
 export const apiClient = {
   /**
-   * Realiza una petición GET
-   * @param {string} endpoint - Ruta del endpoint (sin la base URL)
-   * @param {object} options - Opciones adicionales para fetch
-   * @param {string} token - Token de autenticación
-   * @returns {Promise} - Promesa con la respuesta
+   * Performs GET request.
+   * @param {string} endpoint - API endpoint path (without base URL).
+   * @param {object} options - Additional fetch options.
+   * @param {string} token - Authentication token.
+   * @returns {Promise} - API response data.
    */
   async get(endpoint, options = {}, token = null) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -75,12 +78,12 @@ export const apiClient = {
   },
 
   /**
-   * Realiza una petición POST
-   * @param {string} endpoint - Ruta del endpoint (sin la base URL)
-   * @param {object} data - Datos a enviar en el cuerpo
-   * @param {object} options - Opciones adicionales para fetch
-   * @param {string} token - Token de autenticación
-   * @returns {Promise} - Promesa con la respuesta
+   * Performs POST request.
+   * @param {string} endpoint - API endpoint path (without base URL).
+   * @param {!Object} data - Request body data.
+   * @param {!Object=} options - Additional fetch options.
+   * @param {?string=} token - Authentication token.
+   * @return {!Promise<!Object>} API response data.
    */
   async post(endpoint, data, options = {}, token = null) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -99,12 +102,12 @@ export const apiClient = {
   },
 
   /**
-   * Realiza una petición PUT
-   * @param {string} endpoint - Ruta del endpoint (sin la base URL)
-   * @param {object} data - Datos a enviar en el cuerpo
-   * @param {object} options - Opciones adicionales para fetch
-   * @param {string} token - Token de autenticación
-   * @returns {Promise} - Promesa con la respuesta
+   * Performs PUT request.
+   * @param {string} endpoint - API endpoint path (without base URL).
+   * @param {!Object} data - Request body data.
+   * @param {!Object=} options - Additional fetch options.
+   * @param {?string=} token - Authentication token.
+   * @return {!Promise<!Object>} API response data.
    */
   async put(endpoint, data, options = {}, token = null) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -123,11 +126,11 @@ export const apiClient = {
   },
 
   /**
-   * Realiza una petición DELETE
-   * @param {string} endpoint - Ruta del endpoint (sin la base URL)
-   * @param {object} options - Opciones adicionales para fetch
-   * @param {string} token - Token de autenticación
-   * @returns {Promise} - Promesa con la respuesta
+   * Performs DELETE request.
+   * @param {string} endpoint - API endpoint path (without base URL).
+   * @param {!Object=} options - Additional fetch options.
+   * @param {?string=} token - Authentication token.
+   * @return {!Promise<!Object>} API response data.
    */
   async delete(endpoint, options = {}, token = null) {
     const url = `${API_BASE_URL}${endpoint}`;

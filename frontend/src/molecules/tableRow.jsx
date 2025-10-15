@@ -1,7 +1,8 @@
 /**
- * Version: 0.2.0
- * Table row component with action event handling
- * Prevents default link behavior for action columns
+ * @fileoverview Table row component with action event handling
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Prevents default link behavior for action columns
  */
 import React from "react";
 import Checkbox from "../atoms/checkBox";

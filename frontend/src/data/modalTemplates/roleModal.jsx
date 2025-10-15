@@ -7,10 +7,10 @@ import DataTable from "../../organisms/dataTable";
 import Modal from "../../molecules/modal";
 
 /**
- * Author: Jaime Trujillo
- * Version: 1.0.0
- * Modal component for editing roles with name, description and privileges checklist.
- * Includes form validation, duplicate checking, and accessibility features.
+ * @fileoverview Modal component for editing roles with name, description and privileges checklist.
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Includes form validation, duplicate checking, and accessibility features.
  */
 
 /**
@@ -83,8 +83,6 @@ export default function ChecklistModal({
       setNameError("El nombre del rol no puede estar vacío");
       return false;
     }
-    
-    console.log("Validating role name:", existingData);
     const isDuplicate = existingData.some(
       (role) =>
         role.rol.toLowerCase().trim() === name.toLowerCase().trim() &&
