@@ -463,7 +463,7 @@ export default function MembershipApplicationPage() {
                 label="Apellido Paterno" name="apellidoP" required value={formData.apellidoP} onChange={handleInputChange} placeholder="Ingresa tu apellido paterno" error={errors.apellidoP} 
               />
               <FormField 
-                label="Apellido Materno" name="apellidoM" required value={formData.apellidoM} onChange={handleInputChange} placeholder="Ingresa tu apellido materno" error={errors.apellidoM} 
+                label="Apellido Materno" name="apellidoM" value={formData.apellidoM} onChange={handleInputChange} placeholder="Ingresa tu apellido materno" error={errors.apellidoM} 
               />
               <FormField 
                 label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email}
