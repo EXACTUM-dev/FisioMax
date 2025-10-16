@@ -338,9 +338,41 @@ export default function MembershipApplicationPage() {
 
     try {
       const formDataToSend = new FormData();
+      
+      // Mapeo de campos de español a inglés
+      const fieldMapping = {
+        nombres: 'firstName',
+        apellidoP: 'lastName',
+        apellidoM: 'middleName',
+        telefonoCasa: 'homePhone',
+        telefonoWhatsApp: 'whatsappPhone',
+        email: 'email',
+        pais: 'country',
+        estado: 'state',
+        ciudad: 'city',
+        colonia: 'neighborhood',
+        codigoPostal: 'postalCode',
+        calle: 'street',
+        numeroExterior: 'exteriorNumber',
+        numeroInterior: 'interiorNumber',
+        licenciatura: 'degree',
+        instagram: 'instagram',
+        linkedin: 'linkedin',
+        facebook: 'facebook',
+        paginaWeb: 'website',
+        titulo: 'degreeDocument',
+        cedula: 'professionalId',
+        constancias: 'certificates'
+      };
+      
+      // Enviar datos con nombres en inglés
       Object.entries(formData).forEach(([key, value]) => {
-        if (value) formDataToSend.append(key, typeof value === "string" ? value.trim() : value);
+        if (value) {
+          const englishKey = fieldMapping[key] || key;
+          formDataToSend.append(englishKey, typeof value === "string" ? value.trim() : value);
+        }
       });
+      
       extraDocs.forEach((doc, i) => { if (doc.file) formDataToSend.append(`extraDoc${i+1}`, doc.file); });
 
       const res = await fetch(MEMBERSHIP_API.CREATE, { method: 'POST', body: formDataToSend });

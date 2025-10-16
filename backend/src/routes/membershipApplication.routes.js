@@ -27,9 +27,9 @@ const upload = multer({
 
 // Middleware to handle multiple file uploads
 const uploadFields = upload.fields([
-  { name: 'titulo', maxCount: 1 },
-  { name: 'cedula', maxCount: 1 },
-  { name: 'constancias', maxCount: 1 },
+  { name: 'degreeDocument', maxCount: 1 },
+  { name: 'professionalId', maxCount: 1 },
+  { name: 'certificates', maxCount: 1 },
   { name: 'extraDoc1', maxCount: 1 },
   { name: 'extraDoc2', maxCount: 1 },
   { name: 'extraDoc3', maxCount: 1 },

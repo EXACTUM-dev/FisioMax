@@ -22,16 +22,16 @@ export const createMembershipApplication = async (req, res) => {
   
   try {
   
-    const cedulaUrl = req.files?.cedula?.[0]
-      ? await S3Service.uploadFile(req.files.cedula[0], 'cedulas')
+    const professionalIdUrl = req.files?.professionalId?.[0]
+      ? await S3Service.uploadFile(req.files.professionalId[0], 'cedulas')
       : null;
 
-    const tituloUrl = req.files?.titulo?.[0]
-      ? await S3Service.uploadFile(req.files.titulo[0], 'titulos')
+    const degreeDocumentUrl = req.files?.degreeDocument?.[0]
+      ? await S3Service.uploadFile(req.files.degreeDocument[0], 'titulos')
       : null;
 
-    const constanciasUrl = req.files?.constancias?.[0]
-      ? await S3Service.uploadFile(req.files.constancias[0], 'constancias')
+    const certificatesUrl = req.files?.certificates?.[0]
+      ? await S3Service.uploadFile(req.files.certificates[0], 'constancias')
       : null;
 
    
@@ -47,34 +47,31 @@ export const createMembershipApplication = async (req, res) => {
     );
 
     const applicationData = {
-      nombres: req.body.nombres,
-      apellidoP: req.body.apellidoP,
-      apellidoM: req.body.apellidoM,
-      telefonoCasa: req.body.telefonoCasa,
-      telefonoWhatsApp: req.body.telefonoWhatsApp,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      middleName: req.body.middleName,
+      homePhone: req.body.homePhone,
+      whatsappPhone: req.body.whatsappPhone,
       email: req.body.email,
-      pais: req.body.pais,
-      estado: req.body.estado,
-      ciudad: req.body.ciudad,
-      colonia: req.body.colonia,
-      codigoPostal: req.body.codigoPostal,
-      calle: req.body.calle,                    
-      numeroExterior: req.body.numeroExterior,  
-      numeroInterior: req.body.numeroInterior,
-      licenciatura: req.body.licenciatura,
+      country: req.body.country,
+      state: req.body.state,
+      city: req.body.city,
+      neighborhood: req.body.neighborhood,
+      postalCode: req.body.postalCode,
+      street: req.body.street,                    
+      exteriorNumber: req.body.exteriorNumber,  
+      interiorNumber: req.body.interiorNumber,
+      degree: req.body.degree,
       instagram: req.body.instagram,
       linkedin: req.body.linkedin,
       facebook: req.body.facebook,
-      paginaWeb: req.body.paginaWeb,
-      documentos: {
-        titulo: tituloUrl,
-        cedula: cedulaUrl,
-        constancias: constanciasUrl,
+      website: req.body.website,
+      documents: {
+        degreeDocument: degreeDocumentUrl,
+        professionalId: professionalIdUrl,
+        certificates: certificatesUrl,
         extra: extraDocsUrls
-      },
-      calle: req.body.calle,
-      numexterior: req.body.numexterior,
-      numinterior: req.body.numinterior
+      }
     };
 
     const application = new MembershipApplication(applicationData);
@@ -89,7 +86,7 @@ export const createMembershipApplication = async (req, res) => {
           html: `
             <h1>¡Atención!</h1>
             <p>Se ha registrado una nueva solicitud de membresía.</p>
-            <p><strong>Nombre:</strong> ${req.body.nombres} ${req.body.apellidoP} ${req.body.apellidoM}</p>
+            <p><strong>Nombre:</strong> ${req.body.firstName} ${req.body.lastName} ${req.body.middleName}</p>
             <p><strong>Email:</strong> ${req.body.email}</p>
           `
         });
