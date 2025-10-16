@@ -18,6 +18,12 @@ import ConfirmModal from "../molecules/confirmationModal";
 import { MEMBERSHIP_API } from "../config/api";
 import logo from '../assets/icons/SOMEFIPPlogo.png';
 
+// Variables de entorno para APIs de países
+const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
+const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env.VITE_COUNTRIES_POSITIONS_ENDPOINT;
+const COUNTRIES_STATES_ENDPOINT = import.meta.env.VITE_COUNTRIES_STATES_ENDPOINT;
+const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT;
+
 /**
  * Select field component for dropdowns.
  * @param {Object} props - Component props.
@@ -162,7 +168,7 @@ export default function MembershipApplicationPage() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await fetch("https://countriesnow.space/api/v0.1/countries/positions");
+        const res = await fetch(`${COUNTRIES_API_BASE_URL}${COUNTRIES_POSITIONS_ENDPOINT}`);
         const data = await res.json();
         const formatted = data.data
           .map(c => ({ value: c.name, label: c.name }))
@@ -217,7 +223,7 @@ export default function MembershipApplicationPage() {
     setStates([]);
     setCities([]);
     try {
-      const res = await fetch("https://countriesnow.space/api/v0.1/countries/states", {
+      const res = await fetch(`${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: value })
@@ -239,7 +245,7 @@ export default function MembershipApplicationPage() {
     setFormData(prev => ({ ...prev, estado: value, ciudad: "" }));
     setCities([]);
     try {
-      const res = await fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
+      const res = await fetch(`${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: formData.pais, state: value })
