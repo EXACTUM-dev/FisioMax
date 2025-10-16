@@ -1,16 +1,24 @@
 /**
- * Version: 0.1.0
- * Switchable container with tabs and an optional search bar.
- * Uses TabsNav and SearchBar atoms.
+ * @fileoverview Switchable container with tabs and optional search.
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description For table views, forwards onRowAction to DataTable.
  */
 import React, { useMemo, useState } from "react";
 import DataTable from "./dataTable";
 import TabsNav from "../molecules/tabsNav";
 import SearchBar from "../molecules/searchBar";
-
+/**
+ * DataSwitchContainer component properties.
+ * @typedef {Object} DataSwitchContainer
+ * @property {DataView[]} [views] - Array of view configurations.
+ * @property {string} [initialKey] - Initial active view key.
+ * @property {string} [className] - Additional CSS classes.
+ * @return {React.ReactElement} Switchable data container component.
+ */
 export default function DataSwitchContainer({
-  views = [], // [{ key, label, type: 'table'|'custom', columns?, rows?, render?, searchPlaceholder?, searchEnabled? }]
-  initialKey, // key of the initial active view
+  views = [], // [{ key, label, type: 'table'|'custom', columns?, rows?, render?, searchPlaceholder?, searchEnabled?, onRowAction? }]
+  initialKey,
   className = "",
 }) {
   const [activeKey, setActiveKey] = useState(initialKey ?? views[0]?.key);
@@ -18,11 +26,11 @@ export default function DataSwitchContainer({
 
   const activeView = views.find((v) => v.key === activeKey) ?? views[0] ?? {};
 
-  // Determine if search should be shown
+  // Enable search by default for table views, allow override via searchEnabled prop
   const searchEnabled =
     activeView.searchEnabled ?? (activeView.type === "table" ? true : false);
 
-  // Filter rows for table-type views
+  // Filter rows based on search query for table views  
   const filteredRows = useMemo(() => {
     if (activeView.type !== "table") return [];
     const q = query.trim().toLowerCase();
@@ -46,7 +54,6 @@ export default function DataSwitchContainer({
 
   return (
     <section className={`max-w-[70rem] mx-auto ${className}`}>
-      {/* Header: tabs + search */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4">
         <TabsNav
           items={views.map((v) => ({ key: v.key, label: v.label }))}
@@ -63,7 +70,6 @@ export default function DataSwitchContainer({
         )}
       </div>
 
-      {/* Body: rounded container */}
       <div
         id={`panel-${activeKey}`}
         role="tabpanel"

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Archivo principal del servidor backend de la aplicación.
- * @version 1.0.0
  * @author EXACTUM-dev
+ * @version 1.0.0
  *
  * @description Configura y levanta el servidor Express con middlewares esenciales.
  */
@@ -19,6 +19,7 @@ import helmet from "helmet";
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import usuariosRoutes from "./src/routes/usuarios.routes.js";
+import rolesRoutes from "./src/routes/roles.routes.js";
 
 // Inicializar la aplicación Express
 const app = express();
@@ -131,7 +132,6 @@ app.post("/login", (req, res) => {
  * @returns {Array<Object>} Lista de usuarios en formato JSON.
  */
 app.get("/api/usuarios", requireAuth, (req, res) => {
-  console.log("Usuarios");
   // req.auth contiene la información del usuario autenticado
   const userId = req.auth?.userId;
 
@@ -385,6 +385,7 @@ export { app };
  */
 
 app.use("/usuarios", usuariosRoutes);
+app.use("/api/roles", rolesRoutes);
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
     console.log(
