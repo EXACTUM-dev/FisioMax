@@ -1,10 +1,3 @@
-import React, { useMemo, useState, useRef, useEffect} from "react";
-import Button from "../../atoms/button";
-import { Title2 } from "../../atoms/typography";
-import CheckBox from "../../atoms/checkBox";
-import FieldBox from "../../molecules/form";
-import DataTable from "../../organisms/dataTable";
-import Modal from "../../molecules/modal";
 
 /**
  * @fileoverview Modal component for editing roles with name, description and privileges checklist.
@@ -12,6 +5,15 @@ import Modal from "../../molecules/modal";
  * @version 1.0.0
  * @description Includes form validation, duplicate checking, and accessibility features.
  */
+
+//Import aplication dependencies
+import React, { useMemo, useState, useRef, useEffect} from "react";
+import Button from "../../atoms/button";
+import { Title2 } from "../../atoms/typography";
+import CheckBox from "../../atoms/checkBox";
+import FieldBox from "../../molecules/form";
+import DataTable from "../../organisms/dataTable";
+import Modal from "../../molecules/modal";
 
 /**
  * Modal to edit role with name, description and privileges checklist.
