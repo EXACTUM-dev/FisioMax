@@ -9,6 +9,10 @@ import {
   getAllRolesFromDB,
   updateRolePrivileges,
 } from "../models/roles.model.js";
+import {
+  getRolePrivileges,
+  getAllPrivileges,
+} from "../models/privileges.model.js";
 
 /**
  * Get role by ID for editing with privileges
@@ -63,18 +67,16 @@ export async function getRoleById(req, res) {
 }
 
 /**
- * Update a role and its privileges
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * Update role name, description and privileges
+ * @route POST /api/roles/edit/:id
+ * @access Protected
  */
 export async function updateRole(req, res) {
   try {
     const { id } = req.params;
-    const { name, privileges } = req.body;
+    const { name, description, privileges } = req.body;
 
-    // Authorization is now handled by middleware
-
-    // Validate input
+    // Validate required fields
     if (!name || !Array.isArray(privileges)) {
       return res.status(400).json({
         success: false,
@@ -82,21 +84,36 @@ export async function updateRole(req, res) {
       });
     }
 
-    // Update role name
-    await updateRoleById(id, { name });
+    // Check if role exists
+    const role = await findRoleById(id);
+    if (!role) {
+      return res.status(404).json({
+        success: false,
+        error: "Role not found",
+      });
+    }
+
+    // Update role basic info (name and description)
+    await updateRoleById(id, { name, description });
 
     // Update role privileges
     await updateRolePrivileges(id, privileges);
 
-    res.json({
+    return res.status(200).json({
       success: true,
       message: "Role updated successfully",
+      data: {
+        id,
+        name,
+        description,
+        privileges,
+      },
     });
   } catch (error) {
     console.error("Error updating role:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: "Error updating role",
+      error: error.message || "Error updating role",
     });
   }
 }

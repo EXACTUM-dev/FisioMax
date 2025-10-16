@@ -1,13 +1,14 @@
 /**
- * Version: 0.2.0
- * Responsive lateral navigation with self-contained routing + Clerk logout
- * Desktop (expandable on hover) + Mobile (bottom bar)
+ * @fileoverview Responsive lateral navigation with self-contained routing + Clerk logout
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Desktop (expandable on hover) + Mobile (bottom bar)
  */
 import React, { useMemo, useState, useEffect } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 // Confirmation modal for logout
-import ConfirmModal from "../molecules/confirmationModal";
+import ConfirmationModal from "../molecules/confirmationModal";
 
 // Icon resources
 import logoSrc from "../assets/icons/SOMEFIPPlogo.png";
@@ -249,7 +250,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
           })}
         </ul>
       </nav>
-      <ConfirmModal
+      <ConfirmationModal
         open={showLogoutModal}
         title="¿Cerrar sesión?"
         message="¿Estás seguro que deseas cerrar sesión?"

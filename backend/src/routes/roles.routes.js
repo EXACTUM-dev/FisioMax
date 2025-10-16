@@ -19,7 +19,7 @@ const router = express.Router();
  * @desc    Get all roles (for listing)
  * @access  Protected (Admin)
  */
-router.get("/", getAllRoles); // Eliminado requireAuth para desactivar autorización temporalmente
+router.get("/", requireAuth, getAllRoles);
 
 /**
  * @route   GET /api/roles/edit/:id

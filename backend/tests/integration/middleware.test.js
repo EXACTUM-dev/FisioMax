@@ -1,6 +1,8 @@
 /**
- * Pruebas de integración para middleware y configuración
- * @fileoverview Tests que verifican el funcionamiento de todos los middleware
+ * @fileoverview Tests that veryfy the functions of all middlewares
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * 
  */
 
 import request from 'supertest';
@@ -14,7 +16,7 @@ describe('Pruebas de Integración - Middleware y Configuración', () => {
         .get('/')
         .expect(200);
 
-      // Verificar headers de seguridad básicos
+      // Veriffy basic headers
       expect(response.headers).toHaveProperty('x-content-type-options');
       expect(response.headers).toHaveProperty('x-frame-options');
     });
@@ -27,7 +29,7 @@ describe('Pruebas de Integración - Middleware y Configuración', () => {
         .set('Origin', 'http://localhost:3000')
         .expect(200);
 
-      // Verificar que CORS está configurado
+      // Veriffy CORS configurated
       expect(response.headers).toHaveProperty('access-control-allow-origin');
     });
 
@@ -39,14 +41,14 @@ describe('Pruebas de Integración - Middleware y Configuración', () => {
         .set('Access-Control-Request-Headers', 'Content-Type')
         .expect(204);
 
-      // Verificar headers CORS en preflight
+      // Veriffy headers CORS in preflight
       expect(response.headers).toHaveProperty('access-control-allow-methods');
     });
   });
 
   describe('Middleware de compresión', () => {
     test('debería comprimir respuestas grandes', async () => {
-      // Crear una respuesta grande
+      // Create big response
       const largeData = 'x'.repeat(1000);
       
       const response = await request(app)
@@ -54,27 +56,21 @@ describe('Pruebas de Integración - Middleware y Configuración', () => {
         .send({ data: largeData })
         .expect(200);
 
-      // En un entorno real, debería comprimir la respuesta
+      // In real environment, response is comprimed
       expect(response.headers).toHaveProperty('content-encoding');
     });
   });
 
   describe('Middleware de logging (Morgan)', () => {
     test('debería registrar solicitudes HTTP', async () => {
-      // Mock console.log para verificar que se registra
-      const originalLog = console.log;
       const mockLog = jest.fn();
-      console.log = mockLog;
 
       await request(app)
         .get('/')
         .expect(200);
 
-      // Restaurar console.log
-      console.log = originalLog;
+  
 
-      // Morgan debería registrar la solicitud
-      // En un entorno real, verificarías los logs
       expect(mockLog).toHaveBeenCalled();
     });
   });

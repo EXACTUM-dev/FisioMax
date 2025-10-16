@@ -1,7 +1,7 @@
 /**
  * @fileoverview Archivo principal del servidor backend de la aplicación.
- * @version 1.0.0
  * @author EXACTUM-dev
+ * @version 1.0.0
  *
  * @description Configura y levanta el servidor Express con middlewares esenciales.
  */

@@ -1,24 +1,29 @@
 /**
+ * Author: Exactum
  * Version: 1.2.0
  * Generic button atom
  * Reusable, accessible and brand-ready button.
  * Notes: uses Tailwind and the extended "brand" color (#CAD00F).
  */
+
 import React from "react";
 
 /**
- * Props:
- * - label?: string (default "SOMEFIPP")
- * - children?: React.ReactNode (overrides label if present)
- * - variant?: "brand" | "outline" | "ghost"
- * - size?: "xs" | "sm" | "md" | "lg" | "xl"  // more compact scale
- * - fullWidth?: boolean
- * - type?: "button" | "submit" | "reset"
- * - disabled?: boolean
- * - onClick?: () => void
- * - className?: string
- * - ariaLabel?: string
- * - radius?: "sm" | "md" | "lg" | "xl" | "2xl" | "full" (default "xl")
+ * Generic button atom component
+ * @component
+ * @param {Object} props - Component properties
+ * @param {string} [props.label="SOMEFIPP"] - Button text label
+ * @param {React.ReactNode} [props.children] - Button content (overrides label if present)
+ * @param {"brand"|"outline"|"ghost"} [props.variant="brand"] - Button style variant
+ * @param {"xs"|"sm"|"md"|"lg"|"xl"} [props.size="md"] - Button size with compact scale
+ * @param {boolean} [props.fullWidth=false] - Whether button should take full width
+ * @param {"button"|"submit"|"reset"} [props.type="button"] - HTML button type
+ * @param {boolean} [props.disabled=false] - Whether button is disabled
+ * @param {Function} [props.onClick] - Click event handler
+ * @param {string} [props.className=""] - Additional CSS classes
+ * @param {string} [props.ariaLabel] - Accessible label for screen readers
+ * @param {"sm"|"md"|"lg"|"xl"|"2xl"|"full"} [props.radius="xl"] - Border radius size
+ * @returns {React.Element} Button component
  */
 export default function Button({
   label = "SOMEFIPP",
@@ -43,6 +48,7 @@ export default function Button({
   };
   const sizeCls = sizes[size] ?? sizes.md;
 
+  // Button style variants using brand color
   const variants = {
     brand:
       "bg-brand text-stone-700 hover:brightness-95 focus-visible:ring-brand/60",
@@ -53,6 +59,7 @@ export default function Button({
   };
   const variantCls = variants[variant] ?? variants.brand;
 
+  // Border radius options
   const radii = {
     sm: "rounded",
     md: "rounded-md",
@@ -63,6 +70,7 @@ export default function Button({
   };
   const radiusCls = radii[radius] ?? radii.xl;
 
+  // Base button styles
   const base =
     "inline-flex items-center justify-center font-semibold " +
     "shadow-sm transition-[transform,filter] cursor-pointer " +
