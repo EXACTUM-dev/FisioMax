@@ -102,6 +102,9 @@ export default function MembershipApplicationPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const isNavigatingRef = useRef(false);
+  
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
 
   /**
    * Checks if the form has any data entered.
@@ -256,16 +259,34 @@ export default function MembershipApplicationPage() {
    */
   const validateForm = () => {
     const newErrors = {};
+    const missingFields = [];
     
-    if (!formData.nombres) newErrors.nombres = "El nombre es requerido";
-    if (!formData.apellidoP) newErrors.apellidoP = "El apellido paterno es requerido";
-    if (!formData.email) newErrors.email = "El email es requerido";
-    if (!formData.telefonoWhatsApp) newErrors.telefonoWhatsApp = "El teléfono (WhatsApp) es requerido";
+    // Campos requeridos
+    if (!formData.nombres) {
+      newErrors.nombres = "El nombre es requerido";
+      missingFields.push("Nombre(s)");
+    }
+    if (!formData.apellidoP) {
+      newErrors.apellidoP = "El apellido paterno es requerido";
+      missingFields.push("Apellido Paterno");
+    }
+    if (!formData.email) {
+      newErrors.email = "El email es requerido";
+      missingFields.push("Correo electrónico");
+    }
+    if (!formData.telefonoWhatsApp) {
+      newErrors.telefonoWhatsApp = "El teléfono (WhatsApp) es requerido";
+      missingFields.push("Teléfono (WhatsApp)");
+    }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) newErrors.email = "El formato del email no es válido";
+    if (formData.email && !emailRegex.test(formData.email)) {
+      newErrors.email = "El formato del email no es válido";
+    }
+    
     if (!formData.cedula) {
       newErrors.cedula = "La cédula es requerida";
+      missingFields.push("Cédula profesional");
     } else if (formData.cedula.type !== 'application/pdf') {
       newErrors.cedula = "Solo se aceptan archivos PDF";
     } else if (formData.cedula.size > 10 * 1024 * 1024) {
@@ -287,7 +308,16 @@ export default function MembershipApplicationPage() {
         newErrors.constancias = "El archivo no puede ser mayor a 10MB";
       }
     }
+    
     setErrors(newErrors);
+    
+    // Si hay campos faltantes, mostrar el modal de validación
+    if (missingFields.length > 0) {
+      setValidationErrors(missingFields);
+      setShowValidationModal(true);
+      return false;
+    }
+    
     return Object.keys(newErrors).length === 0;
   };
 
@@ -318,7 +348,7 @@ export default function MembershipApplicationPage() {
       } else if (res.status === 409) {
     
         setModalType("error");
-        setModalMessage("Este corero o teléfono ya está registrado");
+        setModalMessage("Este correo o teléfono ya está registrado");
         setShowModal(true);
       } else {
         setModalType("error");
@@ -397,6 +427,14 @@ export default function MembershipApplicationPage() {
   };
 
   /**
+   * Closes the validation modal.
+   */
+  const handleCloseValidationModal = () => {
+    setShowValidationModal(false);
+    setValidationErrors([]);
+  };
+
+  /**
    * Adds a new extra document field to the form.
    */
   const handleAddDocuments = () => setExtraDocs(prev => [...prev, { id: Date.now(), file: null }]);
@@ -463,7 +501,7 @@ export default function MembershipApplicationPage() {
                 label="Apellido Paterno" name="apellidoP" required value={formData.apellidoP} onChange={handleInputChange} placeholder="Ingresa tu apellido paterno" error={errors.apellidoP} 
               />
               <FormField 
-                label="Apellido Materno" name="apellidoM" required value={formData.apellidoM} onChange={handleInputChange} placeholder="Ingresa tu apellido materno" error={errors.apellidoM} 
+                label="Apellido Materno" name="apellidoM" value={formData.apellidoM} onChange={handleInputChange} placeholder="Ingresa tu apellido materno" error={errors.apellidoM} 
               />
               <FormField 
                 label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email}
@@ -589,6 +627,36 @@ export default function MembershipApplicationPage() {
         onConfirm={handleConfirmExit}
         onCancel={handleCancelExit}
       />
+
+      {/* Modal de validación de campos requeridos */}
+      <Modal open={showValidationModal} onClose={handleCloseValidationModal} size="md" position="center">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
+            <svg className="h-16 w-16 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Campos requeridos faltantes
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Por favor completa los siguientes campos obligatorios antes de enviar tu solicitud:
+          </p>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <ul className="text-left text-gray-700 space-y-2">
+              {validationErrors.map((field, index) => (
+                <li key={index} className="flex items-center">
+                  <span className="text-orange-500 mr-2">•</span>
+                  {field}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Button variant="brand" onClick={handleCloseValidationModal} className="w-full">
+            Entendido
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
