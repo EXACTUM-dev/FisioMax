@@ -18,7 +18,7 @@ import ConfirmModal from "../molecules/confirmationModal";
 import { MEMBERSHIP_API } from "../config/api";
 import logo from '../assets/icons/SOMEFIPPlogo.png';
 
-// Variables de entorno para APIs de países
+//  Variables for country, state and city APIs
 const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
 const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env.VITE_COUNTRIES_POSITIONS_ENDPOINT;
 const COUNTRIES_STATES_ENDPOINT = import.meta.env.VITE_COUNTRIES_STATES_ENDPOINT;
@@ -267,7 +267,6 @@ export default function MembershipApplicationPage() {
     const newErrors = {};
     const missingFields = [];
     
-    // Campos requeridos
     if (!formData.nombres) {
       newErrors.nombres = "El nombre es requerido";
       missingFields.push("Nombre(s)");
@@ -281,30 +280,30 @@ export default function MembershipApplicationPage() {
       missingFields.push("Correo electrónico");
     }
     if (!formData.telefonoWhatsApp) {
-      newErrors.telefonoWhatsApp = "El teléfono (WhatsApp) es requerido";
-      missingFields.push("Teléfono (WhatsApp)");
+      newErrors.telefonoWhatsApp = "El contacto profesional es requerido";
+      missingFields.push("Contacto profesional");
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = "El formato del email no es válido";
+      missingFields.push("El formato del correo no es válido");
     }
     
     if (!formData.cedula) {
-      newErrors.cedula = "La cédula es requerida";
-      missingFields.push("Cédula profesional");
     } else if (formData.cedula.type !== 'application/pdf') {
       newErrors.cedula = "Solo se aceptan archivos PDF";
     } else if (formData.cedula.size > 10 * 1024 * 1024) {
       newErrors.cedula = "El archivo no puede ser mayor a 10MB";
     }
 
-    if (formData.titulo) {
-      if (formData.titulo.type !== 'application/pdf') {
-        newErrors.titulo = "Solo se aceptan archivos PDF";
-      } else if (formData.titulo.size > 10 * 1024 * 1024) {
-        newErrors.titulo = "El archivo no puede ser mayor a 10MB";
-      }
+    if (!formData.titulo) {
+      newErrors.titulo = "El título es requerido";
+      missingFields.push("Título/Kardex");
+    } else if (formData.titulo.type !== 'application/pdf') {
+      newErrors.titulo = "Solo se aceptan archivos PDF";
+    } else if (formData.titulo.size > 10 * 1024 * 1024) {
+      newErrors.titulo = "El archivo no puede ser mayor a 10MB";
     }
 
     if (formData.constancias) {
@@ -317,7 +316,7 @@ export default function MembershipApplicationPage() {
     
     setErrors(newErrors);
     
-    // Si hay campos faltantes, mostrar el modal de validación
+    // If there are missing fields, display the missing fields modal
     if (missingFields.length > 0) {
       setValidationErrors(missingFields);
       setShowValidationModal(true);
@@ -339,7 +338,6 @@ export default function MembershipApplicationPage() {
     try {
       const formDataToSend = new FormData();
       
-      // Mapeo de campos de español a inglés
       const fieldMapping = {
         nombres: 'firstName',
         apellidoP: 'lastName',
@@ -365,7 +363,6 @@ export default function MembershipApplicationPage() {
         constancias: 'certificates'
       };
       
-      // Enviar datos con nombres en inglés
       Object.entries(formData).forEach(([key, value]) => {
         if (value) {
           const englishKey = fieldMapping[key] || key;
@@ -380,7 +377,7 @@ export default function MembershipApplicationPage() {
 
       if (res.ok) {
         setModalType("success");
-        setModalMessage(result.message || "Tu solicitud de membresía ha sido enviada exitosamente. Recibirá un mensaje por correo o WhatsApp.");
+        setModalMessage(result.message || "Tu solicitud de membresía ha sido enviada exitosamente. Recibirá un mensaje por WhatsApp.");
         setShowModal(true);
         setExtraDocs([]);
       } else if (res.status === 409) {
@@ -545,10 +542,10 @@ export default function MembershipApplicationPage() {
                 label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email}
               />
               <FormField 
-                label="Teléfono personal" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}
+                label="Contacto personal" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}
               />
                <FormField 
-                label="Teléfono (WhatsApp)" name="telefonoWhatsApp" required value={formData.telefonoWhatsApp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsApp}
+                label="Contacto profesional" name="telefonoWhatsApp" required value={formData.telefonoWhatsApp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsApp}
               />
               <FormField 
                 label="Facebook" name="facebook" value={formData.facebook} onChange={handleInputChange} placeholder="Ingresa tu cuenta de Facebook"
@@ -568,13 +565,13 @@ export default function MembershipApplicationPage() {
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Ubicación de práctica profesional</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField
-                label="País" name="pais" value={formData.pais} onChange={(e) => handlePaisChange(e.target.value)} options={countries} error={errors.pais}
+                label="País" name="pais" required value={formData.pais} onChange={(e) => handlePaisChange(e.target.value)} options={countries} error={errors.pais}
               />
               <SelectField
-                label="Estado / Provincia" name="estado" value={formData.estado} onChange={(e) => handleEstadoChange(e.target.value)} options={states} error={errors.estado}
+                label="Estado / Provincia" name="estado" required value={formData.estado} onChange={(e) => handleEstadoChange(e.target.value)} options={states} error={errors.estado}
               />
               <SelectField
-                label="Ciudad" name="ciudad" value={formData.ciudad} onChange={handleInputChange} options={cities} error={errors.ciudad}
+                label="Ciudad" name="ciudad" required value={formData.ciudad} onChange={handleInputChange} options={cities} error={errors.ciudad}
               />
               <FormField
                 label="Colonia" name="colonia" value={formData.colonia} onChange={handleInputChange} placeholder="Ingresa tu colonia"
@@ -599,8 +596,8 @@ export default function MembershipApplicationPage() {
           {/* Documentation section */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-6">Documentación</h3>
             <div className="space-y-6">
-              <FileUpload name="titulo" label="Título/Kardex" value={formData.titulo} onChange={handleFileChange} error={errors.titulo} />
-              <FileUpload name="cedula" label="Cédula profesional" required value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
+              <FileUpload name="titulo" label="Título/Kardex" required value={formData.titulo} onChange={handleFileChange} error={errors.titulo} />
+              <FileUpload name="cedula" label="Cédula profesional" value={formData.cedula} onChange={handleFileChange} error={errors.cedula} />
               <FileUpload name="constancias" label="Constancias pélvicas" value={formData.constancias} onChange={handleFileChange} error={errors.constancias}/>
               {extraDocs.map((doc, i) => (
               <div key={doc.id} className="relative">
@@ -666,7 +663,7 @@ export default function MembershipApplicationPage() {
         onCancel={handleCancelExit}
       />
 
-      {/* Modal de validación de campos requeridos */}
+      {/* Modal to show validate required fields empty */}
       <Modal open={showValidationModal} onClose={handleCloseValidationModal} size="md" position="center">
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
