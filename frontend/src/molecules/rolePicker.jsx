@@ -45,8 +45,6 @@ export default function RolePicker({ row, onOpenPopup }) {
   };
 
   const handleConfirm = (roleName, selectedPrivileges) => {
-    console.log('Nuevo rol:', roleName);
-    console.log('Privilegios seleccionados:', selectedPrivileges);
     setModalOpen(false);
   };
 

@@ -150,12 +150,10 @@ const [error, setError] = useState(null);
     []
   );
 
-useEffect(() => {
-    console.log("Roles cargados:", roleRows);
+  useEffect(() => {
   }, [roleRows]);
 
   useEffect(() => {
-    console.log("Usuarios cargados:", userRows);
   }, [userRows]);
 
   // Show loading spinner until user data is loaded
