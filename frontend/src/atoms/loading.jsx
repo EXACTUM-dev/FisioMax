@@ -1,10 +1,23 @@
+/**
+ * @fileoverview Loader atom component (spinner + optional message)
+ * @version 0.3.0
+ * @author EXACTUM-dev
+ */
+
 import React from "react";
 
 /**
- * Átomo de loader reutilizable.
+ * Reusable loading indicator.
  * - fullscreen: ocupa toda la pantalla (centra el spinner)
  * - message: texto a mostrar debajo del spinner
  * - size: tamaño del spinner en px
+ *
+ * @param {Object} props - Component props
+ * @param {boolean} [props.fullscreen=true] - If true, covers full viewport
+ * @param {string} [props.message="Cargando..."] - Label shown under the spinner
+ * @param {number} [props.size=48] - Spinner size in pixels
+ * @param {string} [props.className=""] - Extra CSS classes for wrapper
+ * @returns {JSX.Element} Loading atom
  */
 export default function Loading({
   fullscreen = true,
