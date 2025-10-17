@@ -1,73 +1,75 @@
 /**
- * @fileoverview Pruebas para el API de Roles (Roles Controller)
- * @version 0.3.0
+ * @fileoverview Api roles tests(Roles Controller)
  * @author EXACTUM-dev
+ * @version 1.0.0
  */
 
-// Mocks de Jest - DEBEN estar al inicio del archivo
+// Jest mocks must be at the top level
 jest.mock('../../src/models/roles.model.js');
 jest.mock('../../src/models/privileges.model.js');
 
+// Third party dependencies
 import request from 'supertest';
 import express from 'express';
 
-// Importar las funciones del controlador
+// Import controllers functions to test
 import { getRoleById, updateRole, getAllRoles } from '../../src/controllers/roles.controller.js';
 
-// Mockear las funciones de los modelos
+// Aplication dependencies
 import * as rolesModel from '../../src/models/roles.model.js';
 import * as privilegesModel from '../../src/models/privileges.model.js';
 
-// Configuración de la aplicación Express para las pruebas
+// Configure Express app for testing
 const app = express();
 app.use(express.json());
 
-// Definición de rutas para el controlador
+// Define routes for the controller
 app.get('/api/roles/:id', getRoleById);
 app.put('/api/roles/:id', updateRole);
 app.get('/api/roles', getAllRoles);
 
-// Datos de mock
-const MOCK_ROLE_ID = 1;
-const MOCK_ROLE = { IDRol: MOCK_ROLE_ID, nombre: 'Admin', descripcion: 'Administrador del sistema' };
-const MOCK_ALL_PRIVILEGES = [
+// Mock data for the tests
+const mockRoleId = 1;
+const mockRole = { IDRol: mockRoleId, nombre: 'Admin', descripcion: 'Administrador del sistema' };
+const mockAllPrivileges = [
   { id: 1, name: 'view_dashboard' },
   { id: 2, name: 'edit_users' },
   { id: 3, name: 'manage_roles' },
 ];
-const MOCK_ROLE_PRIVILEGES = [
+const mockRolePrivileges = [
   { id: 1, name: 'view_dashboard' },
   { id: 3, name: 'manage_roles' },
 ];
 
+// Tests
 describe('Roles API', () => {
-  // Limpiar todos los mocks después de cada test
+  //Clean up mocks after each test
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  // Limpiar todos los mocks después de todos los tests
+  // Clean up all mocks after all tests
   afterAll(() => {
     jest.restoreAllMocks();
   });
 
   describe('GET /api/roles/:id', () => {
     it('should return role data with mapped privileges successfully', async () => {
-      // Configurar Mocks
-      rolesModel.findRoleById.mockResolvedValue(MOCK_ROLE);
-      privilegesModel.getRolePrivileges.mockResolvedValue(MOCK_ROLE_PRIVILEGES);
-      privilegesModel.getAllPrivileges.mockResolvedValue(MOCK_ALL_PRIVILEGES);
+      // Mock model functions
+      rolesModel.findRoleById.mockResolvedValue(mockRole);
+      privilegesModel.getRolePrivileges.mockResolvedValue(mockRolePrivileges);
+      privilegesModel.getAllPrivileges.mockResolvedValue(mockAllPrivileges);
 
       const response = await request(app)
-        .get(`/api/roles/${MOCK_ROLE_ID}`);
+        .get(`/api/roles/${mockRoleId}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.id).toBe(MOCK_ROLE_ID);
+      expect(response.body.data.id).toBe(mockRoleId);
       expect(response.body.data.name).toBe('Admin');
       expect(Array.isArray(response.body.data.privileges)).toBe(true);
 
-      // Verificar que los privilegios están correctamente mapeados (checked: true/false)
+      // Verify user privileges (checked: true/false)
       const viewDashboard = response.body.data.privileges.find(p => p.id === 1);
       expect(viewDashboard.checked).toBe(true);
 
@@ -75,8 +77,5 @@ describe('Roles API', () => {
       expect(editUsers.checked).toBe(false);
     });
 
-    // ... resto de tus tests
   });
-
-  // ... resto de tus describe blocks
 });

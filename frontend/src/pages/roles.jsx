@@ -1,6 +1,7 @@
 /**
- * Version: 1.1.0
- * Role management page: list, edit via modal
+ * @fileoverview Role management page: list, edit via modal
+ * @author EXACTUM-dev
+ * @version 1.0.0
  */
 
 import React, { useMemo, useState } from "react";

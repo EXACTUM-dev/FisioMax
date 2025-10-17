@@ -1,6 +1,7 @@
 /**
- * Version: 0.4.0
- * Hook para gestionar roles y privilegios
+ * @fileoverview Hook to manage roles page logic
+ * @author EXACTUM-dev
+ * @version 1.0.0
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -8,8 +9,8 @@ import { useAuth } from "@clerk/clerk-react";
 import * as rolesService from "../services/rolesServices";
 
 /**
- * Hook para gestionar la lógica de roles
- * @returns {Object} - Estados y métodos para trabajar con roles
+ * Hook to manage roles and their privileges.
+ * @returns {Object} - States and methods for working with roles
  */
 export function useRoles() {
   const [roles, setRoles] = useState([]);
@@ -27,7 +28,7 @@ export function useRoles() {
 
     try {
       const token = await getToken();
-      const response = await rolesService.getAllRoles(token); // { success, data: [ ... ] }
+      const response = await rolesService.getAllRoles(token);
       setRoles(
         (response?.data ?? []).map((role) => ({
           id: role.IDRol || role.id,

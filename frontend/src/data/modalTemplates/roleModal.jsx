@@ -1,3 +1,12 @@
+
+/**
+ * @fileoverview Modal component for editing roles with name, description and privileges checklist.
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Includes form validation, duplicate checking, and accessibility features.
+ */
+
+//Import aplication dependencies
 import React, { useMemo, useState, useRef, useEffect} from "react";
 import Button from "../../atoms/button";
 import { Title2 } from "../../atoms/typography";
@@ -5,13 +14,6 @@ import CheckBox from "../../atoms/checkBox";
 import FieldBox from "../../molecules/form";
 import DataTable from "../../organisms/dataTable";
 import Modal from "../../molecules/modal";
-
-/**
- * Author: Jaime Trujillo
- * Version: 1.0.0
- * Modal component for editing roles with name, description and privileges checklist.
- * Includes form validation, duplicate checking, and accessibility features.
- */
 
 /**
  * Modal to edit role with name, description and privileges checklist.
@@ -83,8 +85,6 @@ export default function ChecklistModal({
       setNameError("El nombre del rol no puede estar vacío");
       return false;
     }
-    
-    console.log("Validating role name:", existingData);
     const isDuplicate = existingData.some(
       (role) =>
         role.rol.toLowerCase().trim() === name.toLowerCase().trim() &&

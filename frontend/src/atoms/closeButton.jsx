@@ -1,10 +1,10 @@
 import React from "react";
 
 /**
- * Author: Jaime Trujillo
- * Version: 0.1.0
- * Reusable checkBox component
- * Includes consistent styles and improved accessibility
+ * @fileovervieweusable checkBox component
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Includes consistent styles and improved accessibility
  */
 
 /**

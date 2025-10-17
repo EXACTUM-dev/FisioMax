@@ -1,6 +1,7 @@
 /**
- * Version: 0.3.0
- * Role model - Database interaction for roles
+ * @fileoverview Role model - Database interaction for roles
+ * @author EXACTUM-dev
+ * @version 1.0.0
  */
 
 import { dbPool } from "../../config.js";
@@ -18,7 +19,7 @@ export async function findRoleById(id) {
     );
     return rows.length > 0 ? rows[0] : null;
   } catch (error) {
-    console.error("Database error in findRoleById:", error);
+    console.error("Error de base de datos en findRoleById:", error);
     throw error;
   }
 }
@@ -34,7 +35,7 @@ export async function getAllRolesFromDB() {
     );
     return rows;
   } catch (error) {
-    console.error("Database error in getAllRolesFromDB:", error);
+    console.error("Error de base de datos en getAllRolesFromDB:", error);
     throw error;
   }
 }
@@ -53,7 +54,7 @@ export async function updateRoleById(id, { name, description }) {
     );
     return result;
   } catch (error) {
-    console.error("Database error in updateRoleById:", error);
+    console.error("Error de base de datos en updateRoleById:", error);
     throw error;
   }
 }
@@ -93,7 +94,7 @@ export async function updateRolePrivileges(roleId, privileges) {
     await connection.commit();
   } catch (error) {
     await connection.rollback();
-    console.error("Database error in updateRolePrivileges:", error);
+    console.error("Error de base de datos en updateRolePrivileges:", error);
     throw error;
   } finally {
     connection.release();

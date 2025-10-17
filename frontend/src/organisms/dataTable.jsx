@@ -1,15 +1,16 @@
 /**
- * Version: 0.2.0
- * Generic data table with responsive mobile cards
- * Columns are fully dynamic and can include custom renderers and metadata
+ * @fileoverview Generic data table with responsive mobile cards
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Columns are fully dynamic and can include custom renderers and metadata
  */
 import React, { useMemo } from "react";
 import TableRow from "../molecules/tableRow";
 
 export default function DataTable({ columns = [], data = [] }) {
-  // Helpers for mobile layout (generic, driven by column metadata)
-  // You can set col.isAction = true to show an action in the card header right area on mobile
-  // You can set col.mobileHidden = true to hide a column in mobile card body
+  /* Helpers for mobile layout (generic, driven by column metadata)
+   You can set col.isAction = true to show an action in the card header right area on mobile
+   You can set col.mobileHidden = true to hide a column in mobile card body */
   const nonActionCols = columns.filter((c) => !c.isAction);
   const actionCols = columns.filter((c) => c.isAction);
 

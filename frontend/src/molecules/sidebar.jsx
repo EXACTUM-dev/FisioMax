@@ -1,7 +1,8 @@
 /**
- * Version: 0.2.0
- * Responsive lateral navigation with self-contained routing + Clerk logout
- * Desktop (expandable on hover) + Mobile (bottom bar)
+ * @fileoverview Responsive lateral navigation with self-contained routing + Clerk logout
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Desktop (expandable on hover) + Mobile (bottom bar)
  */
 import React, { useMemo, useState, useEffect } from "react";
 import { useClerk } from "@clerk/clerk-react";

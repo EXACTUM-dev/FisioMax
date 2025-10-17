@@ -1,6 +1,7 @@
 /**
- * Version: 0.3.0
- * Privilege model - Database interaction for privileges
+ * @fileoverview Privilege model - Database interaction for privileges
+ * @author EXACTUM-dev
+ * @version 1.0.0
  */
 
 import { dbPool } from "../../config.js";
@@ -21,7 +22,7 @@ export async function getRolePrivileges(roleId) {
     );
     return rows;
   } catch (error) {
-    console.error("Database error in getRolePrivileges:", error);
+    console.error("Error de base de datos en getRolePrivileges:", error);
     throw error;
   }
 }
@@ -39,7 +40,7 @@ export async function getAllPrivileges() {
     );
     return rows;
   } catch (error) {
-    console.error("Database error in getAllPrivileges:", error);
+    console.error("Error de base de datos en getAllPrivileges:", error);
     throw error;
   }
 }

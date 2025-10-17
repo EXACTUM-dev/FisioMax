@@ -1,14 +1,14 @@
+/**
+ * @fileoverview Reusable base modal component with confirmation flow support.
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Features responsive sizing, positioning, and optional close confirmation.
+ */
+
 // components/molecules/modal/index.jsx
 import React, { useState } from "react";
 import CloseButton from "../atoms/closeButton";
 import ConfirmationModal from "../molecules/confirmationModal";
-
-/**
- * Author: Jaime Trujillo
- * Version: 1.0.0
- * Reusable base modal component with confirmation flow support.
- * Features responsive sizing, positioning, and optional close confirmation.
- */
 
 /**
  * Base reusable modal component
