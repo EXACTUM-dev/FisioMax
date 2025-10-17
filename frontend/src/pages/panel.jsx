@@ -2,6 +2,7 @@
  * @fileoverview Main control panel view component.
  * @version 1.0.0
  * @author EXACTUM-dev
+ * Hola mau
  */
 
 /**
