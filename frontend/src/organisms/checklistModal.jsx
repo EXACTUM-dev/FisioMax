@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Modal component for role modification with privilege checklist.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ */
+
 import React, { useState } from "react";
 import Modal from "../molecules/modal";
 import Button from "../atoms/button";
@@ -7,15 +13,17 @@ import DataTable from "../organisms/dataTable";
 import ConfirmModal from "../molecules/confirmationModal";
 
 /**
- * Modal para modificar rol con checklist de privilegios.
- * Props:
- * - open: boolean (si está abierto o no)
- * - title: string (título del modal, default "Modificar Rol")
- * - roleName: string (nombre inicial del rol)
- * - privileges: array de objetos { id, label, checked }
- * - confirmLabel: string (texto del botón confirmar)
- * - onConfirm: (roleName, selectedPrivileges) => void
- * - onCancel: () => void
+ * ChecklistModal component for modifying roles with privilege selection.
+ * Displays a modal with a role name input and a checklist of privileges.
+ * @param {Object} props Component properties.
+ * @param {boolean} props.open Whether the modal is open or not.
+ * @param {string} [props.title="Modificar Rol"] Modal title.
+ * @param {string} [props.roleName="Administrador"] Initial role name.
+ * @param {Array} [props.roles=[]] Array of role objects with {id, nombre, checked}.
+ * @param {string} [props.confirmLabel="Modificar Rol"] Confirm button text.
+ * @param {Function} props.onConfirm Callback function called with (roleName, selectedPrivileges).
+ * @param {Function} props.onClose Callback function to close the modal.
+ * @returns {JSX.Element|null} Checklist modal component or null if not open.
  */
 export default function ChecklistModal({
   open,

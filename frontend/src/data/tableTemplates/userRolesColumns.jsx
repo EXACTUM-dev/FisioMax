@@ -1,7 +1,5 @@
 /**
- * @fileoverview Template para las columnas de la tabla de usuarios.
- * Define las columnas para mostrar información de usuarios, incluyendo nombre, rol,
- * estado de membresía y una acción para eliminar.
+ * @fileoverview Template for user table columns.
  * @version 1.0.0
  * @author EXACTUM-dev
  */
@@ -11,21 +9,23 @@ import RolePicker from "../../molecules/rolePicker";
 import trashIcon from "../../assets/icons/trash-2.png";
 
 /**
- * Genera las columnas para la tabla de usuarios.
- * @param {Object} options - Opciones para configurar las columnas.
- * @param {Array} options.roles - Lista de roles disponibles para asignar.
- * @param {Function} options.onDelete - Callback para manejar la eliminación de un usuario.
- * @param {Function} options.onChangeRole - Callback para manejar el cambio de rol de un usuario.
- * @returns {Array} - Configuración de columnas para la tabla.
+ * Builds the column configuration for the users table.
+ * Defines columns for displaying user information including name, role,
+ * membership status, and a delete action.
+ * @param {Object} options Configuration options for the columns.
+ * @param {Array} options.roles List of available roles to assign.
+ * @param {Function} options.onDelete Callback to handle user deletion.
+ * @param {Function} options.onChangeRole Callback to handle user role changes.
+ * @returns {Array} Column configuration for the table.
  */
 export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {}) {
   return [
     {
-      key: "nombre", // Identificador único de la columna
-      label: "Nombre", // Etiqueta visible en la tabla
-      className: "w-[40%]", // Clase CSS para el ancho de la columna
+      key: "nombre", // Unique column identifier
+      label: "Nombre", // Visible label in the table
+      className: "w-[40%]", // CSS class for column width
       render: (row) => {
-        // Intentar construir nombre completo con nombres, apellidoP y apellidoM
+        // Try to build full name with nombres, apellidoP and apellidoM
         const nombreCompleto = `${row?.nombres || ''} ${row?.apellidoP || ''} ${row?.apellidoM || ''}`.trim();
         return nombreCompleto || row?.nombre || row?.name || '';
       },
@@ -35,7 +35,7 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {
       label: "Rol",
       className: "w-[20%] text-center",
       render: (row) => (
-        // Componente interactivo para seleccionar roles
+        // Interactive component to select roles
         <RolePicker row={row} roles={roles} onSelect={(r) => onChangeRole?.(row, r)} />
       ),
     },
@@ -49,7 +49,7 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {
       key: "eliminar",
       label: "Eliminar",
       className: "w-[20%] text-right",
-      isAction: true, // Indica que esta columna contiene acciones
+      isAction: true, // Indicates this column contains actions
       render: (row) => (
         <button
           type="button"

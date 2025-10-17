@@ -1,13 +1,14 @@
 /**
- * @fileoverview Vista para el panel de control.
+ * @fileoverview Main control panel view component.
  * @version 1.0.0
  * @author EXACTUM-dev
  */
 
 /**
- * Main control panel view.
- * This component manages the state and layout for the admin panel,
- * including user and role management.
+ * Panel component - Main control panel view.
+ * Manages the state and layout for the admin panel, including user and role management.
+ * Fetches user and role data from the backend and displays them in switchable table views.
+ * @returns {JSX.Element} Admin panel component with data tables and navigation.
  */
 
 // Import necessary libraries and components
@@ -26,7 +27,7 @@ import AppHeader from "../molecules/appHeader";
 import Carousel from "../organisms/carousel";
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 
-// Data y utils
+// Data and utilities
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import { fetchWithClerk } from "../utils/api";
@@ -36,9 +37,9 @@ export default function Panel() {
   const { getToken } = useAuth();
   const [current, setCurrent] = useState("panel");
   
-    // Estados para datos mostrados en la UI
-    const [userRows, setUserRows] = useState([]); // Usuarios desde el backend
-    const [roleRows, setRoleRows] = useState([]); // Roles desde el backend
+    // State for UI data
+    const [userRows, setUserRows] = useState([]); // Users from backend
+    const [roleRows, setRoleRows] = useState([]); // Roles from backend
   
 const [error, setError] = useState(null);
 
@@ -50,7 +51,7 @@ const [error, setError] = useState(null);
         const token = await getToken();
         const usersResponse = await fetchWithClerk("/api/usuarios", { method: "GET" }, token);
         if (!alive) return;
-        // Extraer el array de usuarios de la respuesta del backend
+        // Extract user array from backend response
         setUserRows(Array.isArray(usersResponse) ? usersResponse : usersResponse?.data || []);
       } catch (err) {
         console.error("Error loading users:", err);
@@ -71,7 +72,7 @@ const [error, setError] = useState(null);
         const token = await getToken();
         const rolesResponse = await fetchWithClerk('/api/roles', { method: 'GET' }, token);
         if (!alive) return;
-        // Extraer el array de roles de la respuesta del backend
+        // Extract role array from backend response
         setRoleRows(Array.isArray(rolesResponse) ? rolesResponse : rolesResponse?.data || []);
       } catch (err) {
         console.error("Error loading roles:", err);
@@ -117,15 +118,15 @@ const [error, setError] = useState(null);
     }
     return userRows.map((user) => {
       const role = roleRows.find((r) => r.IDRol === user.roleId);
-      // Construir el nombre completo con nombres, apellidoP y apellidoM
+      // Build full name with nombres, apellidoP and apellidoM
       const nombreCompleto = `${user.nombres || ''} ${user.apellidoP || ''} ${user.apellidoM || ''}`.trim();
       return {
         ...user,
-        nombre: nombreCompleto || user.nombre || user.name, // Priorizar nombre completo construido
+        nombre: nombreCompleto || user.nombre || user.name, // Prioritize built full name
         roleName: role ? role.nombre : "Sin rol asignado",
       };
     });
-  }, [userRows, roleRows]); // Validar que userRows sea un arreglo antes de usar map
+  }, [userRows, roleRows]); // Validate that userRows is an array before using map
 
   // Define columns for the user table
   const userColumns = useMemo(

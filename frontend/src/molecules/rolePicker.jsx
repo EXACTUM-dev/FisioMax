@@ -1,7 +1,5 @@
 /**
- * @fileoverview Componente para la selección de roles.
- * Este componente muestra el rol actual de un usuario y permite abrir un modal
- * para gestionar o asignar un nuevo rol utilizando el componente ChecklistModal.
+ * @fileoverview Role selection component.
  * @version 1.0.0
  * @author EXACTUM-dev
  */
@@ -10,18 +8,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import ChecklistModal from '../organisms/checklistModal';
 
 /**
- * RolePicker
- * @param {Object} props - Propiedades del componente.
- * @param {Object} props.row - Datos del usuario asociado al rol.
- * @param {Function} props.onOpenPopup - Callback opcional para manejar la apertura del popup.
- * @returns {JSX.Element} - Componente de selección de roles.
+ * RolePicker component for managing user roles.
+ * Displays the current role of a user and allows opening a modal
+ * to manage or assign a new role using the ChecklistModal component.
+ * @param {Object} props Component properties.
+ * @param {Object} props.row User data associated with the role.
+ * @param {Function} props.onOpenPopup Optional callback to handle popup opening.
+ * @returns {JSX.Element} Role selection component.
  */
 export default function RolePicker({ row, onOpenPopup }) {
-  const [open, setOpen] = useState(false); // Estado para manejar el dropdown (no usado actualmente)
-  const ref = useRef(null); // Referencia para manejar clics fuera del componente
-  const [isModalOpen, setModalOpen] = useState(false); // Estado para manejar la visibilidad del modal
+  const [open, setOpen] = useState(false); // State to handle dropdown (not currently used)
+  const ref = useRef(null); // Reference to handle clicks outside the component
+  const [isModalOpen, setModalOpen] = useState(false); // State to handle modal visibility
 
-  // Maneja el cierre del dropdown al hacer clic fuera del componente
+  // Handles closing the dropdown when clicking outside the component
   useEffect(() => {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -30,16 +30,16 @@ export default function RolePicker({ row, onOpenPopup }) {
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
-  // Determina el rol actual del usuario
+  // Determines the current user role
   const current =
     row?.rol || row?.role || (Array.isArray(row?.roles) && row.roles[0]?.name) || row?.correo || '';
 
-  // Abre el modal
+  // Opens the modal
   const handleOpenModal = () => {
     setModalOpen(true);
   };
 
-  // Cierra el modal
+  // Closes the modal
   const handleCloseModal = () => {
     setModalOpen(false);
   };
@@ -52,7 +52,7 @@ export default function RolePicker({ row, onOpenPopup }) {
 
   return (
     <div className="relative inline-block text-left" ref={ref}>
-      {/* Texto clickeable para abrir el modal */}
+      {/* Clickable text to open the modal */}
       <span
         onClick={handleOpenModal}
         className="cursor-pointer hover:opacity-80 text-left block"
@@ -60,7 +60,7 @@ export default function RolePicker({ row, onOpenPopup }) {
         {current || 'Asignar rol'}
       </span>
 
-      {/* Modal para gestionar roles */}
+      {/* Modal to manage roles */}
       <ChecklistModal
         open={isModalOpen}
         onClose={handleCloseModal}
