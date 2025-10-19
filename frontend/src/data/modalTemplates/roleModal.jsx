@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview Modal component for editing roles with name, description and privileges checklist.
  * @author EXACTUM-dev
@@ -7,7 +6,7 @@
  */
 
 //Import aplication dependencies
-import React, { useMemo, useState, useRef, useEffect} from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import Button from "../../atoms/button";
 import { Title2 } from "../../atoms/typography";
 import CheckBox from "../../atoms/checkBox";
@@ -31,7 +30,7 @@ import Modal from "../../molecules/modal";
  * @param {Function} props.onClose - Callback on close
  * @returns {React.Element} Checklist modal component
  */
-export default function ChecklistModal({
+function ChecklistModalContent({
   open,
   title = "Titulo del Modal",
   dataName: initialDataName = "",
@@ -49,7 +48,7 @@ export default function ChecklistModal({
     initialDataDescription
   );
   const [nameError, setNameError] = useState("");
-  
+
   // State for tracking checked privileges
   const [checkedPrivileges, setCheckedPrivileges] = useState(() =>
     (tableData || []).reduce((acc, priv) => {
@@ -71,9 +70,6 @@ export default function ChecklistModal({
       }, 100);
     }
   }, [open]);
-
-  // Return null if modal is not open
-  if (!open) return null;
 
   /**
    * Validate role name for duplicates and empty values
@@ -141,7 +137,7 @@ export default function ChecklistModal({
    * @param {KeyboardEvent} e - Keyboard event
    */
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault(); // Prevent default behavior
       handleConfirm();
     }
@@ -207,13 +203,11 @@ export default function ChecklistModal({
   );
 
   return (
-    <Modal 
-      open={open} 
-      onClose={onClose} 
-      size="xl" 
-      requireConfirmation={true}
-    >
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 w-full" onKeyDown={handleKeyDown}>
+    <Modal open={open} onClose={onClose} size="xl" requireConfirmation={true}>
+      <div
+        className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 w-full"
+        onKeyDown={handleKeyDown}
+      >
         {/* Left column - Form inputs */}
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex flex-col items-center justify-center h-full">
@@ -274,34 +268,37 @@ export default function ChecklistModal({
 
         {/* Right column - Privileges checklist table */}
         <div className="flex-1 min-w-0 mt-4 lg:mt-0 min-h-0">
-          <div className="bg-white rounded-lg border border-slate-200 max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] overflow-y-auto p-2 sm:p-3
+          <div
+            className="bg-white rounded-lg border border-slate-200 max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] overflow-y-auto p-2 sm:p-3
             [&::-webkit-scrollbar]:w-2 sm:[&::-webkit-scrollbar]:w-3
             [&::-webkit-scrollbar-track]:bg-slate-100
             [&::-webkit-scrollbar-track]:rounded-lg
             [&::-webkit-scrollbar-thumb]:bg-slate-300
             [&::-webkit-scrollbar-thumb]:rounded-lg
-            [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
-            
+            [&::-webkit-scrollbar-thumb]:hover:bg-slate-400"
+          >
             {/* Mobile header for table section */}
             <div className="lg:hidden mb-3 pb-2 border-b border-slate-200">
               <h3 className="text-base font-semibold text-slate-700 text-center">
                 Lista de Permisos
               </h3>
             </div>
-            
+
             {/* Privileges data table */}
-            <DataTable 
-              columns={tableColumns} 
+            <DataTable
+              columns={tableColumns}
               data={tableDataWithIndex}
               className="text-xs sm:text-sm"
             />
           </div>
-          
+
           {/* Mobile select all button */}
           {tableData.length > 0 && (
             <div className="lg:hidden mt-3 flex justify-center">
               <Button
-                label={allSelected ? "Deseleccionar Todos" : "Seleccionar Todos"}
+                label={
+                  allSelected ? "Deseleccionar Todos" : "Seleccionar Todos"
+                }
                 variant="brand"
                 onClick={handleSelectAll}
                 size="sm"
@@ -313,4 +310,13 @@ export default function ChecklistModal({
       </div>
     </Modal>
   );
+}
+
+/**
+ * Wrapper component that controls visibility.
+ * It prevents conditional hooks by mounting/unmounting the content.
+ */
+export default function ChecklistModal(props) {
+  if (!props.open) return null;
+  return <ChecklistModalContent {...props} />;
 }

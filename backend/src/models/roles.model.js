@@ -100,3 +100,54 @@ export async function updateRolePrivileges(roleId, privileges) {
     connection.release();
   }
 }
+
+/**
+ * Create a new role with privileges
+ * @param {Object} roleData - Role data (name, description)
+ * @param {Array<string>} privileges - Array of privilege IDs
+ * @returns {Promise<Object>} - Created role object with assigned ID
+ */
+export async function createRoleWithPrivileges(
+  { name, description = "" },
+  privileges = []
+) {
+  const connection = await dbPool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Insert role without specifying ID (autoincremental)
+    const [result] = await connection.query(
+      "INSERT INTO rol (nombre, descripcion) VALUES (?, ?)",
+      [name, description]
+    );
+
+    // Get the auto-generated ID
+    const roleId = result.insertId;
+
+    // Insert privileges if any
+    if (privileges.length > 0) {
+      for (const privilegeId of privileges) {
+        await connection.query(
+          "INSERT INTO rolprivilegios (IDPrivilegio, IDRol) VALUES (?, ?)",
+          [privilegeId, roleId]
+        );
+      }
+    }
+
+    await connection.commit();
+
+    // Return the created role with its auto-generated ID
+    return {
+      id: roleId,
+      name,
+      description,
+    };
+  } catch (error) {
+    await connection.rollback();
+    console.error("Database error in createRoleWithPrivileges:", error);
+    throw error;
+  } finally {
+    connection.release();
+  }
+}

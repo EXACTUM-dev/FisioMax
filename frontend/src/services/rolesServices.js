@@ -57,6 +57,64 @@ export const updateRole = async (id, name, description, privileges, token) => {
 export const deleteRole = async (id, token) => {
   // Placeholder for implementation
   console.warn("La función deleteRole no está implementada en el backend");
-  
+
   return Promise.resolve({ success: true, message: "Rol eliminado" });
+};
+
+/**
+ * Get privileges data for role creation
+ * @param {string} token - Authentication token
+ * @return {Promise<Object>} Privileges list for create role form
+ */
+export const getCreateRoleData = async (token) => {
+  try {
+    return await apiClient.get("/roles/create", {}, token);
+  } catch (err) {
+    // Network error handling
+    if (
+      err.message?.includes("Failed to fetch") ||
+      err.message?.includes("NetworkError") ||
+      err.message?.includes("Network Error")
+    ) {
+      const error = new Error(
+        "No hay conexión con el servidor. Intenta más tarde."
+      );
+      error.code = "NETWORK_ERROR";
+      throw error;
+    }
+    throw err;
+  }
+};
+
+/**
+ * Creates a new role with privileges
+ * @param {string} name - Role name
+ * @param {string} description - Role description
+ * @param {Array<string>} privileges - Array of privilege IDs
+ * @param {string} token - Authentication token
+ * @return {Promise<Object>} Create operation result
+ */
+export const createRole = async (name, description, privileges, token) => {
+  try {
+    return await apiClient.post(
+      "/roles/create",
+      { name, description, privileges },
+      {},
+      token
+    );
+  } catch (err) {
+    // Network error handling
+    if (
+      err.message?.includes("Failed to fetch") ||
+      err.message?.includes("NetworkError") ||
+      err.message?.includes("Network Error")
+    ) {
+      const error = new Error(
+        "No hay conexión con el servidor. Intenta más tarde."
+      );
+      error.code = "NETWORK_ERROR";
+      throw error;
+    }
+    throw err;
+  }
 };

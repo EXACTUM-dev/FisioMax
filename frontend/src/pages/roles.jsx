@@ -1,15 +1,16 @@
 /**
- * @fileoverview Role management page: list, edit via modal
+ * @fileoverview Role management page: list, edit and create roles
  * @author EXACTUM-dev
- * @version 1.0.0
+ * @version 0.3.1
  */
 
-import React, { useMemo, useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useUser } from "@clerk/clerk-react";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
+import Button from "../atoms/button";
 
 // Organisms
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
@@ -19,30 +20,43 @@ import SuccessErrorModal from "../organisms/successErrorModal";
 // Data & utils
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import { useRoles } from "../hooks/useRoles";
+import { useCreateRole } from "../hooks/useRoles";
 
 export default function RolesPage() {
   const { user, isLoaded: isClerkLoaded } = useUser();
   const [current, setCurrent] = useState("roles");
 
-  // Modal state
+  // Modal state for editing
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [editingPrivileges, setEditingPrivileges] = useState([]);
   const [roleName, setRoleName] = useState("");
 
+  // Modal state for creating
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createPrivileges, setCreatePrivileges] = useState([]);
+
   // Success/Error modal state
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState("success"); // "success" | "error"
+  const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
 
   const {
     roles,
-    loading,
-    error,
+    loading: rolesLoading,
+    error: rolesError,
+    loadRoles,
     loadRoleById,
     updateRoleWithPrivileges,
     deleteRoleById,
   } = useRoles();
+
+  const {
+    loading: createLoading,
+    error: createError,
+    loadCreateRoleData,
+    createRoleWithPrivileges,
+  } = useCreateRole();
 
   // Row action handler
   const handleRowAction = (col, row) => {
@@ -54,121 +68,184 @@ export default function RolesPage() {
   };
 
   /**
-   * Open edit modal and load role data
-   * @param {Object} rowRole - Role object from table row
+   * Handle opening create role modal
    */
-  const handleEditRole = async (rowRole) => {
+  const handleCreateRole = async () => {
     try {
-      const roleData = await loadRoleById(rowRole.id);
+      const privileges = await loadCreateRoleData();
 
-      // Map backend privileges to modal table format
-      const mappedPrivileges = (roleData.privileges ?? []).map((p) => ({
+      // Map privileges to modal table format
+      const mappedPrivileges = (privileges || []).map((p) => ({
         id: p.id,
         label: p.name,
-        checked: !!p.checked,
+        checked: false,
       }));
 
-      setEditingRole(roleData);
-      setRoleName(roleData.name || "");
-      setEditingPrivileges(mappedPrivileges);
-      setModalOpen(true);
+      setCreatePrivileges(mappedPrivileges);
+      setCreateModalOpen(true);
     } catch (err) {
-      console.error("Error cargando rol para edición:", err);
+      console.error("Error loading create role data:", err);
       setModalType("error");
       setModalMessage(
-        "No se pudo cargar la información del rol. Por favor, intenta nuevamente."
+        "No se pudieron cargar los privilegios. Intente nuevamente."
       );
       setShowModal(true);
     }
   };
 
   /**
-   * Handle modal confirmation - update role with new data
-   * @param {string} newRoleName - Updated role name
-   * @param {string} newRoleDescription - Updated role description
-   * @param {Array<string>} selectedPrivilegeIds - Array of selected privilege IDs
+   * Handle create role modal confirmation
    */
-  const handleModalConfirm = async (
-    newRoleName,
-    newRoleDescription,
+  const handleCreateConfirm = async (
+    name,
+    description,
     selectedPrivilegeIds
   ) => {
-    if (!editingRole?.id) return;
-
     try {
-      await updateRoleWithPrivileges(
-        editingRole.id,
-        newRoleName,
-        newRoleDescription,
-        selectedPrivilegeIds
-      );
-      setModalOpen(false);
-      setEditingRole(null);
+      await createRoleWithPrivileges(name, description, selectedPrivilegeIds);
 
-      // Show success modal
+      // Close modal and refresh roles list
+      setCreateModalOpen(false);
+      await loadRoles();
+
+      // Show success message
       setModalType("success");
-      setModalMessage("El rol ha sido actualizado exitosamente.");
+      setModalMessage("El rol ha sido creado exitosamente.");
       setShowModal(true);
     } catch (err) {
-      console.error("Error actualizando rol:", err);
+      console.error("Error creating role:", err);
 
-      // Show error modal
+      if (err.code === "NETWORK_ERROR") {
+        // Show network error without closing the modal
+        setModalType("error");
+        setModalMessage("No hay conexión con el servidor. Intenta más tarde.");
+        setShowModal(true);
+      } else if (err.response?.status === 409) {
+        // Duplicate name error - handled by modal validation
+      } else {
+        // General error
+        setModalType("error");
+        setModalMessage(
+          "No se pudo crear el rol. Por favor, intente nuevamente."
+        );
+        setShowModal(true);
+      }
+    }
+  };
+  /**
+   * Handle opening edit role modal
+   * @param {Object} row - Role row data from the table
+   */
+  const handleEditRole = async (row) => {
+    try {
+      // Load role details including privileges
+      const roleData = await loadRoleById(row.id);
+
+      // Map privileges to modal table format
+      const mappedPrivileges = (roleData.privileges || []).map((p) => ({
+        id: p.id,
+        label: p.name,
+        checked: !!p.checked,
+      }));
+
+      // Set state for editing
+      setEditingRole(roleData);
+      setRoleName(roleData.name || "");
+      setEditingPrivileges(mappedPrivileges);
+      setModalOpen(true);
+    } catch (err) {
+      console.error("Error loading role for edit:", err);
       setModalType("error");
       setModalMessage(
-        "No se pudieron guardar los cambios. Por favor, intenta nuevamente."
+        "No se pudo cargar el rol para editar. Intente nuevamente."
       );
       setShowModal(true);
     }
   };
 
+  /**
+   * Handle edit role modal confirmation
+   */
+  const handleModalConfirm = async (
+    name,
+    description,
+    selectedPrivilegeIds
+  ) => {
+    try {
+      if (!editingRole?.id) return;
+
+      await updateRoleWithPrivileges(
+        editingRole.id,
+        name,
+        description,
+        selectedPrivilegeIds
+      );
+
+      // Close modal and refresh roles list
+      setModalOpen(false);
+      setEditingRole(null);
+      await loadRoles();
+
+      // Show success message
+      setModalType("success");
+      setModalMessage("El rol ha sido actualizado exitosamente.");
+      setShowModal(true);
+    } catch (err) {
+      console.error("Error updating role:", err);
+
+      if (err.code === "NETWORK_ERROR") {
+        // Show network error without closing the modal
+        setModalType("error");
+        setModalMessage("No hay conexión con el servidor. Intenta más tarde.");
+        setShowModal(true);
+      } else {
+        // General error
+        setModalType("error");
+        setModalMessage(
+          "No se pudo actualizar el rol. Por favor, intente nuevamente."
+        );
+        setShowModal(true);
+      }
+    }
+  };
+
+  /**
+   * Handle edit modal cancel button
+   */
   const handleModalCancel = () => {
     setModalOpen(false);
     setEditingRole(null);
   };
 
+  /**
+   * Handle modal close button
+   */
   const handleCloseModal = () => {
     setShowModal(false);
-    // Si hubo error, mantener el modal de edición abierto
-    if (modalType === "error" && editingRole) {
-      setModalOpen(true);
+    // If there was an error during create and modal is still open, keep it open
+    if (modalType === "error" && createModalOpen) {
+      setCreateModalOpen(true);
     }
   };
 
-  // Table columns
-  const roleColumns = useMemo(
-    () =>
-      buildRolePermissionsColumns({
-        onEdit: handleEditRole,
-        onDelete: (row) => deleteRoleById(row.id),
-      }),
-    [deleteRoleById]
-  );
+  /**
+   * Build table columns on every render (safe default).
+   * Note: This trades a tiny perf optimization (useMemo) for stability.
+   */
+  const roleColumns = buildRolePermissionsColumns({
+    onEdit: handleEditRole,
+    onDelete: (row) => deleteRoleById(row.id),
+  });
+
+  const loading = rolesLoading || createLoading;
+  const error = rolesError || createError;
 
   if (!isClerkLoaded || loading) {
-    return (
-      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
+    // Loading state...
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 font-medium">Error: {error}</p>
-          <button
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            onClick={() => window.location.reload()}
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
+    // Error state...
   }
 
   return (
@@ -178,9 +255,11 @@ export default function RolesPage() {
 
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-semibold mb-6">
-            Administración de Roles y Permisos
-          </h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold">
+              Administración de Roles y Permisos
+            </h1>
+          </div>
 
           <DataSwitchContainer
             initialKey="roles"
@@ -195,9 +274,18 @@ export default function RolesPage() {
                 onRowAction: handleRowAction,
               },
             ]}
+            toolbarRight={
+              <Button
+                variant="brand"
+                label="Crear nuevo rol"
+                onClick={handleCreateRole}
+                className="whitespace-nowrap"
+              />
+            }
           />
         </div>
 
+        {/* Edit Role Modal */}
         {editingRole && (
           <ChecklistModal
             open={modalOpen}
@@ -205,22 +293,38 @@ export default function RolesPage() {
             dataName={roleName}
             dataDescription={editingRole.description || ""}
             tableData={editingPrivileges}
-            existingRoles={roles}
-            currentRoleId={editingRole.id}
+            existingData={roles}
+            currentDataId={editingRole.id}
             confirmLabel="Guardar Cambios"
             onConfirm={handleModalConfirm}
             onClose={handleModalCancel}
           />
         )}
 
-        {/* Modal de éxito/error reutilizable */}
+        {/* Create Role Modal */}
+        <ChecklistModal
+          open={createModalOpen}
+          title="Crear Nuevo Rol"
+          dataName=""
+          dataDescription=""
+          tableData={createPrivileges}
+          existingData={roles}
+          currentDataId={null}
+          confirmLabel="Crear Rol"
+          onConfirm={handleCreateConfirm}
+          onClose={() => setCreateModalOpen(false)}
+        />
+
+        {/* Success/Error Modal */}
         <SuccessErrorModal
           open={showModal}
           onClose={handleCloseModal}
           type={modalType}
           message={modalMessage}
           title={
-            modalType === "success" ? "¡Cambios guardados!" : "Error al guardar"
+            modalType === "success"
+              ? "¡Operación exitosa!"
+              : "Error en la operación"
           }
         />
       </main>
