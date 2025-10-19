@@ -234,6 +234,20 @@ function ChecklistModalContent({
               className="text-xs sm:text-sm"
             />
           </div>
+          {/* Mobile select all button */}
+          {tableData.length > 0 && (
+            <div className="lg:hidden mt-3 flex justify-center">
+              <Button
+                label={
+                  allSelected ? "Deseleccionar Todos" : "Seleccionar Todos"
+                }
+                variant="brand"
+                onClick={handleSelectAll}
+                size="sm"
+                className="text-xs"
+              />
+            </div>
+          )}
         </div>
       </div>
     </Modal>
