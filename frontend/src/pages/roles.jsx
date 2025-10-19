@@ -279,6 +279,7 @@ export default function RolesPage() {
                 variant="brand"
                 label="Crear nuevo rol"
                 onClick={handleCreateRole}
+                size="sm"
                 className="whitespace-nowrap"
               />
             }
