@@ -11,9 +11,13 @@ import { apiClient } from "./api";
  * @param {string} token - Authentication token.
  * @return {!Promise<!Array<!Role>>} List of role objects.
  */
-export const getAllRoles = async (token) => {
-  return apiClient.get("/roles", {}, token);
-};
+export async function getAllRoles(token) {
+  try {
+    return await apiClient.get("/roles", {}, token);
+  } catch (err) {
+    throw normalizeNetworkError(err);
+  }
+}
 
 /**
  * Retrieves a specific role with its privileges.
@@ -21,9 +25,13 @@ export const getAllRoles = async (token) => {
  * @param {string} token - Authentication token.
  * @return {!Promise<!Role>} Role details with privileges.
  */
-export const getRoleById = async (id, token) => {
-  return apiClient.get(`/roles/edit/${id}`, {}, token);
-};
+export async function getRoleById(id, token) {
+  try {
+    return await apiClient.get(`/roles/edit/${id}`, {}, token);
+  } catch (err) {
+    throw normalizeNetworkError(err);
+  }
+}
 
 /**
  * Updates a role with new name, description and privileges.
@@ -34,18 +42,18 @@ export const getRoleById = async (id, token) => {
  * @param {string} token - Authentication token.
  * @return {!Promise<!Object>} Update operation result.
  */
-export const updateRole = async (id, name, description, privileges, token) => {
-  return apiClient.post(
-    `/roles/edit/${id}`,
-    {
-      name,
-      description,
-      privileges,
-    },
-    {},
-    token
-  );
-};
+export async function updateRole(id, name, description, privileges, token) {
+  try {
+    return await apiClient.post(
+      `/roles/edit/${id}`,
+      { name, description, privileges },
+      {},
+      token
+    );
+  } catch (err) {
+    throw normalizeNetworkError(err);
+  }
+}
 
 /**
  * Deletes a role (currently mocked - not implemented in backend).
@@ -94,7 +102,7 @@ export const getCreateRoleData = async (token) => {
  * @param {string} token - Authentication token
  * @return {Promise<Object>} Create operation result
  */
-export const createRole = async (name, description, privileges, token) => {
+export async function createRole(name, description, privileges, token) {
   try {
     return await apiClient.post(
       "/roles/create",
@@ -103,18 +111,6 @@ export const createRole = async (name, description, privileges, token) => {
       token
     );
   } catch (err) {
-    // Network error handling
-    if (
-      err.message?.includes("Failed to fetch") ||
-      err.message?.includes("NetworkError") ||
-      err.message?.includes("Network Error")
-    ) {
-      const error = new Error(
-        "No hay conexión con el servidor. Intenta más tarde."
-      );
-      error.code = "NETWORK_ERROR";
-      throw error;
-    }
-    throw err;
+    throw normalizeNetworkError(err);
   }
-};
+}

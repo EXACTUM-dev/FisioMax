@@ -1,11 +1,15 @@
 /**
  * @fileoverview Role management page: list, edit and create roles
  * @author EXACTUM-dev
- * @version 0.3.1
+ * @version 0.4.0
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
+
+// Atoms
+import Loading from "../atoms/loading";
+import AlertBanner from "../atoms/alertBanner";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -21,6 +25,7 @@ import SuccessErrorModal from "../organisms/successErrorModal";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import { useRoles } from "../hooks/useRoles";
 import { useCreateRole } from "../hooks/useRoles";
+import { toUserMessage } from "../services/serviceErrors";
 
 export default function RolesPage() {
   const { user, isLoaded: isClerkLoaded } = useUser();
@@ -132,6 +137,7 @@ export default function RolesPage() {
       }
     }
   };
+
   /**
    * Handle opening edit role modal
    * @param {Object} row - Role row data from the table
@@ -237,16 +243,27 @@ export default function RolesPage() {
     onDelete: (row) => deleteRoleById(row.id),
   });
 
+  // Merge loading and error states from both hooks
   const loading = rolesLoading || createLoading;
-  const error = rolesError || createError;
+  const mergedError = rolesError || createError;
 
+  // Show a reusable full screen loader while fetching
   if (!isClerkLoaded || loading) {
-    // Loading state...
+    return <Loading fullscreen message="Cargando roles..." />;
   }
 
-  if (error) {
-    // Error state...
-  }
+  // Friendly banner if there was any error (including network errors)
+  const errorBanner = mergedError ? (
+    <AlertBanner
+      type="warning"
+      message={toUserMessage(
+        mergedError,
+        "Ocurrió un problema al cargar los roles. Intenta nuevamente."
+      )}
+      onRetry={() => loadRoles?.()}
+      className="mb-4"
+    />
+  ) : null;
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
@@ -260,6 +277,8 @@ export default function RolesPage() {
               Administración de Roles y Permisos
             </h1>
           </div>
+
+          {errorBanner}
 
           <DataSwitchContainer
             initialKey="roles"
@@ -280,7 +299,7 @@ export default function RolesPage() {
                 label="Crear nuevo rol"
                 onClick={handleCreateRole}
                 size="sm"
-                className="whitespace-nowrap"
+                className="whitespace-nowrap px-3 py-1.5 text-sm md:px-5 md:py-2.5 md:text-base"
               />
             }
           />
