@@ -23,9 +23,6 @@ class MembershipApplication {
     if (!data.email || data.email.trim() === '') {
       throw new Error('El email es obligatorio');
     }
-    if (!data.documents?.professionalId) {
-      throw new Error('La cédula es obligatoria');
-    }
 
     this.firstName = data.firstName.trim();
     this.lastName = data.lastName.trim();
