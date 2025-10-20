@@ -25,13 +25,22 @@ export async function findRoleById(id) {
 }
 
 /**
- * Get all roles from database
- * @returns {Promise<Array>} - Array of role objects
+ * Get all roles from database with their privileges
+ * @returns {Promise<Array>} - Array of role objects with privileges
  */
 export async function getAllRolesFromDB() {
   try {
     const [rows] = await dbPool.query(
-      "SELECT IDRol, nombre, descripcion FROM rol WHERE deletedAt IS NULL AND eliminado = 0"
+      `SELECT 
+        r.IDRol, 
+        r.nombre, 
+        r.descripcion,
+        GROUP_CONCAT(p.nombre SEPARATOR ', ') as privilegios
+      FROM rol r
+      LEFT JOIN rolprivilegios rp ON r.IDRol = rp.IDRol AND rp.deletedAt IS NULL AND rp.eliminado = 0
+      LEFT JOIN privilegios p ON rp.IDPrivilegio = p.IDPrivilegio AND p.deletedAt IS NULL AND p.eliminado = 0
+      WHERE r.deletedAt IS NULL AND r.eliminado = 0
+      GROUP BY r.IDRol, r.nombre, r.descripcion`
     );
     return rows;
   } catch (error) {
