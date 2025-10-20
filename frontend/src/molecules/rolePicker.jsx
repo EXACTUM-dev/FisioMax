@@ -32,7 +32,12 @@ export default function RolePicker({ row, onOpenPopup }) {
 
   // Determines the current user role
   const current =
-    row?.rol || row?.role || (Array.isArray(row?.roles) && row.roles[0]?.name) || row?.correo || '';
+    row?.rol || 
+    row?.rolNombre || 
+    row?.role || 
+    (Array.isArray(row?.roles) && row.roles[0]?.name) || 
+    row?.roleName ||
+    '';
 
   // Opens the modal
   const handleOpenModal = () => {

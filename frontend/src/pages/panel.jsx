@@ -2,7 +2,6 @@
  * @fileoverview Main control panel view component.
  * @version 1.0.0
  * @author EXACTUM-dev
- * Hola mau
  */
 
 /**
@@ -118,13 +117,19 @@ const [error, setError] = useState(null);
       return [];
     }
     return userRows.map((user) => {
-      const role = roleRows.find((r) => r.IDRol === user.roleId);
       // Build full name with nombres, apellidoP and apellidoM
       const nombreCompleto = `${user.nombres || ''} ${user.apellidoP || ''} ${user.apellidoM || ''}`.trim();
+      
+      // Get role name from the user object (comes from backend JOIN) or from roleRows
+      const roleName = user.rolNombre || 
+                      (roleRows.find((r) => r.IDRol === user.IDRol)?.nombre) || 
+                      "Sin rol asignado";
+      
       return {
         ...user,
         nombre: nombreCompleto || user.nombre || user.name, // Prioritize built full name
-        roleName: role ? role.nombre : "Sin rol asignado",
+        rol: roleName, // Role name for display in table
+        roleName: roleName, // Keep for backward compatibility
       };
     });
   }, [userRows, roleRows]); // Validate that userRows is an array before using map

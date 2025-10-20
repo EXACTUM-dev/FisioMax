@@ -128,22 +128,20 @@ app.post("/login", (req, res) => {
 app.get("/api/usuarios", requireAuth, async (req, res) => {
   try {
     const userId = req.auth?.userId;
-    const { dbPool } = await import("./config.js");
+    const { getUsuarios } = await import("./src/models/users.model.js");
     
-    const [rows] = await dbPool.query(
-      "SELECT IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento FROM usuario"
-    );
+    const users = await getUsuarios();
 
     res.json({
-      message: "Lista de usuarios obtenida exitosamente",
-      data: rows,
+      message: "User list retrieved successfully",
+      data: users,
       authenticatedUserId: userId,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Error al obtener usuarios:", error);
+    console.error("Error retrieving users:", error);
     res.status(500).json({ 
-      error: "Error al consultar la base de datos",
+      error: "Database query error",
       message: error.message 
     });
   }

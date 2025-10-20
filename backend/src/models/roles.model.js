@@ -100,3 +100,29 @@ export async function updateRolePrivileges(roleId, privileges) {
     connection.release();
   }
 }
+
+/**
+ * Get user role by user ID
+ * @param {number} userId - User ID
+ * @returns {Promise<Object|null>} - Role object with IDRol, nombre, descripcion or null if not found
+ */
+export async function getUserRole(userId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT r.IDRol, r.nombre, r.descripcion
+       FROM rol r
+       INNER JOIN usuariorol ur ON r.IDRol = ur.IDRol
+       WHERE ur.IDUsuario = ? 
+         AND ur.deletedAt IS NULL 
+         AND ur.eliminado = 0
+         AND r.deletedAt IS NULL 
+         AND r.eliminado = 0
+       LIMIT 1`,
+      [userId]
+    );
+    return rows.length > 0 ? rows[0] : null;
+  } catch (error) {
+    console.error("Error de base de datos en getUserRole:", error);
+    throw error;
+  }
+}
