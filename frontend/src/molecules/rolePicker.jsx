@@ -5,9 +5,11 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import Modal from './modal';
 import Button from '../atoms/button';
 import ConfirmationModal from './confirmationModal';
+import { fetchWithClerk } from '../utils/api';
 
 /**
  * RolePicker component for managing user roles.
@@ -19,10 +21,12 @@ import ConfirmationModal from './confirmationModal';
  * @returns {JSX.Element} Role selection component.
  */
 export default function RolePicker({ row, roles = [], onSelect }) {
+  const { getToken } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
 
   // Handles closing the dropdown when clicking outside
@@ -74,15 +78,58 @@ export default function RolePicker({ row, roles = [], onSelect }) {
   };
 
   // Handle confirmation of role change
-  const handleConfirmRoleChange = () => {
+  const handleConfirmRoleChange = async () => {
     setConfirmModalOpen(false);
+    setIsLoading(true);
     
-    // Find the full role object
-    const roleObj = roles.find(r => 
-      (r?.nombre || r?.name || r?.rol) === selectedRole
-    );
-    onSelect?.(roleObj || selectedRole);
-    setModalOpen(false);
+    try {
+      // Find the full role object
+      const roleObj = roles.find(r => 
+        (r?.nombre || r?.name || r?.rol) === selectedRole
+      );
+
+      const userId = row?.id || row?.IDUsuario;
+      const roleId = roleObj?.id || roleObj?.IDRol;
+
+      if (!userId) {
+        console.error("User ID not found");
+        alert("Error: No se pudo identificar el usuario");
+        return;
+      }
+
+      // Call backend API to update user role
+      const token = await getToken();
+      const response = await fetchWithClerk(
+        `/api/usuarios/${userId}/rol`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            roleId: roleId,
+            roleName: selectedRole 
+          }),
+        },
+        token
+      );
+
+      if (response && response.success) {
+        // Call the onSelect callback to update UI
+        onSelect?.(roleObj || selectedRole);
+        setModalOpen(false);
+        
+        // Show success message
+        console.log("Rol actualizado exitosamente");
+      } else {
+        throw new Error(response?.error || "Error al actualizar el rol");
+      }
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      alert("Error al actualizar el rol. Por favor, intenta nuevamente.");
+      // Revert selection
+      setSelectedRole(current);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle cancel of confirmation
@@ -249,13 +296,14 @@ export default function RolePicker({ row, roles = [], onSelect }) {
               variant="outline"
               onClick={handleCancel}
               radius="lg"
+              disabled={isLoading}
             />
             <Button
-              label="Guardar Cambios"
+              label={isLoading ? "Guardando..." : "Guardar Cambios"}
               variant="brand"
               onClick={handleConfirm}
               radius="lg"
-              disabled={!selectedRole || selectedRole === current}
+              disabled={!selectedRole || selectedRole === current || isLoading}
             />
           </div>
         </div>
@@ -266,7 +314,7 @@ export default function RolePicker({ row, roles = [], onSelect }) {
         open={confirmModalOpen}
         title="¿Confirmar cambio de rol?"
         message={`¿Estás seguro de que deseas cambiar el rol de "${userName}" de "${current}" a "${selectedRole}"?`}
-        confirmLabel="Confirmar"
+        confirmLabel={isLoading ? "Guardando..." : "Confirmar"}
         cancelLabel="Cancelar"
         onConfirm={handleConfirmRoleChange}
         onCancel={handleCancelConfirmation}

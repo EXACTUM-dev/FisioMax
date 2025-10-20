@@ -38,6 +38,6 @@ export async function getUsuarios() {
     return rows;
   } catch (error) {
     console.error("Error al consultar la base de datos:", error);
-    res.status(500).json({ error: "Error al consultar la base de datos" });
+    throw error; // Throw error to be handled by controller
   }
 }

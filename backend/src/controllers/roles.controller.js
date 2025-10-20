@@ -8,6 +8,7 @@ import {
   updateRoleById,
   getAllRolesFromDB,
   updateRolePrivileges,
+  assignRoleToUser,
 } from "../models/roles.model.js";
 import {
   getRolePrivileges,
@@ -136,5 +137,121 @@ export async function getAllRoles(req, res) {
       success: false,
       error: "Error fetching roles",
     });
+  }
+}
+
+/**
+ * Assign role to a specific user
+ * @route PATCH /api/usuarios/:userId/rol
+ * @access Protected
+ */
+export async function assignUserRole(req, res) {
+  try {
+    const { userId } = req.params;
+    const { roleId, roleName } = req.body;
+
+    // Validate required fields
+    if (!roleId && !roleName) {
+      return res.status(400).json({
+        success: false,
+        error: "Role ID or role name is required",
+      });
+    }
+
+    let role;
+    
+    // Find role by ID or name
+    if (roleId) {
+      role = await findRoleById(roleId);
+    } else if (roleName) {
+      // Find role by name
+      const roles = await getAllRolesFromDB();
+      role = roles.find(r => r.nombre === roleName);
+    }
+
+    if (!role) {
+      return res.status(404).json({
+        success: false,
+        error: "Role not found",
+      });
+    }
+
+    // Assign role to user
+    await assignRoleToUser(userId, role.IDRol || role.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Role assigned successfully",
+      data: {
+        userId,
+        roleId: role.IDRol || role.id,
+        roleName: role.nombre || role.name,
+      },
+    });
+  } catch (error) {
+    console.error("Error assigning role to user:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Error assigning role to user",
+    });
+  }
+}
+
+
+/**
+ * Assign role to a user
+ * @param {number} userId - User ID
+ * @param {number} roleId - Role ID to assign
+ * @returns {Promise<void>}
+ */
+export async function assignRoleToUser(userId, roleId) {
+  const connection = await dbPool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Soft delete current role assignment
+    await connection.query(
+      `UPDATE usuariorol 
+       SET eliminado = 1, deletedAt = NOW() 
+       WHERE IDUsuario = ? 
+         AND deletedAt IS NULL 
+         AND eliminado = 0`,
+      [userId]
+    );
+
+    // Check if a relationship exists (soft deleted)
+    const [existing] = await connection.query(
+      `SELECT IDUsuarioRol 
+       FROM usuariorol 
+       WHERE IDUsuario = ? AND IDRol = ?
+       LIMIT 1`,
+      [userId, roleId]
+    );
+
+    if (existing.length > 0) {
+      // Reactivate existing relationship
+      await connection.query(
+        `UPDATE usuariorol 
+         SET eliminado = 0, deletedAt = NULL 
+         WHERE IDUsuario = ? AND IDRol = ?`,
+        [userId, roleId]
+      );
+    } else {
+      // Create new relationship
+      await connection.query(
+        `INSERT INTO usuariorol (IDUsuario, IDRol) 
+         VALUES (?, ?)`,
+        [userId, roleId]
+      );
+    }
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error de base de datos assignRoleToUser:", error);
+    throw error;
+  } finally {
+    connection.release();
   }
 }
