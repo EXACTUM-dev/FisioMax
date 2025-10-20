@@ -1,5 +1,5 @@
 /**
- * C@fileoverview Column factory for a roles/permissions table
+ * @fileoverview Column factory for a roles/permissions table
  * @author EXACTUM-dev
  * @version 1.0.0
  * @description Keeps DataTable generic; only columns define labels, renders and mobile behavior
@@ -56,7 +56,7 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
             {list.map((p, i) => (
               <span
                 key={`${p}-${i}`}
-                className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700"
+                className="px-2 py-0.5 rounded-full text-xs font-medium text-slate-700"
               >
                 {p}
               </span>
