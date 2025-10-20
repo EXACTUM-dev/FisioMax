@@ -29,6 +29,13 @@ export default function RolePicker({ row, roles = [], onSelect }) {
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Debug: Log roles to see what we're receiving
+  useEffect(() => {
+    console.log('RolePicker - roles prop:', roles);
+    console.log('RolePicker - roles length:', roles?.length);
+    console.log('RolePicker - roles is array:', Array.isArray(roles));
+  }, [roles]);
+
   // Handles closing the dropdown when clicking outside
   useEffect(() => {
     function handleClick(e) {

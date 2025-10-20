@@ -396,7 +396,7 @@ export { app };
  * Start the server and listen on the specified port.
  * Only runs if the file is executed directly (not in tests).
  */
-app.use("/usuarios", usuariosRoutes);
+app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
 
 if (process.env.NODE_ENV !== "test") {

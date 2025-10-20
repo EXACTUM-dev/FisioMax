@@ -38,7 +38,7 @@ export async function getAllRolesFromDB() {
         GROUP_CONCAT(p.nombre SEPARATOR ', ') as privilegios
       FROM rol r
       LEFT JOIN rolprivilegios rp ON r.IDRol = rp.IDRol AND rp.deletedAt IS NULL AND rp.eliminado = 0
-      LEFT JOIN privilegios p ON rp.IDPrivilegio = p.IDPrivilegio AND p.deletedAt IS NULL AND p.eliminado = 0
+      LEFT JOIN privilegio p ON rp.IDPrivilegio = p.IDPrivilegio
       WHERE r.deletedAt IS NULL AND r.eliminado = 0
       GROUP BY r.IDRol, r.nombre, r.descripcion`
     );
@@ -133,5 +133,54 @@ export async function getUserRole(userId) {
   } catch (error) {
     console.error("Error de base de datos en getUserRole:", error);
     throw error;
+  }
+}
+
+/**
+ * Assign role to a user
+ * @param {number} userId - User ID
+ * @param {number} roleId - Role ID to assign
+ * @returns {Promise<Object>} - Result of the operation
+ */
+export async function assignRoleToUser(userId, roleId) {
+  const connection = await dbPool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Soft delete any existing role assignments for this user
+    await connection.query(
+      "UPDATE usuariorol SET eliminado = 1, deletedAt = NOW() WHERE IDUsuario = ?",
+      [userId]
+    );
+
+    // Check if there's an existing record to reactivate
+    const [existing] = await connection.query(
+      "SELECT * FROM usuariorol WHERE IDUsuario = ? AND IDRol = ?",
+      [userId, roleId]
+    );
+
+    if (existing.length > 0) {
+      // Reactivate existing record
+      await connection.query(
+        "UPDATE usuariorol SET eliminado = 0, deletedAt = NULL WHERE IDUsuario = ? AND IDRol = ?",
+        [userId, roleId]
+      );
+    } else {
+      // Insert new role assignment
+      await connection.query(
+        "INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)",
+        [userId, roleId]
+      );
+    }
+
+    await connection.commit();
+    return { success: true };
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error de base de datos en assignRoleToUser:", error);
+    throw error;
+  } finally {
+    connection.release();
   }
 }

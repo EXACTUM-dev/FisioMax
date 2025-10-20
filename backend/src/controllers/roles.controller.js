@@ -126,16 +126,21 @@ export async function updateRole(req, res) {
  */
 export async function getAllRoles(req, res) {
   try {
+    console.log("getAllRoles - Starting to fetch roles");
     const roles = await getAllRolesFromDB();
+    console.log("getAllRoles - Roles fetched:", roles);
+    console.log("getAllRoles - Roles count:", roles?.length);
     res.json({
       success: true,
       data: roles,
     });
   } catch (error) {
     console.error("Error fetching roles:", error);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       error: "Error fetching roles",
+      message: error.message,
     });
   }
 }
@@ -194,64 +199,5 @@ export async function assignUserRole(req, res) {
       success: false,
       error: error.message || "Error assigning role to user",
     });
-  }
-}
-
-
-/**
- * Assign role to a user
- * @param {number} userId - User ID
- * @param {number} roleId - Role ID to assign
- * @returns {Promise<void>}
- */
-export async function assignRoleToUser(userId, roleId) {
-  const connection = await dbPool.getConnection();
-
-  try {
-    await connection.beginTransaction();
-
-    // Soft delete current role assignment
-    await connection.query(
-      `UPDATE usuariorol 
-       SET eliminado = 1, deletedAt = NOW() 
-       WHERE IDUsuario = ? 
-         AND deletedAt IS NULL 
-         AND eliminado = 0`,
-      [userId]
-    );
-
-    // Check if a relationship exists (soft deleted)
-    const [existing] = await connection.query(
-      `SELECT IDUsuarioRol 
-       FROM usuariorol 
-       WHERE IDUsuario = ? AND IDRol = ?
-       LIMIT 1`,
-      [userId, roleId]
-    );
-
-    if (existing.length > 0) {
-      // Reactivate existing relationship
-      await connection.query(
-        `UPDATE usuariorol 
-         SET eliminado = 0, deletedAt = NULL 
-         WHERE IDUsuario = ? AND IDRol = ?`,
-        [userId, roleId]
-      );
-    } else {
-      // Create new relationship
-      await connection.query(
-        `INSERT INTO usuariorol (IDUsuario, IDRol) 
-         VALUES (?, ?)`,
-        [userId, roleId]
-      );
-    }
-
-    await connection.commit();
-  } catch (error) {
-    await connection.rollback();
-    console.error("Error de base de datos assignRoleToUser:", error);
-    throw error;
-  } finally {
-    connection.release();
   }
 }

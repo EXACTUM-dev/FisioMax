@@ -35,8 +35,7 @@ export async function getAllPrivileges() {
   try {
     const [rows] = await dbPool.query(
       `SELECT IDPrivilegio as id, nombre as name, descripcion as description
-       FROM privilegio
-       WHERE deletedAt IS NULL`
+       FROM privilegio`
     );
     return rows;
   } catch (error) {
