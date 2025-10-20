@@ -55,13 +55,30 @@ export default function RolePicker({ row, onOpenPopup }) {
 
   return (
     <div className="relative inline-block text-left" ref={ref}>
-      {/* Clickable text to open the modal */}
-      <span
+      {/* Clickable button to open the modal */}
+      <button
+        type="button"
         onClick={handleOpenModal}
-        className="cursor-pointer hover:opacity-80 text-left block"
+        className="
+          px-4 py-2 
+          rounded-lg 
+          font-medium 
+          text-sm
+          transition-all 
+          duration-200
+          bg-slate-100 
+          text-slate-700 
+          hover:bg-slate-200 
+          shadow-sm
+          focus:outline-none 
+          focus:ring-2 
+          focus:ring-brand/50 
+          focus:ring-offset-1
+          active:scale-95
+        "
       >
         {current || 'Asignar rol'}
-      </span>
+      </button>
 
       {/* Modal to manage roles */}
       <ChecklistModal
