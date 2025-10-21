@@ -9,6 +9,7 @@ import { useAuth } from '@clerk/clerk-react';
 import Modal from './modal';
 import Button from '../atoms/button';
 import ConfirmationModal from './confirmationModal';
+import SuccessErrorModal from '../organisms/successErrorModal';
 import { fetchWithClerk } from '../utils/api';
 
 /**
@@ -28,6 +29,11 @@ export default function RolePicker({ row, roles = [], onSelect }) {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
+  
+  // Success/Error modal states
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Handles closing the dropdown when clicking outside
   useEffect(() => {
@@ -100,14 +106,16 @@ export default function RolePicker({ row, roles = [], onSelect }) {
 
       if (!userId) {
         console.error("User ID not found");
-        alert("Error: No se pudo identificar el usuario");
+        setErrorMessage("No se pudo identificar el usuario");
+        setErrorModalOpen(true);
         setIsLoading(false);
         return;
       }
 
       if (!roleId) {
         console.error("Role ID not found");
-        alert("Error: No se pudo identificar el rol");
+        setErrorMessage("No se pudo identificar el rol");
+        setErrorModalOpen(true);
         setIsLoading(false);
         return;
       }
@@ -135,14 +143,15 @@ export default function RolePicker({ row, roles = [], onSelect }) {
         setModalOpen(false);
         
         // Show success message
-        console.log(`Rol de ${userName} actualizado a ${selectedRole}`);
-        alert(`Rol actualizado exitosamente a ${selectedRole}`);
+        console.log(`✅ Rol de ${userName} actualizado a ${selectedRole}`);
+        setSuccessModalOpen(true);
       } else {
         throw new Error(response?.error || "Error al actualizar el rol");
       }
     } catch (error) {
-      console.error("Error updating user role:", error);
-      alert(`Error al actualizar el rol: ${error.message}`);
+      console.error("❌ Error updating user role:", error);
+      setErrorMessage(error.message || "Error al actualizar el rol. Por favor, intenta nuevamente.");
+      setErrorModalOpen(true);
       // Revert selection
       setSelectedRole(current);
     } finally {
@@ -336,6 +345,26 @@ export default function RolePicker({ row, roles = [], onSelect }) {
         cancelLabel="Cancelar"
         onConfirm={handleConfirmRoleChange}
         onCancel={handleCancelConfirmation}
+      />
+
+            {/* Success Modal */}
+      <SuccessErrorModal
+        open={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        type="success"
+        title="¡Rol actualizado exitosamente!"
+        message={`El rol de ${userName} ha sido cambiado a ${selectedRole}.`}
+        confirmLabel="Entendido"
+      />
+
+      {/* Error Modal */}
+      <SuccessErrorModal
+        open={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        type="error"
+        title="Error al actualizar rol"
+        message={errorMessage}
+        confirmLabel="Cerrar"
       />
     </>
   );
