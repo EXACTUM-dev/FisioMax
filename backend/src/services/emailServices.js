@@ -1,7 +1,8 @@
 /**
- * version 1.0.0
- * Email service using Amazon SES
- * Inlcudes basic SES configuration
+ * @fileoverview Email service using Amazon SES 
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @describe Inlcudes basic SES configuration
  */
 
 import nodemailer from "nodemailer";
@@ -30,8 +31,6 @@ export const sendEmail = async ({ to, subject, html }) => {
       subject,
       html
     });
-
-    console.log("Correo enviado:", info.messageId);
   } catch (error) {
     console.error("Error enviando correo:", error);
   }

@@ -1,7 +1,8 @@
 /**
- * Version: 0.1.1
- * FormField molecule component
- * Componente de campo de formulario reutilizable con label e input
+ * @fileoverview FormField molecule component
+ * @author EXACTUM-dev
+ * @version: 0.1.1
+ * @description Reusable form component with label and input
  */
 import React from "react";
 

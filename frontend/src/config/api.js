@@ -1,7 +1,8 @@
 /**
- * version 1.0.1
- * Configuration to backend's URLs
- * Includes helper to build the complete URLs
+ * @fileoverview Configuration to backend's URLs
+ * @author EXACTUM-dev 
+ * @version 1.0.1
+ * @describe Includes helper to build the complete URLs
  */
 
 export const API_CONFIG = {

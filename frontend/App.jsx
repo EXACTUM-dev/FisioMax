@@ -1,7 +1,9 @@
 /**
- * Version: 0.3.1
- * App router: protege rutas y monta Hero como página principal
+ * @fileoverview App router: protect routes y monta Hero show principal page
+ * @author EXACTUM-dev
+ * @version: 0.3.1
  */
+
 import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
@@ -23,7 +25,7 @@ import VideoPage from "./src/pages/video";
 import EmailPage from "./src/pages/email";
 import MembershipApplicationPage from "./src/pages/membershipApplication";
 
-// Rutas protegidas con Clerk (solo login usa Clerk)
+// Protected routes with Clerk (only login use Clerk)
 function ProtectedRoute({ children }) {
   return (
     <>
@@ -35,7 +37,7 @@ function ProtectedRoute({ children }) {
   );
 }
 
-// Componente del Dashboard
+// Dashboard component
 function Dashboard() {
   const { user, isLoaded, isSignedIn } = useUser();
   const [current, setCurrent] = useState("home");
@@ -55,7 +57,7 @@ function Dashboard() {
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Estados para los datos
+  // Data status
   const [heroSlides, setHeroSlides] = useState([]);
   const [rowSlides, setRowSlides] = useState([]);
   const [products, setProducts] = useState({ columns: [], rows: [] });
@@ -63,7 +65,7 @@ function Dashboard() {
   const [roleRows, setRoleRows] = useState([]);
   const [sideSlides, setSideSlides] = useState([]);
 
-  // Fetch del backend
+  // Backend's Fetch
   useEffect(() => {
     if (isSignedIn && user) {
       fetch('/api/usuarios')
@@ -75,7 +77,7 @@ function Dashboard() {
     }
   }, [user, isSignedIn]);
 
-  // Cargar datos mock
+  // Load mock data
   useEffect(() => {
     let alive = true;
     Promise.all([
@@ -99,7 +101,7 @@ function Dashboard() {
     };
   }, []);
 
-  // Columnas para las tablas
+  // Table's columns
   const userColumns = useMemo(
     () =>
       buildUserActionsColumns({
@@ -223,7 +225,7 @@ function Dashboard() {
   );
 }
 
-// Componente App con las rutas
+// App component with routes
 export default function App() {
   return (
     <Routes>

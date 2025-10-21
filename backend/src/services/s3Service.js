@@ -1,7 +1,8 @@
 /**
- * version 1.0.0
- * Upload documents using Amazon S3
- * Inlcudes basic S3 configuration
+ * @fileoverview Upload documents using Amazon S3
+ * @author EXACTUM-dev 
+ * @version 1.0.0
+ * @description Inlcudes basic S3 configuration
  */
 
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";

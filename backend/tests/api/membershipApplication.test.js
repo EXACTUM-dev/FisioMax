@@ -42,7 +42,7 @@ describe('Membership Application API', () => {
     it('should return validation error for missing required fields', async () => {
       const incompleteData = {
         nombres: 'Juan',
-        // Faltan apellidos, email, etc.
+        // Incomplete personal information
       };
 
       const response = await request(app)
@@ -93,7 +93,7 @@ describe('Membership Application API', () => {
 
   describe('PUT /api/membership-applications/:id/status', () => {
     it('should update application status', async () => {
-      // Primero crear una solicitud
+      // First, a new application is created
       const applicationData = {
         nombres: 'María',
         apellidos: 'González López',
@@ -109,7 +109,7 @@ describe('Membership Application API', () => {
 
       const applicationId = createResponse.body.data.id;
 
-      // Actualizar estado
+      // Update status
       const updateData = {
         estado: 'aprobada',
         notas: 'Documentación verificada correctamente'

@@ -1,5 +1,6 @@
 /**
  * @fileoverview Controller to handle membership application requests.
+ * @author EXACTUM-dev
  * @version 1.2.1
  * @description Handles the creation of membership applications including:
  * - File uploads to S3 (cedula, titulo, constancias, extra documents)
@@ -22,6 +23,7 @@ export const createMembershipApplication = async (req, res) => {
   
   try {
   
+    // Save documents in S3
     const professionalIdUrl = req.files?.professionalId?.[0]
       ? await S3Service.uploadFile(req.files.professionalId[0], 'cedulas')
       : null;
@@ -34,7 +36,7 @@ export const createMembershipApplication = async (req, res) => {
       ? await S3Service.uploadFile(req.files.certificates[0], 'constancias')
       : null;
 
-   
+    // If there is an extra document
     const extraDocs = [];
     Object.keys(req.files || {}).forEach(key => {
       if (key.startsWith('extraDoc')) {
@@ -74,9 +76,11 @@ export const createMembershipApplication = async (req, res) => {
       }
     };
 
+    // Send data to archive model
     const application = new MembershipApplication(applicationData);
     await application.save();
 
+    // Create template for the email when the application is sended
     const adminEmails = ["doculili08@gmail.com"];
     adminEmails.forEach(async (email) => {
       try {
@@ -95,6 +99,7 @@ export const createMembershipApplication = async (req, res) => {
       }
     });
 
+    // If the applicacion is success
     res.status(201).json({
       success: true,
       message: 'Solicitud creada, recibirá un correo o mensaje por WhatsApp por parte de SOMEFIPP',

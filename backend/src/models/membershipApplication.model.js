@@ -1,14 +1,19 @@
 /**
- * version 2.0.0
- * Model to handle the membership information and modify the database
- * Includes the creation of the application, save documents in S3 and insert new documents if it's necessary
+ * @fileoverview Model to handle the membership information and modify the database
+ * @version 2.0.0
+ * @description Includes the creation of the application,
+ * save documents in S3 and insert new documents if it's necessary
  */
 
 import crypto from 'crypto';
 import S3Service from '../services/s3Service.js';
 import db from '../../database/db.js';
 
-
+/**
+ * Save the new membership application in database and documents in S3.
+ * @param {object} data - Express all the data that will be save in data base.
+ * @returns {Promise<void>} Sends JSON response with success or error.
+ */
 class MembershipApplication {
   constructor(data) {
     if (!data.firstName || data.firstName.trim() === '') {

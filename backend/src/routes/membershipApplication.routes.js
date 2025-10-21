@@ -1,6 +1,8 @@
 /**
- * version 1.1.1
- * Router with endpoints for membership application managment.
+ * @fileoverview Router with endpoints for membership application managment.
+ * @author EXACTUM-dev
+ * @version 1.1.1
+ * @description Defines endpoint to retrive membership applications
  */
 import express from 'express';
 import multer from 'multer';

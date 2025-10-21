@@ -1,7 +1,8 @@
 /**
- * version 1.0.0
- * Component to upload PDF
- * Include the design of the component and the specification to only acept PDF
+ * @fileoverview Component to upload PDF
+ * @author EXACTUM-dev 
+ * @version 1.0.0
+ * @description Include the design of the component and the specification to only acept PDF
  */
 import React, { useState } from "react";
 
