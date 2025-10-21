@@ -83,86 +83,70 @@ export default function RolePicker({ row, roles = [], onSelect }) {
     }
   };
 
-  // Handle confirmation of role change
+  /**
+   * Handles confirmation and execution of role change.
+   */
   const handleConfirmRoleChange = async () => {
     setConfirmModalOpen(false);
     setIsLoading(true);
-    
+
     try {
-      // Find the full role object
-      const roleObj = roles.find(r => 
+      const roleObj = roles.find((r) =>
         (r?.nombre || r?.name || r?.rol) === selectedRole
       );
 
       const userId = row?.id || row?.IDUsuario;
       const roleId = roleObj?.id || roleObj?.IDRol;
 
-      console.log("Asignando rol al usuario:", {
-        userId,
-        roleId,
-        roleName: selectedRole,
-        userName
-      });
-
       if (!userId) {
-        console.error("User ID not found");
-        setErrorMessage("No se pudo identificar el usuario");
+        setErrorMessage('No se pudo identificar el usuario');
         setErrorModalOpen(true);
         setIsLoading(false);
         return;
       }
 
       if (!roleId) {
-        console.error("Role ID not found");
-        setErrorMessage("No se pudo identificar el rol");
+        setErrorMessage('No se pudo identificar el rol');
         setErrorModalOpen(true);
         setIsLoading(false);
         return;
       }
 
-      // Call backend API to update user role
       const token = await getToken();
       const response = await fetchWithClerk(
-        `/api/usuarios/${userId}/rol`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            roleId: roleId,
-            roleName: selectedRole 
-          }),
-        },
-        token
+          `/api/usuarios/${userId}/rol`,
+          {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              roleId: roleId,
+              roleName: selectedRole,
+            }),
+          },
+          token
       );
 
-      console.log("Respuesta del servidor:", response);
-
-      if (response && response.success) {
-        // Update UI immediately with role object
+      if (response?.success) {
         const roleToUpdate = roleObj || {
           id: roleId,
           IDRol: roleId,
           nombre: selectedRole,
           name: selectedRole,
         };
-        
-        console.log("Actualizando UI con rol:", roleToUpdate);
-        
-        // Call the onSelect callback to update UI
+
         onSelect?.(roleToUpdate);
         setModalOpen(false);
-        
-        // Show success message
-        console.log(`✅ Rol de ${userName} actualizado a ${selectedRole}`);
         setSuccessModalOpen(true);
       } else {
-        throw new Error(response?.error || "Error al actualizar el rol");
+        throw new Error(response?.error || 'Error al actualizar el rol');
       }
     } catch (error) {
-      console.error("❌ Error updating user role:", error);
-      setErrorMessage(error.message || "Error al actualizar el rol. Por favor, intenta nuevamente.");
+      console.error('Error updating user role:', error);
+      setErrorMessage(
+          error.message ||
+          'Error al actualizar el rol. Por favor, intenta nuevamente.'
+      );
       setErrorModalOpen(true);
-      // Revert selection
       setSelectedRole(current);
     } finally {
       setIsLoading(false);

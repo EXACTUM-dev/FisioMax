@@ -142,37 +142,28 @@ export async function getAllRoles(req, res) {
 }
 
 /**
- * Assign role to a specific user
- * @route PATCH /api/usuarios/:userId/rol
- * @access Protected
+ * Assigns a role to a specific user.
+ * @param {Object} req Express request object
+ * @param {Object} res Express response object
+ * @returns {Promise<void>}
  */
 export async function assignUserRole(req, res) {
   try {
-    const { userId } = req.params;
-    const { roleId, roleName } = req.body;
+    const {userId} = req.params;
+    const {roleId, roleName} = req.body;
 
-    console.log("assignUserRole - Request received:", {
-      userId,
-      roleId,
-      roleName,
-      body: req.body
-    });
-
-    // Validate required fields
     if (!roleId && !roleName) {
-      console.log("assignUserRole - Missing role information");
       return res.status(400).json({
         success: false,
-        error: "Role ID or role name is required",
+        error: 'Role ID o role name es requerido',
       });
     }
 
     // Validate userId
     if (!userId) {
-      console.log("assignUserRole - Missing userId");
       return res.status(400).json({
         success: false,
-        error: "User ID is required",
+        error: 'User ID es requerido',
       });
     }
 
@@ -180,37 +171,24 @@ export async function assignUserRole(req, res) {
     
     // Find role by ID or name
     if (roleId) {
-      console.log("assignUserRole - Finding role by ID:", roleId);
       role = await findRoleById(roleId);
     } else if (roleName) {
-      console.log("assignUserRole - Finding role by name:", roleName);
-      // Find role by name
       const roles = await getAllRolesFromDB();
-      role = roles.find(r => r.nombre === roleName);
+      role = roles.find((r) => r.nombre === roleName);
     }
 
     if (!role) {
-      console.log("assignUserRole - Role not found");
       return res.status(404).json({
         success: false,
-        error: "Role not found",
+        error: 'Rol no encontrado',
       });
     }
 
-    console.log("assignUserRole - Role found:", role);
-
-    // Assign role to user
-    const result = await assignRoleToUser(userId, role.IDRol || role.id);
-
-    console.log("assignUserRole - Role assigned successfully:", {
-      userId,
-      roleId: role.IDRol || role.id,
-      roleName: role.nombre || role.name,
-    });
+    await assignRoleToUser(userId, role.IDRol || role.id);
 
     return res.status(200).json({
       success: true,
-      message: "Role assigned successfully",
+      message: 'Rol asignado exitosamente',
       data: {
         userId,
         roleId: role.IDRol || role.id,
@@ -218,11 +196,10 @@ export async function assignUserRole(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error assigning role to user:", error);
-    console.error("Error stack:", error.stack);
+    console.error('Error asignando rol a usuario:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || "Error assigning role to user",
+      error: error.message || 'Error asignando rol a usuario',
     });
   }
 }

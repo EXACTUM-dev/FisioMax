@@ -52,20 +52,30 @@ export default function Panel() {
 
   // Fetch initial data for the panel
   useEffect(() => {
-    let alive = true; // Prevent state updates after unmount
-    async function fetchData() {
+    let alive = true;
+
+    const fetchUsers = async () => {
       try {
         const token = await getToken();
-        const usersResponse = await fetchWithClerk("/api/usuarios", { method: "GET" }, token);
+        const usersResponse = await fetchWithClerk(
+            '/api/usuarios',
+            {method: 'GET'},
+            token
+        );
         if (!alive) return;
-        // Extract user array from backend response
-        setUserRows(Array.isArray(usersResponse) ? usersResponse : usersResponse?.data || []);
+
+        setUserRows(
+            Array.isArray(usersResponse) ?
+            usersResponse :
+            usersResponse?.data || []
+        );
       } catch (err) {
-        console.error("Error loading users:", err);
-        setError("Error loading users. Please try again later.");
+        console.error('Error de carga de usuarios:', err);
+        setError('Error de carga de usuarios. Por favor intente más tarde.');
       }
-    }
-    fetchData();
+    };
+
+    fetchUsers();
     return () => {
       alive = false;
     };
@@ -73,34 +83,42 @@ export default function Panel() {
 
   // Fetch roles from the backend
   useEffect(() => {
-    let alive = true; // Prevent state updates after unmount
-    async function fetchData() {
+    let alive = true;
+
+    const fetchRoles = async () => {
       try {
         const token = await getToken();
-        const rolesResponse = await fetchWithClerk('/api/roles', { method: 'GET' }, token);
+        const rolesResponse = await fetchWithClerk(
+            '/api/roles',
+            {method: 'GET'},
+            token
+        );
         if (!alive) return;
         // Extract role array from backend response
         const extractedRoles = Array.isArray(rolesResponse) ? rolesResponse : rolesResponse?.data || [];
         setRoleRows(extractedRoles);
       } catch (err) {
-        console.error("Error loading roles:", err);
-        setError("Error loading roles. Please try again later.");
+        console.error('Error de carga de roles:', err);
+        setError('Error de carga de roles. Por favor intente más tarde.');
       }
-    }
-    fetchData();
+    };
+
+    fetchRoles();
     return () => {
       alive = false;
     };
   }, [getToken]);
 
-  // Function to update a user's role in the UI only (backend is called by RolePicker)
+  /**
+   * Updates user's role in the UI state.
+   * @param {string|number} userId User identifier
+   * @param {Object} newRoleObj Role object containing role information
+   */
   const updateUserRole = useCallback(
     (userId, newRoleObj) => {
       const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj;
       const roleId = newRoleObj?.id || newRoleObj?.IDRol;
-      
-      console.log("Actualizando rol en UI:", { userId, roleName, roleId });
-      
+
       setUserRows((prev) =>
         prev.map((user) => {
           const matchesId = user.id === userId || user.IDUsuario === userId;
@@ -121,15 +139,19 @@ export default function Panel() {
   );
 
   /**
-   * Handle viewing role details - load role with privileges and open modal
-   * @param {Object} roleRow - Role object from table row
+   * Handles viewing role details with privileges.
+   * @param {Object} roleRow Role object from table row
    */
   const handleViewRole = useCallback(async (roleRow) => {
     try {
       const token = await getToken();
-      const response = await fetchWithClerk(`/api/roles/${roleRow.id}`, { method: "GET" }, token);
-      
-      if (response && response.success && response.data) {
+      const response = await fetchWithClerk(
+          `/api/roles/${roleRow.id}`,
+          {method: 'GET'},
+          token
+      );
+
+      if (response?.success && response.data) {
         const roleData = response.data;
         
         // Map privileges to table format (without checkboxes, just for display)
@@ -138,70 +160,63 @@ export default function Panel() {
           label: p.name,
           sequenceNumber: index + 1,
         }));
-        
+
         setSelectedRoleForView(roleData);
         setRolePrivileges(mappedPrivileges);
         setModalOpen(true);
       }
     } catch (err) {
-      console.error("Error cargando detalles del rol:", err);
+      console.error('Error loading role details:', err);
     }
   }, [getToken]);
 
-  // Map user rows to include role names from roleRows and full names
   const mappedUserRows = useMemo(() => {
     if (!Array.isArray(userRows)) {
-      console.error("userRows no es un arreglo:", userRows);
       return [];
     }
+
     return userRows.map((user) => {
-      // Build full name with nombres, apellidoP and apellidoM
       const nombreCompleto = `${user.nombres || ''} ${user.apellidoP || ''} ${user.apellidoM || ''}`.trim();
-      
-      // Get role name - prioritize recently updated rol/rolNombre, then from backend, then from roleRows lookup
-      const roleName = user.rol || 
-                      user.rolNombre || 
-                      (roleRows.find((r) => r.IDRol === user.IDRol)?.nombre) || 
-                      "Sin rol asignado";
-      
+
+      const roleName = user.rol ||
+                      user.rolNombre ||
+                      (roleRows.find((r) => r.IDRol === user.IDRol)?.nombre) ||
+                      'Sin rol asignado';
+
       return {
         ...user,
-        nombre: nombreCompleto || user.nombre || user.name, // Prioritize built full name
-        rol: roleName, // Role name for display in table
-        roleName: roleName, // Keep for backward compatibility
+        nombre: nombreCompleto || user.nombre || user.name,
+        rol: roleName,
+        roleName: roleName,
       };
     });
-  }, [userRows, roleRows]); // Validate that userRows is an array before using map
+  }, [userRows, roleRows]);
 
   // Define columns for the user table
   const userColumns = useMemo(
-    () => {
-      return buildUserRolesColumns({
+      () => buildUserRolesColumns({
         roles: roleRows,
-        onDelete: (row) => setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
-        onChangeRole: (row, chosenRole) => updateUserRole(row.id || row.IDUsuario, chosenRole),
-      });
-    },
-    [roleRows, updateUserRole]
+        onDelete: (row) => setUserRows(
+            (prev) => prev.filter((r) => r.id !== row.id)
+        ),
+        onChangeRole: (row, chosenRole) => updateUserRole(
+            row.id || row.IDUsuario,
+            chosenRole
+        ),
+      }),
+      [roleRows, updateUserRole]
   );
 
   // Define columns for the role table with view action
   const roleColumns = useMemo(
-    () =>
-      buildRolePermissionsColumns({
+      () => buildRolePermissionsColumns({
         onEdit: handleViewRole,
-        editLabel: "Ver Permisos",
-        editTooltip: "Ver detalles",
-        showDelete: false // No mostrar botón de eliminar en panel
+        editLabel: 'Ver Permisos',
+        editTooltip: 'Ver detalles',
+        showDelete: false,
       }),
-    [handleViewRole]
+      [handleViewRole]
   );
-
-  useEffect(() => {
-  }, [roleRows]);
-
-  useEffect(() => {
-  }, [userRows]);
 
   // Show loading spinner until user data is loaded
   if (!isLoaded) {
