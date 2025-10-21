@@ -76,28 +76,6 @@ const products = {
   ],
 };
 
-// Users mock (moved from App)
-const users = [
-  {
-    id: "u1",
-    nombre: "Ana Gómez",
-    correo: "ana.gomez@example.com",
-    documentos: { type: "pdf", url: "/docs/ana-gomez.pdf" },
-  },
-  {
-    id: "u2",
-    nombre: "Luis Pérez",
-    correo: "luis.perez@example.com",
-    documentos: { type: "pdf", url: "/docs/luis-perez.pdf" },
-  },
-  {
-    id: "u3",
-    nombre: "María López",
-    correo: "maria.lopez@example.com",
-    documentos: { type: "pdf", url: "/docs/maria-lopez.pdf" },
-  },
-];
-
 export async function getHeroSlides() {
   return heroSlides;
 }
@@ -113,6 +91,12 @@ export async function getRowSlides() {
 export async function getProducts() {
   return products;
 }
+
+const users = [
+  { id: 1, nombre: "Juan Perez", email: "juan.perez@example.com", roleId: "r1" },
+  { id: 2, nombre: "Ana Gomez", email: "ana.gomez@example.com", roleId: "r2" },
+  { id: 3, nombre: "Luis Martinez", email: "luis.martinez@example.com", roleId: "r3" },
+];
 
 export async function getUsers() {
   return users;

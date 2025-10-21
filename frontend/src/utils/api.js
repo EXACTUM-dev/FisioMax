@@ -1,17 +1,19 @@
-
 /**
- * @fileoverview Helpers para llamadas al backend. Incluye util para enviar
- * el token de Clerk (Bearer) obtenido desde el cliente Clerk.
+ * @fileoverview Helper utilities for backend API calls with Clerk authentication.
  * @version 1.0.0
  * @author EXACTUM-dev
  */
-import { clerkClient, useAuth } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
 
 /**
- * Realiza una petición fetch al backend con el token de Clerk en la cabecera Authorization.
- * @param {string} path - ruta relativa al backend (ej. /api/profile)
- * @param {RequestInit} options - opciones de fetch
- * @param {string} clerkToken - token JWT de Clerk (si ya se obtuvo)
+ * Makes a fetch request to the backend with Clerk token in Authorization header.
+ * Automatically includes the Clerk JWT token as a Bearer token if provided.
+ * Throws an error if the request fails.
+ * @param {string} path Relative path to the backend endpoint (e.g., /api/profile).
+ * @param {RequestInit} [options={}] Fetch options (method, headers, body, etc.).
+ * @param {string} clerkToken Clerk JWT token (if already obtained).
+ * @returns {Promise<Object>} Parsed JSON response from the server.
+ * @throws {Error} If the request fails with status and response body attached.
  */
 export async function fetchWithClerk(path, options = {}, clerkToken) {
 	const headers = new Headers(options.headers || {});
@@ -28,12 +30,3 @@ export async function fetchWithClerk(path, options = {}, clerkToken) {
 	}
 	return res.json();
 }
-
-/**
- * Convenience: use this client-side to get a token from Clerk and call the backend.
- * Example usage from a React component:
- * import { useAuth } from '@clerk/clerk-react';
- * const { getToken } = useAuth();
- * const token = await getToken();
- * await fetchWithClerk('/api/profile', { method: 'GET' }, token);
- */
