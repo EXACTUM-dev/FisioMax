@@ -93,29 +93,31 @@ export default function Panel() {
     };
   }, [getToken]);
 
-  // Function to update a user's role
+  // Function to update a user's role in the UI only (backend is called by RolePicker)
   const updateUserRole = useCallback(
-    async (rowId, newRoleObj) => {
-      const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj; // Extract role name
-      const id = rowId?.id || rowId?.IDUsuario || rowId; // Extract user ID
-      const prevRows = userRows; // Backup current state for rollback
+    (userId, newRoleObj) => {
+      const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj;
+      const roleId = newRoleObj?.id || newRoleObj?.IDRol;
+      
+      console.log("Actualizando rol en UI:", { userId, roleName, roleId });
+      
       setUserRows((prev) =>
-        prev.map((u) => (u.id === id || u.IDUsuario === id ? { ...u, rol: roleName } : u))
+        prev.map((user) => {
+          const matchesId = user.id === userId || user.IDUsuario === userId;
+          if (matchesId) {
+            return {
+              ...user,
+              rol: roleName,
+              rolNombre: roleName,
+              roleName: roleName,
+              IDRol: roleId,
+            };
+          }
+          return user;
+        })
       );
-      try {
-        const token = await getToken();
-        await fetchWithClerk(`/api/usuarios/${id}/rol`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rol: roleName }),
-        }, token);
-        console.log("Rol actualizado en backend:", roleName);
-      } catch (err) {
-        console.error("Error updating role in backend:", err);
-        setUserRows(prevRows); // Revert UI changes on error
-      }
     },
-    [getToken, userRows]
+    []
   );
 
   /**
@@ -156,8 +158,9 @@ export default function Panel() {
       // Build full name with nombres, apellidoP and apellidoM
       const nombreCompleto = `${user.nombres || ''} ${user.apellidoP || ''} ${user.apellidoM || ''}`.trim();
       
-      // Get role name from the user object (comes from backend JOIN) or from roleRows
-      const roleName = user.rolNombre || 
+      // Get role name - prioritize recently updated rol/rolNombre, then from backend, then from roleRows lookup
+      const roleName = user.rol || 
+                      user.rolNombre || 
                       (roleRows.find((r) => r.IDRol === user.IDRol)?.nombre) || 
                       "Sin rol asignado";
       

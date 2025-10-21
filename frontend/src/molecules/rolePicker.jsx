@@ -138,8 +138,18 @@ export default function RolePicker({ row, roles = [], onSelect }) {
       console.log("Respuesta del servidor:", response);
 
       if (response && response.success) {
+        // Update UI immediately with role object
+        const roleToUpdate = roleObj || {
+          id: roleId,
+          IDRol: roleId,
+          nombre: selectedRole,
+          name: selectedRole,
+        };
+        
+        console.log("Actualizando UI con rol:", roleToUpdate);
+        
         // Call the onSelect callback to update UI
-        onSelect?.(roleObj || selectedRole);
+        onSelect?.(roleToUpdate);
         setModalOpen(false);
         
         // Show success message
