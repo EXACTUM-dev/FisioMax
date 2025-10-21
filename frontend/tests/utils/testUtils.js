@@ -1,5 +1,5 @@
 /**
- * @fileoverview Utilidades para las pruebas unitarias de FisioMax
+ * @fileoverview Utilities for FisioMax unit tests
  * @version 1.0.0
  * @author EXACTUM-dev
  */
@@ -8,9 +8,9 @@ import { render } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 
 /**
- * Renderiza un componente con el router para pruebas
- * @param {React.Component} component - Componente a renderizar
- * @returns {Object} Resultado del render
+ * Renders a component with router for testing.
+ * @param {React.Component} component - Component to render
+ * @returns {Object} Render result
  */
 export const renderWithRouter = (component) => {
   return render(
@@ -21,7 +21,7 @@ export const renderWithRouter = (component) => {
 };
 
 /**
- * Datos mock para pruebas de formulario de membresía según el UML
+ * Mock data for membership form tests according to UML.
  */
 export const mockMembershipFormData = {
   validData: {
@@ -59,14 +59,14 @@ export const mockMembershipFormData = {
 };
 
 /**
- * Utilidades para simular eventos de usuario según el UML
+ * Utilities to simulate user events according to UML.
  */
 export const userEventHelpers = {
   /**
-   * Simula llenar un formulario completo con datos válidos según el UML
-   * @param {Object} user - Instancia de userEvent
-   * @param {Object} formElements - Elementos del formulario
-   * @param {Object} data - Datos a ingresar
+   * Simulates filling a complete form with valid data according to UML.
+   * @param {Object} user - userEvent instance
+   * @param {Object} formElements - Form elements
+   * @param {Object} data - Data to enter
    */
   async fillFormWithValidData(user, formElements, data = mockMembershipFormData.validData) {
     await user.type(formElements.nombresInput, data.nombres);
@@ -89,10 +89,10 @@ export const userEventHelpers = {
   },
 
   /**
-   * Simula llenar un formulario con datos inválidos según el UML
-   * @param {Object} user - Instancia de userEvent
-   * @param {Object} formElements - Elementos del formulario
-   * @param {Object} data - Datos a ingresar
+   * Simulates filling a form with invalid data according to UML.
+   * @param {Object} user - userEvent instance
+   * @param {Object} formElements - Form elements
+   * @param {Object} data - Data to enter
    */
   async fillFormWithInvalidData(user, formElements, data = mockMembershipFormData.invalidData) {
     await user.type(formElements.nombresInput, data.nombres);
@@ -112,7 +112,7 @@ export const userEventHelpers = {
 };
 
 /**
- * Selectores de elementos del formulario según el UML
+ * Form element selectors according to UML.
  */
 export const formSelectors = {
   nombresInput: () => screen.getByTestId("nombres-input"),
@@ -135,7 +135,7 @@ export const formSelectors = {
 };
 
 /**
- * Mensajes de error esperados según el UML
+ * Expected error messages according to UML.
  */
 export const expectedErrorMessages = {
   requiredFields: "Llene todos los campos obligatorios",
@@ -146,7 +146,7 @@ export const expectedErrorMessages = {
 };
 
 /**
- * Mensajes de éxito esperados según el UML
+ * Expected success messages according to UML.
  */
 export const expectedSuccessMessages = {
   applicationSubmitted: "Se ha mandado la solicitud con éxito. Los administradores le avisarán el estado final de su solicitación.",

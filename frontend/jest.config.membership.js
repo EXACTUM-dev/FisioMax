@@ -1,41 +1,41 @@
 /**
- * @fileoverview Configuración de Jest específica para pruebas de solicitud de membresías
+ * @fileoverview Jest configuration specific for membership application tests
  * @version 1.0.0
  * @author EXACTUM-dev
  */
 
 module.exports = {
-  // Entorno de prueba
+  // Test environment
   testEnvironment: 'jsdom',
   
-  // Archivos de configuración
+  // Configuration files
   setupFilesAfterEnv: [
     '<rootDir>/tests/setup/membershipApplication.setup.js'
   ],
   
-  // Patrones de archivos de prueba
+  // Test file patterns
   testMatch: [
     '<rootDir>/tests/**/*.test.jsx',
     '<rootDir>/tests/**/*.test.js'
   ],
   
-  // Transformaciones
+  // Transformations
   transform: {
     '^.+\\.(js|jsx)$': 'babel-jest'
   },
   
-  // Módulos a ignorar en transformaciones
+  // Modules to ignore in transformations
   transformIgnorePatterns: [
     'node_modules/(?!(clerk|@clerk)/)'
   ],
   
-  // Mocks de módulos
+  // Module mocks
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@tests/(.*)$': '<rootDir>/tests/$1'
   },
   
-  // Configuración de cobertura
+  // Coverage configuration
   collectCoverageFrom: [
     'src/**/*.{js,jsx}',
     '!src/**/*.stories.{js,jsx}',
@@ -43,7 +43,7 @@ module.exports = {
     '!src/main.jsx'
   ],
   
-  // Umbrales de cobertura
+  // Coverage thresholds
   coverageThreshold: {
     global: {
       branches: 80,
@@ -53,25 +53,25 @@ module.exports = {
     }
   },
   
-  // Reportes de cobertura
+  // Coverage reports
   coverageReporters: [
     'text',
     'lcov',
     'html'
   ],
   
-  // Directorio de reportes
+  // Reports directory
   coverageDirectory: '<rootDir>/coverage',
   
-  // Configuración de timeouts
+  // Timeout configuration
   testTimeout: 10000,
   
-  // Configuración de verbose
+  // Verbose configuration
   verbose: true,
   
-  // Limpiar mocks automáticamente
+  // Automatically clear mocks
   clearMocks: true,
   
-  // Restaurar mocks automáticamente
+  // Automatically restore mocks
   restoreMocks: true
 };

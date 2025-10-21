@@ -1,21 +1,27 @@
 /**
- * @fileoverview Configuración específica para pruebas de solicitud de membresías
+ * @fileoverview Specific configuration for membership application tests
  * @version 1.0.0
  * @author EXACTUM-dev
  */
 
 import '@testing-library/jest-dom';
 
-// Mock global de fetch para pruebas de API
 global.fetch = jest.fn();
 
-// Mock de window.alert
 global.alert = jest.fn();
 
-// Mock de console para evitar ruido en las pruebas
+/**
+ * Mock console methods to avoid noise in tests.
+ * @type {Function} originalConsoleError - Original console.error function
+ * @type {Function} originalConsoleWarn - Original console.warn function
+ */
 const originalConsoleError = console.error;
 const originalConsoleWarn = console.warn;
 
+/**
+ * Jest hook to set up console mocking before all tests.
+ * Suppresses React deprecation warnings and lifecycle warnings.
+ */
 beforeAll(() => {
   console.error = (...args) => {
     if (
@@ -39,16 +45,24 @@ beforeAll(() => {
   };
 });
 
+/**
+ * Jest hook to restore original console methods after all tests.
+ */
 afterAll(() => {
   console.error = originalConsoleError;
   console.warn = originalConsoleWarn;
 });
 
-// Mock de URL.createObjectURL para pruebas de archivos
+/**
+ * Mock URL.createObjectURL and URL.revokeObjectURL for file tests.
+ */
 global.URL.createObjectURL = jest.fn(() => 'mock-url');
 global.URL.revokeObjectURL = jest.fn();
 
-// Mock de FileReader para pruebas de carga de archivos
+/**
+ * Mock FileReader class for file loading tests.
+ * @class MockFileReader
+ */
 global.FileReader = class {
   constructor() {
     this.result = null;
@@ -72,17 +86,26 @@ global.FileReader = class {
   }
 };
 
-// Mock de ResizeObserver
+/**
+ * Mock ResizeObserver class for DOM observation tests.
+ * @class MockResizeObserver
+ */
 global.ResizeObserver = class ResizeObserver {
   constructor(cb) {
     this.cb = cb;
   }
+  
   observe() {}
+  
   unobserve() {}
+  
   disconnect() {}
 };
 
-// Limpiar mocks después de cada prueba
+/**
+ * Jest hook to clear all mocks after each test.
+ * Ensures clean state between test runs.
+ */
 afterEach(() => {
   jest.clearAllMocks();
   global.alert.mockClear();

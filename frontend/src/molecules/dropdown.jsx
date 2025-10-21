@@ -1,9 +1,23 @@
 /**
- * @fileoverview Componente de dropdown personalizado
+ * @fileoverview Personalized dropdown component
  * @version 1.0.0
  * @author EXACTUM-dev
  */
 import React, { useState, useRef, useEffect } from "react";
+
+/**
+ * Dropdown component
+ * @param {Object} props - Component props.
+ * @param {string} props.name - Field name.
+ * @param {string} props.label - Field label.
+ * @param {boolean} props.required - Whether field is required.
+ * @param {string} props.value - Current value.
+ * @param {Function} props.onChange - Change handler.
+ * @param {Array<{value: string, label: string}>} props.options - Options array.
+ * @param {string} props.placeholder - Placeholder text.
+ * @param {string} props.error - Error message.
+ * @returns {JSX.Element} Dropdown component.
+ */
 
 export default function Dropdown({ 
   name, 

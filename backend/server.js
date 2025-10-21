@@ -1,41 +1,34 @@
 /**
- * @fileoverview Archivo principal del servidor backend de la aplicación.
+ * @fileoverview Main backend server file for the application.
  * @version 1.0.0
  * @author EXACTUM-dev
  *
- * @description Configura y levanta el servidor Express con middlewares esenciales.
+ * @description Configures and starts the Express server with essential middlewares.
  */
 
-// Importar el archivo de configuración central
 import config from "./config.js";
 
-// Importar los módulos necesarios
 import express from 'express';
 import cors from 'cors';
 import joi from 'joi';
 import morgan from 'morgan';
 import compression from 'compression';
 import helmet from 'helmet';
-// import { requireAuth } from './src/middleware/authMiddleware.js';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import membershipApplicationRoutes from './src/routes/membershipApplication.routes.js';
 import usuariosRoutes from '../backend/src/routes/usuarios.routes.js'
 
-// Inicializar la aplicación Express
 const app = express();
 
-//---------------------------
-// MIDDLEWARE DE SEGURIDAD
-//---------------------------
 /**
- * Middleware para asegurar la aplicación con cabeceras HTTP.
+ * Middleware to secure the application with HTTP headers.
  * @see {@link https://helmetjs.github.io/}
  */
 app.use(helmet());
 
 /**
- * Middleware para habilitar CORS (Cross-Origin Resource Sharing).
- * Utiliza las configuraciones definidas en config.js.
+ * Middleware to enable CORS (Cross-Origin Resource Sharing).
+ * Uses configurations defined in config.js.
  * @see {@link https://expressjs.com/en/resources/middleware/cors.html}
  */
 app.use(
@@ -46,91 +39,73 @@ app.use(
 );
 
 /**
- * Middleware para comprimir las respuestas HTTP.
- * Reduce el tamaño de los datos enviados al cliente.
+ * Middleware to compress HTTP responses.
+ * Reduces the size of data sent to the client.
  * @see {@link https://expressjs.com/en/resources/middleware/compression.html}
  */
 app.use(compression());
 
 /**
- * Middleware para registrar las solicitudes HTTP.
- * Útil para el registro y la depuración del servidor.
+ * Middleware to log HTTP requests.
+ * Useful for server logging and debugging.
  * @see {@link https://expressjs.com/en/resources/middleware/morgan.html}
  */
 app.use(morgan("combined"));
 
-//--------------------------------
-// MIDDLEWARE PARA PROCESAR DATOS
-//--------------------------------
 /**
- * Middleware integrado de Express para procesar el cuerpo de las solicitudes en formato JSON.
+ * Built-in Express middleware to process request body in JSON format.
  */
 app.use(express.json());
 
 /**
- * Middleware integrado de Express para procesar datos de formularios URL-encoded.
+ * Built-in Express middleware to process URL-encoded form data.
  */
 app.use(express.urlencoded({ extended: true }));
 
 /**
- * Configuracion del servicio SES
+ * SES service configuration.
  */
-// Configurar SES
+// Configure SES
 const sesClient = new SESClient({
   region: "us-east-2", // Cambia por tu región
 });
 
-//-------------------------
-// DEFINICIÓN DE RUTAS
-//-------------------------
-
 /**
- * Ruta de prueba para verificar que el servidor está funcionando.
+ * Test route to verify that the server is working.
  * @name GET /
  * @function
- * @param {object} req - Objeto de solicitud de Express.
- * @param {object} res - Objeto de respuesta de Express.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
  */
 app.get("/", (req, res) => {
   res.send("¡Servidor de backend funcionando correctamente!");
 });
 
-//-------------------------
-// RUTAS PÚBLICAS
-//-------------------------
-
 /**
- * Ruta pública de login - No requiere autenticación.
+ * Public login route - No authentication required.
  * @name POST /login
  * @function
- * @param {object} req - Objeto de solicitud de Express.
- * @param {object} res - Objeto de respuesta de Express.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
  */
 app.post("/login", (req, res) => {
-  // Aquí iría la lógica de autenticación con Clerk
-  // Por ahora devolvemos una respuesta de ejemplo
   res.json({
     message: "Endpoint de login - Acceso público",
     timestamp: new Date().toISOString(),
   });
 });
 
-//-------------------------
-// RUTAS PROTEGIDAS
-//-------------------------
-
 /**
- * Endpoint protegido para obtener usuarios - Requiere autenticación.
+ * Protected endpoint to get users - Requires authentication.
  * @name GET /api/usuarios
  * @function
- * @param {object} req - Objeto de solicitud de Express.
- * @param {object} res - Objeto de respuesta de Express.
- * @returns {Array<Object>} Lista de usuarios en formato JSON.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Array<Object>} List of users in JSON format.
  */
-// app.get("/api/usuarios", requireAuth, (req, res) => {
+
 app.get("/api/usuarios", (req, res) => {
   console.log("Usuarios");
-  // req.auth contiene la información del usuario autenticado
   const userId = req.auth?.userId;
 
   res.json({
@@ -145,29 +120,24 @@ app.get("/api/usuarios", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  // Aquí iría la lógica de autenticación con Clerk
-  // Por ahora devolvemos una respuesta de ejemplo
+
   res.json({
     message: "Endpoint de login - Acceso público",
     timestamp: new Date().toISOString(),
   });
 });
 
-//-------------------------
-// RUTAS PROTEGIDAS
-//-------------------------
-
 /**
- * Endpoint protegido para obtener usuarios - Requiere autenticación.
+ * Protected endpoint to get users - Requires authentication.
  * @name GET /api/usuarios
  * @function
- * @param {object} req - Objeto de solicitud de Express.
- * @param {object} res - Objeto de respuesta de Express.
- * @returns {Array<Object>} Lista de usuarios en formato JSON.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Array<Object>} List of users in JSON format.
  */
-//app.get("/api/usuarios", requireAuth, (req, res) => {
+
 app.get("/api/usuarios", (req, res) => {
-  // req.auth contiene la información del usuario autenticado
+
   const userId = req.auth?.userId;
 
   res.json({
@@ -182,16 +152,17 @@ app.get("/api/usuarios", (req, res) => {
 });
 
 /**
- * Endpoint de ejemplo para enviar correos.
- * @name GET /api/usuarios
+ * Example endpoint to send emails.
+ * @name POST /api/contacto
  * @function
- * @returns {Array<Object>} Mensaje de operacion exitosa/error.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Object} Success/error operation message.
  */
 app.post("/api/contacto", async (req, res) => {
   try {
     const { nombre, email, mensaje } = req.body;
 
-    // Validar campos requeridos
     if (!nombre || !email || !mensaje) {
       return res.status(400).json({
         success: false,
@@ -199,9 +170,9 @@ app.post("/api/contacto", async (req, res) => {
       });
     }
     const params = {
-      Source: "trujillo_jaime@outlook.com", // Email verificado en SES
+      Source: "trujillo_jaime@outlook.com",
       Destination: {
-        ToAddresses: [email], // Tu email real
+        ToAddresses: [email], 
       },
       Message: {
         Subject: {
@@ -246,9 +217,7 @@ Enviado desde: ${req.headers.host}
   }
 });
 
-//app.get("/api/admin", requireAuth, (req, res) => {
 app.get("/api/admin", (req, res) => {
-  // Simular verificación de rol admin
   const userRoles = req.auth?.sessionClaims?.metadata?.roles || [];
   if (!userRoles.includes("admin")) {
     return res.status(403).json({ error: "Acceso denegado" });
@@ -256,7 +225,6 @@ app.get("/api/admin", (req, res) => {
   res.json({ message: "Panel de administración" });
 });
 
-// Rutas de prueba que generan diferentes tipos de errores
 app.get("/api/error/validation", (req, res, next) => {
   const error = new Error("Datos inválidos");
   error.name = "ValidationError";
@@ -288,7 +256,6 @@ app.get("/api/error/timeout", (req, res, next) => {
 
 app.get("/api/error/async", async (req, res, next) => {
   try {
-    // Simular operación asíncrona que falla
     await new Promise((resolve, reject) => {
       setTimeout(() => reject(new Error("Error asíncrono")), 100);
     });
@@ -306,7 +273,6 @@ app.post("/api/test", (req, res) => {
 });
 
 app.post("/api/error/body-parser", (req, res) => {
-  // Esta ruta puede fallar si el body no se puede parsear
   res.json({ message: "Body parseado correctamente" });
 });
 
@@ -318,23 +284,20 @@ app.get("/api/sensitive", (req, res) => {
 });
 
 /**
- * Rutas para solicitudes de membresía SOMEFIPP
+ * Routes for SOMEFIPP membership applications.
  */
 app.use('/api/membership-applications', membershipApplicationRoutes);
 
 app.use("/usuarios", usuariosRoutes);
 
-// Middleware para manejar errores de parsing de JSON
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
-    // Error de JSON malformado
     return res.status(400).json({
       error: "Datos de entrada inválidos",
       timestamp: new Date().toISOString(),
     });
   }
   if (err.type === "entity.too.large") {
-    // Payload demasiado grande
     return res.status(413).json({
       error: "Payload demasiado grande",
       timestamp: new Date().toISOString(),
@@ -343,9 +306,7 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-// Middleware de manejo de errores seguro
 const secureErrorHandler = (err, req, res, next) => {
-  // Log del error para debugging interno (sin exponer al cliente)
   console.error("Error interno:", {
     message: err.message,
     stack: err.stack,
@@ -354,7 +315,6 @@ const secureErrorHandler = (err, req, res, next) => {
     method: req.method,
   });
 
-  // Determinar el tipo de error
   if (err.name === "ValidationError") {
     return res.status(400).json({
       error: "Datos de entrada inválidos",
@@ -376,21 +336,17 @@ const secureErrorHandler = (err, req, res, next) => {
     });
   }
 
-  // Error genérico para errores internos del servidor
   res.status(500).json({
     error: "Error interno del servidor",
     timestamp: new Date().toISOString(),
   });
 };
 
-// Aplicar middleware de manejo de errores
+
 app.use(secureErrorHandler);
 
-//-------------------------
-// MIDDLEWARE DE MANEJO DE ERRORES
-//-------------------------
 /**
- * Middleware global para manejo de errores no capturados
+ * Global middleware for handling uncaught errors.
  */
 app.use((error, req, res, next) => {
   console.error('Error no manejado:', error);
@@ -403,7 +359,7 @@ app.use((error, req, res, next) => {
 });
 
 /**
- * Middleware para rutas no encontradas
+ * Middleware for routes not found.
  */
 app.use((req, res) => {
   res.status(404).json({
@@ -412,15 +368,11 @@ app.use((req, res) => {
   });
 });
 
-// Exportar la aplicación para uso en pruebas
 export { app };
 
-//-------------------------
-// INICIAR EL SERVIDOR
-//-------------------------
 /**
- * Inicia el servidor y lo pone a escuchar en el puerto especificado.
- * Solo se ejecuta si el archivo se ejecuta directamente (no en pruebas).
+ * Starts the server and makes it listen on the specified port.
+ * Only executes if the file is run directly (not in tests).
  */
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
