@@ -1,5 +1,5 @@
 /**
- * C@fileoverview Column factory for a roles/permissions table
+ * @fileoverview Column factory for a roles/permissions table
  * @author EXACTUM-dev
  * @version 1.0.0
  * @description Keeps DataTable generic; only columns define labels, renders and mobile behavior

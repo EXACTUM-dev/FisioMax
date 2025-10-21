@@ -24,8 +24,6 @@ export async function getRoleById(req, res) {
   try {
     const { id } = req.params;
 
-    // Authorization is now handled by middleware
-
     // Get role data
     const role = await findRoleById(id);
     if (!role) {

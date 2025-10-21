@@ -147,8 +147,6 @@ app.get("/api/usuarios", requireAuth, async (req, res) => {
   }
 });
 app.post("/login", (req, res) => {
-  // Aquí iría la lógica de autenticación con Clerk
-  // Por ahora devolvemos una respuesta de ejemplo
   res.json({
     message: "Endpoint de login - Acceso público",
     timestamp: new Date().toISOString(),
