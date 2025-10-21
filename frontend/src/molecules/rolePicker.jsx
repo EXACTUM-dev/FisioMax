@@ -29,13 +29,6 @@ export default function RolePicker({ row, roles = [], onSelect }) {
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Debug: Log roles to see what we're receiving
-  useEffect(() => {
-    console.log('RolePicker - roles prop:', roles);
-    console.log('RolePicker - roles length:', roles?.length);
-    console.log('RolePicker - roles is array:', Array.isArray(roles));
-  }, [roles]);
-
   // Handles closing the dropdown when clicking outside
   useEffect(() => {
     function handleClick(e) {
@@ -98,9 +91,24 @@ export default function RolePicker({ row, roles = [], onSelect }) {
       const userId = row?.id || row?.IDUsuario;
       const roleId = roleObj?.id || roleObj?.IDRol;
 
+      console.log("Asignando rol al usuario:", {
+        userId,
+        roleId,
+        roleName: selectedRole,
+        userName
+      });
+
       if (!userId) {
         console.error("User ID not found");
         alert("Error: No se pudo identificar el usuario");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!roleId) {
+        console.error("Role ID not found");
+        alert("Error: No se pudo identificar el rol");
+        setIsLoading(false);
         return;
       }
 
@@ -119,19 +127,22 @@ export default function RolePicker({ row, roles = [], onSelect }) {
         token
       );
 
+      console.log("Respuesta del servidor:", response);
+
       if (response && response.success) {
         // Call the onSelect callback to update UI
         onSelect?.(roleObj || selectedRole);
         setModalOpen(false);
         
         // Show success message
-        console.log("Rol actualizado exitosamente");
+        console.log(`Rol de ${userName} actualizado a ${selectedRole}`);
+        alert(`Rol actualizado exitosamente a ${selectedRole}`);
       } else {
         throw new Error(response?.error || "Error al actualizar el rol");
       }
     } catch (error) {
       console.error("Error updating user role:", error);
-      alert("Error al actualizar el rol. Por favor, intenta nuevamente.");
+      alert(`Error al actualizar el rol: ${error.message}`);
       // Revert selection
       setSelectedRole(current);
     } finally {

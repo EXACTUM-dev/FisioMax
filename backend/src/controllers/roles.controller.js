@@ -126,17 +126,13 @@ export async function updateRole(req, res) {
  */
 export async function getAllRoles(req, res) {
   try {
-    console.log("getAllRoles - Starting to fetch roles");
     const roles = await getAllRolesFromDB();
-    console.log("getAllRoles - Roles fetched:", roles);
-    console.log("getAllRoles - Roles count:", roles?.length);
     res.json({
       success: true,
       data: roles,
     });
   } catch (error) {
     console.error("Error fetching roles:", error);
-    console.error("Error stack:", error.stack);
     res.status(500).json({
       success: false,
       error: "Error fetching roles",
@@ -155,11 +151,28 @@ export async function assignUserRole(req, res) {
     const { userId } = req.params;
     const { roleId, roleName } = req.body;
 
+    console.log("assignUserRole - Request received:", {
+      userId,
+      roleId,
+      roleName,
+      body: req.body
+    });
+
     // Validate required fields
     if (!roleId && !roleName) {
+      console.log("assignUserRole - Missing role information");
       return res.status(400).json({
         success: false,
         error: "Role ID or role name is required",
+      });
+    }
+
+    // Validate userId
+    if (!userId) {
+      console.log("assignUserRole - Missing userId");
+      return res.status(400).json({
+        success: false,
+        error: "User ID is required",
       });
     }
 
@@ -167,22 +180,33 @@ export async function assignUserRole(req, res) {
     
     // Find role by ID or name
     if (roleId) {
+      console.log("assignUserRole - Finding role by ID:", roleId);
       role = await findRoleById(roleId);
     } else if (roleName) {
+      console.log("assignUserRole - Finding role by name:", roleName);
       // Find role by name
       const roles = await getAllRolesFromDB();
       role = roles.find(r => r.nombre === roleName);
     }
 
     if (!role) {
+      console.log("assignUserRole - Role not found");
       return res.status(404).json({
         success: false,
         error: "Role not found",
       });
     }
 
+    console.log("assignUserRole - Role found:", role);
+
     // Assign role to user
-    await assignRoleToUser(userId, role.IDRol || role.id);
+    const result = await assignRoleToUser(userId, role.IDRol || role.id);
+
+    console.log("assignUserRole - Role assigned successfully:", {
+      userId,
+      roleId: role.IDRol || role.id,
+      roleName: role.nombre || role.name,
+    });
 
     return res.status(200).json({
       success: true,
@@ -195,6 +219,7 @@ export async function assignUserRole(req, res) {
     });
   } catch (error) {
     console.error("Error assigning role to user:", error);
+    console.error("Error stack:", error.stack);
     return res.status(500).json({
       success: false,
       error: error.message || "Error assigning role to user",

@@ -78,12 +78,9 @@ export default function Panel() {
       try {
         const token = await getToken();
         const rolesResponse = await fetchWithClerk('/api/roles', { method: 'GET' }, token);
-        console.log("Panel - rolesResponse received:", rolesResponse);
         if (!alive) return;
         // Extract role array from backend response
         const extractedRoles = Array.isArray(rolesResponse) ? rolesResponse : rolesResponse?.data || [];
-        console.log("Panel - extractedRoles:", extractedRoles);
-        console.log("Panel - extractedRoles length:", extractedRoles.length);
         setRoleRows(extractedRoles);
       } catch (err) {
         console.error("Error loading roles:", err);
@@ -176,8 +173,6 @@ export default function Panel() {
   // Define columns for the user table
   const userColumns = useMemo(
     () => {
-      console.log("Panel - useMemo userColumns - roleRows:", roleRows);
-      console.log("Panel - useMemo userColumns - roleRows length:", roleRows?.length);
       return buildUserRolesColumns({
         roles: roleRows,
         onDelete: (row) => setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
