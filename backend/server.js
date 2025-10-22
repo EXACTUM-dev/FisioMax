@@ -1,21 +1,23 @@
 /**
- * @fileoverview Main backend server application file.
- * @author EXACTUM-dev
+ * @fileoverview Main backend server file for the application.
  * @version 1.0.0
+ * @author EXACTUM-dev
+ *
+ * @description Configures and starts the Express server with essential middlewares.
  */
 
-// Import central configuration file
 import config from "./config.js";
 
-// Import required modules
-import express from "express";
-import cors from "cors";
-import joi from "joi";
-import morgan from "morgan";
-import compression from "compression";
-import helmet from "helmet";
+import express from 'express';
+import cors from 'cors';
+import joi from 'joi';
+import morgan from 'morgan';
+import compression from 'compression';
+import helmet from 'helmet';
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import membershipApplicationRoutes from './src/routes/membershipApplication.routes.js';
+
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import usuariosRoutes from "./src/routes/users.routes.js";
 import rolesRoutes from "./src/routes/roles.routes.js";
 
@@ -146,6 +148,7 @@ app.get("/api/usuarios", requireAuth, async (req, res) => {
     });
   }
 });
+
 app.post("/login", (req, res) => {
   res.json({
     message: "Endpoint de login - Acceso público",
@@ -173,7 +176,7 @@ app.post("/api/contacto", async (req, res) => {
       });
     }
     const params = {
-      Source: "trujillo_jaime@outlook.com", // Email verificado en SES
+      Source: "trujillo_jaime@outlook.com",
       Destination: {
         ToAddresses: [email],
       },
@@ -314,6 +317,10 @@ app.get("/api/sensitive", (req, res) => {
     data: "información confidencial",
   });
 });
+/**
+ * Routes for SOMEFIPP membership applications.
+ */
+app.use('/api/membership-applications', membershipApplicationRoutes);
 
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
@@ -381,11 +388,34 @@ const secureErrorHandler = (err, req, res, next) => {
   });
 };
 
-// Apply error handling middleware
+
 app.use(secureErrorHandler);
 
-// Export the application for use in tests
+/**
+ * Global middleware for handling uncaught errors.
+ */
+app.use((error, req, res, next) => {
+  console.error('Error no manejado:', error);
+  
+  res.status(error.status || 500).json({
+    success: false,
+    message: error.message || 'Error interno del servidor',
+    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+  });
+});
+
+/**
+ * Middleware for routes not found.
+ */
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Ruta no encontrada'
+  });
+});
+
 export { app };
+
 
 //-------------------------
 // START THE SERVER

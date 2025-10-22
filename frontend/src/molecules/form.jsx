@@ -1,14 +1,16 @@
 /**
- * Version: 0.1.0
- * FormField molecule component
- * Componente de campo de formulario reutilizable con label e input
+ * @fileoverview FormField molecule component
+ * @author EXACTUM-dev
+ * @version: 0.1.1
+ * @description Reusable form component with label and input
  */
 import React from "react";
 
-function FormLabel({ htmlFor, children }) {
+function FormLabel({ htmlFor, children, required }) {
 	return (
 		<label className="text-sm font-semibold text-gray-700 mb-1" htmlFor={htmlFor}>
 			{children}
+			{required && <span className="text-red-500 ml-1">*</span>}
 		</label>
 	);
 }
@@ -28,12 +30,12 @@ function FormInput({ type = "text", id, name, value, onChange, placeholder }) {
 	);
 }
 
-export default function FormField({ label, value, onChange, type = "text", placeholder = "", name = "" }) {
+export default function FormField({ label, value, onChange, type = "text", placeholder = "", name = "", required = false, error = "" }) {
 	return (
 		// Main container with label and input
 		<div className="flex flex-col items-start w-full mb-4">
 			{/* Label at the top left */}
-			<FormLabel htmlFor={name}>{label}</FormLabel>
+			<FormLabel htmlFor={name} required={required}>{label}</FormLabel>
 			{/* Input at the bottom */}
 			<FormInput
 				type={type}
@@ -43,6 +45,7 @@ export default function FormField({ label, value, onChange, type = "text", place
 				onChange={onChange}
 				placeholder={placeholder}
 			/>
+			{error && <p className="mt-1 text-sm text-red-500">{error}</p>}
 		</div>
 	);
 }
