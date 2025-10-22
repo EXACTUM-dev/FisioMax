@@ -16,10 +16,17 @@ import compression from 'compression';
 import helmet from 'helmet';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import membershipApplicationRoutes from './src/routes/membershipApplication.routes.js';
-import usuariosRoutes from '../backend/src/routes/usuarios.routes.js'
 
+import { requireAuth } from "./src/middlewares/clerkAuth.js";
+import usuariosRoutes from "./src/routes/users.routes.js";
+import rolesRoutes from "./src/routes/roles.routes.js";
+
+// Initialize Express application
 const app = express();
 
+//---------------------------
+// SECURITY MIDDLEWARE
+//---------------------------
 /**
  * Middleware to secure the application with HTTP headers.
  * @see {@link https://helmetjs.github.io/}
@@ -52,8 +59,11 @@ app.use(compression());
  */
 app.use(morgan("combined"));
 
+//--------------------------------
+// DATA PROCESSING MIDDLEWARE
+//--------------------------------
 /**
- * Built-in Express middleware to process request body in JSON format.
+ * Built-in Express middleware to process request bodies in JSON format.
  */
 app.use(express.json());
 
@@ -65,88 +75,86 @@ app.use(express.urlencoded({ extended: true }));
 /**
  * SES service configuration.
  */
-// Configure SES
+// Configure AWS SES client
 const sesClient = new SESClient({
-  region: "us-east-2", // Cambia por tu región
+  region: config.aws.region,
 });
 
+//-------------------------
+// ROUTE DEFINITIONS
+//-------------------------
+
 /**
- * Test route to verify that the server is working.
+ * Test route to verify that the server is running.
  * @name GET /
  * @function
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
  */
 app.get("/", (req, res) => {
   res.send("¡Servidor de backend funcionando correctamente!");
 });
 
+//-------------------------
+// PUBLIC ROUTES
+//-------------------------
+
 /**
- * Public login route - No authentication required.
+ * Public login route - Does not require authentication.
  * @name POST /login
  * @function
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
  */
 app.post("/login", (req, res) => {
+  // Authentication logic with Clerk would go here
+  // For now, return an example response
   res.json({
-    message: "Endpoint de login - Acceso público",
+    message: "Login endpoint - Public access",
     timestamp: new Date().toISOString(),
   });
 });
+
+//-------------------------
+// PROTECTED ROUTES
+//-------------------------
 
 /**
  * Protected endpoint to get users - Requires authentication.
  * @name GET /api/usuarios
  * @function
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
  * @returns {Array<Object>} List of users in JSON format.
  */
+app.get("/api/usuarios", requireAuth, async (req, res) => {
+  try {
+    const userId = req.auth?.userId;
+    const { dbPool } = await import("./config.js");
+    
+    const [rows] = await dbPool.query(
+      "SELECT IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento FROM usuario"
+    );
 
-app.get("/api/usuarios", (req, res) => {
-  console.log("Usuarios");
-  const userId = req.auth?.userId;
-
-  res.json({
-    message: "Lista de usuarios obtenida exitosamente",
-    data: [
-      { id: 1, nombre: "Juan", email: "juan@ejemplo.com" },
-      { id: 2, nombre: "Ana", email: "ana@ejemplo.com" },
-    ],
-    authenticatedUserId: userId,
-    timestamp: new Date().toISOString(),
-  });
+    res.json({
+      message: "Lista de usuarios obtenida exitosamente",
+      data: rows,
+      authenticatedUserId: userId,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error al obtener usuarios:", error);
+    res.status(500).json({ 
+      error: "Error al consultar la base de datos",
+      message: error.message 
+    });
+  }
 });
 
 app.post("/login", (req, res) => {
 
   res.json({
     message: "Endpoint de login - Acceso público",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-/**
- * Protected endpoint to get users - Requires authentication.
- * @name GET /api/usuarios
- * @function
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
- * @returns {Array<Object>} List of users in JSON format.
- */
-
-app.get("/api/usuarios", (req, res) => {
-
-  const userId = req.auth?.userId;
-
-  res.json({
-    message: "Lista de usuarios obtenida exitosamente",
-    data: [
-      { id: 1, nombre: "Juan", email: "juan@ejemplo.com" },
-      { id: 2, nombre: "Ana", email: "ana@ejemplo.com" },
-    ],
-    authenticatedUserId: userId,
     timestamp: new Date().toISOString(),
   });
 });
@@ -155,14 +163,15 @@ app.get("/api/usuarios", (req, res) => {
  * Example endpoint to send emails.
  * @name POST /api/contacto
  * @function
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
- * @returns {Object} Success/error operation message.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ * @returns {Object} Success or error message.
  */
 app.post("/api/contacto", async (req, res) => {
   try {
     const { nombre, email, mensaje } = req.body;
 
+    // Validate required fields
     if (!nombre || !email || !mensaje) {
       return res.status(400).json({
         success: false,
@@ -172,7 +181,7 @@ app.post("/api/contacto", async (req, res) => {
     const params = {
       Source: "trujillo_jaime@outlook.com",
       Destination: {
-        ToAddresses: [email], 
+        ToAddresses: [email],
       },
       Message: {
         Subject: {
@@ -216,8 +225,15 @@ Enviado desde: ${req.headers.host}
     });
   }
 });
-
-app.get("/api/admin", (req, res) => {
+/**
+ * Admin route - Requires authentication and admin role.
+ * @name GET /api/admin
+ * @function
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ */
+app.get("/api/admin", requireAuth, (req, res) => {
+  // Simulate admin role verification
   const userRoles = req.auth?.sessionClaims?.metadata?.roles || [];
   if (!userRoles.includes("admin")) {
     return res.status(403).json({ error: "Acceso denegado" });
@@ -225,6 +241,7 @@ app.get("/api/admin", (req, res) => {
   res.json({ message: "Panel de administración" });
 });
 
+// Test routes that generate different types of errors
 app.get("/api/error/validation", (req, res, next) => {
   const error = new Error("Datos inválidos");
   error.name = "ValidationError";
@@ -256,6 +273,7 @@ app.get("/api/error/timeout", (req, res, next) => {
 
 app.get("/api/error/async", async (req, res, next) => {
   try {
+    // Simulate async operation that fails
     await new Promise((resolve, reject) => {
       setTimeout(() => reject(new Error("Error asíncrono")), 100);
     });
@@ -263,41 +281,61 @@ app.get("/api/error/async", async (req, res, next) => {
     next(error);
   }
 });
-
+/**
+ * Test endpoint.
+ * @name GET /api/test
+ * @function
+ */
 app.get("/api/test", (req, res) => {
   res.json({ message: "Test endpoint" });
 });
 
+/**
+ * Test POST endpoint.
+ * @name POST /api/test
+ * @function
+ */
 app.post("/api/test", (req, res) => {
   res.json({ message: "POST test endpoint" });
 });
 
+/**
+ * Body parser error test endpoint.
+ * @name POST /api/error/body-parser
+ * @function
+ */
 app.post("/api/error/body-parser", (req, res) => {
+  // This route may fail if the body cannot be parsed
   res.json({ message: "Body parseado correctamente" });
 });
 
+/**
+ * Sensitive data endpoint.
+ * @name GET /api/sensitive
+ * @function
+ */
 app.get("/api/sensitive", (req, res) => {
   res.json({
     message: "Datos sensibles",
     data: "información confidencial",
   });
 });
-
 /**
  * Routes for SOMEFIPP membership applications.
  */
 app.use('/api/membership-applications', membershipApplicationRoutes);
 
-app.use("/usuarios", usuariosRoutes);
-
+// Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    // Malformed JSON error
     return res.status(400).json({
       error: "Datos de entrada inválidos",
       timestamp: new Date().toISOString(),
     });
   }
   if (err.type === "entity.too.large") {
+    // Payload too large
     return res.status(413).json({
       error: "Payload demasiado grande",
       timestamp: new Date().toISOString(),
@@ -306,7 +344,16 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+/**
+ * Secure error handler middleware.
+ * Handles different types of errors and returns appropriate responses.
+ * @param {Error} err - Error object.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ * @param {function} next - Express next function.
+ */
 const secureErrorHandler = (err, req, res, next) => {
+  // Log error for internal debugging (without exposing to client)
   console.error("Error interno:", {
     message: err.message,
     stack: err.stack,
@@ -315,6 +362,7 @@ const secureErrorHandler = (err, req, res, next) => {
     method: req.method,
   });
 
+  // Determine error type
   if (err.name === "ValidationError") {
     return res.status(400).json({
       error: "Datos de entrada inválidos",
@@ -336,6 +384,7 @@ const secureErrorHandler = (err, req, res, next) => {
     });
   }
 
+  // Generic error for internal server errors
   res.status(500).json({
     error: "Error interno del servidor",
     timestamp: new Date().toISOString(),
@@ -370,10 +419,17 @@ app.use((req, res) => {
 
 export { app };
 
+
+//-------------------------
+// START THE SERVER
+//-------------------------
 /**
- * Starts the server and makes it listen on the specified port.
- * Only executes if the file is run directly (not in tests).
+ * Start the server and listen on the specified port.
+ * Only runs if the file is executed directly (not in tests).
  */
+app.use("/usuarios", usuariosRoutes);
+app.use("/api/roles", rolesRoutes);
+
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
     console.log(

@@ -1,7 +1,7 @@
 /**
- * @fileoverview App router: protect routes y monta Hero show principal page
+ * @fileoverview App router: Protect routes and mounts Hero as the main page
  * @author EXACTUM-dev
- * @version: 0.3.1
+ * @version 1.0.0
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -26,6 +26,11 @@ import EmailPage from "./src/pages/email";
 import MembershipApplicationPage from "./src/pages/membershipApplication";
 
 // Protected routes with Clerk (only login use Clerk)
+import ProfilePage from "./src/pages/profile";
+import Panel from "./src/pages/panel";
+import RolesPage from "./src/pages/roles";
+
+// Rutes protected with Clerk
 function ProtectedRoute({ children }) {
   return (
     <>
@@ -249,9 +254,26 @@ export default function App() {
         }
       />
       <Route
+        path="/ajustes/perfil/*"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/panel"
+        element={
+          <ProtectedRoute>
+            <Panel />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/"
         element={
           <ProtectedRoute>
+            {/* Unique call to dashboard: Hero */}
             <Hero />
           </ProtectedRoute>
         }

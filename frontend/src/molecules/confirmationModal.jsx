@@ -2,27 +2,40 @@ import React from "react";
 import Button from "../atoms/button";
 
 /**
- * Generic confirmation modal.
- * Props:
- * - open: boolean (if it's open or not)
- * - title: string (modal title)
- * - message: string (main message)
- * - confirmLabel: string (confirm text button)
- * - cancelLabel: string (cancel text button)
- * - onConfirm: () => void
- * - onCancel: () => void
+ * @fileoverview Generic confirmation modal for user decision flows.
+ * @author EXACTUM-dev
+ * @version 1.0.0
+ * @description Provides consistent styling and accessibility for confirmation dialogs.
  */
-export default function ConfirmModal({
+
+/**
+ * Generic confirmation modal for user decision flows
+ * @param {Object} props - Component properties
+ * @param {boolean} props.open - Controls whether the modal is open
+ * @param {string} props.title - Modal title text
+ * @param {string} props.message - Main message content
+ * @param {string} props.confirmLabel - Confirm button text (default: "Confirmar")
+ * @param {string} props.cancelLabel - Cancel button text (default: "Cancelar")
+ * @param {Function} props.onConfirm - Callback function for confirm action
+ * @param {Function} props.onCancel - Callback function for cancel action
+ * @returns {React.Element} Confirmation modal component
+ */
+export default function ConfirmationModal({
   open,
-  title = "¿Estás seguro?",
-  message = "Esta acción no se puede deshacer.",
+  title,
+  message,
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   onConfirm,
   onCancel,
 }) {
+  // Return null if modal is not open
   if (!open) return null;
 
+  /**
+   * Handle backdrop click to trigger cancel action
+   * @param {React.MouseEvent} e - Mouse event
+   */
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       onCancel();
@@ -31,7 +44,7 @@ export default function ConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center border border-slate-200">
