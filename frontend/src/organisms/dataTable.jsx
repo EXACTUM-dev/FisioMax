@@ -48,8 +48,8 @@ export default function DataTable({ columns = [], data = [] }) {
 
             {/* Table body */}
             <tbody>
-              {data.map((row) => {
-                const id = row.id ?? row.name;
+              {data.map((row, rowIndex) => {
+                const id = row.id ?? row.IDUsuario ?? row.IDRol ?? row.name ?? rowIndex;
                 return (
                   <tr key={id} className="border-t border-neutral-200">
                     {columns.map((col) => (
@@ -77,8 +77,8 @@ export default function DataTable({ columns = [], data = [] }) {
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {/* Mobile cards (generic) */}
-        {data.map((row) => {
-          const id = row.id ?? row.name;
+        {data.map((row, rowIndex) => {
+          const id = row.id ?? row.IDUsuario ?? row.IDRol ?? row.name ?? rowIndex;
 
           const primary = nonActionCols[0];
           const secondary = nonActionCols[1];

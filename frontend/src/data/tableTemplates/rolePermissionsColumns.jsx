@@ -1,5 +1,5 @@
 /**
- * C@fileoverview Column factory for a roles/permissions table
+ * @fileoverview Column factory for a roles/permissions table
  * @author EXACTUM-dev
  * @version 1.0.0
  * @description Keeps DataTable generic; only columns define labels, renders and mobile behavior
@@ -16,10 +16,19 @@ import editIcon from "../../assets/icons/square-pen.png";
  * @param {Object} options - Configuration options
  * @param {Function} [options.onEdit] - Edit handler function that receives the full row data
  * @param {Function} [options.onDelete] - Delete handler function that receives the full row data
+ * @param {string} [options.editLabel] - Custom label for edit column (default: "Editar Permisos")
+ * @param {string} [options.editTooltip] - Custom tooltip for edit button (default: "Editar")
+ * @param {boolean} [options.showDelete] - Whether to show delete column (default: true)
  * @returns {Array<Object>} Array of column configuration objects for DataTable
  */
-export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
-  return [
+export function buildRolePermissionsColumns({ 
+  onEdit, 
+  onDelete,
+  editLabel = "Editar Permisos",
+  editTooltip = "Editar",
+  showDelete = true
+} = {}) {
+  const columns = [
     // Role name column
     {
       key: "rol",
@@ -68,8 +77,8 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
     // Edit action column
     {
       key: "editar",
-      label: "Editar Permisos",
-      className: "w-[5%] text-right",
+      label: editLabel,
+      className: showDelete ? "w-[5%] text-right" : "w-[15%] text-right",
       isAction: true,
       /**
        * Edit action button with event prevention
@@ -79,7 +88,7 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
       render: (row) => (
         <button
           type="button"
-          title="Editar"
+          title={editTooltip}
           onClick={(e) => {
             // Prevent default navigation behavior
             e.preventDefault();
@@ -91,14 +100,17 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
         >
           <img
             src={editIcon}
-            alt="Editar"
+            alt={editTooltip}
             className="w-5 h-5 object-contain opacity-80"
           />
         </button>
       ),
     },
-    // Delete action column
-    {
+  ];
+
+  // Conditionally add delete column
+  if (showDelete) {
+    columns.push({
       key: "eliminar",
       label: "Eliminar",
       className: "w-[10%] text-right",
@@ -128,8 +140,10 @@ export function buildRolePermissionsColumns({ onEdit, onDelete } = {}) {
           />
         </button>
       ),
-    },
-  ];
+    });
+  }
+
+  return columns;
 }
 
 export default buildRolePermissionsColumns;
