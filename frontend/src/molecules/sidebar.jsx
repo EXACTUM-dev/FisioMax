@@ -117,7 +117,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
   const routeMap = useMemo(
     () => ({
       home: "/",
-      profile: "/ajustes/perfil",
+      profile: "/perfil",
       bolt: "/panel",
     }),
     []

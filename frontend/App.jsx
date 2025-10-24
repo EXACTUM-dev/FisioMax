@@ -254,7 +254,7 @@ export default function App() {
         }
       />
       <Route
-        path="/ajustes/perfil/*"
+        path="/perfil*"
         element={
           <ProtectedRoute>
             <ProfilePage />
