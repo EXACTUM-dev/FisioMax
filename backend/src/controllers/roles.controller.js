@@ -10,6 +10,7 @@ import {
   getAllRolesFromDB,
   updateRolePrivileges,
   createRoleWithPrivileges,
+  assignRoleToUser,
 } from "../models/roles.model.js";
 import {
   getRolePrivileges,
@@ -25,8 +26,6 @@ import crypto from "crypto";
 export async function getRoleById(req, res) {
   try {
     const { id } = req.params;
-
-    // Authorization is now handled by middleware
 
     // Get role data
     const role = await findRoleById(id);
@@ -215,6 +214,69 @@ export async function createRole(req, res) {
     return res.status(500).json({
       success: false,
       error: error.message || "Error creating role",
+    });
+  }
+}
+
+/**
+ * Assigns a role to a specific user.
+ * @param {Object} req Express request object
+ * @param {Object} res Express response object
+ * @returns {Promise<void>}
+ */
+export async function assignUserRole(req, res) {
+  try {
+    const { userId } = req.params;
+    const { roleId, roleName } = req.body;
+
+    if (!roleId && !roleName) {
+      return res.status(400).json({
+        success: false,
+        error: "Role ID o role name es requerido",
+      });
+    }
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "User ID es requerido",
+      });
+    }
+
+    let role;
+
+    // Find role by ID or name
+    if (roleId) {
+      role = await findRoleById(roleId);
+    } else if (roleName) {
+      const roles = await getAllRolesFromDB();
+      role = roles.find((r) => r.nombre === roleName);
+    }
+
+    if (!role) {
+      return res.status(404).json({
+        success: false,
+        error: "Rol no encontrado",
+      });
+    }
+
+    await assignRoleToUser(userId, role.IDRol || role.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Rol asignado exitosamente",
+      data: {
+        userId,
+        roleId: role.IDRol || role.id,
+        roleName: role.nombre || role.name,
+      },
+    });
+  } catch (error) {
+    console.error("Error asignando rol a usuario:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Error asignando rol a usuario",
     });
   }
 }

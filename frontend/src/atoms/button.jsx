@@ -53,9 +53,13 @@ export default function Button({
     brand:
       "bg-brand text-stone-700 hover:brightness-95 focus-visible:ring-brand/60",
     outline:
-      "bg-transparent text-brand border border-brand hover:bg-brand/10 focus-visible:ring-brand/50",
+      "bg-transparent text-black border border-brand hover:bg-brand/10 focus-visible:ring-brand/50",
     ghost:
       "bg-transparent text-brand hover:bg-brand/10 focus-visible:ring-brand/40",
+    newDoc:
+      "bg-tra text-black hover:bg-brand/10 focus-visible:ring-brand/40",
+    cancel:
+      "bg-cancel text-white hover:bg-brand/10 focus-visible:ring-brand/40",
   };
   const variantCls = variants[variant] ?? variants.brand;
 

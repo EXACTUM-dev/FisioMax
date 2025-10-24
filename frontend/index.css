@@ -9,4 +9,10 @@
   .border-brand {
     border-color: #cad00f;
   }
+  .text-doc {
+    color: #cad00f;
+  }
+  .bg-cancel {
+    background-color: #FF5050;
+  }
 }
