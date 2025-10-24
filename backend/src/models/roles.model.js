@@ -1,7 +1,7 @@
 /**
  * @fileoverview Role model - Database interaction for roles
  * @author EXACTUM-dev
- * @version 1.0.0
+ * @version 0.1.0
  */
 
 import { dbPool } from "../../config.js";

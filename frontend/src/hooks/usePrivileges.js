@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Custom hook for managing privilege selection state
+ * @version 0.1.0
+ * @author EXACTUM-dev
+ */
+
 import { useState, useMemo } from "react";
 
 /**

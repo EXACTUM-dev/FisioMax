@@ -1,4 +1,9 @@
 /**
+ * @fileoverview Validation utilities for roles
+ * @version 0.1.0
+ * @author EXACTUM-dev
+ */
+/**
  * Validate role name for duplicates and empty values.
  * @param {string} name - Role name to validate
  * @param {Array} existingData - Array of existing roles
