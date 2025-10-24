@@ -21,19 +21,19 @@ import editIcon from "../../assets/icons/square-pen.png";
  * @param {boolean} [options.showDelete] - Whether to show delete column (default: true)
  * @returns {Array<Object>} Array of column configuration objects for DataTable
  */
-export function buildRolePermissionsColumns({ 
-  onEdit, 
+export function buildRolePermissionsColumns({
+  onEdit,
   onDelete,
   editLabel = "Editar Permisos",
   editTooltip = "Editar",
-  showDelete = true
+  showDelete = true,
 } = {}) {
   const columns = [
     // Role name column
     {
       key: "rol",
       label: "Rol",
-      className: "w-[30%]",
+      className: "w-[30%] truncate max-w-xs",
     },
     // Permissions description column with badge rendering
     {
@@ -65,7 +65,7 @@ export function buildRolePermissionsColumns({
             {list.map((p, i) => (
               <span
                 key={`${p}-${i}`}
-                className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700"
+                className="px-2 py-0.5 rounded-full text-xs font-medium text-slate-700 truncate max-w-xs"
               >
                 {p}
               </span>

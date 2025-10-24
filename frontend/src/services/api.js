@@ -1,7 +1,7 @@
 /**
  * @fileoverview Base service for the comunication with the API
  * @author EXACTUM-dev
- * @version 1.0.0
+ * @version 0.2.0
  */
 
 import { useAuth } from "@clerk/clerk-react";
@@ -147,3 +147,36 @@ export const apiClient = {
     return handleResponse(response);
   },
 };
+
+/**
+ * Normalizes network and HTTP errors into a consistent Error instance.
+ * @param {*} err - Raw error from fetch/axios layer.
+ * @returns {Error} Normalized error with message and optional code.
+ */
+export function normalizeNetworkError(err) {
+  const msg = String(err?.message || "");
+
+  // Network-level issues
+  if (
+    msg.includes("Failed to fetch") ||
+    msg.includes("NetworkError") ||
+    msg.includes("Network Error") ||
+    msg.includes("ERR_NETWORK") ||
+    msg.includes("ECONNABORTED") ||
+    msg.includes("timeout")
+  ) {
+    const e = new Error("No hay conexión con el servidor. Intenta más tarde.");
+    no;
+    e.code = "NETWORK_ERROR";
+    return e;
+  }
+
+  // HTTP response errors (axios-style shape)
+  const status = err?.response?.status;
+  const serverMsg =
+    err?.response?.data?.message || err?.response?.data?.error || err?.message;
+
+  const e = new Error(serverMsg || "Ocurrió un error inesperado.");
+  if (status) e.code = `HTTP_${status}`;
+  return e;
+}

@@ -8,14 +8,14 @@
 
 import config from "./config.js";
 
-import express from 'express';
-import cors from 'cors';
-import joi from 'joi';
-import morgan from 'morgan';
-import compression from 'compression';
-import helmet from 'helmet';
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import membershipApplicationRoutes from './src/routes/membershipApplication.routes.js';
+import express from "express";
+import cors from "cors";
+import joi from "joi";
+import morgan from "morgan";
+import compression from "compression";
+import helmet from "helmet";
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import membershipApplicationRoutes from "./src/routes/membershipApplication.routes.js";
 
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import usuariosRoutes from "./src/routes/users.routes.js";
@@ -131,7 +131,7 @@ app.get("/api/usuarios", requireAuth, async (req, res) => {
   try {
     const userId = req.auth?.userId;
     const { getUsuarios } = await import("./src/models/users.model.js");
-    
+
     const users = await getUsuarios();
 
     res.json({
@@ -142,18 +142,11 @@ app.get("/api/usuarios", requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error("Error retrieving users:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Database query error",
-      message: error.message 
+      message: error.message,
     });
   }
-});
-
-app.post("/login", (req, res) => {
-  res.json({
-    message: "Endpoint de login - Acceso público",
-    timestamp: new Date().toISOString(),
-  });
 });
 
 /**
@@ -320,7 +313,9 @@ app.get("/api/sensitive", (req, res) => {
 /**
  * Routes for SOMEFIPP membership applications.
  */
-app.use('/api/membership-applications', membershipApplicationRoutes);
+app.use("/api/membership-applications", membershipApplicationRoutes);
+app.use("/api/usuarios", usuariosRoutes);
+app.use("/api/roles", rolesRoutes);
 
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
@@ -388,19 +383,18 @@ const secureErrorHandler = (err, req, res, next) => {
   });
 };
 
-
 app.use(secureErrorHandler);
 
 /**
  * Global middleware for handling uncaught errors.
  */
 app.use((error, req, res, next) => {
-  console.error('Error no manejado:', error);
-  
+  console.error("Error no manejado:", error);
+
   res.status(error.status || 500).json({
     success: false,
-    message: error.message || 'Error interno del servidor',
-    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    message: error.message || "Error interno del servidor",
+    ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
   });
 });
 
@@ -410,12 +404,11 @@ app.use((error, req, res, next) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Ruta no encontrada'
+    message: "Ruta no encontrada",
   });
 });
 
 export { app };
-
 
 //-------------------------
 // START THE SERVER
@@ -424,8 +417,6 @@ export { app };
  * Start the server and listen on the specified port.
  * Only runs if the file is executed directly (not in tests).
  */
-app.use("/api/usuarios", usuariosRoutes);
-app.use("/api/roles", rolesRoutes);
 
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
