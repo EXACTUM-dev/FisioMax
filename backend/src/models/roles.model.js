@@ -25,13 +25,22 @@ export async function findRoleById(id) {
 }
 
 /**
- * Get all roles from database
- * @returns {Promise<Array>} - Array of role objects
+ * Get all roles from database with their privileges
+ * @returns {Promise<Array>} - Array of role objects with privileges
  */
 export async function getAllRolesFromDB() {
   try {
     const [rows] = await dbPool.query(
-      "SELECT IDRol, nombre, descripcion FROM rol WHERE deletedAt IS NULL AND eliminado = 0"
+      `SELECT 
+        r.IDRol, 
+        r.nombre, 
+        r.descripcion,
+        GROUP_CONCAT(p.nombre SEPARATOR ', ') as privilegios
+      FROM rol r
+      LEFT JOIN rolprivilegios rp ON r.IDRol = rp.IDRol AND rp.deletedAt IS NULL AND rp.eliminado = 0
+      LEFT JOIN privilegio p ON rp.IDPrivilegio = p.IDPrivilegio
+      WHERE r.deletedAt IS NULL AND r.eliminado = 0
+      GROUP BY r.IDRol, r.nombre, r.descripcion`
     );
     return rows;
   } catch (error) {
@@ -111,6 +120,38 @@ export async function createRoleWithPrivileges(
   { name, description = "" },
   privileges = []
 ) {
+ * Get user role by user ID
+ * @param {number} userId - User ID
+ * @returns {Promise<Object|null>} - Role object with IDRol, nombre, descripcion or null if not found
+ */
+export async function getUserRole(userId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT r.IDRol, r.nombre, r.descripcion
+       FROM rol r
+       INNER JOIN usuariorol ur ON r.IDRol = ur.IDRol
+       WHERE ur.IDUsuario = ? 
+         AND ur.deletedAt IS NULL 
+         AND ur.eliminado = 0
+         AND r.deletedAt IS NULL 
+         AND r.eliminado = 0
+       LIMIT 1`,
+      [userId]
+    );
+    return rows.length > 0 ? rows[0] : null;
+  } catch (error) {
+    console.error("Error de base de datos en getUserRole:", error);
+    throw error;
+  }
+}
+
+/**
+ * Assign role to a user
+ * @param {number} userId - User ID
+ * @param {number} roleId - Role ID to assign
+ * @returns {Promise<Object>} - Result of the operation
+ */
+export async function assignRoleToUser(userId, roleId) {
   const connection = await dbPool.getConnection();
 
   try {
@@ -146,8 +187,40 @@ export async function createRoleWithPrivileges(
   } catch (error) {
     await connection.rollback();
     console.error("Database error in createRoleWithPrivileges:", error);
+    // Soft delete any existing role assignments for this user
+    await connection.query(
+      "UPDATE usuariorol SET eliminado = 1, deletedAt = NOW() WHERE IDUsuario = ?",
+      [userId]
+    );
+
+    // Check if there's an existing record to reactivate
+    const [existing] = await connection.query(
+      "SELECT * FROM usuariorol WHERE IDUsuario = ? AND IDRol = ?",
+      [userId, roleId]
+    );
+
+    if (existing.length > 0) {
+      // Reactivate existing record
+      await connection.query(
+        "UPDATE usuariorol SET eliminado = 0, deletedAt = NULL WHERE IDUsuario = ? AND IDRol = ?",
+        [userId, roleId]
+      );
+    } else {
+      // Insert new role assignment
+      await connection.query(
+        "INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)",
+        [userId, roleId]
+      );
+    }
+
+    await connection.commit();
+    return { success: true };
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error de base de datos en assignRoleToUser:", error);
     throw error;
   } finally {
     connection.release();
   }
+}
 }

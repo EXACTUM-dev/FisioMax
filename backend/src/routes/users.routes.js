@@ -7,6 +7,8 @@
 
 import express from "express";
 import { getUsuarios } from "../models/users.model.js";
+import { assignUserRole } from "../controllers/roles.controller.js";
+import { requireAuth } from "../middlewares/clerkAuth.js";
 
 const router = express.Router();
 
@@ -20,5 +22,17 @@ const router = express.Router();
  * @param {function} middleware - Express middleware.
  */
 router.get("/", getUsuarios);
+
+/**
+ * Route to assign a role to a user.
+ * @name PATCH /:userId/rol
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication.
+ * @param {function} handler - Request handler.
+ */
+router.patch("/:userId/rol", requireAuth, assignUserRole);
 
 export default router;
