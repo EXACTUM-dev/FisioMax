@@ -322,6 +322,10 @@ app.get("/api/sensitive", (req, res) => {
  */
 app.use('/api/membership-applications', membershipApplicationRoutes);
 
+// Mount users and roles routes before the error handlers so they are reachable.
+app.use("/api/usuarios", usuariosRoutes);
+app.use("/api/roles", rolesRoutes);
+
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
@@ -389,11 +393,13 @@ const secureErrorHandler = (err, req, res, next) => {
 };
 
 
-app.use(secureErrorHandler);
 
 /**
  * Global middleware for handling uncaught errors.
  */
+app.use(secureErrorHandler);
+
+
 app.use((error, req, res, next) => {
   console.error('Error no manejado:', error);
   
@@ -424,9 +430,6 @@ export { app };
  * Start the server and listen on the specified port.
  * Only runs if the file is executed directly (not in tests).
  */
-app.use("/api/usuarios", usuariosRoutes);
-app.use("/api/roles", rolesRoutes);
-
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {
     console.log(
