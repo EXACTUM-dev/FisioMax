@@ -1,10 +1,11 @@
 /**
  * @fileoverview Servicio para la gestión de roles en la aplicación
  * @author EXACTUM-dev
- * @version 1.0.0
+ * @version 0.2.0
  */
 
 import { apiClient } from "./api";
+import { normalizeNetworkError } from "./api";
 
 /**
  * Retrieves all available roles.
@@ -42,18 +43,18 @@ export async function getRoleById(id, token) {
  * @param {string} token - Authentication token.
  * @return {!Promise<!Object>} Update operation result.
  */
-export async function updateRole(id, name, description, privileges, token) {
-  try {
-    return await apiClient.post(
-      `/roles/edit/${id}`,
-      { name, description, privileges },
-      {},
-      token
-    );
-  } catch (err) {
-    throw normalizeNetworkError(err);
-  }
-}
+export const updateRole = async (id, name, description, privileges, token) => {
+  return apiClient.post(
+    `/roles/edit/${id}`,
+    {
+      name,
+      description,
+      privileges,
+    },
+    {},
+    token
+  );
+};
 
 /**
  * Deletes a role (currently mocked - not implemented in backend).
