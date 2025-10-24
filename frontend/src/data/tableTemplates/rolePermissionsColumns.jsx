@@ -33,7 +33,7 @@ export function buildRolePermissionsColumns({
     {
       key: "rol",
       label: "Rol",
-      className: "w-[30%]",
+      className: "w-[30%] truncate max-w-xs",
     },
     // Permissions description column with badge rendering
     {
@@ -65,7 +65,7 @@ export function buildRolePermissionsColumns({
             {list.map((p, i) => (
               <span
                 key={`${p}-${i}`}
-                className="px-2 py-0.5 rounded-full text-xs font-medium text-slate-700"
+                className="px-2 py-0.5 rounded-full text-xs font-medium text-slate-700 truncate max-w-xs"
               >
                 {p}
               </span>

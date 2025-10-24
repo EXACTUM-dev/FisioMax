@@ -217,8 +217,7 @@ export async function createRole(req, res) {
     });
   }
 }
-
-/**
+/*
  * Assigns a role to a specific user.
  * @param {Object} req Express request object
  * @param {Object} res Express response object

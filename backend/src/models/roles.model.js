@@ -1,15 +1,16 @@
 /**
  * @fileoverview Role model - Database interaction for roles
+ * @version 0.2.0
  * @author EXACTUM-dev
- * @version 0.1.0
+ * @description Provides CRUD operations for roles and role-privilege assignments.
  */
 
 import { dbPool } from "../../config.js";
 
 /**
- * Find a role by its ID
- * @param {string} id - Role ID to search
- * @returns {Promise<Object|null>} - Role object or null if not found
+ * Find a role by its ID.
+ * @param {string|number} id - Role ID to search.
+ * @returns {Promise<Object|null>} Role object or null if not found.
  */
 export async function findRoleById(id) {
   try {
@@ -25,8 +26,8 @@ export async function findRoleById(id) {
 }
 
 /**
- * Get all roles from database with their privileges
- * @returns {Promise<Array>} - Array of role objects with privileges
+ * Get all roles from database with their privileges (comma-separated).
+ * @returns {Promise<Array>} Array of role objects with privileges string.
  */
 export async function getAllRolesFromDB() {
   try {
@@ -35,11 +36,16 @@ export async function getAllRolesFromDB() {
         r.IDRol, 
         r.nombre, 
         r.descripcion,
-        GROUP_CONCAT(p.nombre SEPARATOR ', ') as privilegios
+        GROUP_CONCAT(p.nombre SEPARATOR ', ') AS privilegios
       FROM rol r
-      LEFT JOIN rolprivilegios rp ON r.IDRol = rp.IDRol AND rp.deletedAt IS NULL AND rp.eliminado = 0
-      LEFT JOIN privilegio p ON rp.IDPrivilegio = p.IDPrivilegio
-      WHERE r.deletedAt IS NULL AND r.eliminado = 0
+      LEFT JOIN rolprivilegios rp 
+        ON r.IDRol = rp.IDRol 
+       AND rp.deletedAt IS NULL 
+       AND rp.eliminado = 0
+      LEFT JOIN privilegio p 
+        ON rp.IDPrivilegio = p.IDPrivilegio
+      WHERE r.deletedAt IS NULL 
+        AND r.eliminado = 0
       GROUP BY r.IDRol, r.nombre, r.descripcion`
     );
     return rows;
@@ -50,10 +56,10 @@ export async function getAllRolesFromDB() {
 }
 
 /**
- * Update role by ID
- * @param {string} id - Role ID to update
- * @param {Object} data - Data to update (name, description)
- * @returns {Promise<Object>} - Result of the update operation
+ * Update role by ID (name and description).
+ * @param {string|number} id - Role ID to update.
+ * @param {{name:string, description:string}} data - Data to update.
+ * @returns {Promise<Object>} Result of the update operation.
  */
 export async function updateRoleById(id, { name, description }) {
   try {
@@ -69,24 +75,23 @@ export async function updateRoleById(id, { name, description }) {
 }
 
 /**
- * Update role privileges
- * @param {string} roleId - Role ID
- * @param {Array<string>} privileges - Array of privilege IDs to assign
+ * Update role privileges in a transaction (soft delete + upsert).
+ * @param {string|number} roleId - Role ID.
+ * @param {Array<string|number>} privileges - Privilege IDs to assign.
  * @returns {Promise<void>}
  */
 export async function updateRolePrivileges(roleId, privileges) {
   const connection = await dbPool.getConnection();
-
   try {
     await connection.beginTransaction();
 
-    // Delete all current privileges for this role (soft delete)
+    // Soft-delete all current privileges
     await connection.query(
       "UPDATE rolprivilegios SET eliminado = 1, deletedAt = NOW() WHERE IDRol = ?",
       [roleId]
     );
 
-    // Insert new privileges
+    // Reactivate existing or insert new links
     for (const privilegeId of privileges) {
       const [result] = await connection.query(
         "UPDATE rolprivilegios SET eliminado = 0, deletedAt = NULL WHERE IDRol = ? AND IDPrivilegio = ?",
@@ -111,22 +116,22 @@ export async function updateRolePrivileges(roleId, privileges) {
 }
 
 /**
- * Get user role by user ID
- * @param {number} userId - User ID
- * @returns {Promise<Object|null>} - Role object with IDRol, nombre, descripcion or null if not found
+ * Get user role by user ID.
+ * @param {number} userId - User ID.
+ * @returns {Promise<Object|null>} Role object or null if not found.
  */
 export async function getUserRole(userId) {
   try {
     const [rows] = await dbPool.query(
       `SELECT r.IDRol, r.nombre, r.descripcion
-       FROM rol r
-       INNER JOIN usuariorol ur ON r.IDRol = ur.IDRol
-       WHERE ur.IDUsuario = ? 
-         AND ur.deletedAt IS NULL 
-         AND ur.eliminado = 0
-         AND r.deletedAt IS NULL 
-         AND r.eliminado = 0
-       LIMIT 1`,
+         FROM rol r
+         INNER JOIN usuariorol ur ON r.IDRol = ur.IDRol
+        WHERE ur.IDUsuario = ?
+          AND ur.deletedAt IS NULL
+          AND ur.eliminado = 0
+          AND r.deletedAt IS NULL
+          AND r.eliminado = 0
+        LIMIT 1`,
       [userId]
     );
     return rows.length > 0 ? rows[0] : null;
@@ -137,37 +142,34 @@ export async function getUserRole(userId) {
 }
 
 /**
- * Assign role to a user
- * @param {number} userId - User ID
- * @param {number} roleId - Role ID to assign
- * @returns {Promise<Object>} - Result of the operation
+ * Assign a role to a user (soft delete previous and upsert the new one).
+ * @param {number} userId - User ID.
+ * @param {number} roleId - Role ID to assign.
+ * @returns {Promise<{success:boolean}>} Operation result.
  */
 export async function assignRoleToUser(userId, roleId) {
   const connection = await dbPool.getConnection();
-
   try {
     await connection.beginTransaction();
 
-    // Soft delete any existing role assignments for this user
+    // Soft-delete all current role assignments for the user
     await connection.query(
       "UPDATE usuariorol SET eliminado = 1, deletedAt = NOW() WHERE IDUsuario = ?",
       [userId]
     );
 
-    // Check if there's an existing record to reactivate
+    // Reactivate if the same relation exists, otherwise insert new
     const [existing] = await connection.query(
-      "SELECT * FROM usuariorol WHERE IDUsuario = ? AND IDRol = ?",
+      "SELECT 1 FROM usuariorol WHERE IDUsuario = ? AND IDRol = ? LIMIT 1",
       [userId, roleId]
     );
 
     if (existing.length > 0) {
-      // Reactivate existing record
       await connection.query(
         "UPDATE usuariorol SET eliminado = 0, deletedAt = NULL WHERE IDUsuario = ? AND IDRol = ?",
         [userId, roleId]
       );
     } else {
-      // Insert new role assignment
       await connection.query(
         "INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)",
         [userId, roleId]
@@ -186,47 +188,36 @@ export async function assignRoleToUser(userId, roleId) {
 }
 
 /**
- * Create a new role with privileges
- * @param {Object} roleData - Role data (name, description)
- * @param {Array<string>} privileges - Array of privilege IDs
- * @returns {Promise<Object>} - Created role object with assigned ID
+ * Create a new role with privileges.
+ * @param {{name:string, description?:string}} roleData - Role data.
+ * @param {Array<string|number>} privileges - Privilege IDs.
+ * @returns {Promise<{id:number, name:string, description:string}>} Created role.
  */
 export async function createRoleWithPrivileges(
   { name, description = "" },
   privileges = []
 ) {
   const connection = await dbPool.getConnection();
-
   try {
     await connection.beginTransaction();
 
-    // Insert role without specifying ID (autoincremental)
+    // Insert role (auto-increment ID)
     const [result] = await connection.query(
       "INSERT INTO rol (nombre, descripcion) VALUES (?, ?)",
       [name, description]
     );
-
-    // Get the auto-generated ID
     const roleId = result.insertId;
 
     // Insert privileges if any
-    if (privileges.length > 0) {
-      for (const privilegeId of privileges) {
-        await connection.query(
-          "INSERT INTO rolprivilegios (IDPrivilegio, IDRol) VALUES (?, ?)",
-          [privilegeId, roleId]
-        );
-      }
+    for (const privilegeId of privileges) {
+      await connection.query(
+        "INSERT INTO rolprivilegios (IDPrivilegio, IDRol) VALUES (?, ?)",
+        [privilegeId, roleId]
+      );
     }
 
     await connection.commit();
-
-    // Return the created role with its auto-generated ID
-    return {
-      id: roleId,
-      name,
-      description,
-    };
+    return { id: roleId, name, description };
   } catch (error) {
     await connection.rollback();
     console.error("Database error in createRoleWithPrivileges:", error);

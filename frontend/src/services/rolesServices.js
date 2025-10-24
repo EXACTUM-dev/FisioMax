@@ -43,18 +43,18 @@ export async function getRoleById(id, token) {
  * @param {string} token - Authentication token.
  * @return {!Promise<!Object>} Update operation result.
  */
-export const updateRole = async (id, name, description, privileges, token) => {
-  return apiClient.post(
-    `/roles/edit/${id}`,
-    {
-      name,
-      description,
-      privileges,
-    },
-    {},
-    token
-  );
-};
+export async function updateRole(id, name, description, privileges, token) {
+  try {
+    return await apiClient.post(
+      `/roles/edit/${id}`,
+      { name, description, privileges },
+      {},
+      token
+    );
+  } catch (err) {
+    throw normalizeNetworkError(err);
+  }
+}
 
 /**
  * Deletes a role (currently mocked - not implemented in backend).
