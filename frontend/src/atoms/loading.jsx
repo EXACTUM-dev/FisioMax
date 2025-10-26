@@ -1,23 +1,21 @@
 /**
- * @fileoverview Loader atom component (spinner + optional message)
- * @version 0.3.0
+ * @fileoverview Loading component with spinner and optional message
+ * @version 0.4.0
  * @author EXACTUM-dev
+ * @description Reusable loading indicator for different loading states
  */
 
 import React from "react";
 
 /**
- * Reusable loading indicator.
- * - fullscreen: ocupa toda la pantalla (centra el spinner)
- * - message: texto a mostrar debajo del spinner
- * - size: tamaño del spinner en px
- *
- * @param {Object} props - Component props
- * @param {boolean} [props.fullscreen=true] - If true, covers full viewport
- * @param {string} [props.message="Cargando..."] - Label shown under the spinner
- * @param {number} [props.size=48] - Spinner size in pixels
- * @param {string} [props.className=""] - Extra CSS classes for wrapper
- * @returns {JSX.Element} Loading atom
+ * Loading component with customizable spinner and message
+ * @component
+ * @param {Object} props - Component properties
+ * @param {boolean} props.fullscreen - If true, covers full viewport with background
+ * @param {string} props.message - Text to display below spinner
+ * @param {number} props.size - Spinner size in pixels
+ * @param {string} props.className - Additional CSS classes
+ * @returns {React.Element} Loading component
  */
 export default function Loading({
   fullscreen = true,
@@ -25,29 +23,18 @@ export default function Loading({
   size = 48,
   className = "",
 }) {
-  const wrapperBase = fullscreen
+  const wrapperClasses = fullscreen
     ? "min-h-screen bg-[#FAFAFA] flex items-center justify-center"
     : "py-8 flex items-center justify-center";
 
   return (
-    <div
-      className={`${wrapperBase} ${className}`}
-      role="status"
-      aria-busy="true"
-      aria-live="polite"
-      data-testid="loading"
-    >
+    <div className={`${wrapperClasses} ${className}`}>
       <div className="text-center">
-        <span
-          className="animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 inline-block"
+        <div
+          className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"
           style={{ width: size, height: size }}
-          data-testid="loading-spinner"
         />
-        {message ? (
-          <p className="mt-4 text-gray-600 text-sm" data-testid="loading-text">
-            {message}
-          </p>
-        ) : null}
+        {message && <p className="mt-4 text-gray-600">{message}</p>}
       </div>
     </div>
   );

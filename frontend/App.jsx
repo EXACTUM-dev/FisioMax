@@ -300,6 +300,14 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/video"
+        element={
+          <ProtectedRoute>
+            <VideoPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
