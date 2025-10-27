@@ -1,17 +1,18 @@
 /**
  * @fileoverview Video player component using native HTML5 video
- * @version 1.0.0
+ * @version 0.2.0
  * @author EXACTUM-dev
- * @description Simple and reliable native video player
+ * @description Simple and reliable native video player with mobile tap support
  */
 
-import React from "react";
+import React, { useRef } from "react";
 
 /**
  * Native HTML5 video player component
  * @component
  * @param {Object} props - Component properties
  * @param {string} props.url - Video URL to play
+ * @param {string} [props.poster] - Poster image URL
  * @param {boolean} [props.controls=true] - Show video controls
  * @param {boolean} [props.playing=false] - Auto play video
  * @param {Function} [props.onReady] - Callback when video is ready
@@ -21,12 +22,37 @@ import React from "react";
  */
 export default function VideoPlayer({
   url,
+  poster,
   controls = true,
   playing = false,
   onReady,
   onError,
   className = "",
 }) {
+  const videoRef = useRef(null);
+  const containerRef = useRef(null);
+
+  const handleContainerClick = (e) => {
+    if (window.innerWidth < 768) {
+      const video = videoRef.current;
+      if (!video) return;
+
+      const rect = video.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+        if (video.paused) {
+          video.play().catch((err) => {
+            console.error("Error playing video:", err);
+          });
+        } else {
+          video.pause();
+        }
+      }
+    }
+  };
+
   if (!url) {
     return (
       <div
@@ -54,14 +80,19 @@ export default function VideoPlayer({
 
   return (
     <div
+      ref={containerRef}
       className={`aspect-video w-full rounded-2xl overflow-hidden bg-black ${className}`}
+      onClick={handleContainerClick}
     >
       <video
+        ref={videoRef}
         className="w-full h-full"
         controls={controls}
         autoPlay={playing}
         onCanPlay={onReady}
         onError={onError}
+        playsInline
+        preload="metadata"
       >
         <source src={url} type="video/mp4" />
         Tu navegador no soporta el elemento de video.

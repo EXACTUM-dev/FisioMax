@@ -301,7 +301,7 @@ export default function App() {
         }
       />
       <Route
-        path="/video"
+        path="/video/:videoId"
         element={
           <ProtectedRoute>
             <VideoPage />

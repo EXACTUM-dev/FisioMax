@@ -316,6 +316,11 @@ app.get("/api/sensitive", (req, res) => {
 app.use("/api/membership-applications", membershipApplicationRoutes);
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
+/**
+ * Routes for video content access.
+ */
+import contentRoutes from "./src/routes/content.routes.js";
+app.use("/api", contentRoutes);
 
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
