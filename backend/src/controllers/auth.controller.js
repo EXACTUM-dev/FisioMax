@@ -50,12 +50,7 @@ export const getProfile = async (req, res) => {
                 imageUrl: userData.imageUrl,
                 role: userData.role,
                 roleId: userData.roleId,
-                // Complete DB data
-                dbData: userData.dbData,
-                // Complete Clerk data (optional, comment out if not needed)
-                clerkData: userData.clerkData
-            },
-            auth: req.auth 
+            }
         });
     } catch (error) {
         console.error('auth.controller.getProfile error:', error);

@@ -13,7 +13,7 @@ describe("Login Page", () => {
     // Verificar elementos principales
     expect(screen.getByText(/FisioMax/i)).toBeInTheDocument();
     expect(screen.getByText(/Inicia sesión en tu cuenta/i)).toBeInTheDocument();
-    expect(screen.getByTestId("clerk-sign-in")).toBeInTheDocument();1
+    expect(screen.getByTestId("clerk-sign-in")).toBeInTheDocument();
     const supportLink = screen.getByText(/Contacta soporte/i);
     expect(supportLink).toBeInTheDocument();
     expect(supportLink.closest("a")).toHaveAttribute("href", "/support");

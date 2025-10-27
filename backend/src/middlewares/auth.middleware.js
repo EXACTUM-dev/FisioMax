@@ -6,7 +6,6 @@
  * @version 1.0.0
  * @author EXACTUM-dev
  */
-import { verify } from '../utils/jwt.util.js';
 
 export async function jwtAuth(req, res, next) {
 	const authHeader = req.headers.authorization || '';
