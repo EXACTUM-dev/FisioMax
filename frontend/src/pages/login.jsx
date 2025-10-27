@@ -1,16 +1,46 @@
 /**
- * @fileoverview Login view using Clerk
- * @author EXACTUM-dev 
+ * @fileoverview Login page component using Clerk authentication.
+ * @author EXACTUM-dev
  * @version 1.0.0
  */
-import React from "react";
-import { SignIn } from "@clerk/clerk-react";
+import React from 'react';
+import {SignIn, useUser} from '@clerk/clerk-react';
+import {Navigate} from 'react-router-dom';
 
+/**
+ * Login page component that handles user authentication via Clerk.
+ * Displays a loading state while checking authentication status,
+ * redirects authenticated users to the home page, and shows the
+ * Clerk SignIn component for unauthenticated users.
+ *
+ * @return {React.Element} The rendered login page component.
+ */
 export default function LoginPage() {
+  const {isSignedIn, isLoaded} = useUser();
+
+  // Display loading state while authentication status is being determined
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect authenticated users to home page
+  // (ProtectedRoute will handle DB validation)
+  if (isSignedIn) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Display login form for unauthenticated users
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="flex flex-col items-center w-full max-w-md">
-        {/* Logo/avatar */}
+        {/* Logo/Avatar */}
         <div className="flex justify-center mb-[-40px] z-10">
           <img
             src="/SOMEFIPPlogo.png"
@@ -18,14 +48,16 @@ export default function LoginPage() {
             className="w-20 h-20 rounded-full border-4 border-white shadow-lg bg-white"
           />
         </div>
-        {/* Card */}
+
+        {/* Main Card */}
         <div className="bg-white rounded-xl shadow-lg p-8 pt-16 w-full">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-semibold text-gray-800 mb-1">
               Bienvenido a la SOMEFIPP
             </h2>
           </div>
-          {/* Clerk SignIn */}
+
+          {/* Clerk SignIn Component */}
           <SignIn
             path="/login"
             routing="path"
@@ -33,20 +65,24 @@ export default function LoginPage() {
             afterSignInUrl="/"
             appearance={{
               elements: {
-                card: "shadow-none",
-                formButtonPrimary: "bg-black hover:bg-gray-800 text-white rounded-md py-2",
-                formFieldInput: "border-gray-300 rounded-md",
-                formFieldLabel: "text-gray-700 font-medium",
+                card: 'shadow-none',
+                formButtonPrimary:
+                    'bg-black hover:bg-gray-800 text-white rounded-md py-2',
+                formFieldInput: 'border-gray-300 rounded-md',
+                formFieldLabel: 'text-gray-700 font-medium',
               },
             }}
           />
         </div>
-        
-        {/* Additional links */}
+
+        {/* Additional Links */}
         <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
           <p>
-            ¿No tienes cuenta? {" "}
-            <a href="/solicitud-membresia" className="text-blue-600 hover:text-blue-700 font-medium">
+            ¿No tienes cuenta?{' '}
+            <a
+              href="/solicitud-membresia"
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
               Solicita tu membresía
             </a>
           </p>

@@ -1,35 +1,81 @@
 
 /**
- * @fileoverview Servicio de autenticación - wrapper mínimo sobre Clerk SDK
- * @version 1.0.0
+ * @fileoverview Authentication service - combines Clerk and database data.
+ * @version 2.0.0
  * @author EXACTUM-dev
  */
-// Use the server-side Clerk client provided by the SDK. Depending on the
-// SDK version the package exposes a named `clerkClient` export that is
-// already configured to call Clerk's server APIs. Avoid trying to
-// instantiate a default export as a constructor (that's what caused the
-// "Clerk is not a constructor" error).
-import { clerkClient } from '@clerk/clerk-sdk-node';
+import {clerkClient} from '@clerk/clerk-sdk-node';
 import config from '../../config.js';
-
-// Note: some Clerk SDK versions pick up configuration from
-// process.env.CLERK_SECRET_KEY or similar. If you rely on `config` we
-// could also set process.env here as a fallback. Keep simple for now and
-// use the provided `clerkClient`.
+import {getUserByClerkId} from '../models/users.model.js';
 
 /**
- * Obtiene información del usuario por ID usando Clerk
- * @param {string} userId
- * @returns {Promise<Object>} usuario
+ * Gets complete user information combining Clerk and DB data.
+ *
+ * @async
+ * @param {string} clerkUserId - Clerk user ID.
+ * @return {Promise<Object>} Combined user data (Clerk + DB).
+ * @return {Object} return.clerkData - User data from Clerk.
+ * @return {Object|null} return.dbData - User data from database.
+ * @return {boolean} return.exists - Flag indicating if user exists in DB.
+ * @return {number|null} return.id - User ID from database.
+ * @return {string} return.clerkID - Clerk user ID.
+ * @return {string|null} return.email - User email.
+ * @return {string|null} return.firstName - User first name.
+ * @return {string|null} return.lastName - User last name.
+ * @return {string|null} return.imageUrl - User profile image URL.
+ * @return {string|null} return.role - User role name.
+ * @return {number|null} return.roleId - User role ID.
+ * @throws {Error} When there's an error fetching user data.
  */
-export async function getUserById(userId) {
-	if (!userId) return null;
-	try {
-		// clerkClient.users.getUser puede variar según la versión; usar la API REST si es necesario
-		const user = await clerkClient.users.getUser(userId);
-		return user;
-	} catch (err) {
-		console.error('auth.service.getUserById error:', err?.message || err);
-		throw err;
-	}
+export async function getUserById(clerkUserId) {
+  if (!clerkUserId) return null;
+
+  try {
+    // 1. Get data from Clerk
+    const clerkUser = await clerkClient.users.getUser(clerkUserId);
+
+    // 2. Search user in DB by clerkID
+    const dbUser = await getUserByClerkId(clerkUserId);
+
+    // 3. Combine data
+    return {
+      clerkData: clerkUser,
+      dbData: dbUser,
+      exists: !!dbUser, // Flag to know if exists in DB
+      // Consolidated data for easy access
+      id: dbUser?.IDUsuario || null,
+      clerkID: clerkUserId,
+      email:
+          clerkUser.emailAddresses?.[0]?.emailAddress ||
+          dbUser?.correo ||
+          null,
+      firstName: clerkUser.firstName || dbUser?.nombres || null,
+      lastName: clerkUser.lastName || dbUser?.apellidoP || null,
+      imageUrl: clerkUser.imageUrl || dbUser?.foto || null,
+      role: dbUser?.rolNombre || null,
+      roleId: dbUser?.IDRol || null,
+    };
+  } catch (err) {
+    console.error('auth.service.getUserById error:', err?.message || err);
+    throw err;
+  }
+}
+
+/**
+ * Verifies if a Clerk user exists in the database.
+ *
+ * @async
+ * @param {string} clerkUserId - Clerk user ID.
+ * @return {Promise<boolean>} True if user exists in DB, false otherwise.
+ */
+export async function userExistsInDB(clerkUserId) {
+  if (!clerkUserId) return false;
+
+  try {
+    const dbUser = await getUserByClerkId(clerkUserId);
+    return !!dbUser;
+  } catch (err) {
+    console.error('auth.service.userExistsInDB error:', err?.message || err);
+    return false;
+  }
 }

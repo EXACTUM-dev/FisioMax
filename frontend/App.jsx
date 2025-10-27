@@ -7,6 +7,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+import ProtectedRoute from "./src/components/ProtectedRoute";
 import FormField from "./src/molecules/form";
 import {
   userFormFields,
@@ -37,18 +38,6 @@ import MembershipApplicationPage from "./src/pages/membershipApplication";
 import ProfilePage from "./src/pages/profile";
 import Panel from "./src/pages/panel";
 import RolesPage from "./src/pages/roles";
-
-// Rutes protected with Clerk
-function ProtectedRoute({ children }) {
-  return (
-    <>
-      <SignedIn>{children}</SignedIn>
-      <SignedOut>
-        <Navigate to="/login" replace />
-      </SignedOut>
-    </>
-  );
-}
 
 // Dashboard component
 function Dashboard() {
