@@ -1,7 +1,7 @@
 /**
- * @fileoverview Vista para el inicio de sesión con Clerk
+ * @fileoverview Login view using Clerk
+ * @author EXACTUM-dev 
  * @version 1.0.0
- * @author EXACTUM-dev
  */
 import React from "react";
 import { SignIn } from "@clerk/clerk-react";
@@ -41,12 +41,13 @@ export default function LoginPage() {
             }}
           />
         </div>
-        {/* Enlace soporte */}
-        <div className="mt-6 text-center text-sm text-gray-600">
+        
+        {/* Additional links */}
+        <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
           <p>
-            ¿Necesitas ayuda?{" "}
-            <a href="/support" className="text-blue-600 hover:text-blue-700 font-medium">
-              Contacta soporte
+            ¿No tienes cuenta? {" "}
+            <a href="/solicitud-membresia" className="text-blue-600 hover:text-blue-700 font-medium">
+              Solicita tu membresía
             </a>
           </p>
         </div>

@@ -1,21 +1,23 @@
 /**
- * @fileoverview Main backend server application file.
- * @author EXACTUM-dev
+ * @fileoverview Main backend server file for the application.
  * @version 1.0.0
+ * @author EXACTUM-dev
+ *
+ * @description Configures and starts the Express server with essential middlewares.
  */
 
-// Import central configuration file
 import config from "./config.js";
 
-// Import required modules
 import express from "express";
 import cors from "cors";
 import joi from "joi";
 import morgan from "morgan";
 import compression from "compression";
 import helmet from "helmet";
-import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import membershipApplicationRoutes from "./src/routes/membershipApplication.routes.js";
+
+import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import usuariosRoutes from "./src/routes/users.routes.js";
 import rolesRoutes from "./src/routes/roles.routes.js";
 
@@ -128,33 +130,23 @@ app.post("/login", (req, res) => {
 app.get("/api/usuarios", requireAuth, async (req, res) => {
   try {
     const userId = req.auth?.userId;
-    const { dbPool } = await import("./config.js");
-    
-    const [rows] = await dbPool.query(
-      "SELECT IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento FROM usuario"
-    );
+    const { getUsuarios } = await import("./src/models/users.model.js");
+
+    const users = await getUsuarios();
 
     res.json({
-      message: "Lista de usuarios obtenida exitosamente",
-      data: rows,
+      message: "User list retrieved successfully",
+      data: users,
       authenticatedUserId: userId,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Error al obtener usuarios:", error);
-    res.status(500).json({ 
-      error: "Error al consultar la base de datos",
-      message: error.message 
+    console.error("Error retrieving users:", error);
+    res.status(500).json({
+      error: "Database query error",
+      message: error.message,
     });
   }
-});
-app.post("/login", (req, res) => {
-  // Aquí iría la lógica de autenticación con Clerk
-  // Por ahora devolvemos una respuesta de ejemplo
-  res.json({
-    message: "Endpoint de login - Acceso público",
-    timestamp: new Date().toISOString(),
-  });
 });
 
 /**
@@ -177,7 +169,7 @@ app.post("/api/contacto", async (req, res) => {
       });
     }
     const params = {
-      Source: "trujillo_jaime@outlook.com", // Email verificado en SES
+      Source: "trujillo_jaime@outlook.com",
       Destination: {
         ToAddresses: [email],
       },
@@ -318,6 +310,12 @@ app.get("/api/sensitive", (req, res) => {
     data: "información confidencial",
   });
 });
+/**
+ * Routes for SOMEFIPP membership applications.
+ */
+app.use("/api/membership-applications", membershipApplicationRoutes);
+app.use("/api/usuarios", usuariosRoutes);
+app.use("/api/roles", rolesRoutes);
 
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
@@ -385,10 +383,31 @@ const secureErrorHandler = (err, req, res, next) => {
   });
 };
 
-// Apply error handling middleware
 app.use(secureErrorHandler);
 
-// Export the application for use in tests
+/**
+ * Global middleware for handling uncaught errors.
+ */
+app.use((error, req, res, next) => {
+  console.error("Error no manejado:", error);
+
+  res.status(error.status || 500).json({
+    success: false,
+    message: error.message || "Error interno del servidor",
+    ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
+  });
+});
+
+/**
+ * Middleware for routes not found.
+ */
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Ruta no encontrada",
+  });
+});
+
 export { app };
 
 //-------------------------
@@ -398,8 +417,6 @@ export { app };
  * Start the server and listen on the specified port.
  * Only runs if the file is executed directly (not in tests).
  */
-app.use("/usuarios", usuariosRoutes);
-app.use("/api/roles", rolesRoutes);
 
 if (process.env.NODE_ENV !== "test") {
   app.listen(config.app.port, () => {

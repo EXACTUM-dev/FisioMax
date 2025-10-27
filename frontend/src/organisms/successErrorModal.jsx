@@ -82,9 +82,12 @@ export default function SuccessErrorModal({
         <p className="text-gray-600 mb-6">{message}</p>
 
         {/* Action button with dynamic label */}
-        <Button variant="brand" onClick={onClose} className="w-full">
-          {confirmLabel || defaultConfirmLabel}
-        </Button>
+        <Button 
+          variant="brand" 
+          onClick={onClose} 
+          className="w-full"
+          label={confirmLabel || defaultConfirmLabel}
+        />
       </div>
     </Modal>
   );
