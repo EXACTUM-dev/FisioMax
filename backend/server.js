@@ -23,8 +23,6 @@ import { autoSyncClerkId } from "./src/middlewares/clerkAuth.js";
 import usuariosRoutes from "./src/routes/users.routes.js";
 import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
-import webhookRoutes from "./src/routes/webhook.routes.js";
-import adminRoutes from "./src/routes/admin.routes.js";
 
 // Initialize Express application
 const app = express();
