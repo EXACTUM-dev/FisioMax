@@ -1,6 +1,5 @@
 /**
  * @fileoverview Unit tests for profile-related backend endpoints
- * Tests GET /api/usuarios (profile list) using mocked model
  * @author EXACTUM-dev
  */
 

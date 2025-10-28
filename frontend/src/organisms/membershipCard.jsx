@@ -1,7 +1,20 @@
+/**
+ * @fileoverview Membership card component for displaying membership information.
+ * Shows registration date, expiration date, and membership plan.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ */
+
 import React from 'react';
 import Button from "../atoms/button";
 
-export default function MembershipCard({ data = {} }) {
+/**
+ * Displays user's membership information and payment button.
+ * @param {!Object} props - Component props.
+ * @param {!Object} props.data - User profile data containing membership information.
+ * @return {!JSX.Element} Membership card component.
+ */
+export default function MembershipCard({data = {}}) {
   const registeredAt = data.membershipRegisteredAt
     ? new Date(data.membershipRegisteredAt).toLocaleDateString()
     : '—';

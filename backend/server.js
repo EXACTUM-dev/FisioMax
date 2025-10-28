@@ -387,13 +387,10 @@ const secureErrorHandler = (err, req, res, next) => {
   });
 };
 
-app.use(secureErrorHandler);
-
 /**
  * Global middleware for handling uncaught errors.
  */
 app.use(secureErrorHandler);
-
 
 app.use((error, req, res, next) => {
   console.error("Error no manejado:", error);

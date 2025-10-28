@@ -128,7 +128,7 @@ function Dashboard() {
     []
   );
 
-  if (!loaded) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">

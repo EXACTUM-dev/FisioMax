@@ -1,6 +1,19 @@
+/**
+ * @fileoverview Address card component for displaying user address information.
+ * Shows country, state, city, and detailed address fields.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ */
+
 import React from 'react';
 
-export default function AddressCard({ data = {} }) {
+/**
+ * Displays user's address information in a card layout.
+ * @param {!Object} props - Component props.
+ * @param {!Object} props.data - User profile data containing address information.
+ * @return {!JSX.Element} Address card component.
+ */
+export default function AddressCard({data = {}}) {
   return (
     <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
       <div className="flex justify-between items-start">

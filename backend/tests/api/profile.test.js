@@ -19,7 +19,7 @@ const app = express();
 app.use(express.json());
 
 // Simple route for testing that uses the mocked getUsuarios directly.
-app.get('/api/usuarios', async (req, res) => {
+app.get('/api/users', async (req, res) => {
   try {
     const users = await getUsuarios();
     res.json(users);
@@ -33,7 +33,7 @@ describe('Profile / Users API (backend)', () => {
     jest.clearAllMocks();
   });
 
-  test('GET /api/usuarios - returns user list successfully', async () => {
+  test('GET /api/users - returns user list successfully', async () => {
     const mockUsers = [
       { id: 1, nombres: 'Ana', correo: 'ana@example.com' },
       { id: 2, nombres: 'Luis', correo: 'luis@example.com' },
@@ -41,7 +41,7 @@ describe('Profile / Users API (backend)', () => {
 
     getUsuarios.mockResolvedValue(mockUsers);
 
-    const res = await request(app).get('/api/usuarios');
+    const res = await request(app).get('/api/users');
 
     expect(res.status).toBe(200);
     // The route handler in users.routes returns whatever the model returns.
@@ -49,10 +49,10 @@ describe('Profile / Users API (backend)', () => {
     expect(getUsuarios).toHaveBeenCalled();
   });
 
-  test('GET /api/usuarios - handles model error with 500', async () => {
+  test('GET /api/users - handles model error with 500', async () => {
     getUsuarios.mockRejectedValue(new Error('DB failure'));
 
-    const res = await request(app).get('/api/usuarios');
+    const res = await request(app).get('/api/users');
 
     expect(res.status).toBe(500);
     expect(res.body).toHaveProperty('error');

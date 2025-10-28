@@ -1,16 +1,25 @@
+/**
+ * @fileoverview Documents card component for displaying user documents.
+ * Provides preview and download functionality for PDFs.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ */
+
 import React from 'react';
 
 /**
- * DocumentsCard component - displays user documents with preview and download options
- * @param {Object} data - User profile data containing document URLs
- * @returns {JSX.Element} Documents card component
+ * Displays user documents with preview and download options.
+ * @param {!Object} props - Component props.
+ * @param {!Object} props.data - User profile data containing document URLs.
+ * @return {!JSX.Element} Documents card component.
  */
-export default function DocumentsCard({ data = {} }) {
+export default function DocumentsCard({data = {}}) {
   const hasFile = (v) => !!v;
 
   /**
-   * Opens document in a new tab for preview
-   * @param {string} url - Document URL
+   * Opens document in a new tab for preview.
+   * @param {string} url - Document URL.
+   * @return {void}
    */
   const handleViewDocument = (url) => {
     if (url) {
@@ -19,9 +28,10 @@ export default function DocumentsCard({ data = {} }) {
   };
 
   /**
-   * Downloads the document
-   * @param {string} url - Document URL
-   * @param {string} filename - Suggested filename for download
+   * Downloads the document by fetching and creating a blob.
+   * @param {string} url - Document URL.
+   * @param {string} filename - Suggested filename for download.
+   * @return {!Promise<void>}
    */
   const handleDownloadDocument = async (url, filename) => {
     if (!url) return;
@@ -52,13 +62,14 @@ export default function DocumentsCard({ data = {} }) {
   };
 
   /**
-   * Renders document row with actions
-   * @param {string} label - Document label
-   * @param {string} fileUrl - Document URL
-   * @param {string} filename - Suggested filename
-   * @returns {JSX.Element} Document row
+   * Renders document row with action buttons.
+   * @param {!Object} props - Component props.
+   * @param {string} props.label - Document label.
+   * @param {string} props.fileUrl - Document URL.
+   * @param {string} props.filename - Suggested filename.
+   * @return {!JSX.Element} Document row.
    */
-  const DocumentRow = ({ label, fileUrl, filename }) => (
+  const DocumentRow = ({label, fileUrl, filename}) => (
     <div className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
       <span className="text-slate-600">{label}</span>
       {hasFile(fileUrl) ? (
