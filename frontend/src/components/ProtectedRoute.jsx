@@ -87,13 +87,13 @@ export function ProtectedRoute({children}) {
               <div className="space-y-3">
                 <Link
                   to="/solicitud-membresia"
-                  className="block w-full bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-blue-700 transition-colors"
+                  className="block w-full bg-[#CAD00F] text-gray-900 rounded-md px-4 py-2 text-sm font-medium hover:bg-[#B3BA0D] transition-colors"
                 >
                   Solicitar Membresía
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="block w-full bg-[#CAD00F] text-gray-900 rounded-md px-4 py-2 text-sm font-medium hover:bg-[#B3BA0D] transition-colors"
+                  className="block w-full bg-gray-100 text-gray-700 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
                   Cerrar Sesión
                 </button>
