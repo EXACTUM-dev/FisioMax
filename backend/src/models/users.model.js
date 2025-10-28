@@ -16,16 +16,16 @@ export async function getUsuarios() {
     const [rows] = await dbPool.query(
       `SELECT 
         u.IDUsuario,
-        u.nombres, 
-        u.apellidoP, 
-        u.apellidoM,
-        u.correo,
-        u.telefono,
-        u.fechaNacimiento,
+        u.firstName, 
+        u.lastName, 
+        u.middleName,
+        u.email,
+        u.telefonoWhatsApp,
+        u.homePhone,
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion
-      FROM usuario u
+      FROM Usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
         AND ur.eliminado = 0
@@ -33,7 +33,7 @@ export async function getUsuarios() {
         AND r.deletedAt IS NULL 
         AND r.eliminado = 0
       WHERE u.deletedAt IS NULL 
-        AND u.eliminado = 0`
+        AND u.deleted = 0`
     );
     return rows;
   } catch (error) {
