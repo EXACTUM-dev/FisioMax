@@ -1,38 +1,53 @@
 /**
- * Version: 0.3.0
- * Roles routes - API endpoints for role management
+ * @fileoverview API endpoints for role management.
+ * @version 0.3.2
+ * @author EXACTUM-dev
  */
 
-import express from "express";
+import express from 'express';
 import {
   getRoleById,
   updateRole,
   getAllRoles,
-} from "../controllers/roles.controller.js";
-import { requireAuth } from "../middlewares/clerkAuth.js";
-import { requireRole } from "../middlewares/requireRoles.js";
+  getCreateRole,
+  createRole,
+} from '../controllers/roles.controller.js';
+import {requireAuth, autoSyncClerkId} from '../middlewares/clerkAuth.js';
+import {requireDbUser} from '../middlewares/requireDbUser.js';
 
 const router = express.Router();
 
-/**
- * @route   GET /api/roles
- * @desc    Get all roles (for listing)
- * @access  Protected (Admin)
- */
-router.get("/", requireAuth, getAllRoles);
+// Get all roles
+router.get('/', requireAuth, autoSyncClerkId, requireDbUser, getAllRoles);
 
-/**
- * @route   GET /api/roles/edit/:id
- * @desc    Get role by ID with privileges for editing
- * @access  Protected (Admin)
- */
-router.get("/edit/:id", requireAuth, getRoleById);
+// Get create role form/page
+router.get(
+    '/create',
+    requireAuth,
+    autoSyncClerkId,
+    requireDbUser,
+    getCreateRole
+);
 
-/**
- * @route   POST /api/roles/edit/:id
- * @desc    Update role and its privileges
- * @access  Protected (Admin)
- */
-router.post("/edit/:id", requireAuth, updateRole);
+// Create new role
+router.post('/create', requireAuth, autoSyncClerkId, requireDbUser, createRole);
+
+// Get role by ID for editing
+router.get(
+    '/edit/:id',
+    requireAuth,
+    autoSyncClerkId,
+    requireDbUser,
+    getRoleById
+);
+
+// Update role by ID
+router.post(
+    '/edit/:id',
+    requireAuth,
+    autoSyncClerkId,
+    requireDbUser,
+    updateRole
+);
 
 export default router;

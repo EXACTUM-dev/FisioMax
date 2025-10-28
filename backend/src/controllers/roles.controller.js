@@ -1,6 +1,7 @@
 /**
- * Version: 0.3.0
- * Roles controller - Handles role management operations
+ * @fileoverview Controller for role management operations
+ * @version 0.3.1
+ * @author EXACTUM-dev
  */
 
 import {
@@ -8,12 +9,14 @@ import {
   updateRoleById,
   getAllRolesFromDB,
   updateRolePrivileges,
+  createRoleWithPrivileges,
   assignRoleToUser,
 } from "../models/roles.model.js";
 import {
   getRolePrivileges,
   getAllPrivileges,
 } from "../models/privileges.model.js";
+import crypto from "crypto";
 
 /**
  * Get role by ID for editing with privileges
@@ -134,12 +137,87 @@ export async function getAllRoles(req, res) {
     res.status(500).json({
       success: false,
       error: "Error fetching roles",
-      message: error.message,
     });
   }
 }
 
 /**
+ * Get necessary data for role creation
+ * @route GET /api/roles/create
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function getCreateRole(req, res) {
+  try {
+    // Reusing existing getAllPrivileges function
+    const allPrivileges = await getAllPrivileges();
+
+    // Map privileges for the UI
+    const privileges = allPrivileges.map((privilege) => ({
+      id: privilege.id,
+      name: privilege.name,
+      checked: false,
+    }));
+
+    // Return privileges list
+    res.json({
+      success: true,
+      data: {
+        privileges,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching privileges for role creation:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error fetching privileges for role creation",
+    });
+  }
+}
+
+/**
+ * Create a new role with the specified privileges
+ * @route POST /api/roles/create
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function createRole(req, res) {
+  try {
+    const { name, description, privileges } = req.body;
+
+    // Validate required fields
+    if (!name || !Array.isArray(privileges)) {
+      return res.status(400).json({
+        success: false,
+        error: "Name and privileges array are required",
+      });
+    }
+
+    // Let DB generate the ID and return it
+    const createdRole = await createRoleWithPrivileges(
+      { name, description },
+      privileges
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Role created successfully",
+      data: {
+        id: createdRole.id,
+        name,
+        description,
+        privileges,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating role:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Error creating role",
+    });
+  }
+}
+/*
  * Assigns a role to a specific user.
  * @param {Object} req Express request object
  * @param {Object} res Express response object
@@ -147,13 +225,13 @@ export async function getAllRoles(req, res) {
  */
 export async function assignUserRole(req, res) {
   try {
-    const {userId} = req.params;
-    const {roleId, roleName} = req.body;
+    const { userId } = req.params;
+    const { roleId, roleName } = req.body;
 
     if (!roleId && !roleName) {
       return res.status(400).json({
         success: false,
-        error: 'Role ID o role name es requerido',
+        error: "Role ID o role name es requerido",
       });
     }
 
@@ -161,12 +239,12 @@ export async function assignUserRole(req, res) {
     if (!userId) {
       return res.status(400).json({
         success: false,
-        error: 'User ID es requerido',
+        error: "User ID es requerido",
       });
     }
 
     let role;
-    
+
     // Find role by ID or name
     if (roleId) {
       role = await findRoleById(roleId);
@@ -178,7 +256,7 @@ export async function assignUserRole(req, res) {
     if (!role) {
       return res.status(404).json({
         success: false,
-        error: 'Rol no encontrado',
+        error: "Rol no encontrado",
       });
     }
 
@@ -186,7 +264,7 @@ export async function assignUserRole(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: 'Rol asignado exitosamente',
+      message: "Rol asignado exitosamente",
       data: {
         userId,
         roleId: role.IDRol || role.id,
@@ -194,10 +272,10 @@ export async function assignUserRole(req, res) {
       },
     });
   } catch (error) {
-    console.error('Error asignando rol a usuario:', error);
+    console.error("Error asignando rol a usuario:", error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Error asignando rol a usuario',
+      error: error.message || "Error asignando rol a usuario",
     });
   }
 }

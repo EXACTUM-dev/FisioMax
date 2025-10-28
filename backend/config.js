@@ -1,5 +1,5 @@
 /**
- * @fileoverview Archivo de configuración central de la aplicación.
+ * @fileoverview Central application configuration file.
  * @version 2.0.0
  * @author EXACTUM-dev
  * @description Centralizes environment variables and app configuration.
@@ -53,6 +53,7 @@ const config = {
   clerk: {
     publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
     secretKey: process.env.CLERK_SECRET_KEY,
+    webhookSecret: process.env.CLERK_WEBHOOK_SECRET,
   },
   // AWS storage services configuration
   aws: {

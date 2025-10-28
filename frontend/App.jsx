@@ -6,9 +6,18 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+import ProtectedRoute from "./src/components/ProtectedRoute";
 import FormField from "./src/molecules/form";
-import { userFormFields, getHeroSlides, getRowSlides, getProducts, getUsers, getRoles, getSideSlides } from "./src/data/mockApi";
+import {
+  userFormFields,
+  getHeroSlides,
+  getRowSlides,
+  getProducts,
+  getUsers,
+  getRoles,
+  getSideSlides,
+} from "./src/data/mockApi";
 import Carousel from "./src/organisms/carousel";
 import { Title2 } from "./src/atoms/typography";
 import Sidebar from "./src/molecules/sidebar";
@@ -29,18 +38,6 @@ import MembershipApplicationPage from "./src/pages/membershipApplication";
 import ProfilePage from "./src/pages/profile";
 import Panel from "./src/pages/panel";
 import RolesPage from "./src/pages/roles";
-
-// Rutes protected with Clerk
-function ProtectedRoute({ children }) {
-  return (
-    <>
-      <SignedIn>{children}</SignedIn>
-      <SignedOut>
-        <Navigate to="/login" replace />
-      </SignedOut>
-    </>
-  );
-}
 
 // Dashboard component
 function Dashboard() {
@@ -73,12 +70,12 @@ function Dashboard() {
   // Backend's Fetch
   useEffect(() => {
     if (isSignedIn && user) {
-      fetch('/api/usuarios')
-        .then(res => res.json())
-        .then(data => {
-          console.log('Usuarios desde backend:', data);
+      fetch("/api/usuarios")
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Usuarios desde backend:", data);
         })
-        .catch(err => console.error('Error al obtener usuarios:', err));
+        .catch((err) => console.error("Error al obtener usuarios:", err));
     }
   }, [user, isSignedIn]);
 
@@ -148,20 +145,23 @@ function Dashboard() {
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">FisioMax Dashboard</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">
+                FisioMax Dashboard
+              </h1>
               {user && (
                 <p className="text-sm text-gray-600 mt-1">
-                  Bienvenido, {user.firstName || user.emailAddresses[0].emailAddress}
+                  Bienvenido,{" "}
+                  {user.firstName || user.emailAddresses[0].emailAddress}
                 </p>
               )}
             </div>
             <div className="flex items-center space-x-4">
-              <UserButton 
+              <UserButton
                 afterSignOutUrl="/login"
                 appearance={{
                   elements: {
-                    avatarBox: "h-10 w-10"
-                  }
+                    avatarBox: "h-10 w-10",
+                  },
                 }}
               />
             </div>
@@ -204,10 +204,10 @@ function Dashboard() {
 
         <div className="max-w-[70rem] mx-auto">
           <div className="flex justify-center py-6">
-            <Button 
-              size="sm" 
-              label="Solicitar Membresía SOMEFIPP" 
-              onClick={() => navigate('/solicitud-membresia')}
+            <Button
+              size="sm"
+              label="Solicitar Membresía SOMEFIPP"
+              onClick={() => navigate("/solicitud-membresia")}
             />
           </div>
         </div>
@@ -236,7 +236,10 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/solicitud-membresia" element={<MembershipApplicationPage />} />
+      <Route
+        path="/solicitud-membresia"
+        element={<MembershipApplicationPage />}
+      />
       <Route
         path="/video"
         element={
@@ -266,6 +269,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Panel />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/roles"
+        element={
+          <ProtectedRoute>
+            <RolesPage />
           </ProtectedRoute>
         }
       />

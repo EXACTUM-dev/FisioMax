@@ -149,3 +149,80 @@ export function useRoles() {
     setSelectedRole,
   };
 }
+
+/**
+ * Hook for role creation functionality
+ * @returns {Object} Role creation methods and states
+ */
+export function useCreateRole() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [createPrivileges, setCreatePrivileges] = useState([]);
+  const { getToken } = useAuth();
+
+  /**
+   * Load privileges for role creation
+   */
+  const loadCreateRoleData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = await getToken();
+      const response = await rolesService.getCreateRoleData(token);
+
+      if (response?.success && response?.data?.privileges) {
+        setCreatePrivileges(response.data.privileges);
+        return response.data.privileges;
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (err) {
+      setError(err.message || "Error cargando datos para crear rol");
+      console.error("Error loading role create data:", err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [getToken]);
+
+  /**
+   * Create a new role with privileges
+   * @param {string} name - Role name
+   * @param {string} description - Role description
+   * @param {Array<string>} privilegeIds - Selected privilege IDs
+   * @returns {Promise<Object>} Creation result
+   */
+  const createRoleWithPrivileges = useCallback(
+    async (name, description, privilegeIds) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const token = await getToken();
+        const result = await rolesService.createRole(
+          name,
+          description,
+          privilegeIds,
+          token
+        );
+        return result;
+      } catch (err) {
+        setError(err.message || "Error al crear el rol");
+        console.error("Error creating role:", err);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getToken]
+  );
+
+  return {
+    createPrivileges,
+    loading,
+    error,
+    loadCreateRoleData,
+    createRoleWithPrivileges,
+  };
+}
