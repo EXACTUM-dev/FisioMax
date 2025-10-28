@@ -181,11 +181,11 @@ export default function VideoPage() {
 
   const handleVideoError = (err) => {
     console.error("Playback error:", err);
-    setError("Error al reproducir el video.");
+    setError("Error al reproducir el vídeo.");
     setErrorType("error");
   };
 
-  if (!isLoaded || loading) return <Loading message="Cargando video..." />;
+  if (!isLoaded || loading) return <Loading message="Cargando vídeo..." />;
 
   if (error) {
     return (

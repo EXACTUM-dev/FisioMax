@@ -1,6 +1,6 @@
 /**
  * @fileoverview Mock API for demo data (slides, products, users, videos)
- * @version 0.1.0
+ * @version 0.3.0
  * @author EXACTUM-dev
  * @description Provides mock data for development and testing
  */

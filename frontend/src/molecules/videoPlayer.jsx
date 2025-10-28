@@ -12,7 +12,6 @@ import React, { useRef } from "react";
  * @component
  * @param {Object} props - Component properties
  * @param {string} props.url - Video URL to play
- * @param {string} [props.poster] - Poster image URL
  * @param {boolean} [props.controls=true] - Show video controls
  * @param {boolean} [props.playing=false] - Auto play video
  * @param {Function} [props.onReady] - Callback when video is ready
@@ -22,7 +21,6 @@ import React, { useRef } from "react";
  */
 export default function VideoPlayer({
   url,
-  poster,
   controls = true,
   playing = false,
   onReady,

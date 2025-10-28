@@ -1,5 +1,5 @@
 /**
- * @fileoverview Function to fetch (...)
+ * @fileoverview Function to fetch user data from an API.
  * @version 0.2.0
  * @author EXACTUM-dev
  * @description Optional description of the file
