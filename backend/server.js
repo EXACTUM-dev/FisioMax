@@ -316,6 +316,7 @@ app.get("/api/sensitive", (req, res) => {
 app.use("/api/membership-applications", membershipApplicationRoutes);
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
+app.use("/api/membresias", membershipApplicationRoutes);
 
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {

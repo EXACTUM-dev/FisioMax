@@ -1,8 +1,9 @@
 /**
  * @fileoverview Model to handle the membership information and modify the database
- * @version 2.0.0
+ * @version 2.1.0
  * @description Includes the creation of the application,
  * save documents in S3 and insert new documents if it's necessary
+ * Bring the membership applications from de DB
  */
 
 import crypto from 'crypto';
@@ -51,7 +52,7 @@ class MembershipApplication {
     this.documents = data.documents || {};
     this.id = null;
   }
-  
+
   /**
    * Save new application to the database and upload documents in S3
    * @returns {Promise<object>} - Message of success or fail
@@ -100,5 +101,30 @@ class MembershipApplication {
     }
   }
 }
+
+/**
+ * Obtains all the membership applications with user information
+ * @returns {Promise<Array>} Array that contains membership application with their user data
+ */
+export const getMembershipApplications = async () => {
+  const conn = await db.getConnection();
+  try {
+    const query = `
+      SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, u.IDUsuario, 
+      u.nombres, u.apellidoP, u.correo
+      FROM Membresia m
+      JOIN Usuario u ON m.IDUsuario = u.IDUsuario
+      WHERE m.deletedAt IS NULL AND u.eliminado = 0
+    `;
+
+    const [rows] = await conn.execute(query);
+    return rows;
+  } catch (error) {
+    console.error("Error en getMembershipApplications:", error);
+    throw error;
+  } finally {
+    conn.release();
+  }
+};
 
 export default MembershipApplication;

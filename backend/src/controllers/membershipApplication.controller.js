@@ -9,7 +9,7 @@
  * - Duplicate entry detection
  */
 
-import MembershipApplication from '../models/membershipApplication.model.js';
+import MembershipApplication, { getMembershipApplications } from '../models/membershipApplication.model.js';
 import { sendEmail } from '../services/emailServices.js';
 import S3Service from '../services/s3Service.js';
 
@@ -126,19 +126,26 @@ export const createMembershipApplication = async (req, res) => {
 };
 
 
-
-export async function getMembershipApplications(req, res) {
+/**
+ * Obtain all the membership applications
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
+export const getMemberships = async (req, res) => {
   try {
-    const applications = await getAllFromDB();
+    
+    const membershipApplication = await getMembershipApplications();
     res.json({
       success: true,
-      data: applications,
+      data: membershipApplication,
     });
+    
   } catch (error) {
-    console.error("Error fetching applications:", error);
+    console.error("Error en getMemberships:", error);
     res.status(500).json({
       success: false,
-      error: "Error fetching roles",
+      error: "Error interno del servidor",
+      message: error.message
     });
   }
-}
+};
