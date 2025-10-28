@@ -53,6 +53,24 @@ export default function VideoPlayer({
     }
   };
 
+  // Multi-format support based on file extension
+  const getSources = (url) => {
+    if (!url) return [];
+    const ext = url.split(".").pop().toLowerCase();
+    const sources = [];
+
+    if (ext === "mp4") {
+      sources.push({ src: url, type: "video/mp4" });
+    } else if (ext === "webm") {
+      sources.push({ src: url, type: "video/webm" });
+    } else if (ext === "ogg" || ext === "ogv") {
+      sources.push({ src: url, type: "video/ogg" });
+    } else {
+      sources.push({ src: url, type: "video/mp4" });
+    }
+    return sources;
+  };
+
   if (!url) {
     return (
       <div
@@ -72,7 +90,7 @@ export default function VideoPlayer({
               d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
             />
           </svg>
-          <p className="text-lg">No hay URL de video disponible</p>
+          <p className="text-lg">No video URL available</p>
         </div>
       </div>
     );
@@ -94,8 +112,10 @@ export default function VideoPlayer({
         playsInline
         preload="metadata"
       >
-        <source src={url} type="video/mp4" />
-        Tu navegador no soporta el elemento de video.
+        {getSources(url).map((source) => (
+          <source key={source.type} src={source.src} type={source.type} />
+        ))}
+        Your browser does not support the video element.
       </video>
     </div>
   );
