@@ -1,6 +1,5 @@
-
 /**
- * @fileoverview Configuración mínima para Clerk en frontend.
+ * @fileoverview Minimum configuration for Clerk on the frontend.
  * @version 1.0.0
  * @author EXACTUM-dev
  */
