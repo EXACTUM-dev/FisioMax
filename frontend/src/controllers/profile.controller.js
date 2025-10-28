@@ -49,8 +49,9 @@ export function transformUserData(userData) {
     apellidoP: userData.apellidoP || '',
     apellidoM: userData.apellidoM || '',
     email: userData.email || '',
-    telefonoCasa: userData.telefonoCasa || '',
-    telefonoWhatsApp: userData.telefonoWhatsApp || '',
+    telefono: userData.telefono || '',
+    fechaNacimiento: userData.fechaNacimiento || '',
+    foto: userData.foto || null,
     licenciatura: userData.licenciatura || '',
     
     // Address info
@@ -62,8 +63,6 @@ export function transformUserData(userData) {
     numInterior: userData.numInterior || '',
     colonia: userData.colonia || '',
     codigoPostal: userData.codigoPostal || '',
-    numeroExterior: userData.numExterior || '',
-    numeroInterior: userData.numInterior || '',
     
     // Social media
     instagram: userData.instagram || '',
@@ -83,12 +82,8 @@ export function transformUserData(userData) {
     
     // Additional info
     IDUsuario: userData.IDUsuario,
+    clerkID: userData.clerkID,
     createdAt: userData.createdAt,
-    
-    // Metadata for membership status
-    membershipRegisteredAt: userData.membershipRegisteredAt || null,
-    membershipExpiresAt: userData.membershipExpiresAt || null,
-    membershipPlan: userData.membershipPlan || null,
   };
 }
 

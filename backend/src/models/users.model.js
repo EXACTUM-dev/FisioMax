@@ -16,16 +16,18 @@ export async function getUsuarios() {
     const [rows] = await dbPool.query(
       `SELECT 
         u.IDUsuario,
-        u.firstName, 
-        u.lastName, 
-        u.middleName,
-        u.email,
-        u.telefonoWhatsApp,
-        u.homePhone,
+        u.clerkID,
+        u.nombres, 
+        u.apellidoP, 
+        u.apellidoM,
+        u.foto,
+        u.correo,
+        u.telefono,
+        u.fechaNacimiento,
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion
-      FROM Usuario u
+      FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
         AND ur.eliminado = 0
@@ -33,7 +35,7 @@ export async function getUsuarios() {
         AND r.deletedAt IS NULL 
         AND r.eliminado = 0
       WHERE u.deletedAt IS NULL 
-        AND u.deleted = 0`
+        AND u.eliminado = 0`
     );
     return rows;
   } catch (error) {
@@ -52,42 +54,43 @@ export async function getUsuarioByClerkId(clerkId) {
     const [rows] = await dbPool.query(
       `SELECT 
         u.IDUsuario,
-        u.firstName,
-        u.lastName,
-        u.middleName,
-        u.email,
-        u.homePhone,
-        u.telefonoWhatsApp,
-        u.country,
-        u.state,
-        u.city,
-        u.street,
-        u.exteriorNumber,
-        u.interiorNumber,
-        u.neighborhood,
-        u.postalCode,
-        u.degree,
+        u.clerkID,
+        u.nombres,
+        u.apellidoP,
+        u.apellidoM,
+        u.foto,
+        u.correo,
+        u.telefono,
+        u.fechaNacimiento,
+        u.cedula,
+        u.titulo,
+        u.constancias,
+        u.licenciatura,
+        u.pais,
+        u.estado,
+        u.ciudad,
+        u.calle,
+        u.numExterior,
+        u.numInterior,
+        u.colonia,
+        u.codigoPostal,
         u.instagram,
         u.linkedin,
         u.facebook,
-        u.website,
-        u.professionalId,
-        u.degreeDocument,
-        u.certificates,
-        u.clerkId,
+        u.paginaWeb,
         u.createdAt,
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion
-      FROM Usuario u
+      FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
         AND ur.eliminado = 0
       LEFT JOIN rol r ON ur.IDRol = r.IDRol 
         AND r.deletedAt IS NULL 
         AND r.eliminado = 0
-      WHERE u.clerkId = ? 
-        AND u.deleted = 0
+      WHERE u.clerkID = ? 
+        AND u.eliminado = 0
       LIMIT 1`,
       [clerkId]
     );

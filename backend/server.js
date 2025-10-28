@@ -323,7 +323,7 @@ app.get("/api/sensitive", (req, res) => {
 app.use('/api/membership-applications', membershipApplicationRoutes);
 
 // Mount users and roles routes before the error handlers so they are reachable.
-app.use("/api/usuarios", usuariosRoutes);
+app.use("/api/users", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
 
 // Middleware to handle JSON parsing errors
