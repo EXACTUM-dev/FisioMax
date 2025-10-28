@@ -255,28 +255,32 @@ export default function Panel() {
 
       {/* Main content area */}
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
-        {/* Data switcher for toggling between views */}
-        <DataSwitchContainer
-          initialKey="solicitudes"
-          views={[
-            {
-              key: "solicitudes",
-              label: "Solicitudes",
-              type: "table",
-              columns: roleColumns,
-              rows: roleRows,
-              searchPlaceholder: "Buscar Solicitudes...",
-            },
-            {
-              key: "users",
-              label: "Usuarios",
-              type: "table",
-              columns: userColumns,
-              rows: mappedUserRows,
-              searchPlaceholder: "Buscar Usuarios...",
-            },
-          ]}
-        />
+        <div className="max-w-[1100px] mx-auto">
+          <Title2 className="mb-6">Panel de Control</Title2>
+          
+          {/* Data switcher for toggling between views */}
+          <DataSwitchContainer
+            initialKey="solicitudes"
+            views={[
+              {
+                key: "solicitudes",
+                label: "Solicitudes",
+                type: "table",
+                columns: roleColumns,
+                rows: roleRows,
+                searchPlaceholder: "Buscar Solicitudes...",
+              },
+              {
+                key: "users",
+                label: "Usuarios",
+                type: "table",
+                columns: userColumns,
+                rows: mappedUserRows,
+                searchPlaceholder: "Buscar Usuarios...",
+              },
+            ]}
+          />
+        </div>
       </main>
 
       {/* Modal for viewing role permissions (read-only) */}

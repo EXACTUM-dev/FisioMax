@@ -23,6 +23,11 @@ export default function ProfileInfo({ data = {} }) {
           </div>
 
           <div>
+            <label className="text-sm text-slate-600">Fecha de nacimiento</label>
+            <div className="mt-1 text-slate-900">{data.fechaNacimiento || <span className="text-slate-400">No disponible</span>}</div>
+          </div>
+
+          <div>
             <label className="text-sm text-slate-600">Grado / Carrera</label>
             <div className="mt-1 text-slate-900">{data.licenciatura || <span className="text-slate-400">No disponible</span>}</div>
           </div>
@@ -44,11 +49,6 @@ export default function ProfileInfo({ data = {} }) {
           <div>
             <label className="text-sm text-slate-600">Teléfono</label>
             <div className="mt-1 text-slate-900">{data.telefono || <span className="text-slate-400">No disponible</span>}</div>
-          </div>
-
-          <div>
-            <label className="text-sm text-slate-600">Fecha de nacimiento</label>
-            <div className="mt-1 text-slate-900">{data.fechaNacimiento || <span className="text-slate-400">No disponible</span>}</div>
           </div>
 
           <div>

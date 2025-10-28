@@ -106,7 +106,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
   const links = useMemo(
     () => [
       { key: "home", label: "Inicio", icon: houseSrc },
-      { key: "bolt", label: "Panel de", icon: boltSrc },
+      { key: "bolt", label: "Panel de control", icon: boltSrc },
       { key: "profile", label: "Perfil", icon: profileSrc },
       { key: "logout", label: "Cerrar sesión", icon: logoutSrc },
     ],
