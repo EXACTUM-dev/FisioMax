@@ -14,6 +14,7 @@
 // Import necessary libraries and components
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 
 // Atoms
 import Button from "../atoms/button";
@@ -37,6 +38,7 @@ import { fetchWithClerk } from "../utils/api";
 export default function Panel() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
+  const navigate = useNavigate();
   const [current, setCurrent] = useState("panel");
   
   // State for UI data
@@ -108,6 +110,18 @@ export default function Panel() {
       alive = false;
     };
   }, [getToken]);
+
+  /**
+   * Handles clicking on a user name to view their profile.
+   * @param {Object} userRow User object from table row
+   */
+  const handleUserNameClick = useCallback((userRow) => {
+    // Navigate to user profile page with user ID
+    const userId = userRow.IDUsuario || userRow.id;
+    if (userId) {
+      navigate(`/profile/${userId}`);
+    }
+  }, [navigate]);
 
   /**
    * Updates user's role in the UI state.
@@ -203,8 +217,9 @@ export default function Panel() {
             row.id || row.IDUsuario,
             chosenRole
         ),
+        onClickName: handleUserNameClick,
       }),
-      [roleRows, updateUserRole]
+      [roleRows, updateUserRole, handleUserNameClick]
   );
 
   // Define columns for the role table with view action

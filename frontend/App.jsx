@@ -257,7 +257,15 @@ export default function App() {
         }
       />
       <Route
-        path="/perfil*"
+        path="/perfil"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile/:userId"
         element={
           <ProtectedRoute>
             <ProfilePage />

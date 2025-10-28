@@ -8,7 +8,7 @@
 import express from "express";
 import { getUsuarios } from "../models/users.model.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
-import { getCurrentUserProfile } from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById } from "../controllers/users.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
 
@@ -36,6 +36,18 @@ router.get("/", requireAuth, autoSyncClerkId, requireDbUser, getUsuarios);
  * @param {function} handler - Request handler.
  */
 router.get("/profile", requireAuth, getCurrentUserProfile);
+
+/**
+ * Route to get a specific user's profile by ID.
+ * @name GET /:userId
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication.
+ * @param {function} handler - Request handler.
+ */
+router.get("/:userId", requireAuth, getUserProfileById);
 
 /**
  * Route to assign a role to a user.

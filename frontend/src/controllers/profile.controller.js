@@ -35,6 +35,33 @@ export async function getCurrentUserProfile(clerkToken) {
 }
 
 /**
+ * Get a specific user's profile by ID from the backend
+ * @param {string} userId - User database ID
+ * @param {string} clerkToken - Clerk JWT token
+ * @returns {Promise<Object>} User profile data
+ */
+export async function getUserProfileById(userId, clerkToken) {
+  try {
+    const url = buildApiUrl(`/api/users/${userId}`);
+    const response = await fetchWithClerk(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }, clerkToken);
+
+    if (response.success) {
+      return response.data;
+    } else {
+      throw new Error(response.error || 'Error al obtener el perfil del usuario');
+    }
+  } catch (error) {
+    console.error('Error fetching user profile by ID:', error);
+    throw error;
+  }
+}
+
+/**
  * Transform backend user data to frontend format (if needed)
  * This ensures compatibility with the current components
  * @param {Object} userData - Raw user data from backend

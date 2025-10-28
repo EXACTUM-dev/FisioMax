@@ -34,8 +34,18 @@ export default function AddressCard({ data = {} }) {
         </div>
 
         <div>
-          <label className="text-sm text-slate-600">Calle / Número</label>
-          <div className="mt-1 text-slate-900">{(data.calle || '') + (data.numeroExterior ? ` ${data.numeroExterior}` : '') || <span className="text-slate-400">No disponible</span>}</div>
+          <label className="text-sm text-slate-600">Calle</label>
+          <div className="mt-1 text-slate-900">{data.calle || <span className="text-slate-400">No disponible</span>}</div>
+        </div>
+
+        <div>
+          <label className="text-sm text-slate-600">Número Exterior</label>
+          <div className="mt-1 text-slate-900">{data.numExterior || <span className="text-slate-400">No disponible</span>}</div>
+        </div>
+
+        <div>
+          <label className="text-sm text-slate-600">Número Interior</label>
+          <div className="mt-1 text-slate-900">{data.numInterior || <span className="text-slate-400">No disponible</span>}</div>
         </div>
       </div>
     </section>

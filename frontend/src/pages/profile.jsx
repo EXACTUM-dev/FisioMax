@@ -1,6 +1,7 @@
 // Import necessary libraries and components
 import React, { useState, useEffect } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
+import { useParams } from "react-router-dom";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -16,7 +17,7 @@ import TicketsCard from "../organisms/ticketsCard";
 import DocumentsCard from "../organisms/documentsCard";
 
 // Controllers
-import { getCurrentUserProfile } from "../controllers/profile.controller";
+import { getCurrentUserProfile, getUserProfileById } from "../controllers/profile.controller";
 
 export default function ProfilePage() {
   const [current, setCurrent] = useState("profile");
@@ -26,6 +27,7 @@ export default function ProfilePage() {
 
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
+  const { userId } = useParams(); // Get userId from URL if present
 
   // Fetch user profile from backend
   useEffect(() => {
@@ -37,7 +39,12 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         const token = await getToken();
-        const profileData = await getCurrentUserProfile(token);
+        
+        // If userId is in URL, fetch that user's profile, otherwise fetch current user
+        const profileData = userId 
+          ? await getUserProfileById(userId, token)
+          : await getCurrentUserProfile(token);
+          
         setUserProfile(profileData);
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -48,7 +55,7 @@ export default function ProfilePage() {
     }
 
     fetchProfile();
-  }, [isLoaded, user, getToken]);
+  }, [isLoaded, user, getToken, userId]); // Added userId to dependencies
 
   const handleNavigate = (key) => setCurrent(key);
 
@@ -87,7 +94,9 @@ export default function ProfilePage() {
 
         <main className="flex-1 p-6 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
           <div className="max-w-[1100px] mx-auto">
-            <Title2 className="mb-6">Mi Perfil</Title2>
+            <Title2 className="mb-6">
+              {userId ? 'Perfil de Usuario' : 'Mi Perfil'}
+            </Title2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left column: profile info + address */}
             <div className="lg:col-span-2 space-y-6">
