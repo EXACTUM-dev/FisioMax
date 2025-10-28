@@ -1,23 +1,25 @@
 /**
- * @fileoverview Main control panel view component.
- * @version 1.0.0
+ * @fileoverview Admin control panel for managing users and roles.
+ * Provides data tables for user and role management with CRUD operations.
+ * @version 1.1.0
  * @author EXACTUM-dev
  */
 
 /**
- * Panel component - Main control panel view.
- * Manages the state and layout for the admin panel, including user and role management.
- * Fetches user and role data from the backend and displays them in switchable table views.
- * @returns {JSX.Element} Admin panel component with data tables and navigation.
+ * Renders the main admin control panel with user and role management tables.
+ * Fetches and displays user and role data from backend with switchable views.
+ * @return {!React.Component} Admin panel component with data tables and navigation.
  */
 
 // Import necessary libraries and components
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import React, {useEffect, useMemo, useState, useCallback} from "react";
+import {useUser, useAuth} from "@clerk/clerk-react";
+import {useNavigate} from "react-router-dom";
 
 // Atoms
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
+import Loading from "../atoms/loading";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -32,16 +34,19 @@ import DataTable from "../organisms/dataTable";
 // Data and utilities
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
-import { fetchWithClerk } from "../utils/api";
+import {fetchWithClerk} from "../utils/api";
 
 export default function Panel() {
-  const { user, isLoaded } = useUser();
-  const { getToken } = useAuth();
-  const [current, setCurrent] = useState("panel");
+  const {user, isLoaded} = useUser();
+  const {getToken} = useAuth();
+  const navigate = useNavigate();
+  const [current, setCurrent] = useState("bolt");
   
   // State for UI data
   const [userRows, setUserRows] = useState([]); // Users from backend
   const [roleRows, setRoleRows] = useState([]); // Roles from backend
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingRoles, setLoadingRoles] = useState(true);
   
   // Modal state for viewing role permissions
   const [modalOpen, setModalOpen] = useState(false);
@@ -56,9 +61,10 @@ export default function Panel() {
 
     const fetchUsers = async () => {
       try {
+        setLoadingUsers(true);
         const token = await getToken();
         const usersResponse = await fetchWithClerk(
-            '/api/usuarios',
+            '/api/users',
             {method: 'GET'},
             token
         );
@@ -72,6 +78,8 @@ export default function Panel() {
       } catch (err) {
         console.error('Error de carga de usuarios:', err);
         setError('Error de carga de usuarios. Por favor intente más tarde.');
+      } finally {
+        if (alive) setLoadingUsers(false);
       }
     };
 
@@ -87,6 +95,7 @@ export default function Panel() {
 
     const fetchRoles = async () => {
       try {
+        setLoadingRoles(true);
         const token = await getToken();
         const rolesResponse = await fetchWithClerk(
             '/api/roles',
@@ -100,6 +109,8 @@ export default function Panel() {
       } catch (err) {
         console.error('Error de carga de roles:', err);
         setError('Error de carga de roles. Por favor intente más tarde.');
+      } finally {
+        if (alive) setLoadingRoles(false);
       }
     };
 
@@ -108,6 +119,18 @@ export default function Panel() {
       alive = false;
     };
   }, [getToken]);
+
+  /**
+   * Handles clicking on a user name to view their profile.
+   * @param {Object} userRow User object from table row
+   */
+  const handleUserNameClick = useCallback((userRow) => {
+    // Navigate to user profile page with user ID
+    const userId = userRow.IDUsuario || userRow.id;
+    if (userId) {
+      navigate(`/profile/${userId}`);
+    }
+  }, [navigate]);
 
   /**
    * Updates user's role in the UI state.
@@ -203,8 +226,9 @@ export default function Panel() {
             row.id || row.IDUsuario,
             chosenRole
         ),
+        onClickName: handleUserNameClick,
       }),
-      [roleRows, updateUserRole]
+      [roleRows, updateUserRole, handleUserNameClick]
   );
 
   // Define columns for the role table with view action
@@ -220,14 +244,7 @@ export default function Panel() {
 
   // Show loading spinner until user data is loaded
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
+    return <Loading fullscreen message="Cargando..." />;
   }
 
   return (
@@ -240,28 +257,44 @@ export default function Panel() {
 
       {/* Main content area */}
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
-        {/* Data switcher for toggling between views */}
-        <DataSwitchContainer
-          initialKey="solicitudes"
-          views={[
-            {
-              key: "solicitudes",
-              label: "Solicitudes",
-              type: "table",
-              columns: roleColumns,
-              rows: roleRows,
-              searchPlaceholder: "Buscar Solicitudes...",
-            },
-            {
-              key: "users",
-              label: "Usuarios",
-              type: "table",
-              columns: userColumns,
-              rows: mappedUserRows,
-              searchPlaceholder: "Buscar Usuarios...",
-            },
-          ]}
-        />
+        <div className="max-w-[1100px] mx-auto">
+          <Title2 className="mb-4">Panel de Control</Title2>
+          
+          <div className="flex justify-end mb-6">
+            <Button
+              variant="secondary"
+              size="sm"
+              radius="lg"
+              onClick={() => navigate('/roles')}
+            >
+              Roles
+            </Button>
+          </div>
+          
+          {/* Data switcher for toggling between views */}
+          <DataSwitchContainer
+            initialKey="solicitudes"
+            loading={loadingRoles || loadingUsers}
+            views={[
+              {
+                key: "solicitudes",
+                label: "Solicitudes",
+                type: "table",
+                columns: roleColumns,
+                rows: roleRows,
+                searchPlaceholder: "Buscar Solicitudes...",
+              },
+              {
+                key: "users",
+                label: "Usuarios",
+                type: "table",
+                columns: userColumns,
+                rows: mappedUserRows,
+                searchPlaceholder: "Buscar Usuarios...",
+              },
+            ]}
+          />
+        </div>
       </main>
 
       {/* Modal for viewing role permissions (read-only) */}

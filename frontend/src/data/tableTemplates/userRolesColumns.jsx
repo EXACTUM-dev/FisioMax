@@ -16,9 +16,10 @@ import trashIcon from "../../assets/icons/trash-2.png";
  * @param {Array} options.roles List of available roles to assign.
  * @param {Function} options.onDelete Callback to handle user deletion.
  * @param {Function} options.onChangeRole Callback to handle user role changes.
+ * @param {Function} options.onClickName Callback to handle clicking on user name.
  * @returns {Array} Column configuration for the table.
  */
-export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {}) {
+export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole, onClickName } = {}) {
   return [
     {
       key: "nombre", // Unique column identifier
@@ -27,7 +28,34 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole } = {
       render: (row) => {
         // Try to build full name with nombres, apellidoP and apellidoM
         const nombreCompleto = `${row?.nombres || ''} ${row?.apellidoP || ''} ${row?.apellidoM || ''}`.trim();
-        return nombreCompleto || row?.nombre || row?.name || '';
+        const displayName = nombreCompleto || row?.nombre || row?.name || '';
+        
+        return (
+          <button
+            type="button"
+            onClick={() => onClickName?.(row)}
+            className="
+              px-4 py-2 
+              rounded-lg 
+              font-medium 
+              text-sm
+              transition-all 
+              duration-200
+              bg-slate-100 
+              text-slate-700 
+              hover:bg-slate-200 
+              shadow-sm
+              focus:outline-none 
+              focus:ring-2 
+              focus:ring-brand/50 
+              focus:ring-offset-1
+              active:scale-95
+            "
+            title="Ver perfil"
+          >
+            {displayName}
+          </button>
+        );
       },
     },
     {

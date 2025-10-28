@@ -10,7 +10,8 @@ export const API_CONFIG = {
   ENDPOINTS: {
     MEMBERSHIP_APPLICATIONS: '/api/membership-applications',
     CONTACT: '/api/contacto',
-    USERS: '/api/usuarios',
+    USERS: '/api/users',
+    USER_PROFILE: '/api/users/profile',
     AUTH_PROFILE: '/api/auth/profile',
     ROLES: '/api/roles'
   }

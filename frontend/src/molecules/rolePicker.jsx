@@ -114,7 +114,7 @@ export default function RolePicker({ row, roles = [], onSelect }) {
 
       const token = await getToken();
       const response = await fetchWithClerk(
-          `/api/usuarios/${userId}/rol`,
+          `/api/users/${userId}/rol`,
           {
             method: 'PATCH',
             headers: {'Content-Type': 'application/json'},

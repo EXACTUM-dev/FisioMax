@@ -23,30 +23,52 @@ export const createMembershipApplication = async (req, res) => {
   
   try {
   
-    // Save documents in S3
-    const professionalIdUrl = req.files?.professionalId?.[0]
-      ? await S3Service.uploadFile(req.files.professionalId[0], 'cedulas')
-      : null;
+    // Save documents in S3 (or skip if S3 is not configured)
+    let professionalIdUrl = null;
+    let degreeDocumentUrl = null;
+    let certificatesUrl = null;
+    let extraDocsUrls = [];
 
-    const degreeDocumentUrl = req.files?.degreeDocument?.[0]
-      ? await S3Service.uploadFile(req.files.degreeDocument[0], 'titulos')
-      : null;
+    // Check if AWS is configured
+    const isS3Configured = process.env.AWS_REGION && process.env.AWS_BUCKET_NAME;
 
-    const certificatesUrl = req.files?.certificates?.[0]
-      ? await S3Service.uploadFile(req.files.certificates[0], 'constancias')
-      : null;
+    if (isS3Configured) {
+      professionalIdUrl = req.files?.professionalId?.[0]
+        ? await S3Service.uploadFile(req.files.professionalId[0], 'cedulas')
+        : null;
 
-    // If there is an extra document
-    const extraDocs = [];
-    Object.keys(req.files || {}).forEach(key => {
-      if (key.startsWith('extraDoc')) {
-        extraDocs.push(req.files[key][0]);
+      degreeDocumentUrl = req.files?.degreeDocument?.[0]
+        ? await S3Service.uploadFile(req.files.degreeDocument[0], 'titulos')
+        : null;
+
+      certificatesUrl = req.files?.certificates?.[0]
+        ? await S3Service.uploadFile(req.files.certificates[0], 'constancias')
+        : null;
+
+      // If there is an extra document
+      const extraDocs = [];
+      Object.keys(req.files || {}).forEach(key => {
+        if (key.startsWith('extraDoc')) {
+          extraDocs.push(req.files[key][0]);
+        }
+      });
+
+      extraDocsUrls = await Promise.all(
+        extraDocs.map(file => S3Service.uploadFile(file, 'documentos-extra'))
+      );
+    } else {
+      console.warn('AWS S3 not configured. Files will not be uploaded.');
+      // Store file names instead of URLs for development
+      if (req.files?.professionalId?.[0]) {
+        professionalIdUrl = req.files.professionalId[0].originalname;
       }
-    });
-
-    const extraDocsUrls = await Promise.all(
-      extraDocs.map(file => S3Service.uploadFile(file, 'documentos-extra'))
-    );
+      if (req.files?.degreeDocument?.[0]) {
+        degreeDocumentUrl = req.files.degreeDocument[0].originalname;
+      }
+      if (req.files?.certificates?.[0]) {
+        certificatesUrl = req.files.certificates[0].originalname;
+      }
+    }
 
     const applicationData = {
       firstName: req.body.firstName,
@@ -55,6 +77,7 @@ export const createMembershipApplication = async (req, res) => {
       homePhone: req.body.homePhone,
       whatsappPhone: req.body.whatsappPhone,
       email: req.body.email,
+      birthDate: req.body.birthDate,
       country: req.body.country,
       state: req.body.state,
       city: req.body.city,

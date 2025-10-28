@@ -220,6 +220,7 @@ export default function MembershipApplicationPage() {
     telefonoCasa: "",
     telefonoWhatsApp: "",
     email: "",
+    fechaNacimiento: "",
     pais: "",
     estado: "",
     ciudad: "",
@@ -425,6 +426,10 @@ export default function MembershipApplicationPage() {
       newErrors.email = "El email es requerido";
       missingFields.push("Correo electrónico");
     }
+    if (!formData.fechaNacimiento) {
+      newErrors.fechaNacimiento = "La fecha de nacimiento es requerida";
+      missingFields.push("Fecha de nacimiento");
+    }
     if (!formData.telefonoWhatsApp) {
       newErrors.telefonoWhatsApp = "El contacto profesional es requerido";
       missingFields.push("Contacto profesional");
@@ -491,6 +496,7 @@ export default function MembershipApplicationPage() {
         telefonoCasa: 'homePhone',
         telefonoWhatsApp: 'whatsappPhone',
         email: 'email',
+        fechaNacimiento: 'birthDate',
         pais: 'country',
         estado: 'state',
         ciudad: 'city',
@@ -571,6 +577,7 @@ export default function MembershipApplicationPage() {
       telefonoCasa: "",
       telefonoWhatsApp: "",
       email: "",
+      fechaNacimiento: "",
       pais: "",
       estado: "",
       ciudad: "",
@@ -686,6 +693,9 @@ export default function MembershipApplicationPage() {
               />
               <FormField 
                 label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email}
+              />
+              <FormField 
+                label="Fecha de nacimiento" name="fechaNacimiento" type="date" required value={formData.fechaNacimiento} onChange={handleInputChange} error={errors.fechaNacimiento}
               />
               <FormField 
                 label="Contacto personal" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}

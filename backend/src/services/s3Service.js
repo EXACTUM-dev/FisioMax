@@ -28,16 +28,59 @@ class S3Service {
     try {
       await s3.send(new PutObjectCommand(params));
 
+      // Return the S3 key instead of the presigned URL
+      return key;
+    } catch (error) {
+      console.error('Error subiendo archivo a S3:', error);
+      throw new Error('Error al subir archivo a S3');
+    }
+  }
+
+  /**
+   * Generate a presigned URL for viewing a file
+   * @param {string} key - S3 object key
+   * @param {number} expiresIn - URL expiration time in seconds (default: 1 hour)
+   * @returns {Promise<string>} Presigned URL
+   */
+  static async getPresignedUrl(key, expiresIn = 3600) {
+    if (!key) return null;
+
+    try {
+      // If the key is already a full URL, extract the key
+      let s3Key = key;
+      if (key.includes('amazonaws.com')) {
+        const url = new URL(key);
+        s3Key = url.pathname.substring(1); // Remove leading '/'
+      }
+
       const url = await getSignedUrl(
         s3,
-        new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }),
-        { expiresIn: 3600 }
+        new GetObjectCommand({ Bucket: BUCKET_NAME, Key: s3Key }),
+        { expiresIn }
       );
 
       return url;
     } catch (error) {
-      console.error('Error subiendo archivo a S3:', error);
-      throw new Error('Error al subir archivo a S3');
+      console.error('Error generando URL presignada:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate presigned URLs for multiple files
+   * @param {Array<string>} keys - Array of S3 object keys
+   * @param {number} expiresIn - URL expiration time in seconds (default: 1 hour)
+   * @returns {Promise<Array<string>>} Array of presigned URLs
+   */
+  static async getPresignedUrls(keys, expiresIn = 3600) {
+    if (!keys || !Array.isArray(keys)) return [];
+
+    try {
+      const urlPromises = keys.map(key => this.getPresignedUrl(key, expiresIn));
+      return await Promise.all(urlPromises);
+    } catch (error) {
+      console.error('Error generando URLs presignadas:', error);
+      return [];
     }
   }
 }
