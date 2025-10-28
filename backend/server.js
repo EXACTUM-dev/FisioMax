@@ -320,6 +320,11 @@ app.use("/api/membership-applications", membershipApplicationRoutes);
 app.use("/api/users", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/auth", authRoutes);
+/**
+ * Routes for video content access.
+ */
+import contentRoutes from "./src/routes/content.routes.js";
+app.use("/api", contentRoutes);
 
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
