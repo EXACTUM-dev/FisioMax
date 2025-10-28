@@ -10,7 +10,9 @@ export const API_CONFIG = {
   ENDPOINTS: {
     MEMBERSHIP_APPLICATIONS: '/api/membership-applications',
     CONTACT: '/api/contacto',
-    USERS: '/api/usuarios'
+    USERS: '/api/usuarios',
+    AUTH_PROFILE: '/api/auth/profile',
+    ROLES: '/api/roles'
   }
 };
 
@@ -20,6 +22,29 @@ export const API_CONFIG = {
 export const buildApiUrl = (endpoint) => {
   return `${API_CONFIG.BASE_URL}${endpoint}`;
 };
+
+/**
+ * Helper para hacer requests autenticados con Clerk
+ * @param {string} url - URL del endpoint
+ * @param {Function} getToken - Función de Clerk para obtener el token
+ * @param {Object} options - Opciones adicionales de fetch
+ */
+export async function authenticatedFetch(url, getToken, options = {}) {
+  const token = await getToken();
+  
+  const defaultHeaders = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  });
+}
 
 /**
  * Espacific URLs to membership application
