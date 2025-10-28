@@ -124,3 +124,21 @@ export const createMembershipApplication = async (req, res) => {
     });
   }
 };
+
+
+
+export async function getMembershipApplications(req, res) {
+  try {
+    const applications = await getAllFromDB();
+    res.json({
+      success: true,
+      data: applications,
+    });
+  } catch (error) {
+    console.error("Error fetching applications:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error fetching roles",
+    });
+  }
+}
