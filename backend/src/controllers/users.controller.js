@@ -6,6 +6,7 @@
      */
 
     import { getUsuarioByClerkId, getUserById, getUsuarios } from '../models/users.model.js';
+    import S3Service from '../services/s3Service.js';
 
     /**
      * Get all users with their roles
@@ -57,6 +58,18 @@
         });
         }
 
+        // Generate fresh presigned URLs for documents
+        const [cedulaUrl, tituloUrl, constanciasUrl] = await Promise.all([
+        S3Service.getPresignedUrl(user.cedula),
+        S3Service.getPresignedUrl(user.titulo),
+        S3Service.getPresignedUrl(user.constancias)
+        ]);
+
+        // Generate presigned URLs for additional documents
+        const documentosAdicionalesUrls = user.documentosAdicionales && user.documentosAdicionales.length > 0
+        ? await S3Service.getPresignedUrls(user.documentosAdicionales)
+        : [];
+
         const transformedUser = {
         nombres: user.nombres || '',
         apellidoP: user.apellidoP || '',
@@ -78,10 +91,10 @@
         linkedin: user.linkedin || '',
         facebook: user.facebook || '',
         paginaWeb: user.paginaWeb || '',
-        cedula: user.cedula || null,
-        titulo: user.titulo || null,
-        constancias: user.constancias || null,
-        documentosAdicionales: user.documentosAdicionales || [],
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
+        documentosAdicionales: documentosAdicionalesUrls,
         rol: user.rolNombre || null,
         IDRol: user.IDRol || null,
         IDUsuario: user.IDUsuario,
@@ -129,6 +142,18 @@
         });
         }
 
+        // Generate fresh presigned URLs for documents
+        const [cedulaUrl, tituloUrl, constanciasUrl] = await Promise.all([
+        S3Service.getPresignedUrl(user.cedula),
+        S3Service.getPresignedUrl(user.titulo),
+        S3Service.getPresignedUrl(user.constancias)
+        ]);
+
+        // Generate presigned URLs for additional documents
+        const documentosAdicionalesUrls = user.documentosAdicionales && user.documentosAdicionales.length > 0
+        ? await S3Service.getPresignedUrls(user.documentosAdicionales)
+        : [];
+
         const transformedUser = {
         nombres: user.nombres || '',
         apellidoP: user.apellidoP || '',
@@ -150,10 +175,10 @@
         linkedin: user.linkedin || '',
         facebook: user.facebook || '',
         paginaWeb: user.paginaWeb || '',
-        cedula: user.cedula || null,
-        titulo: user.titulo || null,
-        constancias: user.constancias || null,
-        documentosAdicionales: [],
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
+        documentosAdicionales: documentosAdicionalesUrls,
         rol: user.rolNombre || null,
         IDRol: user.IDRol || null,
         IDUsuario: user.IDUsuario,
