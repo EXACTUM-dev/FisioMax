@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 // Atoms
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
+import Loading from "../atoms/loading";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -39,11 +40,13 @@ export default function Panel() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
   const navigate = useNavigate();
-  const [current, setCurrent] = useState("panel");
+  const [current, setCurrent] = useState("bolt");
   
   // State for UI data
   const [userRows, setUserRows] = useState([]); // Users from backend
   const [roleRows, setRoleRows] = useState([]); // Roles from backend
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingRoles, setLoadingRoles] = useState(true);
   
   // Modal state for viewing role permissions
   const [modalOpen, setModalOpen] = useState(false);
@@ -58,9 +61,10 @@ export default function Panel() {
 
     const fetchUsers = async () => {
       try {
+        setLoadingUsers(true);
         const token = await getToken();
         const usersResponse = await fetchWithClerk(
-            '/api/usuarios',
+            '/api/users',
             {method: 'GET'},
             token
         );
@@ -74,6 +78,8 @@ export default function Panel() {
       } catch (err) {
         console.error('Error de carga de usuarios:', err);
         setError('Error de carga de usuarios. Por favor intente más tarde.');
+      } finally {
+        if (alive) setLoadingUsers(false);
       }
     };
 
@@ -89,6 +95,7 @@ export default function Panel() {
 
     const fetchRoles = async () => {
       try {
+        setLoadingRoles(true);
         const token = await getToken();
         const rolesResponse = await fetchWithClerk(
             '/api/roles',
@@ -102,6 +109,8 @@ export default function Panel() {
       } catch (err) {
         console.error('Error de carga de roles:', err);
         setError('Error de carga de roles. Por favor intente más tarde.');
+      } finally {
+        if (alive) setLoadingRoles(false);
       }
     };
 
@@ -235,14 +244,7 @@ export default function Panel() {
 
   // Show loading spinner until user data is loaded
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
+    return <Loading fullscreen message="Cargando..." />;
   }
 
   return (
@@ -256,11 +258,23 @@ export default function Panel() {
       {/* Main content area */}
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-[1100px] mx-auto">
-          <Title2 className="mb-6">Panel de Control</Title2>
+          <Title2 className="mb-4">Panel de Control</Title2>
+          
+          <div className="flex justify-end mb-6">
+            <Button
+              variant="secondary"
+              size="sm"
+              radius="lg"
+              onClick={() => navigate('/roles')}
+            >
+              Roles
+            </Button>
+          </div>
           
           {/* Data switcher for toggling between views */}
           <DataSwitchContainer
             initialKey="solicitudes"
+            loading={loadingRoles || loadingUsers}
             views={[
               {
                 key: "solicitudes",

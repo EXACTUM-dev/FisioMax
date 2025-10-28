@@ -9,6 +9,7 @@ import React, { useMemo, useState } from "react";
 import DataTable from "./dataTable";
 import TabsNav from "../molecules/tabsNav";
 import SearchBar from "../molecules/searchBar";
+import Loading from "../atoms/loading";
 
 /**
  * DataSwitchContainer component properties.
@@ -17,6 +18,7 @@ import SearchBar from "../molecules/searchBar";
  * @property {string} [initialKey] - Initial active view key.
  * @property {string} [className] - Additional CSS classes.
  * @property {React.ReactNode} [toolbarRight] - Right-aligned toolbar content (e.g., action button).
+ * @property {boolean} [loading] - Show loading spinner when true.
  * @return {React.ReactElement} Switchable data container component.
  */
 export default function DataSwitchContainer({
@@ -24,6 +26,7 @@ export default function DataSwitchContainer({
   initialKey,
   className = "",
   toolbarRight = null,
+  loading = false,
 }) {
   const [activeKey, setActiveKey] = useState(initialKey ?? views[0]?.key);
   const [query, setQuery] = useState("");
@@ -87,7 +90,9 @@ export default function DataSwitchContainer({
         aria-labelledby={`tab-${activeKey}`}
         className="rounded-[18px] border border-slate-200 bg-white p-4 md:p-6"
       >
-        {activeView.type === "table" ? (
+        {loading ? (
+          <Loading fullscreen={false} message="Cargando datos..." size={40} />
+        ) : activeView.type === "table" ? (
           <DataTable
             columns={activeView.columns ?? []}
             data={filteredRows}

@@ -5,7 +5,31 @@
      * @description Handles user profile retrieval and management
      */
 
-    import { getUsuarioByClerkId, getUserById } from '../models/users.model.js';
+    import { getUsuarioByClerkId, getUserById, getUsuarios } from '../models/users.model.js';
+
+    /**
+     * Get all users with their roles
+     * @param {Object} req - Express request object
+     * @param {Object} res - Express response object
+     * @returns {Promise<void>} Sends JSON response with users array or error
+     */
+    export async function getAllUsers(req, res) {
+    try {
+        const users = await getUsuarios();
+        
+        res.status(200).json({
+        success: true,
+        data: users,
+        });
+    } catch (error) {
+        console.error('Error obteniendo usuarios:', error);
+        res.status(500).json({
+        success: false,
+        error: 'Error al obtener los usuarios',
+        message: error.message,
+        });
+    }
+    }
 
     /**
      * Get the profile of the authenticated user

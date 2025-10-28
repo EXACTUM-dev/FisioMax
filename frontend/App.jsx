@@ -70,7 +70,7 @@ function Dashboard() {
   // Backend's Fetch
   useEffect(() => {
     if (isSignedIn && user) {
-      fetch("/api/usuarios")
+      fetch("/api/users")
         .then((res) => res.json())
         .then((data) => {
           console.log("Usuarios desde backend:", data);
@@ -128,11 +128,11 @@ function Dashboard() {
     []
   );
 
-  if (!isLoaded) {
+  if (!loaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderBottomColor: '#CAD00F' }}></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>

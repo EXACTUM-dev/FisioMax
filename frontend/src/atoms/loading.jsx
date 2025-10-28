@@ -39,8 +39,8 @@ export default function Loading({
     >
       <div className="text-center">
         <span
-          className="animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 inline-block"
-          style={{ width: size, height: size }}
+          className="animate-spin rounded-full border-b-2 inline-block"
+          style={{ width: size, height: size, borderBottomColor: '#CAD00F' }}
           data-testid="loading-spinner"
         />
         {message ? (

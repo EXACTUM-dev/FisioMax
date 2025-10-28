@@ -6,9 +6,8 @@
  */
 
 import express from "express";
-import { getUsuarios } from "../models/users.model.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers } from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
-import { getCurrentUserProfile, getUserProfileById } from "../controllers/users.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
 
@@ -23,7 +22,7 @@ const router = express.Router();
  * @param {string} path - Express path.
  * @param {function} middleware - Express middleware.
  */
-router.get("/", requireAuth, autoSyncClerkId, requireDbUser, getUsuarios);
+router.get("/", requireAuth, autoSyncClerkId, requireDbUser, getAllUsers);
 
 /**
  * Route to get the current user's profile.
