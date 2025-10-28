@@ -21,7 +21,8 @@ export async function getUsuarios() {
         u.apellidoP, 
         u.apellidoM,
         u.correo,
-        u.telefono,
+        u.telefonoCasa,
+        u.telefonoWhatsapp,
         u.fechaNacimiento,
         r.IDRol,
         r.nombre as rolNombre,
@@ -59,7 +60,8 @@ export async function getUserByClerkId(clerkID) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefono,
+        u.telefonoCasa,
+        u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
         u.titulo,
@@ -109,7 +111,8 @@ export async function getUserById(userId) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefono,
+        u.telefonoCasa,
+        u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
         u.titulo,
@@ -159,7 +162,8 @@ export async function getUserByEmail(email) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefono,
+        u.telefonoCasa,
+        u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
         u.titulo,
@@ -230,27 +234,44 @@ export async function createUserWithClerkId(userData) {
       apellidoP,
       apellidoM = null,
       correo,
-      telefono = '',
-      fechaNacimiento = '',
+      telefonoCasa = "",
+      telefonoWhatsapp = "",
+      fechaNacimiento = "",
       foto = null,
-      pais = 'México',
-      estado = '',
+      pais = "México",
+      estado = "",
       ciudad = null,
       colonia = null,
-      codigoPostal = null
+      codigoPostal = null,
     } = userData;
 
     const [result] = await dbPool.query(
       `INSERT INTO usuario 
-        (IDUsuario, clerkID, nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento, foto, pais, estado, ciudad, colonia, codigoPostal)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [IDUsuario, clerkID, nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento, foto, pais, estado, ciudad, colonia, codigoPostal]
+        (IDUsuario, clerkID, nombres, apellidoP, apellidoM, correo, telefonoCasa, telefonoWhatsapp, fechaNacimiento, foto, pais, estado, ciudad, colonia, codigoPostal)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        IDUsuario,
+        clerkID,
+        nombres,
+        apellidoP,
+        apellidoM,
+        correo,
+        telefonoCasa,
+        telefonoWhatsapp,
+        fechaNacimiento,
+        foto,
+        pais,
+        estado,
+        ciudad,
+        colonia,
+        codigoPostal,
+      ]
     );
 
     if (result.affectedRows > 0) {
       return await getUserById(IDUsuario);
     }
-    throw new Error('No se pudo crear el usuario');
+    throw new Error("No se pudo crear el usuario");
   } catch (error) {
     console.error("Error al crear usuario con clerkID:", error);
     throw error;
