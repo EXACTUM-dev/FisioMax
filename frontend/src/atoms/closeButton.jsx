@@ -57,7 +57,7 @@ const CloseButton = (
       aria-label={ariaLabel}
       type="button"
     >
-      x
+      ✕
     </button>
   );
 };

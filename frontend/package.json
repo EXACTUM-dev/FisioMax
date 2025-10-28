@@ -17,8 +17,10 @@
     "@clerk/clerk-sdk-node": "^4.13.23",
     "@clerk/react-router": "^1.10.2",
     "@tailwindcss/vite": "^4.1.13",
+    "pdfjs-dist": "^5.4.296",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-pdf": "^10.2.0",
     "react-router": "^7.9.1",
     "react-router-dom": "^7.9.1",
     "sweetalert2": "^11.24.0"

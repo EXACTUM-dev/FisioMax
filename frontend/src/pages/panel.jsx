@@ -34,6 +34,7 @@ import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import buildMembershipColumns from "../data/tableTemplates/membershipColumns";
 import { fetchWithClerk } from "../utils/api";
+import MembershipModal from "../data/modalTemplates/membershipModal";
 
 export default function Panel() {
   const { user, isLoaded } = useUser();
@@ -272,7 +273,7 @@ const fetchMemberships = async () => {
   // Define columns for memberships table
   const membershipColumns = useMemo(
     () => buildMembershipColumns({
-      onRowClick: (row) => {
+      onView: (row) => {
       setSelectedMembership(row);  // Guarda la fila seleccionada
       setMembershipModalOpen(true);  // Abre el modal
       },
@@ -431,76 +432,26 @@ const fetchMemberships = async () => {
           </div>
         </Modal>
       )}
-      {/* Nuevo Modal para memberships */}
+      {/* New modal for memberships*/}
     {selectedMembership && (
-      <Modal 
-        open={membershipModalOpen} 
+      <MembershipModal
+        open={membershipModalOpen}
         onClose={() => {
           setMembershipModalOpen(false);
           setSelectedMembership(null);
-        }} 
-        size="lg"  // Puedes ajustar el tamaño según necesites
-      >
-        <div className="flex flex-col gap-4 w-full">   
-          <Title2 className="text-lg sm:text-xl text-center">
-            Detalles de la Solicitud
-          </Title2>
-
-          {/* Detalles de la membership (puedes personalizar) */}
-          <div className="w-full">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Nombre
-            </label>
-            <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900">
-              {selectedMembership.nombre}
-            </div>
-          </div>
-
-          <div className="w-full">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Estado
-            </label>
-            <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900">
-              {selectedMembership.estado}
-            </div>
-          </div>
-
-          <div className="w-full">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Fecha
-            </label>
-            <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900">
-              {selectedMembership.fecha}
-            </div>
-          </div>
-
-          {/* Opcional: Agrega botones para acciones, e.g., aprobar/rechazar */}
-          <div className="flex gap-4 justify-center mt-4">
-            <Button 
-              onClick={() => {
-                // Lógica para aprobar (e.g., actualizar estado y cerrar modal)
-                console.log('Aprobando solicitud:', selectedMembership.id);
-                setMembershipModalOpen(false);
-                setSelectedMembership(null);
-              }}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Aprobar
-            </Button>
-            <Button 
-              onClick={() => {
-                // Lógica para rechazar
-                console.log('Rechazando solicitud:', selectedMembership.id);
-                setMembershipModalOpen(false);
-                setSelectedMembership(null);
-              }}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Rechazar
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        }}
+        membership={selectedMembership}
+        onStatusChange={(membershipId, newStatus) => {
+          // Updated the initial state
+          setMembershipRows(prev => 
+            prev.map(membership => 
+              membership.id === membershipId 
+                ? { ...membership, estado: newStatus }
+                : membership
+            )
+          );
+        }}
+      />
     )}
     </div>
   );
