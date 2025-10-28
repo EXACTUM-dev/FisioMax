@@ -35,6 +35,7 @@ class MembershipApplication {
     this.homePhone = data.homePhone?.trim() || null;
     this.whatsappPhone = data.whatsappPhone.trim();
     this.email = data.email.trim();
+    this.birthDate = data.birthDate?.trim() || null;
     this.country = data.country?.trim() || null;
     this.state = data.state?.trim() || null;
     this.city = data.city?.trim() || null;
@@ -69,12 +70,33 @@ class MembershipApplication {
       const certificatesUrl = this.documents.certificates || null;
 
       await conn.query(
-        `INSERT INTO Usuario 
-        (IDUsuario, firstName, lastName, middleName, email, homePhone, telefonoWhatsApp, country, state, city, neighborhood, postalCode, street, exteriorNumber, interiorNumber, degree, instagram, linkedin, facebook, website, professionalId, degreeDocument, certificates, createdAt, deleted)
+        `INSERT INTO usuario 
+        (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento, pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, numInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
         [ 
-          userId, this.firstName, this.lastName, this.middleName, this.email, this.homePhone, this.whatsappPhone, this.country, this.state, this.city, this.neighborhood, this.postalCode, this.street, this.exteriorNumber, 
-          this.interiorNumber, this.degree, this.instagram, this.linkedin, this.facebook, this.website, professionalIdUrl, degreeDocumentUrl, certificatesUrl
+          userId, 
+          this.firstName, 
+          this.lastName, 
+          this.middleName, 
+          this.email, 
+          this.whatsappPhone, 
+          this.birthDate,
+          this.country, 
+          this.state, 
+          this.city, 
+          this.neighborhood, 
+          this.postalCode, 
+          this.street, 
+          this.exteriorNumber, 
+          this.interiorNumber, 
+          this.degree, 
+          this.instagram, 
+          this.linkedin, 
+          this.facebook, 
+          this.website, 
+          professionalIdUrl, 
+          degreeDocumentUrl, 
+          certificatesUrl
         ]
       );
 

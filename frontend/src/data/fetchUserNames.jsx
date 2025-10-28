@@ -13,7 +13,7 @@ import React from "react";
  */
 export async function fetchUserNames() {
   try {
-    const response = await fetch("/api/usuarios"); // Endpoint that consumes the model
+    const response = await fetch("/api/users"); // Endpoint that consumes the model
     const data = await response.json();
     return data.map((user) => `${user.nombres} ${user.apellidoP} ${user.apellidoM}`);
   } catch (error) {

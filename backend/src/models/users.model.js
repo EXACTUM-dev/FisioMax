@@ -20,6 +20,7 @@ export async function getUsuarios() {
         u.nombres, 
         u.apellidoP, 
         u.apellidoM,
+        u.foto,
         u.correo,
         u.telefono,
         u.fechaNacimiento,
@@ -44,18 +45,18 @@ export async function getUsuarios() {
 }
 
 /**
- * Get a user by their Clerk ID
- * @param {string} clerkID - The Clerk user ID
- * @returns {Promise<Object|null>} User object with role information or null if not found
+ * Get a single user by Clerk ID with all their information including documents
+ * @param {string} clerkId - Clerk user ID
+ * @returns {Promise<Object|null>} User object with all data or null if not found
  */
-export async function getUserByClerkId(clerkID) {
+export async function getUserByClerkId(clerkId) {
   try {
     const [rows] = await dbPool.query(
       `SELECT 
         u.IDUsuario,
         u.clerkID,
-        u.nombres, 
-        u.apellidoP, 
+        u.nombres,
+        u.apellidoP,
         u.apellidoM,
         u.foto,
         u.correo,
@@ -68,8 +69,16 @@ export async function getUserByClerkId(clerkID) {
         u.pais,
         u.estado,
         u.ciudad,
+        u.calle,
+        u.numExterior,
+        u.numInterior,
         u.colonia,
         u.codigoPostal,
+        u.instagram,
+        u.linkedin,
+        u.facebook,
+        u.paginaWeb,
+        u.createdAt,
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion
@@ -81,17 +90,45 @@ export async function getUserByClerkId(clerkID) {
         AND r.deletedAt IS NULL 
         AND r.eliminado = 0
       WHERE u.clerkID = ? 
-        AND u.deletedAt IS NULL 
         AND u.eliminado = 0
       LIMIT 1`,
-      [clerkID]
+      [clerkId]
     );
-    return rows.length > 0 ? rows[0] : null;
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const user = rows[0];
+
+    // Try to get additional documents if the table exists
+    try {
+      const [docRows] = await dbPool.query(
+        `SELECT 
+          IDDocumento,
+          nombreArchivo,
+          urlArchivo,
+          createdAt
+        FROM DocumentosAdicionales
+        WHERE IDUsuario = ?`,
+        [user.IDUsuario]
+      );
+      user.documentosAdicionales = docRows;
+    } catch (docError) {
+      // If DocumentosAdicionales table doesn't exist, just set empty array
+      console.warn('DocumentosAdicionales table not found or error:', docError.message);
+      user.documentosAdicionales = [];
+    }
+
+    return user;
   } catch (error) {
-    console.error("Error al consultar usuario por clerkID:", error);
+    console.error("Error al obtener usuario por Clerk ID:", error);
     throw error;
   }
 }
+
+// Alias for backward compatibility
+export const getUsuarioByClerkId = getUserByClerkId;
 
 /**
  * Get a user by their database ID (IDUsuario)
@@ -118,8 +155,15 @@ export async function getUserById(userId) {
         u.pais,
         u.estado,
         u.ciudad,
+        u.calle,
+        u.numExterior,
+        u.numInterior,
         u.colonia,
         u.codigoPostal,
+        u.instagram,
+        u.linkedin,
+        u.facebook,
+        u.paginaWeb,
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion
@@ -168,8 +212,15 @@ export async function getUserByEmail(email) {
         u.pais,
         u.estado,
         u.ciudad,
+        u.calle,
+        u.numExterior,
+        u.numInterior,
         u.colonia,
         u.codigoPostal,
+        u.instagram,
+        u.linkedin,
+        u.facebook,
+        u.paginaWeb,
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion

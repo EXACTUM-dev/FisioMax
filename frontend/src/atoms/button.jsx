@@ -14,7 +14,7 @@ import React from "react";
  * @param {Object} props - Component properties
  * @param {string} [props.label="SOMEFIPP"] - Button text label
  * @param {React.ReactNode} [props.children] - Button content (overrides label if present)
- * @param {"brand"|"outline"|"ghost"} [props.variant="brand"] - Button style variant
+ * @param {"brand"|"secondary"|"outline"|"ghost"} [props.variant="brand"] - Button style variant
  * @param {"xs"|"sm"|"md"|"lg"|"xl"} [props.size="md"] - Button size with compact scale
  * @param {boolean} [props.fullWidth=false] - Whether button should take full width
  * @param {"button"|"submit"|"reset"} [props.type="button"] - HTML button type
@@ -52,6 +52,8 @@ export default function Button({
   const variants = {
     brand:
       "bg-brand text-stone-700 hover:brightness-95 focus-visible:ring-brand/60",
+    secondary:
+      "bg-brand text-gray-800 hover:bg-[#b8bc0d] shadow-sm hover:shadow-md focus-visible:ring-brand/60 active:scale-95",
     outline:
       "bg-transparent text-black border border-brand hover:bg-brand/10 focus-visible:ring-brand/50",
     ghost:

@@ -282,6 +282,7 @@ export default function RolesPage() {
 
           <DataSwitchContainer
             initialKey="roles"
+            loading={loading}
             views={[
               {
                 key: "roles",
