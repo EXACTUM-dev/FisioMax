@@ -18,8 +18,11 @@ import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import membershipApplicationRoutes from "./src/routes/membershipApplication.routes.js";
 
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
+import { requireDbUser } from "./src/middlewares/requireDbUser.js";
+import { autoSyncClerkId } from "./src/middlewares/clerkAuth.js";
 import usuariosRoutes from "./src/routes/users.routes.js";
 import rolesRoutes from "./src/routes/roles.routes.js";
+import authRoutes from "./src/routes/auth.route.js";
 
 // Initialize Express application
 const app = express();
@@ -120,14 +123,14 @@ app.post("/login", (req, res) => {
 //-------------------------
 
 /**
- * Protected endpoint to get users - Requires authentication.
+ * Protected endpoint to get users - Requires authentication and database registration.
  * @name GET /api/usuarios
  * @function
  * @param {object} req - Express request object.
  * @param {object} res - Express response object.
  * @returns {Array<Object>} List of users in JSON format.
  */
-app.get("/api/usuarios", requireAuth, async (req, res) => {
+app.get("/api/usuarios", requireAuth, requireDbUser, async (req, res) => {
   try {
     const userId = req.auth?.userId;
     const { getUsuarios } = await import("./src/models/users.model.js");
@@ -216,13 +219,13 @@ Enviado desde: ${req.headers.host}
   }
 });
 /**
- * Admin route - Requires authentication and admin role.
+ * Admin route - Requires authentication, database registration and admin role.
  * @name GET /api/admin
  * @function
  * @param {object} req - Express request object.
  * @param {object} res - Express response object.
  */
-app.get("/api/admin", requireAuth, (req, res) => {
+app.get("/api/admin", requireAuth, requireDbUser, (req, res) => {
   // Simulate admin role verification
   const userRoles = req.auth?.sessionClaims?.metadata?.roles || [];
   if (!userRoles.includes("admin")) {
@@ -316,6 +319,7 @@ app.get("/api/sensitive", (req, res) => {
 app.use("/api/membership-applications", membershipApplicationRoutes);
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
+app.use("/api/auth", authRoutes);
 /**
  * Routes for video content access.
  */
