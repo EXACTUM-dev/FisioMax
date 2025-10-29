@@ -218,8 +218,9 @@ export default function MembershipApplicationPage() {
     apellidoP: "",
     apellidoM: "",
     telefonoCasa: "",
-    telefonoWhatsApp: "",
-    email: "",
+  telefonoWhatsapp: "",
+  correo: "",
+  fechaNacimiento: "",
     pais: "",
     estado: "",
     ciudad: "",
@@ -228,8 +229,6 @@ export default function MembershipApplicationPage() {
     numInterior: "",
     colonia: "",
     codigoPostal: "",
-    numeroExterior: "",
-    numeroInterior: "",
     licenciatura: "",
     instagram: "",
     linkedin: "",
@@ -421,18 +420,22 @@ export default function MembershipApplicationPage() {
       newErrors.apellidoP = "El apellido paterno es requerido";
       missingFields.push("Apellido Paterno");
     }
-    if (!formData.email) {
-      newErrors.email = "El email es requerido";
+    if (!formData.correo) {
+      newErrors.correo = "El email es requerido";
       missingFields.push("Correo electrónico");
     }
-    if (!formData.telefonoWhatsApp) {
-      newErrors.telefonoWhatsApp = "El contacto profesional es requerido";
+    if (!formData.telefonoWhatsapp) {
+      newErrors.telefonoWhatsapp = "El contacto profesional es requerido";
       missingFields.push("Contacto profesional");
+    }
+    if (!formData.fechaNacimiento) {
+      newErrors.fechaNacimiento = "La fecha de nacimiento es requerida";
+      missingFields.push("Fecha de nacimiento");
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
-      newErrors.email = "El formato del email no es válido";
+    if (formData.correo && !emailRegex.test(formData.correo)) {
+      newErrors.correo = "El formato del email no es válido";
       missingFields.push("El formato del correo no es válido");
     }
     
@@ -483,36 +486,11 @@ export default function MembershipApplicationPage() {
 
     try {
       const formDataToSend = new FormData();
-      
-      const fieldMapping = {
-        nombres: 'firstName',
-        apellidoP: 'lastName',
-        apellidoM: 'middleName',
-        telefonoCasa: 'homePhone',
-        telefonoWhatsApp: 'whatsappPhone',
-        email: 'email',
-        pais: 'country',
-        estado: 'state',
-        ciudad: 'city',
-        colonia: 'neighborhood',
-        codigoPostal: 'postalCode',
-        calle: 'street',
-        numeroExterior: 'exteriorNumber',
-        numeroInterior: 'interiorNumber',
-        licenciatura: 'degree',
-        instagram: 'instagram',
-        linkedin: 'linkedin',
-        facebook: 'facebook',
-        paginaWeb: 'website',
-        titulo: 'degreeDocument',
-        cedula: 'professionalId',
-        constancias: 'certificates'
-      };
+
       
       Object.entries(formData).forEach(([key, value]) => {
-        if (value) {
-          const englishKey = fieldMapping[key] || key;
-          formDataToSend.append(englishKey, typeof value === "string" ? value.trim() : value);
+        if (value !== null && value !== undefined && value !== '') {
+          formDataToSend.append(key, typeof value === "string" ? value.trim() : value);
         }
       });
       
@@ -569,8 +547,8 @@ export default function MembershipApplicationPage() {
       apellidoP: "",
       apellidoM: "",
       telefonoCasa: "",
-      telefonoWhatsApp: "",
-      email: "",
+      telefonoWhatsapp: "",
+      correo: "",
       pais: "",
       estado: "",
       ciudad: "",
@@ -579,8 +557,6 @@ export default function MembershipApplicationPage() {
       numInterior: "",
       colonia: "",
       codigoPostal: "",
-      numeroExterior: "",
-      numeroInterior: "",
       licenciatura: "",
       instagram: "",
       linkedin: "",
@@ -685,13 +661,16 @@ export default function MembershipApplicationPage() {
                 label="Apellido Materno" name="apellidoM" value={formData.apellidoM} onChange={handleInputChange} placeholder="Ingresa tu apellido materno" error={errors.apellidoM} 
               />
               <FormField 
-                label="Correo electrónico" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.email}
+                label="Correo electrónico" name="correo" type="email" required value={formData.correo} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.correo}
               />
               <FormField 
                 label="Contacto personal" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}
               />
                <FormField 
-                label="Contacto profesional" name="telefonoWhatsApp" required value={formData.telefonoWhatsApp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsApp}
+                label="Contacto profesional" name="telefonoWhatsapp" required value={formData.telefonoWhatsapp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsapp}
+              />
+              <FormField 
+                label="Fecha de nacimiento" name="fechaNacimiento" type="date" required value={formData.fechaNacimiento || ''} onChange={handleInputChange} placeholder="AAAA-MM-DD" error={errors.fechaNacimiento}
               />
               <FormField 
                 label="Facebook" name="facebook" value={formData.facebook} onChange={handleInputChange} placeholder="Ingresa tu cuenta de Facebook"
@@ -729,10 +708,10 @@ export default function MembershipApplicationPage() {
                 label="Calle" name="calle" value={formData.calle} onChange={handleInputChange} placeholder="Ingresa tu calle"
               />
               <FormField
-                label="Número exterior" name="numeroExterior" value={formData.numeroExterior} onChange={handleInputChange} placeholder="Ingresa tu número exterior"
+                label="Número exterior" name="numExterior" value={formData.numExterior} onChange={handleInputChange} placeholder="Ingresa tu número exterior"
               />
               <FormField
-                label="Número interior" name="numeroInterior" value={formData.numeroInterior} onChange={handleInputChange} placeholder="Ingresa tu número interior"
+                label="Número interior" name="numInterior" value={formData.numInterior} onChange={handleInputChange} placeholder="Ingresa tu número interior"
               />
             </div>
 

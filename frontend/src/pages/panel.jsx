@@ -34,6 +34,7 @@ import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import buildMembershipColumns from "../data/tableTemplates/membershipColumns";
 import { fetchWithClerk } from "../utils/api";
+import MembershipModal from "../data/modalTemplates/membershipModal";
 
 export default function Panel() {
   const { user, isLoaded } = useUser();
@@ -54,6 +55,66 @@ export default function Panel() {
   const [rolePrivileges, setRolePrivileges] = useState([]);
   
   const [error, setError] = useState(null);
+
+  // Fetch memberships list from data base
+  const fetchMemberships = useCallback(async () => {
+    try {
+      const token = await getToken();
+      const resp = await fetchWithClerk('/api/membresias', { method: 'GET' }, token);
+
+      // backend may return { success, data } or an array
+      const rows = Array.isArray(resp) ? resp : resp?.data || [];
+
+      // Exclude already approved memberships: we only want Pendiente and Rechazado here
+      const visibleRows = (rows || []).filter((r) => {
+        const aceptado = typeof r.aceptado !== 'undefined' ? r.aceptado : (r.accepted ?? null);
+        return aceptado !== 1; // keep if not approved
+      });
+
+      const mapped = (visibleRows || []).map((r) => ({
+        id: r.IDMembresia ?? r.id ?? r.IDMembresia,
+        aceptado: typeof r.aceptado !== 'undefined' ? r.aceptado : (r.accepted ?? null),
+        estatusPago: typeof r.estatusPago !== 'undefined' ? r.estatusPago : (r.paymentStatus ?? null),
+        IDUsuario: r.IDUsuario || r.userId || null,
+        nombre: `${r.nombres || r.nombre || ''} ${r.apellidoP || ''} ${r.apellidoM || ''}`.trim() || 'Sin nombre',
+        estado: (typeof r.aceptado !== 'undefined' ? (r.aceptado === 1 ? 'Aprobado' : r.aceptado === 0 ? 'Rechazado' : 'Pendiente') : (r.status || 'Pendiente')),
+        fecha: r.createdAt || r.created_at || r.fecha || null,
+        __raw: r,
+      }));
+
+      setMembershipRows(mapped);
+    } catch (err) {
+      console.error('Error de carga de solicitudes:', err);
+      setError('Error de carga de solicitudes. Por favor intente más tarde.');
+    }
+  }, [getToken]);
+
+  // Fetch detailed membership by id and open modal with full data.
+  const fetchMembershipDetail = useCallback(async (id) => {
+    try {
+      const token = await getToken();
+      const resp = await fetchWithClerk(`/api/membresias/${id}`, { method: 'GET' }, token);
+      const detail = resp?.data ?? resp ?? null;
+
+      if (detail) {
+        setSelectedMembership(detail);
+        setMembershipModalOpen(true);
+        return;
+      }
+    } catch (err) {
+      // If endpoint doesn't exist or fails, fall back to list entry
+      console.warn('No se pudo obtener detalle de membresía, usando datos locales:', err.message || err);
+    }
+
+    // fallback -> find in membershipRows
+    const fallback = membershipRows.find((m) => String(m.id) === String(id));
+    if (fallback) {
+      setSelectedMembership(fallback.__raw ? { ...fallback.__raw } : fallback);
+      setMembershipModalOpen(true);
+    } else {
+      setError('No se encontró la solicitud solicitada.');
+    }
+  }, [getToken, membershipRows]);
 
   // Fetch initial data for the panel
   useEffect(() => {
@@ -79,59 +140,12 @@ export default function Panel() {
         setError('Error de carga de usuarios. Por favor intente más tarde.');
       }
     };
-const fetchMemberships = async () => {
-  try {
-    // Simular delay de red (opcional)
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Datos mock con las columnas solicitadas
-    const mockMemberships = [
-      {
-        id: 1,
-        nombre: "Juan Pérez García",
-        estado: "Pendiente",
-        fecha: "2024-10-15"
-      },
-      {
-        id: 2,
-        nombre: "María López Hernández",
-        estado: "Pendiente",
-        fecha: "2024-10-20"
-      },
-      {
-        id: 3,
-        nombre: "Carlos Ramírez Torres",
-        estado: "Rechazado",
-        fecha: "2024-10-18"
-      },
-      {
-        id: 4,
-        nombre: "Ana Martínez Sánchez",
-        estado: "Pendiente",
-        fecha: "2024-10-25"
-      },
-      {
-        id: 5,
-        nombre: "Luis González Díaz",
-        estado: "Rechazado",
-        fecha: "2024-10-22"
-      }
-    ];
-
-    if (!alive) return;
-      setMembershipRows(mockMemberships);
-    } catch (err) {
-      console.error('Error de carga de solicitudes:', err);
-      setError('Error de carga de solicitudes. Por favor intente más tarde.');
-    }
-  };
-
     fetchUsers();
     fetchMemberships();
     return () => {
       alive = false;
     };
-  }, [getToken]);
+  }, [getToken, fetchMemberships]);
 
   // Fetch roles from the backend
   useEffect(() => {
@@ -272,13 +286,19 @@ const fetchMemberships = async () => {
   // Define columns for memberships table
   const membershipColumns = useMemo(
     () => buildMembershipColumns({
-      onRowClick: (row) => {
-      setSelectedMembership(row);  // Guarda la fila seleccionada
-      setMembershipModalOpen(true);  // Abre el modal
+      onView: (row) => {
+        // Prefer explicit id fields from backend raw data, fall back to row.id
+        const id = row?.id ?? row?.IDMembresia ?? row?.__raw?.IDMembresia ?? row?.__raw?.id;
+        if (id) {
+          fetchMembershipDetail(id);
+        } else {
+          // If no id available, open modal with provided row
+          setSelectedMembership(row);
+          setMembershipModalOpen(true);
+        }
       },
-
     }),
-    [] // Sin dependencias si no pasas callbacks
+    [fetchMembershipDetail]
   );
 
   // Show loading spinner until user data is loaded
@@ -431,76 +451,26 @@ const fetchMemberships = async () => {
           </div>
         </Modal>
       )}
-      {/* Nuevo Modal para memberships */}
+      {/* New modal for memberships*/}
     {selectedMembership && (
-      <Modal 
-        open={membershipModalOpen} 
+      <MembershipModal
+        open={membershipModalOpen}
         onClose={() => {
           setMembershipModalOpen(false);
           setSelectedMembership(null);
-        }} 
-        size="lg"  // Puedes ajustar el tamaño según necesites
-      >
-        <div className="flex flex-col gap-4 w-full">   
-          <Title2 className="text-lg sm:text-xl text-center">
-            Detalles de la Solicitud
-          </Title2>
-
-          {/* Detalles de la membership (puedes personalizar) */}
-          <div className="w-full">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Nombre
-            </label>
-            <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900">
-              {selectedMembership.nombre}
-            </div>
-          </div>
-
-          <div className="w-full">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Estado
-            </label>
-            <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900">
-              {selectedMembership.estado}
-            </div>
-          </div>
-
-          <div className="w-full">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Fecha
-            </label>
-            <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900">
-              {selectedMembership.fecha}
-            </div>
-          </div>
-
-          {/* Opcional: Agrega botones para acciones, e.g., aprobar/rechazar */}
-          <div className="flex gap-4 justify-center mt-4">
-            <Button 
-              onClick={() => {
-                // Lógica para aprobar (e.g., actualizar estado y cerrar modal)
-                console.log('Aprobando solicitud:', selectedMembership.id);
-                setMembershipModalOpen(false);
-                setSelectedMembership(null);
-              }}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Aprobar
-            </Button>
-            <Button 
-              onClick={() => {
-                // Lógica para rechazar
-                console.log('Rechazando solicitud:', selectedMembership.id);
-                setMembershipModalOpen(false);
-                setSelectedMembership(null);
-              }}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Rechazar
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        }}
+        solicitud={selectedMembership}
+        onStatusChange={(membershipId, newStatus) => {
+          // Updated the initial state
+          setMembershipRows(prev => 
+            prev.map(membership => 
+              membership.id === membershipId 
+                ? { ...membership, estado: newStatus }
+                : membership
+            )
+          );
+        }}
+      />
     )}
     </div>
   );

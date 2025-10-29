@@ -5,6 +5,7 @@
  */
 
 import React from "react";
+import applicationIcon from "../../assets/icons/carta.png";
 
 /**
  * Builds the column configuration for the membership requests table.
@@ -15,7 +16,7 @@ import React from "react";
  * @param {Function} options.onView Callback to handle viewing membership details (optional).
  * @returns {Array} Column configuration for the table.
  */
-export function buildMembershipColumns({ onApprove, onReject, onView} = {}) {
+export function buildMembershipColumns({ onView} = {}) {
   return [
     {
       key: "nombre",
@@ -29,6 +30,7 @@ export function buildMembershipColumns({ onApprove, onReject, onView} = {}) {
         </span>
       ),
     },
+    
     {
       key: "estado",
       label: "Estado",
@@ -87,6 +89,44 @@ export function buildMembershipColumns({ onApprove, onReject, onView} = {}) {
         return <span className="text-sm text-slate-400">-</span>;
       },
     },
+    {
+        key: "ver",
+        label: "Ver solicitud",
+        className: "w-[20%] text-right",
+        isAction: true,
+        render: (row) => (
+            <button
+            type="button"
+            title="Ver solicitud"
+            onClick={() => onView?.(row)}
+            className="
+                px-4 py-2 
+                rounded-lg 
+                font-medium 
+                text-sm
+                transition-all 
+                duration-200
+                bg-slate-100 
+                text-slate-700 
+                hover:bg-slate-200 
+                hover:shadow-md
+                hover:scale-105
+                shadow-sm
+                focus:outline-none 
+                focus:ring-2 
+                focus:ring-brand/50 
+                focus:ring-offset-1
+                active:scale-95
+            "
+            >
+            <img 
+                src={applicationIcon} 
+                alt="Ver" 
+                className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity" 
+            />
+            </button>
+        ),
+    }
   ];
   
 }

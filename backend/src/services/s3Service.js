@@ -34,10 +34,26 @@ class S3Service {
         { expiresIn: 3600 }
       );
 
-      return url;
+      // Return both the object key (suitable for DB storage) and a signed URL for immediate preview/download
+      return { key, url };
     } catch (error) {
       console.error('Error subiendo archivo a S3:', error);
       throw new Error('Error al subir archivo a S3');
+    }
+  }
+
+  static async getFileUrl(key, expiresIn = 3600) {
+    if (!key) return null;
+    try {
+      const url = await getSignedUrl(
+        s3,
+        new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }),
+        { expiresIn }
+      );
+      return url;
+    } catch (err) {
+      console.error('Error generando signed URL para key:', key, err);
+      return null;
     }
   }
 }

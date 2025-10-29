@@ -8,7 +8,8 @@ import express from 'express';
 import multer from 'multer';
 import {
   createMembershipApplication,
-  getMemberships
+  getMemberships,
+  getMembershipById,
 } from '../controllers/membershipApplication.controller.js';
 
 const router = express.Router();
@@ -30,9 +31,13 @@ const upload = multer({
 
 // Middleware to handle multiple file uploads
 const uploadFields = upload.fields([
+  // Accept both English and Spanish field names for files to remain compatible with clients
   { name: 'degreeDocument', maxCount: 1 },
+  { name: 'titulo', maxCount: 1 },
   { name: 'professionalId', maxCount: 1 },
+  { name: 'cedula', maxCount: 1 },
   { name: 'certificates', maxCount: 1 },
+  { name: 'constancias', maxCount: 1 },
   { name: 'extraDoc1', maxCount: 1 },
   { name: 'extraDoc2', maxCount: 1 },
   { name: 'extraDoc3', maxCount: 1 },
@@ -56,13 +61,17 @@ router.post('/', uploadFields, createMembershipApplication);
 //router.get('/', requireAuth, getMemberships);
 router.get('/', getMemberships);
 
+// Detail endpoint for a single membership application
+router.get('/:id', getMembershipById);
+
+
 /**
  * @route POST /api/membresias/{id}/aprobar
  * @description Approve the membership application
  * @access Private
  */
 //router.get('/', requireAuth, approveMemberships);
-router.get('/', approveMemberships);
+//router.get('/', approveMemberships);
 
 
 export default router;

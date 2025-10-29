@@ -7,9 +7,10 @@
  * - Data validation and storage
  * - Email notifications to administrators
  * - Duplicate entry detection
+ * - Show membership application details by ID
  */
 
-import MembershipApplication, { getMembershipApplications, approveMembershipApplications } from '../models/membershipApplication.model.js';
+import MembershipApplication, { getMembershipApplications, approveMembershipApplications, getMembershipApplicationById } from '../models/membershipApplication.model.js';
 import { sendEmail } from '../services/emailServices.js';
 import S3Service from '../services/s3Service.js';
 
@@ -24,17 +25,17 @@ export const createMembershipApplication = async (req, res) => {
   try {
   
     // Save documents in S3
-    const professionalIdUrl = req.files?.professionalId?.[0]
-      ? await S3Service.uploadFile(req.files.professionalId[0], 'cedulas')
-      : null;
+  const professionalFile = req.files?.cedula?.[0] || req.files?.professionalId?.[0] || null;
+  const professionalUpload = professionalFile ? await S3Service.uploadFile(professionalFile, 'cedulas') : null;
+  const professionalKey = professionalUpload?.key || null;
 
-    const degreeDocumentUrl = req.files?.degreeDocument?.[0]
-      ? await S3Service.uploadFile(req.files.degreeDocument[0], 'titulos')
-      : null;
+  const degreeFile = req.files?.titulo?.[0] || req.files?.degreeDocument?.[0] || null;
+  const degreeUpload = degreeFile ? await S3Service.uploadFile(degreeFile, 'titulos') : null;
+  const degreeKey = degreeUpload?.key || null;
 
-    const certificatesUrl = req.files?.certificates?.[0]
-      ? await S3Service.uploadFile(req.files.certificates[0], 'constancias')
-      : null;
+  const certificatesFile = req.files?.constancias?.[0] || req.files?.certificates?.[0] || null;
+  const certificatesUpload = certificatesFile ? await S3Service.uploadFile(certificatesFile, 'constancias') : null;
+  const certificatesKey = certificatesUpload?.key || null;
 
     // If there is an extra document
     const extraDocs = [];
@@ -44,37 +45,45 @@ export const createMembershipApplication = async (req, res) => {
       }
     });
 
-    const extraDocsUrls = await Promise.all(
+    const extraUploads = await Promise.all(
       extraDocs.map(file => S3Service.uploadFile(file, 'documentos-extra'))
     );
+      const extraKeys = extraUploads.map(u => u?.key || null).filter(Boolean);
+      const nombres = (req.body.nombres || req.body.nombre || '').toString().trim();
+      const apellidoP = (req.body.apellidoP || req.body.apellidoPaterno || '').toString().trim();
+      const apellidoM = (req.body.apellidoM || req.body.apellidoMaterno || '').toString().trim() || null;
+      const telefonoWhatsapp = (req.body.telefonoWhatsapp || '').toString().trim() || null;
+      const correo = (req.body.correo || '').toString().trim();
+      const fechaNacimiento = (req.body.fechaNacimiento || '').toString().trim() || null;
 
-    const applicationData = {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      middleName: req.body.middleName,
-      homePhone: req.body.homePhone,
-      whatsappPhone: req.body.whatsappPhone,
-      email: req.body.email,
-      country: req.body.country,
-      state: req.body.state,
-      city: req.body.city,
-      neighborhood: req.body.neighborhood,
-      postalCode: req.body.postalCode,
-      street: req.body.street,                    
-      exteriorNumber: req.body.exteriorNumber,  
-      interiorNumber: req.body.interiorNumber,
-      degree: req.body.degree,
-      instagram: req.body.instagram,
-      linkedin: req.body.linkedin,
-      facebook: req.body.facebook,
-      website: req.body.website,
-      documents: {
-        degreeDocument: degreeDocumentUrl,
-        professionalId: professionalIdUrl,
-        certificates: certificatesUrl,
-        extra: extraDocsUrls
-      }
-    };
+      const applicationData = {
+        nombres,
+        apellidoP,
+        apellidoM,
+        telefonoCasa: req.body.telefonoCasa || null,
+        telefonoWhatsapp,
+        correo,
+        pais: req.body.pais || null,
+        estado: req.body.estado || null,
+        ciudad: req.body.ciudad || null,
+        colonia: req.body.colonia || null,
+        codigoPostal: req.body.codigoPostal || null,
+        calle: req.body.calle || null,
+        numExterior: req.body.numExterior || null,
+        numInterior: req.body.numInterior || null,
+        licenciatura: req.body.licenciatura || null,
+        instagram: req.body.instagram || null,
+        linkedin: req.body.linkedin || null,
+        facebook: req.body.facebook || null,
+        paginaWeb: req.body.paginaWeb || null,
+        fechaNacimiento,
+        documents: {
+          titulo: degreeKey,
+          identificacionProfesional: professionalKey,
+          constancias: certificatesKey,
+          extra: extraKeys
+        }
+      };
 
     // Send data to archive model
     const application = new MembershipApplication(applicationData);
@@ -88,11 +97,11 @@ export const createMembershipApplication = async (req, res) => {
           to: email,
           subject: "Nueva solicitud de membresía pendiente",
           html: `
-            <h1>¡Atención!</h1>
-            <p>Se ha registrado una nueva solicitud de membresía.</p>
-            <p><strong>Nombre:</strong> ${req.body.firstName} ${req.body.lastName} ${req.body.middleName}</p>
-            <p><strong>Email:</strong> ${req.body.email}</p>
-          `
+              <h1>¡Atención!</h1>
+              <p>Se ha registrado una nueva solicitud de membresía.</p>
+              <p><strong>Nombre:</strong> ${req.body.nombres || req.body.firstName || ''} ${req.body.apellidoP || req.body.lastName || ''} ${req.body.apellidoM || req.body.middleName || ''}</p>
+              <p><strong>Email:</strong> ${req.body.correo || req.body.email || ''}</p>
+            `
         });
       } catch (err) {
         console.error(`Error sending email to ${email}:`, err.message);
@@ -103,7 +112,7 @@ export const createMembershipApplication = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Solicitud creada, recibirá un correo o mensaje por WhatsApp por parte de SOMEFIPP',
-      data: { IDUsuario: application.id }
+      data: { IDUsuario: application.id, IDMembresia: application.IDMembresia || null }
     });
 
   } catch (error) {
@@ -171,5 +180,23 @@ export const approveMemberships = async (req, res) => {
       error: "Error interno del servidor",
       message: error.message
     });
+  }
+};
+
+
+/**
+ * Get membership application detail by id
+ */
+export const getMembershipById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const detail = await getMembershipApplicationById(id);
+    if (!detail) {
+      return res.status(404).json({ success: false, message: 'Solicitud no encontrada' });
+    }
+    res.json({ success: true, data: detail });
+  } catch (error) {
+    console.error('Error en getMembershipById:', error);
+    res.status(500).json({ success: false, message: 'Error interno del servidor', error: error.message });
   }
 };
