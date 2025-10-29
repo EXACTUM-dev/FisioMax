@@ -337,4 +337,41 @@ export const approveMembershipApplicationById = async (id) => {
   }
 };
 
+/**
+ * Deny a membership application with reason
+ * @param {number} id - Membership I
+ * @returns {Promise} Query's answer
+ */
+export async function denyMembershipApplication(id = null) {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    
+    const query = `
+      UPDATE Membresia 
+      SET aceptado = 0
+      WHERE IDMembresia = ? 
+        AND deletedAt IS NULL
+    `;
+    
+    const [result] = await conn.execute(query, [id]);
+    
+    // If there is any change
+    if (!result || result.affectedRows === 0) {
+      await conn.rollback();
+      return null;
+    }
+    
+    await conn.commit();
+    return result;
+    
+  } catch (error) {
+    await conn.rollback();
+    console.error('Error en denyMembershipApplication:', error);
+    throw error;
+  } finally {
+    conn.release();
+  }
+}
+
 export default MembershipApplication;

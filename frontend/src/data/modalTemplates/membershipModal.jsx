@@ -1,7 +1,7 @@
 /** 
  * @fileoverview Modal for viewing membership application requests with attached documents.
  * @author EXACTUM-dev
- * @version 1.2.2
+ * @version 1.3.1
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -12,16 +12,11 @@ import { Title2 } from "../../atoms/typography";
 import FieldBox from "../../molecules/form";
 import DataTable from "../../organisms/dataTable";
 import Modal from "../../molecules/modal";
-import ConfirmationModal from "../../molecules/confirmationModal";
 import RejectModal from "../../data/modalTemplates/rejectMembershipModal";
 import pdfIcon from "../../assets/icons/pdf.png";
 import { useAuth } from '@clerk/clerk-react';
 import { fetchWithClerk } from '../../utils/api';
 
-/** 
- * Configure the PDF.js worker to handle PDF rendering in a separate thread.
- * The worker file path is resolved dynamically to avoid bundling issues.
- */
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url
@@ -35,37 +30,27 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
  * @param {Array} props.tableData - Optional custom data for the documents table.
  * @param {Object} props.solicitud - Contains applicant information and documents.
  * @param {Function} props.onClose - Function to close the modal.
+ * @param {Function} props.onStatusChange - Callback when status changes (optional).
  * @returns {JSX.Element} The modal content for viewing a membership request.
  */
 function MembershipModalContent({
   open,
   title = "Solicitud de",
   tableData: tableDataProp = [],
-  solicitud = {
-    nombre: "Juan Pérez",
-    correo: "juan@example.com",
-    telefono: "5551234567",
-    facebook: "juan.p",
-    instagram: "juanp",
-    linkedin: "juan-perez",
-    paginaWeb: "https://juanperez.com",
-    ubicacion: "Ciudad de México",
-    licenciatura: "Ingeniería en Sistemas",
-    documentos: [
-      { id: 1, label: "Solicitud de membresía", url: "/doc1.pdf", checked: false },
-      { id: 2, label: "Identificación oficial", url: "/doc2.pdf", checked: true },
-      { id: 3, label: "Carta de recomendación", url: "/doc3.pdf", checked: false },
-      { id: 4, label: "Comprobante de domicilio", url: "/doc4.pdf", checked: true },
-    ],
-  },
+  solicitud = {},
   onClose,
+  onStatusChange,
 }) {
   // State variables for managing modal visibility
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showAcceptedModal, setShowAcceptedModal] = useState(false);
+  const [showRejectedModal, setShowRejectedModal] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const { getToken } = useAuth();
 
   // Opens the PDF preview modal with the selected document.
   const openPdfModal = (url) => {
@@ -109,8 +94,10 @@ function MembershipModalContent({
   // Destructure applicant data for easier access
   const {
     nombre,
+    nombreCompleto,
     correo,
     telefono,
+    telefonoWhatsapp,
     facebook,
     instagram,
     linkedin,
@@ -120,28 +107,105 @@ function MembershipModalContent({
     documentos = [],
   } = solicitud;
 
-  const { getToken } = useAuth();
+  // Get the membership ID from various possible fields
+  const getMembershipId = () => {
+    return solicitud?.IDMembresia || 
+           solicitud?.id || 
+           solicitud?.ID || 
+           solicitud?.__raw?.IDMembresia;
+  };
 
   // Handle confirm acceptance and call backend to approve membership
   const handleConfirmApprove = async () => {
     setShowConfirmModal(false);
+    setIsProcessing(true);
+    
     try {
       const token = await getToken();
-      const id = solicitud?.IDMembresia || solicitud?.id || solicitud?.ID || solicitud?.IDMembresia;
-      if (!id) throw new Error('ID de solicitud no disponible');
-      await fetchWithClerk(`/api/membresias/${id}/aprobar`, { method: 'POST' }, token);
-      // Show accepted modal to inform admin the positive status for the application
-      setShowAcceptedModal(true);
+      const id = getMembershipId();
+      
+      if (!id) {
+        throw new Error('ID de solicitud no disponible');
+      }
+
+      const response = await fetchWithClerk(
+        `/api/membresias/${id}/aprobar`, 
+        { method: 'POST' }, 
+        token
+      );
+
+      if (response?.success) {
+        // Notify parent component of status change
+        if (typeof onStatusChange === 'function') {
+          onStatusChange(id, 'Aprobado');
+        }
+        
+        // Show accepted modal
+        setShowAcceptedModal(true);
+      } else {
+        throw new Error(response?.message || 'Error al aprobar solicitud');
+      }
     } catch (err) {
       console.error('Error aprobando solicitud:', err);
-      window.alert('No se pudo aprobar la solicitud. Revise la consola para más detalles.');
+      window.alert(`No se pudo aprobar la solicitud: ${err.message}`);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  //Determine which data to use for the table: custom or from `solicitud`.
+  // Handle confirm rejection with reason
+  const handleConfirmReject = async (reason) => {
+    setShowRejectModal(false);
+    setIsProcessing(true);
+    
+    try {
+      const token = await getToken();
+      const id = getMembershipId();
+      
+      if (!id) {
+        throw new Error('ID de solicitud no disponible');
+      }
+
+      // Send rejection reason in request body
+      const response = await fetchWithClerk(
+        `/api/membresias/${id}/rechazar`, 
+        { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            razonRechazo: reason || 'Sin razón especificada' 
+          })
+        }, 
+        token
+      );
+
+      if (response?.success) {
+        // Notify parent component of status change
+        if (typeof onStatusChange === 'function') {
+          onStatusChange(id, 'Rechazado');
+        }
+        
+        // Show rejected confirmation modal
+        setShowRejectedModal(true);
+      } else {
+        throw new Error(response?.message || 'Error al rechazar solicitud');
+      }
+    } catch (err) {
+      console.error('Error rechazando solicitud:', err);
+      window.alert(`No se pudo rechazar la solicitud: ${err.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Determine which data to use for the table
   const tableData = tableDataProp.length > 0 ? tableDataProp : documentos;
 
-  // Automatically focuses on the first input when the modal opens.
+  // Display name with fallback
+  const displayName = nombreCompleto || nombre || solicitud.nombre || 'Usuario';
+
   useEffect(() => {
     if (open && inputRef.current) {
       setTimeout(() => inputRef.current?.focus?.(), 100);
@@ -162,16 +226,46 @@ function MembershipModalContent({
           {/* Left column - Applicant form */}
           <div className="flex-2 flex flex-col gap-2">
             <Title2 className="text-center mb-1">{title}</Title2>
-            <p className="text-lg font-semibold text-center mb-4">{nombre}</p>
+            <p className="text-lg font-semibold text-center mb-4">{displayName}</p>
 
             {/* Applicant contact and social info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FieldBox label="Correo" value={correo || "No se envió"} readOnly onChange={setData} />
-              <FieldBox label="Teléfono" value={telefono || "No se envió"} readOnly onChange={setData} />
-              <FieldBox label="Facebook" value={facebook || "No se envió"} readOnly onChange={setData} />
-              <FieldBox label="Instagram" value={instagram || "No se envió"} readOnly onChange={setData} />
-              <FieldBox label="LinkedIn" value={linkedin || "No se envió"} readOnly onChange={setData} />
-              <FieldBox label="Página web" value={paginaWeb || "No se envió"} readOnly onChange={setData} />
+              <FieldBox 
+                label="Correo" 
+                value={correo || "No se envió"} 
+                readOnly 
+                onChange={setData} 
+              />
+              <FieldBox 
+                label="Teléfono" 
+                value={telefonoWhatsapp || telefono || "No se envió"} 
+                readOnly 
+                onChange={setData} 
+              />
+              <FieldBox 
+                label="Facebook" 
+                value={facebook || "No se envió"} 
+                readOnly 
+                onChange={setData} 
+              />
+              <FieldBox 
+                label="Instagram" 
+                value={instagram || "No se envió"} 
+                readOnly 
+                onChange={setData} 
+              />
+              <FieldBox 
+                label="LinkedIn" 
+                value={linkedin || "No se envió"} 
+                readOnly 
+                onChange={setData} 
+              />
+              <FieldBox 
+                label="Página web" 
+                value={paginaWeb || "No se envió"} 
+                readOnly 
+                onChange={setData} 
+              />
             </div>
 
             {/* Academic and location info */}
@@ -184,7 +278,12 @@ function MembershipModalContent({
                 readOnly
                 onChange={setData}
               />
-              <FieldBox label="Licenciatura" value={licenciatura || "No se envió"} readOnly onChange={setData} />
+              <FieldBox 
+                label="Licenciatura" 
+                value={licenciatura || "No se envió"} 
+                readOnly 
+                onChange={setData} 
+              />
             </div>
           </div>
 
@@ -202,7 +301,9 @@ function MembershipModalContent({
                     headAlign: "left",
                     align: "left",
                     render: (row) => (
-                      <span className="text-sm sm:text-base break-words">{row.label}</span>
+                      <span className="text-sm sm:text-base break-words">
+                        {row.label}
+                      </span>
                     ),
                   },
                   {
@@ -232,9 +333,8 @@ function MembershipModalContent({
                             className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
                           />
                         </button>
-
                         {/* Download / open in new tab — use signed URL if available */}
-                        {row.url ? null : (
+                        {!row.url && (
                           <span className="text-xs text-slate-400">Sin archivo</span>
                         )}
                       </div>
@@ -253,8 +353,18 @@ function MembershipModalContent({
 
         {/* Action buttons */}
         <div className="flex justify-end gap-3 mt-6">
-          <Button label="Rechazar" variant="cancel" onClick={() => setShowRejectModal(true)} />
-          <Button label="Aceptar" variant="brand" onClick={() => setShowConfirmModal(true)} />
+          <Button 
+            label="Rechazar" 
+            variant="cancel" 
+            onClick={() => setShowRejectModal(true)}
+            disabled={isProcessing}
+          />
+          <Button 
+            label="Aceptar" 
+            variant="brand" 
+            onClick={() => setShowConfirmModal(true)}
+            disabled={isProcessing}
+          />
         </div>
       </Modal>
 
@@ -267,16 +377,29 @@ function MembershipModalContent({
               <Page pageNumber={1} width={600} />
             </Document>
           )}
-          <Button label="Cerrar" variant="cancel" onClick={closePdfModal} className="mt-4" />
+          <Button 
+            label="Cerrar" 
+            variant="cancel" 
+            onClick={closePdfModal} 
+            className="mt-4" 
+          />
         </div>
       </Modal>
 
-      {/* Confirmation modal */}
-      <Modal open={showConfirmModal} onClose={() => setShowConfirmModal(false)} size="md">
+      {/* Confirmation modal for APPROVAL */}
+      <Modal 
+        open={showConfirmModal} 
+        onClose={() => setShowConfirmModal(false)} 
+        size="md"
+      >
         <div className="p-6 text-center">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-4">Última confirmación</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">
+            Última confirmación
+          </h2>
           <p className="text-slate-700 mb-6 leading-relaxed">
-            Al darle Confirmar, se aceptará a <strong>{`${nombre || solicitud.nombre || ''}`}</strong> y podrá acceder a todos los beneficios de la membresía <strong>{solicitud?.tipo || solicitud?.membershipType || ''}</strong>.
+            Al darle Confirmar, se aceptará a <strong>{displayName}</strong> y 
+            podrá acceder a todos los beneficios de la membresía{' '}
+            <strong>{solicitud?.tipo || 'estándar'}</strong>.
           </p>
           <div className="flex justify-center gap-4">
             <Button
@@ -285,37 +408,129 @@ function MembershipModalContent({
               onClick={() => setShowConfirmModal(false)}
               radius="xl"
               className="min-w-[140px] border-2 border-[#d6d900] text-[#8a7e00] hover:bg-yellow-50"
+              disabled={isProcessing}
             />
             <Button
-              label="Confirmar"
+              label={isProcessing ? "Procesando..." : "Confirmar"}
               variant="brand"
               onClick={handleConfirmApprove}
               radius="xl"
               className="min-w-[140px] bg-[#d6d900] hover:bg-[#c6c600] text-black font-semibold"
+              disabled={isProcessing}
             />
           </div>
         </div>
       </Modal>
 
+      {/* Reject confirmation modal with reason */}
       <RejectModal
         open={showRejectModal}
-        onConfirm={() => setShowRejectModal(false)}
+        onConfirm={handleConfirmReject}
         onCancel={() => setShowRejectModal(false)}
+        title="Rechazar solicitud de membresía"
+        subtitle={`Está a punto de rechazar la solicitud de ${displayName}. Por favor proporcione el motivo.`}
       />
 
       {/* Accepted confirmation modal shown after successful approve */}
-      <Modal open={showAcceptedModal} onClose={() => { setShowAcceptedModal(false); if (typeof onClose === 'function') onClose(); }} size="md">
+      <Modal 
+        open={showAcceptedModal} 
+        onClose={() => { 
+          setShowAcceptedModal(false); 
+          if (typeof onClose === 'function') onClose(); 
+        }} 
+        size="md"
+      >
         <div className="flex flex-col items-center p-6">
-          {/* green check */}
           <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-12 h-12 text-green-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="#16a34a" strokeWidth="1.5" fill="white" />
-              <path d="M7 12l3 3 7-7" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <svg 
+              className="w-12 h-12 text-green-600" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle 
+                cx="12" 
+                cy="12" 
+                r="10" 
+                stroke="#16a34a" 
+                strokeWidth="1.5" 
+                fill="white" 
+              />
+              <path 
+                d="M7 12l3 3 7-7" 
+                stroke="#16a34a" 
+                strokeWidth="1.8" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+              />
             </svg>
           </div>
-          <h3 className="text-2xl font-bold mb-4 text-center">El miembro {nombre || solicitud.nombre || ''} ha sido aceptado en la sociedad</h3>
+          <h3 className="text-2xl font-bold mb-4 text-center">
+            El miembro {displayName} ha sido aceptado en la sociedad
+          </h3>
           <div>
-            <Button label="Entendido" variant="brand" onClick={() => { setShowAcceptedModal(false); if (typeof onClose === 'function') onClose(); }} className="px-8 py-3 bg-[#d6d900] text-black font-semibold" />
+            <Button 
+              label="Entendido" 
+              variant="brand" 
+              onClick={() => { 
+                setShowAcceptedModal(false); 
+                if (typeof onClose === 'function') onClose(); 
+              }} 
+              className="px-8 py-3 bg-[#d6d900] text-black font-semibold" 
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Rejected confirmation modal */}
+      <Modal 
+        open={showRejectedModal} 
+        onClose={() => { 
+          setShowRejectedModal(false); 
+          if (typeof onClose === 'function') onClose(); 
+        }} 
+        size="md"
+      >
+        <div className="flex flex-col items-center p-6">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4">
+            <svg 
+              className="w-12 h-12 text-red-600" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle 
+                cx="12" 
+                cy="12" 
+                r="10" 
+                stroke="#dc2626" 
+                strokeWidth="1.5" 
+                fill="white" 
+              />
+              <path 
+                d="M8 8l8 8M16 8l-8 8" 
+                stroke="#dc2626" 
+                strokeWidth="1.8" 
+                strokeLinecap="round" 
+              />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold mb-4 text-center text-slate-900">
+            La solicitud de {displayName} ha sido rechazada
+          </h3>
+          <p className="text-slate-600 mb-6 text-center">
+            El aplicante ha sido notificado de la decisión.
+          </p>
+          <div>
+            <Button 
+              label="Entendido" 
+              variant="brand" 
+              onClick={() => { 
+                setShowRejectedModal(false); 
+                if (typeof onClose === 'function') onClose(); 
+              }} 
+              className="px-8 py-3 bg-slate-600 hover:bg-slate-700 text-white font-semibold" 
+            />
           </div>
         </div>
       </Modal>
@@ -325,9 +540,6 @@ function MembershipModalContent({
 
 /**
  * Wrapper component for conditional rendering of the membership modal.
- * Prevents unnecessary DOM rendering when the modal is not open.
- * @param {Object} props - MembershipModalContent props.
- * @returns {JSX.Element|null} Returns null if modal is not open.
  */
 export default function MembershipModal(props) {
   if (!props.open) return null;

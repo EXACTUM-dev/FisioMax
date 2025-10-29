@@ -1,7 +1,7 @@
 /**
  * @fileoverview Controller to handle membership application requests.
  * @author EXACTUM-dev
- * @version 1.2.2
+ * @version 1.2.3
  * @description Handles the creation of membership applications including:
  * - File uploads to S3 (cedula, titulo, constancias, extra documents)
  * - Data validation and storage
@@ -11,7 +11,13 @@
  * - Approve membership applications
  */
 
-import MembershipApplication, { getMembershipApplications, approveMembershipApplications, getMembershipApplicationById, approveMembershipApplicationById } from '../models/membershipApplication.model.js';
+import MembershipApplication, {
+  getMembershipApplications, 
+  approveMembershipApplications, 
+  getMembershipApplicationById, 
+  approveMembershipApplicationById,
+  denyMembershipApplication 
+} from '../models/membershipApplication.model.js';
 import { sendEmail } from '../services/emailServices.js';
 import S3Service from '../services/s3Service.js';
 
@@ -218,3 +224,39 @@ export const approveMembership = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error interno del servidor', error: err.message });
   }
 };
+
+/**
+ * Deny a membership application
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function denyMembership(req, res) {
+  const { id } = req.params;
+  const { razonRechazo } = req.body;
+
+  try {
+    // Update the application in the database with reason
+    const result = await denyMembershipApplication(id, razonRechazo);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Solicitud de membresía no encontrada' 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true,
+      message: 'Solicitud rechazada exitosamente',
+      id: id
+    });
+
+  } catch (error) {
+    console.error('Error al rechazar solicitud:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error interno del servidor al rechazar la solicitud',
+      message: error.message
+    });
+  }
+}

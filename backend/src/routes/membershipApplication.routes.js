@@ -11,6 +11,7 @@ import {
   getMemberships,
   getMembershipById,
   approveMembership,
+  denyMembership,
 } from '../controllers/membershipApplication.controller.js';
 
 const router = express.Router();
@@ -72,6 +73,13 @@ router.get('/:id', getMembershipById);
  * @access Private
  */
 router.post('/:id/aprobar', approveMembership);
+
+/**
+ * @route POST /api/membresias/{id}/rechazar
+ * @description Deny the membership application
+ * @access Private
+ */
+router.post('/:id/rechazar', denyMembership);
 
 
 export default router;
