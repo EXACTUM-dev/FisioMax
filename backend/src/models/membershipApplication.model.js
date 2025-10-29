@@ -1,6 +1,6 @@
 /**
  * @fileoverview Model to handle the membership information and modify the database
- * @version 2.1.0
+ * @version 2.2.0
  * @description Includes the creation of the application,
  * save documents in S3 and insert new documents if it's necessary
  * Bring the membership applications from de DB
@@ -197,15 +197,19 @@ export const getMembershipApplicationById = async (id) => {
 
     // Build documentos array including main document fields if present
     const documentos = [];
-    if (row.cedula) {
+
+    // Only attempt to generate signed URLs for real S3 keys.
+    const isPlaceholder = (k) => !k || String(k).startsWith('__missing_');
+
+    if (row.cedula && !isPlaceholder(row.cedula)) {
       const cedulaUrl = await S3Service.getFileUrl(row.cedula);
       documentos.push({ id: 'cedula', label: 'Cédula profesional', url: cedulaUrl, key: row.cedula });
     }
-    if (row.titulo) {
+    if (row.titulo && !isPlaceholder(row.titulo)) {
       const tituloUrl = await S3Service.getFileUrl(row.titulo);
       documentos.push({ id: 'titulo', label: 'Título', url: tituloUrl, key: row.titulo });
     }
-    if (row.constancias) {
+    if (row.constancias && !isPlaceholder(row.constancias)) {
       const constanciasUrl = await S3Service.getFileUrl(row.constancias);
       documentos.push({ id: 'constancias', label: 'Constancias', url: constanciasUrl, key: row.constancias });
     }
@@ -214,9 +218,9 @@ export const getMembershipApplicationById = async (id) => {
     for (const d of additionalDocs || []) {
       const docId = d.IDDocumentoAdicional || d.IDDocumento || d.id || d.ID || null;
       const label = d.nombreArchivo || d.nombre || d.nombre_archivo || 'Documento adicional';
-      const fileKey = d.urlArchivo || d.url || d.url_archivo || null; // stored as S3 key
-      const url = fileKey ? await S3Service.getFileUrl(fileKey) : null;
-      documentos.push({ id: docId, label, url, key: fileKey });
+  const fileKey = d.urlArchivo || d.url || d.url_archivo || null; // stored as S3 key
+  const url = fileKey && !isPlaceholder(fileKey) ? await S3Service.getFileUrl(fileKey) : null;
+  documentos.push({ id: docId, label, url, key: fileKey });
     }
 
     // Map address / contact fields into a friendly shape

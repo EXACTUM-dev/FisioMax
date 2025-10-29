@@ -1,7 +1,7 @@
 /** 
  * @fileoverview Modal for viewing membership application requests with attached documents.
  * @author EXACTUM-dev
- * @version 1.1.2
+ * @version 1.2.2
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -74,6 +74,30 @@ function MembershipModalContent({
   const closePdfModal = () => {
     setPdfModalOpen(false);
     setPdfUrl(null);
+  };
+
+  // Download a file via fetch and trigger browser download.
+  const downloadDocument = async (url, key) => {
+    if (!url) return;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const filename = key ? key.split('/').pop() : 'document.pdf';
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // release object URL after a short timeout
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000 * 10);
+    } catch (err) {
+      console.error('Error descargando documento:', err);
+      // open in new tab
+      window.open(url, '_blank', 'noopener');
+    }
   };
 
   // Reference for focusing on a specific input when modal opens.
@@ -166,18 +190,33 @@ function MembershipModalContent({
                     className: "max-w-[20%] text-right",
                     isAction: true,
                     render: (row) => (
-                      <button
-                        type="button"
-                        title="Ver pdf"
-                        onClick={() => openPdfModal(row.url)}
-                        className="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-md hover:scale-105 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-1 active:scale-95"
-                      >
-                        <img
-                          src={pdfIcon}
-                          alt="Ver PDF"
-                          className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
-                        />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {/* View PDF in modal (preview) */}
+                        <button
+                          type="button"
+                          title={row.url ? "Descargar PDF" : "Sin archivo"}
+                          onClick={() => row.url && downloadDocument(row.url, row.key)}
+                          disabled={!row.url}
+                          className={
+                            "px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 " +
+                            (row.url
+                              ? "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-md hover:scale-105"
+                              : "bg-slate-50 text-slate-300 cursor-not-allowed") +
+                            " shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-1 active:scale-95"
+                          }
+                        >
+                          <img
+                            src={pdfIcon}
+                            alt={row.url ? "Descargar PDF" : "Sin archivo"}
+                            className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
+                          />
+                        </button>
+
+                        {/* Download / open in new tab — use signed URL if available */}
+                        {row.url ? null : (
+                          <span className="text-xs text-slate-400">Sin archivo</span>
+                        )}
+                      </div>
                     ),
                   },
                 ]}
