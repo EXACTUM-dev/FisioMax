@@ -1,7 +1,7 @@
 /**
  * @fileoverview Router with endpoints for membership application managment.
  * @author EXACTUM-dev
- * @version 1.2.1
+ * @version 1.2.2
  * @description Defines endpoint to retrive membership applications
  */
 import express from 'express';
@@ -10,6 +10,7 @@ import {
   createMembershipApplication,
   getMemberships,
   getMembershipById,
+  approveMembership,
 } from '../controllers/membershipApplication.controller.js';
 
 const router = express.Router();
@@ -70,8 +71,7 @@ router.get('/:id', getMembershipById);
  * @description Approve the membership application
  * @access Private
  */
-//router.get('/', requireAuth, approveMemberships);
-//router.get('/', approveMemberships);
+router.post('/:id/aprobar', approveMembership);
 
 
 export default router;

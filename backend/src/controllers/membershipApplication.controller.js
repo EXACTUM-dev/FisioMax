@@ -1,16 +1,17 @@
 /**
  * @fileoverview Controller to handle membership application requests.
  * @author EXACTUM-dev
- * @version 1.2.1
+ * @version 1.2.2
  * @description Handles the creation of membership applications including:
  * - File uploads to S3 (cedula, titulo, constancias, extra documents)
  * - Data validation and storage
  * - Email notifications to administrators
  * - Duplicate entry detection
  * - Show membership application details by ID
+ * - Approve membership applications
  */
 
-import MembershipApplication, { getMembershipApplications, approveMembershipApplications, getMembershipApplicationById } from '../models/membershipApplication.model.js';
+import MembershipApplication, { getMembershipApplications, approveMembershipApplications, getMembershipApplicationById, approveMembershipApplicationById } from '../models/membershipApplication.model.js';
 import { sendEmail } from '../services/emailServices.js';
 import S3Service from '../services/s3Service.js';
 
@@ -166,12 +167,8 @@ export const getMemberships = async (req, res) => {
  */
 export const approveMemberships = async (req, res) => {
   try {
-    
-    const approveApplication = await approveMembershipApplications(id);
-    res.json({
-      success: true,
-      data: approveApplication,
-    });
+    const rows = await approveMembershipApplications();
+    res.json({ success: true, data: rows });
     
   } catch (error) {
     console.error("Error en getMemberships:", error);
@@ -186,6 +183,8 @@ export const approveMemberships = async (req, res) => {
 
 /**
  * Get membership application detail by id
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
  */
 export const getMembershipById = async (req, res) => {
   try {
@@ -198,5 +197,24 @@ export const getMembershipById = async (req, res) => {
   } catch (error) {
     console.error('Error en getMembershipById:', error);
     res.status(500).json({ success: false, message: 'Error interno del servidor', error: error.message });
+  }
+};
+
+/**
+ * Approve a specific membership application
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
+export const approveMembership = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await approveMembershipApplicationById(id);
+    if (!updated) return res.status(404).json({ success: false, message: 'Solicitud no encontrada o no se pudo actualizar' });
+
+    return res.json({ success: true, message: 'Solicitud aprobada', data: updated });
+  } catch (err) {
+    console.error('Error aprobando solicitud:', err);
+    return res.status(500).json({ success: false, message: 'Error interno del servidor', error: err.message });
   }
 };

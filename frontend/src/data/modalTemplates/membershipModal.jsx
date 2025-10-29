@@ -15,6 +15,8 @@ import Modal from "../../molecules/modal";
 import ConfirmationModal from "../../molecules/confirmationModal";
 import RejectModal from "../../data/modalTemplates/rejectMembershipModal";
 import pdfIcon from "../../assets/icons/pdf.png";
+import { useAuth } from '@clerk/clerk-react';
+import { fetchWithClerk } from '../../utils/api';
 
 /** 
  * Configure the PDF.js worker to handle PDF rendering in a separate thread.
@@ -61,6 +63,7 @@ function MembershipModalContent({
   // State variables for managing modal visibility
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showAcceptedModal, setShowAcceptedModal] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
 
@@ -116,6 +119,24 @@ function MembershipModalContent({
     licenciatura,
     documentos = [],
   } = solicitud;
+
+  const { getToken } = useAuth();
+
+  // Handle confirm acceptance and call backend to approve membership
+  const handleConfirmApprove = async () => {
+    setShowConfirmModal(false);
+    try {
+      const token = await getToken();
+      const id = solicitud?.IDMembresia || solicitud?.id || solicitud?.ID || solicitud?.IDMembresia;
+      if (!id) throw new Error('ID de solicitud no disponible');
+      await fetchWithClerk(`/api/membresias/${id}/aprobar`, { method: 'POST' }, token);
+      // Show accepted modal to inform admin the positive status for the application
+      setShowAcceptedModal(true);
+    } catch (err) {
+      console.error('Error aprobando solicitud:', err);
+      window.alert('No se pudo aprobar la solicitud. Revise la consola para más detalles.');
+    }
+  };
 
   //Determine which data to use for the table: custom or from `solicitud`.
   const tableData = tableDataProp.length > 0 ? tableDataProp : documentos;
@@ -250,21 +271,54 @@ function MembershipModalContent({
         </div>
       </Modal>
 
-      {/* Confirmation and rejection modals */}
-      <ConfirmationModal
-        open={showConfirmModal}
-        title="Última confirmación"
-        message="Al darle Confirmar, se enviará un correo informando al solicitante del estado de su solicitud así como el motivo de rechazo. Recibirás una copia de dicho correo en tu correo registrado en esta cuenta."
-        confirmLabel="Confirmar"
-        cancelLabel="Cancelar"
-        onConfirm={() => setShowConfirmModal(false)}
-        onCancel={() => setShowConfirmModal(false)}
-      />
+      {/* Confirmation modal */}
+      <Modal open={showConfirmModal} onClose={() => setShowConfirmModal(false)} size="md">
+        <div className="p-6 text-center">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">Última confirmación</h2>
+          <p className="text-slate-700 mb-6 leading-relaxed">
+            Al darle Confirmar, se aceptará a <strong>{`${nombre || solicitud.nombre || ''}`}</strong> y podrá acceder a todos los beneficios de la membresía <strong>{solicitud?.tipo || solicitud?.membershipType || ''}</strong>.
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button
+              label="Cancelar"
+              variant="outline"
+              onClick={() => setShowConfirmModal(false)}
+              radius="xl"
+              className="min-w-[140px] border-2 border-[#d6d900] text-[#8a7e00] hover:bg-yellow-50"
+            />
+            <Button
+              label="Confirmar"
+              variant="brand"
+              onClick={handleConfirmApprove}
+              radius="xl"
+              className="min-w-[140px] bg-[#d6d900] hover:bg-[#c6c600] text-black font-semibold"
+            />
+          </div>
+        </div>
+      </Modal>
+
       <RejectModal
         open={showRejectModal}
         onConfirm={() => setShowRejectModal(false)}
         onCancel={() => setShowRejectModal(false)}
       />
+
+      {/* Accepted confirmation modal shown after successful approve */}
+      <Modal open={showAcceptedModal} onClose={() => { setShowAcceptedModal(false); if (typeof onClose === 'function') onClose(); }} size="md">
+        <div className="flex flex-col items-center p-6">
+          {/* green check */}
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-12 h-12 text-green-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="#16a34a" strokeWidth="1.5" fill="white" />
+              <path d="M7 12l3 3 7-7" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold mb-4 text-center">El miembro {nombre || solicitud.nombre || ''} ha sido aceptado en la sociedad</h3>
+          <div>
+            <Button label="Entendido" variant="brand" onClick={() => { setShowAcceptedModal(false); if (typeof onClose === 'function') onClose(); }} className="px-8 py-3 bg-[#d6d900] text-black font-semibold" />
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

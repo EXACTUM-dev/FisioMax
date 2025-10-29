@@ -458,6 +458,8 @@ export default function Panel() {
         onClose={() => {
           setMembershipModalOpen(false);
           setSelectedMembership(null);
+          // refresh list after modal closes in case a status changed
+          fetchMemberships();
         }}
         solicitud={selectedMembership}
         onStatusChange={(membershipId, newStatus) => {

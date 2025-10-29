@@ -8,6 +8,7 @@
 import React from "react";
 import Modal from "../molecules/modal";
 import Button from "../atoms/button";
+import CheckIcon from "../atoms/icons/CheckIcon";
 
 /**
  * SuccessErrorModal - Reusable component for displaying success or error messages
@@ -39,24 +40,19 @@ export default function SuccessErrorModal({
     <Modal open={open} onClose={onClose} size={size} position="center">
       <div className="text-center">
         {/* Icon container with conditional rendering based on type */}
-        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
+        <div 
+          className="mx-auto flex items-center justify-center mb-4"
+          style={{ 
+            background: 'transparent',
+            boxShadow: 'none',
+            filter: 'none'
+          }}
+        >
           {type === "success" ? (
-            // Success icon - Checkmark in circle
-            <svg
-              className="h-16 w-16 text-green-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <div style={{ background: 'transparent', boxShadow: 'none', filter: 'none' }}>
+              <CheckIcon className="h-16 w-16" />
+            </div>
           ) : (
-            // Error icon - X mark in circle
             <svg
               className="h-16 w-16 text-red-500"
               fill="none"

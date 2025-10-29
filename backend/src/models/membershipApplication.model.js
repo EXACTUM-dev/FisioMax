@@ -1,6 +1,6 @@
 /**
  * @fileoverview Model to handle the membership information and modify the database
- * @version 2.2.0
+ * @version 2.2.1
  * @description Includes the creation of the application,
  * save documents in S3 and insert new documents if it's necessary
  * Bring the membership applications from de DB
@@ -297,6 +297,40 @@ export const approveMembershipApplications = async () => {
     return rows;
   } catch (error) {
     console.error("Error en getMembershipApplications:", error);
+    throw error;
+  } finally {
+    conn.release();
+  }
+};
+
+/**
+ * Approve a membership application by IDMembresia and return the updated application detail.
+ * @param {number|string} id
+ * @returns {Promise<object|null>}
+ */
+export const approveMembershipApplicationById = async (id) => {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [res] = await conn.execute(
+      `UPDATE Membresia SET aceptado = 1 WHERE IDMembresia = ? AND deletedAt IS NULL`,
+      [id]
+    );
+
+    // If nothing was updated, return null
+    if (!res || res.affectedRows === 0) {
+      await conn.rollback();
+      return null;
+    }
+
+    await conn.commit();
+
+    // Re-use existing getter to return the full mapped detail
+    const detail = await getMembershipApplicationById(id);
+    return detail;
+  } catch (error) {
+    await conn.rollback();
+    console.error('Error approving membership application:', error);
     throw error;
   } finally {
     conn.release();
