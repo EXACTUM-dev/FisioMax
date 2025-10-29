@@ -53,9 +53,16 @@ router.post('/', uploadFields, createMembershipApplication);
  * @description Obtain all the membership application
  * @access Private
  */
-
 //router.get('/', requireAuth, getMemberships);
 router.get('/', getMemberships);
+
+/**
+ * @route POST /api/membresias/{id}/aprobar
+ * @description Approve the membership application
+ * @access Private
+ */
+//router.get('/', requireAuth, approveMemberships);
+router.get('/', approveMemberships);
 
 
 export default router;

@@ -127,4 +127,30 @@ export const getMembershipApplications = async () => {
   }
 };
 
+
+/**
+ * Approve the membership application
+ * @returns {Promise<Array>} Array that contains membership application with their user data
+ */
+export const approveMembershipApplications = async () => {
+  const conn = await db.getConnection();
+  try {
+    const query = `
+      SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, u.IDUsuario, 
+      u.nombres, u.apellidoP, u.correo
+      FROM Membresia m
+      JOIN Usuario u ON m.IDUsuario = u.IDUsuario
+      WHERE m.deletedAt IS NULL AND u.eliminado = 0
+    `;
+
+    const [rows] = await conn.execute(query);
+    return rows;
+  } catch (error) {
+    console.error("Error en getMembershipApplications:", error);
+    throw error;
+  } finally {
+    conn.release();
+  }
+};
+
 export default MembershipApplication;
