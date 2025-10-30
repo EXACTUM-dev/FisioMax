@@ -5,7 +5,7 @@
      * @description Handles user profile retrieval and management
      */
 
-    import { getUsuarioByClerkId, getUserById, getUsuarios } from '../models/users.model.js';
+    import { getUsuarioByClerkId, getUserById, getUsuarios, updateUserById } from '../models/users.model.js';
     import S3Service from '../services/s3Service.js';
 
     /**
@@ -197,5 +197,58 @@
         error: 'Error al obtener el perfil del usuario',
         message: error.message, 
         });
+    }
+    }
+
+    /**
+     * Update an existing user's basic information
+     * Expects fields in req.body (only allowed fields will be updated)
+     */
+    export async function updateUser(req, res) {
+    try {
+        const { userId } = req.params;
+        const updateData = req.body || {};
+
+        if (!userId) {
+        return res.status(400).json({ success: false, error: 'ID de usuario requerido' });
+        }
+
+        const updated = await updateUserById(userId, updateData);
+
+        if (!updated) {
+        return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        }
+
+        // Transform minimal fields for frontend consistency
+        const transformedUser = {
+        nombres: updated.nombres || '',
+        apellidoP: updated.apellidoP || '',
+        apellidoM: updated.apellidoM || '',
+        email: updated.correo || '',
+        telefono: updated.telefono || '',
+        fechaNacimiento: updated.fechaNacimiento || '',
+        licenciatura: updated.licenciatura || '',
+        pais: updated.pais || '',
+        estado: updated.estado || '',
+        ciudad: updated.ciudad || '',
+        calle: updated.calle || '',
+        numExterior: updated.numExterior || '',
+        numInterior: updated.numInterior || '',
+        colonia: updated.colonia || '',
+        codigoPostal: updated.codigoPostal || '',
+        instagram: updated.instagram || '',
+        linkedin: updated.linkedin || '',
+        facebook: updated.facebook || '',
+        paginaWeb: updated.paginaWeb || '',
+        IDUsuario: updated.IDUsuario,
+        IDRol: updated.IDRol || null,
+        rol: updated.rolNombre || null,
+        clerkID: updated.clerkID || null,
+        };
+
+        return res.status(200).json({ success: true, data: transformedUser });
+    } catch (error) {
+        console.error('Error actualizando usuario:', error);
+        return res.status(500).json({ success: false, error: 'Error al actualizar el usuario', message: error.message });
     }
     }

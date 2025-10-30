@@ -248,7 +248,7 @@ export async function getUserByEmail(email) {
  * Update a user's Clerk ID
  * @param {string} userId - The database user ID
  * @param {string} clerkID - The Clerk user ID to associate
- * @returns {Promise<boolean>} True if updated successfully
+ * @returns {Promise<boolean>} True if updated successfullysi 
  */
 export async function updateUserClerkId(userId, clerkID) {
   try {
@@ -263,6 +263,54 @@ export async function updateUserClerkId(userId, clerkID) {
     return result.affectedRows > 0;
   } catch (error) {
     console.error("Error al actualizar clerkID del usuario:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update fields of a user by ID
+ * Only updates the fields provided in updateData
+ * @param {string|number} userId
+ * @param {Object} updateData - allowed keys: nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento, licenciatura, pais, estado, ciudad, calle, numExterior, numInterior, colonia, codigoPostal, instagram, linkedin, facebook, paginaWeb
+ * @returns {Promise<Object|null>} Updated user object or null if not found
+ */
+export async function updateUserById(userId, updateData) {
+  try {
+    if (!userId) {
+      throw new Error('ID de usuario requerido');
+    }
+
+    const allowedFields = [
+      'nombres', 'apellidoP', 'apellidoM', 'correo', 'telefono', 'fechaNacimiento',
+      'licenciatura', 'pais', 'estado', 'ciudad', 'calle', 'numExterior', 'numInterior',
+      'colonia', 'codigoPostal', 'instagram', 'linkedin', 'facebook', 'paginaWeb'
+    ];
+
+    const setClauses = [];
+    const values = [];
+
+    for (const field of allowedFields) {
+      if (Object.prototype.hasOwnProperty.call(updateData, field)) {
+        setClauses.push(`${field} = ?`);
+        values.push(updateData[field]);
+      }
+    }
+
+    if (setClauses.length === 0) {
+      return await getUserById(userId);
+    }
+
+    const sql = `UPDATE usuario SET ${setClauses.join(', ')} WHERE IDUsuario = ? AND deletedAt IS NULL AND eliminado = 0`;
+    values.push(userId);
+
+    const [result] = await dbPool.query(sql, values);
+    if (result.affectedRows === 0) {
+      return null;
+    }
+
+    return await getUserById(userId);
+  } catch (error) {
+    console.error('Error actualizando usuario:', error);
     throw error;
   }
 }

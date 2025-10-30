@@ -6,7 +6,7 @@
  */
 
 import express from "express";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers } from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser } from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
@@ -47,6 +47,18 @@ router.get("/profile", requireAuth, getCurrentUserProfile);
  * @param {function} handler - Request handler.
  */
 router.get("/:userId", requireAuth, getUserProfileById);
+
+/**
+ * Route to update a user's information
+ * @name PATCH /:userId
+ */
+router.patch(
+  "/:userId",
+  requireAuth,
+  autoSyncClerkId,
+  requireDbUser,
+  updateUser
+);
 
 /**
  * Route to assign a role to a user.

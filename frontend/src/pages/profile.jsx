@@ -17,11 +17,12 @@ import TicketsCard from "../organisms/ticketsCard";
 import DocumentsCard from "../organisms/documentsCard";
 
 // Controllers
-import { getCurrentUserProfile, getUserProfileById } from "../controllers/profile.controller";
+import { getCurrentUserProfile, getUserProfileById, updateUserById } from "../controllers/profile.controller";
 
 export default function ProfilePage() {
   const [current, setCurrent] = useState("profile");
   const [userProfile, setUserProfile] = useState(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -39,12 +40,13 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         const token = await getToken();
-        
-        // If userId is in URL, fetch that user's profile, otherwise fetch current user
-        const profileData = userId 
-          ? await getUserProfileById(userId, token)
-          : await getCurrentUserProfile(token);
-          
+
+        // Always fetch current user's profile for permission checks
+        const me = await getCurrentUserProfile(token);
+        setCurrentUserProfile(me);
+
+        // If userId is in URL, fetch that user's profile, otherwise use my profile
+        const profileData = userId ? await getUserProfileById(userId, token) : me;
         setUserProfile(profileData);
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -58,6 +60,17 @@ export default function ProfilePage() {
   }, [isLoaded, user, getToken, userId]); // Added userId to dependencies
 
   const handleNavigate = (key) => setCurrent(key);
+
+  // Modo pruebas: habilitar edición siempre
+  const canEdit = true;
+
+  async function handleSaveEdits(fields) {
+    const targetId = userId || (currentUserProfile && currentUserProfile.IDUsuario);
+    if (!targetId) return;
+    const token = await getToken();
+    const updated = await updateUserById(targetId, fields, token);
+    setUserProfile(updated);
+  }
 
   if (!isLoaded || loading) {
     return (
@@ -100,8 +113,8 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left column: profile info + address */}
             <div className="lg:col-span-2 space-y-6">
-              <ProfileInfo data={profileData} />
-              <AddressCard data={profileData} />
+              <ProfileInfo data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
+              <AddressCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
               <DocumentsCard data={profileData} />
 
               {/* History / stats placeholder (simple box) */}
