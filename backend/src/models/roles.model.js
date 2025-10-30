@@ -287,7 +287,10 @@ export async function markRolePrivilegesDeleted(roleId) {
     );
     return { affectedRows: result.affectedRows };
   } catch (error) {
-    console.error("Error de base de datos en markRolePrivilegesDeleted:", error);
+    console.error(
+      "Error de base de datos en markRolePrivilegesDeleted:",
+      error
+    );
     throw error;
   }
 }
@@ -367,4 +370,3 @@ export async function updateUsersRole(roleID, userIds = [], newRoleId) {
     connection.release();
   }
 }
-
