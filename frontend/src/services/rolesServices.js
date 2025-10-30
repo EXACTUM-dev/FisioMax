@@ -57,20 +57,6 @@ export async function updateRole(id, name, description, privileges, token) {
 }
 
 /**
- * Deletes a role (currently mocked - not implemented in backend).
- * @param {string} id - Role identifier to delete.
- * @param {string} token - Authentication token.
- * @return {!Promise<!Object>} Delete operation result.
- * @deprecated This function is not implemented in the backend yet.
- */
-export const deleteRole = async (id, token) => {
-  // Placeholder for implementation
-  console.warn("La función deleteRole no está implementada en el backend");
-
-  return Promise.resolve({ success: true, message: "Rol eliminado" });
-};
-
-/**
  * Get privileges data for role creation
  * @param {string} token - Authentication token
  * @return {Promise<Object>} Privileges list for create role form
