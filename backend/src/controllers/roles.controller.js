@@ -300,7 +300,7 @@ export async function deleteRole(req, res) {
         });
       }
       const userIds = users.map((u) => u.IDUsuario);
-      await updateUsersRole(userIds, unassignedRole.IDRol);
+      await updateUsersRole(roleId, userIds, unassignedRole.IDRol);
     }
 
     await markRolePrivilegesDeleted(roleId);

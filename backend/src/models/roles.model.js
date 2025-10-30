@@ -226,3 +226,145 @@ export async function createRoleWithPrivileges(
     connection.release();
   }
 }
+
+/**
+ * Find users assigned to a role (active links only).
+ * @param {string|number} roleId
+ * @returns {Promise<Array<{IDUsuario:number, IDRol:number}>>}
+ */
+export async function findUsersByRole(roleId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT IDUsuario, IDRol
+         FROM usuariorol
+        WHERE IDRol = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [roleId]
+    );
+    return rows; // El controlador solo usa IDUsuario
+  } catch (error) {
+    console.error("Error de base de datos en findUsersByRole:", error);
+    throw error;
+  }
+}
+
+/**
+ * Find a role by exact name (active only).
+ * @param {string} name
+ * @returns {Promise<Object|null>}
+ */
+export async function findRoleByName(name) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT *
+         FROM rol
+        WHERE nombre = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [name]
+    );
+    return rows.length > 0 ? rows[0] : null;
+  } catch (error) {
+    console.error("Error de base de datos en findRoleByName:", error);
+    throw error;
+  }
+}
+
+/**
+ * Mark all privileges of a role as soft-deleted.
+ * @param {string|number} roleId
+ * @returns {Promise<{affectedRows:number}>}
+ */
+export async function markRolePrivilegesDeleted(roleId) {
+  try {
+    const [result] = await dbPool.query(
+      `UPDATE rolprivilegios
+          SET eliminado = 1, deletedAt = NOW()
+        WHERE IDRol = ?
+          AND (deletedAt IS NULL AND eliminado = 0)`,
+      [roleId]
+    );
+    return { affectedRows: result.affectedRows };
+  } catch (error) {
+    console.error("Error de base de datos en markRolePrivilegesDeleted:", error);
+    throw error;
+  }
+}
+
+/**
+ * Soft-delete a role by id.
+ * @param {string|number} roleId
+ * @returns {Promise<{affectedRows:number}>}
+ */
+export async function markRoleDeleted(roleId) {
+  try {
+    const [result] = await dbPool.query(
+      `UPDATE rol
+          SET eliminado = 1, deletedAt = NOW()
+        WHERE IDRol = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [roleId]
+    );
+    return { affectedRows: result.affectedRows };
+  } catch (error) {
+    console.error("Error de base de datos en markRoleDeleted:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update role assignment for many users (soft-delete previous and upsert new one).
+ * @param {Array<number>} userIds
+ * @param {number} newRoleId
+ * @returns {Promise<{success:boolean, affected:number}>}
+ */
+export async function updateUsersRole(roleID, userIds = [], newRoleId) {
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return { success: true, affected: 0 };
+  }
+
+  const connection = await dbPool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1) Soft-delete asignaciones actuales de estos usuarios
+    await connection.query(
+      `UPDATE usuariorol
+          SET eliminado = 1, deletedAt = NOW()
+        WHERE IDRol = ?`,
+      [roleID]
+    );
+
+    // 2) Para cada usuario, reactivar si ya existe la relación con el nuevo rol; si no, insertar
+    let affected = 0;
+    for (const uid of userIds) {
+      const [upd] = await connection.query(
+        `UPDATE usuariorol
+            SET eliminado = 0, deletedAt = NULL
+          WHERE IDUsuario = ? AND IDRol = ?`,
+        [uid, newRoleId]
+      );
+      if (upd.affectedRows === 0) {
+        const [ins] = await connection.query(
+          `INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)`,
+          [uid, newRoleId]
+        );
+        affected += ins.affectedRows || 0;
+      } else {
+        affected += upd.affectedRows || 0;
+      }
+    }
+
+    await connection.commit();
+    return { success: true, affected };
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error de base de datos en updateUsersRole:", error);
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
