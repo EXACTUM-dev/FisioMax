@@ -49,6 +49,7 @@ export default function Panel() {
   const [selectedMembership, setSelectedMembership] = useState(null);
   const [membershipModalOpen, setMembershipModalOpen] = useState(false);
   
+  
   // Modal state for viewing role permissions
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRoleForView, setSelectedRoleForView] = useState(null);

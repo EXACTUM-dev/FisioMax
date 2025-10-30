@@ -211,16 +211,17 @@ export const getMembershipApplicationById = async (id) => {
     }
     if (row.constancias && !isPlaceholder(row.constancias)) {
       const constanciasUrl = await S3Service.getFileUrl(row.constancias);
-      documentos.push({ id: 'constancias', label: 'Constancias', url: constanciasUrl, key: row.constancias });
+      documentos.push({ id: 'constancias', label: 'Constancias', url: constanciasUrl, key: row.constancias, hours: row.constanciaHoras});
     }
 
     // Append additional documents
     for (const d of additionalDocs || []) {
       const docId = d.IDDocumentoAdicional || d.IDDocumento || d.id || d.ID || null;
       const label = d.nombreArchivo || d.nombre || d.nombre_archivo || 'Documento adicional';
+      const hours = d.documentoHoras || null;
   const fileKey = d.urlArchivo || d.url || d.url_archivo || null; // stored as S3 key
   const url = fileKey && !isPlaceholder(fileKey) ? await S3Service.getFileUrl(fileKey) : null;
-  documentos.push({ id: docId, label, url, key: fileKey });
+  documentos.push({ id: docId, label, url, key: fileKey, hours});
     }
 
     // Map address / contact fields into a friendly shape

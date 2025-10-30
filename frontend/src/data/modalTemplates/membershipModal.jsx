@@ -291,7 +291,7 @@ function MembershipModalContent({
           <div className="hidden lg:block w-px bg-slate-200 mx-2" />
 
           {/* Right column - Document list */}
-          <div className="flex-1 min-w-0 mt-4 lg:mt-0 min-h-0">
+          <div className="flex-2 min-w-0 mt-4 lg:mt-0 min-h-0">
             <div className="bg-white rounded-lg border border-slate-200 p-2 sm:p-3">
               <DataTable
                 columns={[
@@ -305,6 +305,18 @@ function MembershipModalContent({
                         {row.label}
                       </span>
                     ),
+                  },
+                  {
+                    key: "horasDocumentos",
+                    label: "",
+                    headAlign: "right",
+                    align: "right",
+                    render: (row) =>
+                      row.hours ? (
+                        <span className="text-sm sm:text-base break-words">
+                          {row.hours} hrs
+                        </span>
+                      ) : null,
                   },
                   {
                     key: "verDocumentos",
