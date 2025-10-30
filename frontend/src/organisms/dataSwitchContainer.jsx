@@ -92,6 +92,8 @@ export default function DataSwitchContainer({
             columns={activeView.columns ?? []}
             data={filteredRows}
             onRowAction={activeView.onRowAction}
+            filterColumn={activeView.filterColumn}
+            filterOptions={activeView.filterOptions}
           />
         ) : typeof activeView.render === "function" ? (
           activeView.render({ query })

@@ -1,14 +1,7 @@
 /**
  * @fileoverview Main control panel view component.
- * @version 1.1.0
+ * @version 1.2.0
  * @author EXACTUM-dev
- */
-
-/**
- * Panel component - Main control panel view.
- * Manages the state and layout for the admin panel, including user and role management.
- * Fetches user and role data from the backend and displays them in switchable table views.
- * @returns {JSX.Element} Admin panel component with data tables and navigation.
  */
 
 // Import necessary libraries and components
@@ -36,6 +29,13 @@ import buildMembershipColumns from "../data/tableTemplates/membershipColumns";
 import { fetchWithClerk } from "../utils/api";
 import MembershipModal from "../data/modalTemplates/membershipModal";
 
+/**
+ * Panel Component
+ * @description Main administrative control panel view that manages users, roles, and membership requests.
+ * Fetches data from the backend using Clerk authentication and displays it in switchable, responsive table views.
+ * Handles user role updates, membership status changes, and role permission viewing through modals.
+ * @returns {JSX.Element} Admin panel interface with navigation, data tables, and management modals.
+ */
 export default function Panel() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
@@ -335,6 +335,8 @@ export default function Panel() {
               columns: membershipColumns,
               rows: membershipRows,
               searchPlaceholder: "Buscar Solicitudes...",
+              filterColumn: "estado",
+              filterOptions: ["Rechazado", "Pendiente"],
             },
             {
               key: "users",
