@@ -115,3 +115,16 @@ export async function createRole(name, description, privileges, token) {
     throw normalizeNetworkError(err);
   }
 }
+/**
+ * Deletes a role using backend API (logical delete on server).
+ * @param {string} id - Role identifier to delete.
+ * @param {string} token - Authentication token.
+ * @return {!Promise<!Object>} Delete operation result.
+ */
+export async function deleteRole(id, token) {
+  try {
+    return await apiClient.delete(`/roles/${id}`, {}, token);
+  } catch (err) {
+    throw normalizeNetworkError(err);
+  }
+}

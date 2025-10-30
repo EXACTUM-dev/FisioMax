@@ -11,6 +11,11 @@ import {
   updateRolePrivileges,
   createRoleWithPrivileges,
   assignRoleToUser,
+  findUsersByRole,
+  findRoleByName,
+  updateUsersRole,
+  markRoleDeleted,
+  markRolePrivilegesDeleted,
 } from "../models/roles.model.js";
 import {
   getRolePrivileges,
@@ -276,6 +281,54 @@ export async function assignUserRole(req, res) {
     return res.status(500).json({
       success: false,
       error: error.message || "Error asignando rol a usuario",
+    });
+  }
+}
+
+export async function deleteRole(req, res) {
+  try {
+    const { id: roleId } = req.params;
+
+    const users = await findUsersByRole(roleId);
+
+    if (Array.isArray(users) && users.length > 0) {
+      const unassignedRole = await findRoleByName("Sin Rol");
+      if (!unassignedRole) {
+        return res.status(500).json({
+          success: false,
+          message: 'Could not find "Sin Rol" role to reassign users.',
+        });
+      }
+      const userIds = users.map((u) => u.IDUsuario);
+      await updateUsersRole(userIds, unassignedRole.IDRol);
+    }
+
+    await markRolePrivilegesDeleted(roleId);
+
+    await markRoleDeleted(roleId);
+
+    return res.status(200).json({
+      success: true,
+      message: "El rol ha sido eliminado exitosamente",
+    });
+  } catch (error) {
+    const isConnError =
+      error?.code === "ECONNREFUSED" ||
+      error?.code === "PROTOCOL_CONNECTION_LOST" ||
+      error?.code === "ER_ACCESS_DENIED_ERROR" ||
+      /connect|connection|pool/i.test(error?.message || "");
+
+    if (isConnError) {
+      return res.status(503).json({
+        success: false,
+        message: "No hay conexión con el servidor. Intenta más tarde",
+      });
+    }
+
+    console.error("deleteRole error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo eliminar el rol. Por favor, intente nuevamente",
     });
   }
 }
