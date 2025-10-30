@@ -1,7 +1,20 @@
+/**
+ * @fileoverview Tickets card component for displaying payment tickets.
+ * Shows empty state when no tickets are available.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ */
+
 import React from 'react';
 import cash from '../assets/icons/cash.png';
 
-export default function TicketsCard({ tickets = [] }) {
+/**
+ * Displays user's payment tickets in a card layout.
+ * @param {!Object} props - Component props.
+ * @param {!Array<!Object>} props.tickets - Array of ticket objects.
+ * @return {!JSX.Element} Tickets card component.
+ */
+export default function TicketsCard({tickets = []}) {
   return (
     <aside className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm max-w-md w-full">
       <h3 className="text-lg font-semibold mb-3">Tickets de pago</h3>
@@ -22,3 +35,4 @@ export default function TicketsCard({ tickets = [] }) {
     </aside>
   );
 }
+

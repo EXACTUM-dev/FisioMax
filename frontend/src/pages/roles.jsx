@@ -64,11 +64,27 @@ export default function RolesPage() {
   } = useCreateRole();
 
   // Row action handler
-  const handleRowAction = (col, row) => {
+  const handleRowAction = async (col, row) => {
     if (col.key === "editar") {
       handleEditRole(row);
     } else if (col.key === "eliminar") {
-      deleteRoleById(row.id);
+      try {
+        await deleteRoleById(row.id);
+        await loadRoles();
+
+        setModalType("success");
+        setModalMessage("El rol ha sido eliminado exitosamente");
+        setShowModal(true);
+      } catch (err) {
+        setModalType("error");
+        setModalMessage(
+          toUserMessage(
+            err,
+            "No se pudo eliminar el rol. Por favor, intente nuevamente"
+          )
+        );
+        setShowModal(true);
+      }
     }
   };
 

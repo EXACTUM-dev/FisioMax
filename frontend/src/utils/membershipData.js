@@ -1,7 +1,14 @@
 /**
- * Utility to provide membership form data for the profile page.
- * It will try to read a saved form from localStorage (key: membershipForm)
- * and fallback to sensible defaults that mirror `membershipApplication` initial state.
+ * @fileoverview Membership data utility for managing form data persistence.
+ * Provides functions to retrieve membership form data from localStorage.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ */
+
+/**
+ * Retrieves membership form data from localStorage or returns defaults.
+ * Tries to read saved form from localStorage keys: 'membershipForm' or 'membershipApplication'.
+ * @return {!Object} Membership data object with user information.
  */
 export function getMembershipData() {
   try {
@@ -32,8 +39,6 @@ function defaultData() {
     numInterior: "",
     colonia: "",
     codigoPostal: "",
-    numeroExterior: "",
-    numeroInterior: "",
     licenciatura: "",
     instagram: "",
     linkedin: "",

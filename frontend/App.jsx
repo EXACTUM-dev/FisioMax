@@ -128,7 +128,7 @@ function Dashboard() {
     []
   );
 
-  if (!loaded) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
@@ -294,6 +294,14 @@ export default function App() {
           <ProtectedRoute>
             {/* Unique call to dashboard: Hero */}
             <Hero />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/video/:videoId"
+        element={
+          <ProtectedRoute>
+            <VideoPage />
           </ProtectedRoute>
         }
       />

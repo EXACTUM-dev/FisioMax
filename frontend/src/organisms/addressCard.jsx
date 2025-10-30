@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Address card component for displaying user address information.
+ * Shows country, state, city, and detailed address fields.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ */
+
 import React, { useState } from 'react';
 
 export default function AddressCard({ data = {}, canEdit = false, onSave }) {

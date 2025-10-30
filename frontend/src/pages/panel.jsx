@@ -1,20 +1,20 @@
 /**
- * @fileoverview Main control panel view component.
- * @version 1.0.0
+ * @fileoverview Admin control panel for managing users and roles.
+ * Provides data tables for user and role management with CRUD operations.
+ * @version 1.1.0
  * @author EXACTUM-dev
  */
 
 /**
- * Panel component - Main control panel view.
- * Manages the state and layout for the admin panel, including user and role management.
- * Fetches user and role data from the backend and displays them in switchable table views.
- * @returns {JSX.Element} Admin panel component with data tables and navigation.
+ * Renders the main admin control panel with user and role management tables.
+ * Fetches and displays user and role data from backend with switchable views.
+ * @return {!React.Component} Admin panel component with data tables and navigation.
  */
 
 // Import necessary libraries and components
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
+import React, {useEffect, useMemo, useState, useCallback} from "react";
+import {useUser, useAuth} from "@clerk/clerk-react";
+import {useNavigate} from "react-router-dom";
 
 // Atoms
 import Button from "../atoms/button";
@@ -34,11 +34,11 @@ import DataTable from "../organisms/dataTable";
 // Data and utilities
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
-import { fetchWithClerk } from "../utils/api";
+import {fetchWithClerk} from "../utils/api";
 
 export default function Panel() {
-  const { user, isLoaded } = useUser();
-  const { getToken } = useAuth();
+  const {user, isLoaded} = useUser();
+  const {getToken} = useAuth();
   const navigate = useNavigate();
   const [current, setCurrent] = useState("bolt");
   

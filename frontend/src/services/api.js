@@ -166,7 +166,6 @@ export function normalizeNetworkError(err) {
     msg.includes("timeout")
   ) {
     const e = new Error("No hay conexión con el servidor. Intenta más tarde.");
-    no;
     e.code = "NETWORK_ERROR";
     return e;
   }

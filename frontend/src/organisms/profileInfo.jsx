@@ -1,4 +1,19 @@
+/**
+ * @fileoverview Profile information card component.
+ * Displays personal and contact information for users.
+ * @version 1.0.0
+ * @author EXACTUM-dev
+ */
+
+import React from 'react';
 import React, { useState } from 'react';
+
+/**
+ * Displays user's personal and contact information.
+ * @param {!Object} props - Component props.
+ * @param {!Object} props.data - User profile data object.
+ * @return {!JSX.Element} Profile information component.
+ */
 
 export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
   const nombreCompleto = `${data.nombres || ''} ${data.apellidoP || ''} ${data.apellidoM || ''}`.trim();
@@ -43,7 +58,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
 
   return (
     <div className="space-y-6">
-      {/* Información personal */}
+      {/* Personal information section */}
       <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-semibold">Información personal</h3>
@@ -112,7 +127,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
         )}
       </section>
 
-      {/* Información de contacto */}
+      {/* Contact information section */}
       <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-semibold">Información de contacto</h3>
