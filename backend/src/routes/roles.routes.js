@@ -14,6 +14,8 @@ import {
 } from '../controllers/roles.controller.js';
 import {requireAuth, autoSyncClerkId} from '../middlewares/clerkAuth.js';
 import {requireDbUser} from '../middlewares/requireDbUser.js';
+import {authorize} from '../middlewares/rbacMiddleware.js';
+import {authenticate} from '../middlewares/authenticate.js';
 
 const router = express.Router();
 
@@ -24,6 +26,8 @@ router.get('/', requireAuth, autoSyncClerkId, requireDbUser, getAllRoles);
 router.get(
     '/create',
     requireAuth,
+    authenticate,
+    authorize(["create_user"]),
     autoSyncClerkId,
     requireDbUser,
     getCreateRole
