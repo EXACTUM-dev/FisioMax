@@ -318,55 +318,24 @@ export async function markRoleDeleted(roleId) {
 }
 
 /**
- * Update role assignment for many users (soft-delete previous and upsert new one).
- * @param {Array<number>} userIds
- * @param {number} newRoleId
+ * Reassign users from one role to another (only updates active relations).
+ * @param {number} oldRoleId - Current role ID to replace.
+ * @param {number} newRoleId - New role ID to assign.
  * @returns {Promise<{success:boolean, affected:number}>}
  */
-export async function updateUsersRole(roleID, userIds = [], newRoleId) {
-  if (!Array.isArray(userIds) || userIds.length === 0) {
-    return { success: true, affected: 0 };
-  }
-
-  const connection = await dbPool.getConnection();
+export async function reassignUsersToRole(oldRoleId, newRoleId) {
   try {
-    await connection.beginTransaction();
-
-    // 1) Soft-delete asignaciones actuales de estos usuarios
-    await connection.query(
+    const [result] = await dbPool.query(
       `UPDATE usuariorol
-          SET eliminado = 1, deletedAt = NOW()
-        WHERE IDRol = ?`,
-      [roleID]
+          SET IDRol = ?
+        WHERE IDRol = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [newRoleId, oldRoleId]
     );
-
-    // 2) Para cada usuario, reactivar si ya existe la relación con el nuevo rol; si no, insertar
-    let affected = 0;
-    for (const uid of userIds) {
-      const [upd] = await connection.query(
-        `UPDATE usuariorol
-            SET eliminado = 0, deletedAt = NULL
-          WHERE IDUsuario = ? AND IDRol = ?`,
-        [uid, newRoleId]
-      );
-      if (upd.affectedRows === 0) {
-        const [ins] = await connection.query(
-          `INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)`,
-          [uid, newRoleId]
-        );
-        affected += ins.affectedRows || 0;
-      } else {
-        affected += upd.affectedRows || 0;
-      }
-    }
-
-    await connection.commit();
-    return { success: true, affected };
+    return { success: true, affected: result.affectedRows };
   } catch (error) {
-    await connection.rollback();
-    console.error("Error de base de datos en updateUsersRole:", error);
+    console.error("Error de base de datos en reassignUsersToRole:", error);
     throw error;
-  } finally {
-    connection.release();
   }
 }
