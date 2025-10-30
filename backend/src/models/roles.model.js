@@ -1,6 +1,6 @@
 /**
  * @fileoverview Role model - Database interaction for roles
- * @version 0.2.0
+ * @version 0.3.0
  * @author EXACTUM-dev
  * @description Provides CRUD operations for roles and role-privilege assignments.
  */

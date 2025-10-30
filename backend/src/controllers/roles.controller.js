@@ -13,7 +13,7 @@ import {
   assignRoleToUser,
   findUsersByRole,
   findRoleByName,
-  updateUsersRole,
+  reassignUsersToRole,
   markRoleDeleted,
   markRolePrivilegesDeleted,
 } from "../models/roles.model.js";
@@ -285,26 +285,33 @@ export async function assignUserRole(req, res) {
   }
 }
 
+/**
+ * Delete a role with logical deletion and user reassignment to "SinRol".
+ * @param {Object} req - Express request object with role ID in params
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ *
+ */
 export async function deleteRole(req, res) {
   try {
     const { id: roleId } = req.params;
 
-    const users = await findUsersByRole(roleId);
-
-    if (Array.isArray(users) && users.length > 0) {
-      const unassignedRole = await findRoleByName("Sin Rol");
-      if (!unassignedRole) {
-        return res.status(500).json({
-          success: false,
-          message: 'Could not find "Sin Rol" role to reassign users.',
-        });
-      }
-      const userIds = users.map((u) => u.IDUsuario);
-      await updateUsersRole(userIds, unassignedRole.IDRol);
+    // 1) Find "SinRol" role (required for user reassignment)
+    const sinRol = await findRoleByName("SinRol");
+    if (!sinRol) {
+      return res.status(404).json({
+        success: false,
+        message: 'Could not find "SinRol" role. Please create it first.',
+      });
     }
 
+    // 2) Reassign all users from this role to "SinRol" (before deletion)
+    await reassignUsersToRole(roleId, sinRol.IDRol);
+
+    // 3) Soft-delete all privileges associated with the role
     await markRolePrivilegesDeleted(roleId);
 
+    // 4) Soft-delete the role itself
     await markRoleDeleted(roleId);
 
     return res.status(200).json({
@@ -312,6 +319,7 @@ export async function deleteRole(req, res) {
       message: "El rol ha sido eliminado exitosamente",
     });
   } catch (error) {
+    // Check for database connectivity errors
     const isConnError =
       error?.code === "ECONNREFUSED" ||
       error?.code === "PROTOCOL_CONNECTION_LOST" ||
@@ -325,6 +333,7 @@ export async function deleteRole(req, res) {
       });
     }
 
+    // Generic error handling
     console.error("deleteRole error:", error);
     return res.status(500).json({
       success: false,
