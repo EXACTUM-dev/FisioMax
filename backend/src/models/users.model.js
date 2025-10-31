@@ -45,6 +45,19 @@ export async function getUsuarios() {
   }
 }
 
+
+export async function getMembershipUserStateById(userId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT aceptado FROM Membresia WHERE IDUsuario = ?;`, [userId]
+    );
+    return rows[0].aceptado;
+  } catch (error) {
+    console.error("Error al consultar la base de datos:", error);
+    throw error; // Throw error to be handled by controller
+  }
+}
+
 /**
  * Get a single user by Clerk ID with all their information including documents
  * @param {string} clerkId - Clerk user ID

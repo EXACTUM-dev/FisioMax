@@ -8,6 +8,7 @@
 import express from "express";
 import { requireAuth } from "../middlewares/clerkAuth.js";
 import * as contentController from "../controllers/content.controller.js";
+import {authorize} from '../middlewares/rbacMiddleware.js';
 
 const router = express.Router();
 

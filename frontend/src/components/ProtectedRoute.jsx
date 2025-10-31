@@ -18,9 +18,9 @@ import {useDbUser} from '../hooks/useDbUser';
  * @param {React.ReactNode} props.children - Content to render if authorized.
  * @return {React.Element} The protected route component.
  */
-export function ProtectedRoute({children}) {
+export function ProtectedRoute({children,  allowedRoles = []}) {
   const {isLoaded: isClerkLoaded} = useUser();
-  const {isLoading: isDbLoading, existsInDB, error} = useDbUser();
+  const {isLoading: isDbLoading, existsInDB, userData, error} = useDbUser();
   const {signOut} = useClerk();
 
   /**
@@ -31,6 +31,10 @@ export function ProtectedRoute({children}) {
     await signOut();
     window.location.href = '/login';
   };
+
+  const userRole = userData?.role;
+  const userState = userData?.acept;
+  const hasPermission =  userRole != undefined && (allowedRoles.length === 0 || allowedRoles.includes(userRole)) && userState == 1;
 
   return (
     <>
@@ -101,9 +105,31 @@ export function ProtectedRoute({children}) {
             </div>
           </div>
         )}
+        {/* Usuario sin permisos */}
+        {!isDbLoading &&
+          isClerkLoaded &&
+          existsInDB &&
+          !hasPermission && (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#FAFAFA] text-center px-4">
+              <div className="max-w-md bg-white p-8 rounded-lg shadow-md">
+                <h2 className="text-lg font-semibold mb-2 text-gray-900">
+                  Acceso restringido
+                </h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  No tienes los permisos necesarios para acceder a esta sección.
+                </p>
+                <button
+                  onClick={handleSignOut}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
+          )}
 
         {/* Display protected content if user exists in DB */}
-        {!isDbLoading && isClerkLoaded && existsInDB && children}
+        {!isDbLoading && isClerkLoaded && existsInDB && hasPermission && children}
       </SignedIn>
     </>
   );

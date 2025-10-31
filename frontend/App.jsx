@@ -275,7 +275,7 @@ export default function App() {
       <Route
         path="/panel"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["Admin"]}>
             <Panel />
           </ProtectedRoute>
         }
@@ -283,7 +283,7 @@ export default function App() {
       <Route
         path="/roles"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["Admin"]}>
             <RolesPage />
           </ProtectedRoute>
         }

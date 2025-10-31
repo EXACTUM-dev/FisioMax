@@ -29,6 +29,9 @@ export const getProfile = async (req, res) => {
 
         // getUserById now returns combined data from Clerk + DB
         const userData = await getUserById(userId);
+        console.log(userData);
+
+
         
         if (!userData.exists) {
             return res.status(403).json({ 
@@ -50,6 +53,7 @@ export const getProfile = async (req, res) => {
                 imageUrl: userData.imageUrl,
                 role: userData.role,
                 roleId: userData.roleId,
+                acept: userData.membershipState,
             }
         });
     } catch (error) {
