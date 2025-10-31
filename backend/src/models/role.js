@@ -9,10 +9,10 @@ import { dbPool } from "../../config.js";
 
 /**
  * Get all roles and privileges for a specific user
- * @param {string} idUsuario - Clerk user ID to retrieve roles and privileges for
+ * @param {string} clerkId - Clerk user ID to retrieve roles and privileges for
  * @returns {Promise<{roles: string[], privilegios: string[]}>} - Object containing arrays of roles and privileges
  */
-export const getUserRolesAndPermissions = async (idUsuario) => {
+export const getUserRolesAndPermissions = async (clerkId) => {
   const [rows] = await dbPool.query(
     `
       SELECT
@@ -31,7 +31,7 @@ export const getUserRolesAndPermissions = async (idUsuario) => {
         AND m.aceptado = 1
         AND m.deletedAt IS NULL
     `,
-    [idUsuario]
+    [clerkId]
   );
 
   const roles = [...new Set(rows.map(r => r.rol))];
