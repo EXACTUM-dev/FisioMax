@@ -12,8 +12,7 @@
  */
 
 import MembershipApplication, {
-  getMembershipApplications, 
-  approveMembershipApplications, 
+  getMembershipApplications,
   getMembershipApplicationById, 
   approveMembershipApplicationById,
   denyMembershipApplication 
@@ -167,7 +166,7 @@ export const getMemberships = async (req, res) => {
 };
 
 /**
- * Obtain all the membership applications
+ * Aprprove membership applications
  * @param {Object} req - Request object
  * @param {Object} res - Response object
  */
@@ -236,14 +235,8 @@ export async function denyMembership(req, res) {
 
   try {
     // Update the application in the database with reason
-    const result = await denyMembershipApplication(id, razonRechazo);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        success: false,
-        error: 'Solicitud de membresía no encontrada' 
-      });
-    }
+    console.log('Rechazando solicitud ID:', id, 'con razón:', razonRechazo);
+    const result = await denyMembershipApplication(razonRechazo, id);
 
     res.status(200).json({ 
       success: true,

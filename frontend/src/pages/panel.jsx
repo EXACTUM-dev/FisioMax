@@ -104,7 +104,7 @@ export default function Panel() {
       }
     } catch (err) {
       // If endpoint doesn't exist or fails, fall back to list entry
-      console.warn('No se pudo obtener detalle de membresía, usando datos locales:', err.message || err);
+      console.warn('No se pudo obtener detalle de membresía:', err.message || err);
     }
 
     // fallback -> find in membershipRows

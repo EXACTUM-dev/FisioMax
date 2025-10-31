@@ -203,7 +203,7 @@ function MembershipModalContent({
   // Determine which data to use for the table
   const tableData = tableDataProp.length > 0 ? tableDataProp : documentos;
 
-  // Display name with fallback
+  // Display full name 
   const displayName = nombreCompleto || nombre || solicitud.nombre || 'Usuario';
 
   useEffect(() => {

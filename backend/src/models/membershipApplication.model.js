@@ -43,9 +43,9 @@ class MembershipApplication {
     this.estado = data.estado?.trim() || null;
     this.ciudad = data.ciudad?.trim() || null;
     this.calle = data.calle?.trim() || null;
-  this.numExterior = data.numExterior?.trim() || null;
-  this.numInterior = data.numInterior?.trim() || null;
-  this.fechaNacimiento = (data.fechaNacimiento || data.birthDate) || null;
+    this.numExterior = data.numExterior?.trim() || null;
+    this.numInterior = data.numInterior?.trim() || null;
+    this.fechaNacimiento = (data.fechaNacimiento || data.birthDate) || null;
     this.colonia = data.colonia?.trim() || null;
     this.codigoPostal = data.codigoPostal?.trim() || null;
     this.licenciatura = data.licenciatura?.trim() || null;
@@ -219,9 +219,9 @@ export const getMembershipApplicationById = async (id) => {
       const docId = d.IDDocumentoAdicional || d.IDDocumento || d.id || d.ID || null;
       const label = d.nombreArchivo || d.nombre || d.nombre_archivo || 'Documento adicional';
       const hours = d.documentoHoras || null;
-  const fileKey = d.urlArchivo || d.url || d.url_archivo || null; // stored as S3 key
-  const url = fileKey && !isPlaceholder(fileKey) ? await S3Service.getFileUrl(fileKey) : null;
-  documentos.push({ id: docId, label, url, key: fileKey, hours});
+      const fileKey = d.urlArchivo || d.url || d.url_archivo || null; // stored as S3 key
+      const url = fileKey && !isPlaceholder(fileKey) ? await S3Service.getFileUrl(fileKey) : null;
+      documentos.push({ id: docId, label, url, key: fileKey, hours});
     }
 
     // Map address / contact fields into a friendly shape
@@ -278,32 +278,6 @@ export const getMembershipApplicationById = async (id) => {
   }
 };
 
-
-/**
- * Approve the membership application
- * @returns {Promise<Array>} Array that contains membership application with their user data
- */
-export const approveMembershipApplications = async () => {
-  const conn = await db.getConnection();
-  try {
-    const query = `
-      SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, u.IDUsuario, 
-      u.nombres, u.apellidoP, u.correo
-      FROM Membresia m
-      JOIN Usuario u ON m.IDUsuario = u.IDUsuario
-      WHERE m.deletedAt IS NULL AND u.eliminado = 0
-    `;
-
-    const [rows] = await conn.execute(query);
-    return rows;
-  } catch (error) {
-    console.error("Error en getMembershipApplications:", error);
-    throw error;
-  } finally {
-    conn.release();
-  }
-};
-
 /**
  * Approve a membership application by IDMembresia and return the updated application detail.
  * @param {number|string} id
@@ -317,12 +291,6 @@ export const approveMembershipApplicationById = async (id) => {
       `UPDATE Membresia SET aceptado = 1 WHERE IDMembresia = ? AND deletedAt IS NULL`,
       [id]
     );
-
-    // If nothing was updated, return null
-    if (!res || res.affectedRows === 0) {
-      await conn.rollback();
-      return null;
-    }
 
     await conn.commit();
 
@@ -343,21 +311,23 @@ export const approveMembershipApplicationById = async (id) => {
  * @param {number} id - Membership I
  * @returns {Promise} Query's answer
  */
-export async function denyMembershipApplication(id = null) {
+export async function denyMembershipApplication(razonRechazo, id) {
   const conn = await db.getConnection();
+
+  console.log('Denying membership application ID:', id, 'with reason:', razonRechazo);
   try {
     await conn.beginTransaction();
     
     const query = `
-      UPDATE Membresia 
-      SET aceptado = 0
+       UPDATE Membresia 
+      SET aceptado = 0, 
+          motivoRechazo = ?
       WHERE IDMembresia = ? 
         AND deletedAt IS NULL
     `;
     
-    const [result] = await conn.execute(query, [id]);
+    const [result] = await conn.execute(query, [razonRechazo, id]);
     
-    // If there is any change
     if (!result || result.affectedRows === 0) {
       await conn.rollback();
       return null;
@@ -374,5 +344,11 @@ export async function denyMembershipApplication(id = null) {
     conn.release();
   }
 }
+
+
+
+
+
+
 
 export default MembershipApplication;

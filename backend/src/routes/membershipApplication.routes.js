@@ -2,7 +2,7 @@
  * @fileoverview Router with endpoints for membership application managment.
  * @author EXACTUM-dev
  * @version 1.2.2
- * @description Defines endpoint to retrive membership applications
+ * @description Defines endpoint to retrive membership applications and manage their approval status.
  */
 import express from 'express';
 import multer from 'multer';
@@ -33,7 +33,6 @@ const upload = multer({
 
 // Middleware to handle multiple file uploads
 const uploadFields = upload.fields([
-  // Accept both English and Spanish field names for files to remain compatible with clients
   { name: 'degreeDocument', maxCount: 1 },
   { name: 'titulo', maxCount: 1 },
   { name: 'professionalId', maxCount: 1 },
@@ -60,10 +59,13 @@ router.post('/', uploadFields, createMembershipApplication);
  * @description Obtain all the membership application
  * @access Private
  */
-//router.get('/', requireAuth, getMemberships);
 router.get('/', getMemberships);
 
-// Detail endpoint for a single membership application
+/**
+ * @route GET /api/membresias/{id}
+ * @description Detail endpoint for a single membership application
+ * @access Private
+ */
 router.get('/:id', getMembershipById);
 
 
