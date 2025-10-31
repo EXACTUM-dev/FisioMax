@@ -50,7 +50,7 @@ export const getProfile = async (req, res) => {
                 imageUrl: userData.imageUrl,
                 role: userData.role,
                 roleId: userData.roleId,
-                acept: userData.membershipState,
+                accept: userData.membershipState,
             }
         });
     } catch (error) {
