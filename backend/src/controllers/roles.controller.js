@@ -11,7 +11,6 @@ import {
   updateRolePrivileges,
   createRoleWithPrivileges,
   assignRoleToUser,
-  findUsersByRole,
   findRoleByName,
   reassignUsersToRole,
   markRoleDeleted,
@@ -296,7 +295,16 @@ export async function deleteRole(req, res) {
   try {
     const { id: roleId } = req.params;
 
-    // 1) Find "SinRol" role (required for user reassignment)
+    // 1) Check if trying to delete "SinRol" (not allowed)
+    const roleToDelete = await findRoleById(roleId);
+    if (roleToDelete && roleToDelete.nombre === "SinRol") {
+      return res.status(400).json({
+        success: false,
+        message: 'No se puede eliminar el rol "SinRol". Es un rol del sistema.',
+      });
+    }
+
+    // 2) Find "SinRol" role (required for user reassignment)
     const sinRol = await findRoleByName("SinRol");
     if (!sinRol) {
       return res.status(404).json({
@@ -305,13 +313,13 @@ export async function deleteRole(req, res) {
       });
     }
 
-    // 2) Reassign all users from this role to "SinRol" (before deletion)
+    // 3) Reassign all users from this role to "SinRol" (simple UPDATE for 1:1)
     await reassignUsersToRole(roleId, sinRol.IDRol);
 
-    // 3) Soft-delete all privileges associated with the role
+    // 4) Soft-delete all privileges associated with the role
     await markRolePrivilegesDeleted(roleId);
 
-    // 4) Soft-delete the role itself
+    // 5) Soft-delete the role itself
     await markRoleDeleted(roleId);
 
     return res.status(200).json({

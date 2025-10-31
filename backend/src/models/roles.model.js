@@ -27,6 +27,7 @@ export async function findRoleById(id) {
 
 /**
  * Get all roles from database with their privileges (comma-separated).
+ * Excludes "SinRol" from the list.
  * @returns {Promise<Array>} Array of role objects with privileges string.
  */
 export async function getAllRolesFromDB() {
@@ -46,6 +47,7 @@ export async function getAllRolesFromDB() {
         ON rp.IDPrivilegio = p.IDPrivilegio
       WHERE r.deletedAt IS NULL 
         AND r.eliminado = 0
+        AND r.nombre != 'SinRol'
       GROUP BY r.IDRol, r.nombre, r.descripcion`
     );
     return rows;
@@ -148,42 +150,37 @@ export async function getUserRole(userId) {
  * @returns {Promise<{success:boolean}>} Operation result.
  */
 export async function assignRoleToUser(userId, roleId) {
-  const connection = await dbPool.getConnection();
   try {
-    await connection.beginTransaction();
-
-    // Soft-delete all current role assignments for the user
-    await connection.query(
-      "UPDATE usuariorol SET eliminado = 1, deletedAt = NOW() WHERE IDUsuario = ?",
+    // Check if user already has a role assignment
+    const [existing] = await dbPool.query(
+      `SELECT IDUsuario, IDRol 
+       FROM usuariorol 
+       WHERE IDUsuario = ? 
+       LIMIT 1`,
       [userId]
     );
 
-    // Reactivate if the same relation exists, otherwise insert new
-    const [existing] = await connection.query(
-      "SELECT 1 FROM usuariorol WHERE IDUsuario = ? AND IDRol = ? LIMIT 1",
-      [userId, roleId]
-    );
-
     if (existing.length > 0) {
-      await connection.query(
-        "UPDATE usuariorol SET eliminado = 0, deletedAt = NULL WHERE IDUsuario = ? AND IDRol = ?",
-        [userId, roleId]
+      // Update existing role assignment
+      await dbPool.query(
+        `UPDATE usuariorol 
+         SET IDRol = ?, eliminado = 0, deletedAt = NULL 
+         WHERE IDUsuario = ?`,
+        [roleId, userId]
       );
     } else {
-      await connection.query(
-        "INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)",
+      // Insert new role assignment
+      await dbPool.query(
+        `INSERT INTO usuariorol (IDUsuario, IDRol) 
+         VALUES (?, ?)`,
         [userId, roleId]
       );
     }
 
-    await connection.commit();
     return { success: true };
   } catch (error) {
-    await connection.rollback();
     console.error("Error de base de datos en assignRoleToUser:", error);
     throw error;
-  } finally {
-    connection.release();
   }
 }
 
