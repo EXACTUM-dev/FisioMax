@@ -37,7 +37,7 @@ export async function getUserById(clerkUserId) {
     // 2. Search user in DB by clerkID
     const dbUser = await getUserByClerkId(clerkUserId);
 
-    // 3. Search user in DB by clerkID
+    // 3. Get membership state
     const dbState = await getMembershipUserStateById(dbUser.IDUsuario);
 
     // 4. Combine data

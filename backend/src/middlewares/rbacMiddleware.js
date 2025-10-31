@@ -20,8 +20,6 @@ export const authorize = (requiredPrivileges = []) => {
 
     try {
       const { privilegios } = await getUserRolesAndPermissions(userId);
-      console.log(privilegios);
-      console.log(requiredPrivileges);
       const hasPermission = requiredPrivileges.every(p =>
         privilegios.includes(p)
       );

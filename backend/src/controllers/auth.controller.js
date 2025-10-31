@@ -29,8 +29,6 @@ export const getProfile = async (req, res) => {
 
         // getUserById now returns combined data from Clerk + DB
         const userData = await getUserById(userId);
-
-
         
         if (!userData.exists) {
             return res.status(403).json({ 

@@ -49,7 +49,7 @@ export async function getUsuarios() {
  * Retrieves the membership status ("aceptado") of a specific user.
  * @async
  * @param {number|string} userId - The unique identifier of the user.
- * @returns {Promise<boolean>} - Returns `1` if the membership is accepted, `0`if the membership is denied, and `NULL`if the membership is pending.
+ * @returns {Promise<boolean>} - Returns `1` if the membership is accepted, `0` if the membership is denied, and `NULL` if the membership is pending.
  * @throws {Error} Throws an error if the database query fails.
  */
 export async function getMembershipUserStateById(userId) {
@@ -57,7 +57,7 @@ export async function getMembershipUserStateById(userId) {
     const [rows] = await dbPool.query(
       `SELECT aceptado FROM Membresia WHERE IDUsuario = ?;`, [userId]
     );
-    return rows[0].aceptado;
+    return rows[0]?.aceptado ?? null;
   } catch (error) {
     console.error("Error al consultar la base de datos:", error);
     throw error; // Throw error to be handled by controller

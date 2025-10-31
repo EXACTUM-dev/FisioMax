@@ -35,7 +35,7 @@ export function ProtectedRoute({children,  allowedRoles = []}) {
   //RBAC Permissions
   const userRole = userData?.role;
   const userState = userData?.acept;
-  const hasPermission =  userRole != undefined && (allowedRoles.length === 0 || allowedRoles.includes(userRole)) && userState == 1;
+  const hasPermission =  userRole !== undefined && (allowedRoles.length === 0 || allowedRoles.includes(userRole)) && userState === 1;
 
   return (
     <>
