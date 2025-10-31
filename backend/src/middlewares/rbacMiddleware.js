@@ -15,10 +15,8 @@ export const authorize = (requiredPrivileges = []) => {
       );
 
       if (!hasPermission) {
-        console.log("Acceso denegado");
         return res.status(403).json({ message: "Acceso denegado" });
       }
-      console.log("Acceso concedido");
       next();
     } catch (err) {
       console.error(err);

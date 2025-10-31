@@ -39,7 +39,6 @@ export async function getUserById(clerkUserId) {
 
     // 3. Search user in DB by clerkID
     const dbState = await getMembershipUserStateById(dbUser.IDUsuario);
-    console.log(dbState);
 
     // 4. Combine data
     return {
