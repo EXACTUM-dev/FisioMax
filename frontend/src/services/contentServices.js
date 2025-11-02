@@ -1,24 +1,24 @@
 /**
- * @fileoverview Content API service for video requests
- * @version 0.1.0
+ * @fileoverview Content API service for multimedia content requests
+ * @version 0.2.0
  * @author EXACTUM-dev
- * @description Handles API calls for video content
+ * @description Handles API calls for multimedia content (videos and articles)
  */
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 if (!API_URL) {
-  throw new Error("VITE_API_URL is not defined in environment variables");
+  throw new Error("VITE_API_URL no está definida en las variables de entorno");
 }
 
 /**
- * Fetches a specific video by ID
- * @param {string} videoId - Video ID to fetch
+ * Fetches a specific content by ID
+ * @param {string} contentId - Content ID to fetch
  * @param {string} token - Clerk authentication token
- * @returns {Promise<Object>} Video data with signed URL
+ * @returns {Promise<Object>} Content data with signed URL
  */
-export async function getVideoById(videoId, token) {
-  const response = await fetch(`${API_URL}/videos/${videoId}`, {
+export async function getContentById(contentId, token) {
+  const response = await fetch(`${API_URL}/content/${contentId}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -28,34 +28,42 @@ export async function getVideoById(videoId, token) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || "Failed to fetch video");
+    throw new Error(error.message || "Failed to fetch content");
   }
 
   return response.json();
 }
 
 /**
- * Fetches all available videos for sidebar with pagination
+ * Fetches all available content for sidebar with pagination
  * @param {string} token - Clerk authentication token
- * @param {number} limit - Number of videos per page
- * @param {number} offset - Number of videos to skip
- * @returns {Promise<Object>} Object with videos array and pagination info
+ * @param {number} limit - Number of content items per page
+ * @param {number} offset - Number of content items to skip
+ * @param {string} type - Type of content ('video' or 'articulo')
+ * @returns {Promise<Object>} Object with content array and pagination info
  */
-export async function getAvailableVideos(token, limit = 10, offset = 0) {
-  const response = await fetch(
-    `${API_URL}/videos?limit=${limit}&offset=${offset}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
+export async function getAvailableContent(
+  token,
+  limit = 10,
+  offset = 0,
+  type = null
+) {
+  let url = `${API_URL}/content?limit=${limit}&offset=${offset}`;
+  if (type) {
+    url += `&type=${type}`;
+  }
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || "Failed to fetch videos");
+    throw new Error(error.message || "Failed to fetch content");
   }
 
   return response.json();

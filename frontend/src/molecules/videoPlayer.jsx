@@ -109,6 +109,9 @@ export default function VideoPlayer({
         onError={onError}
         playsInline
         preload="metadata"
+        controlsList="nodownload"
+        disablePictureInPicture
+        onContextMenu={(e) => e.preventDefault()}
       >
         {getSources(url).map((source) => (
           <source key={source.type} src={source.src} type={source.type} />

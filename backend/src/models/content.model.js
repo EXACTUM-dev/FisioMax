@@ -1,106 +1,122 @@
 /**
- * @fileoverview Content model for video retrieval
- * @version 0.1.0
+ * @fileoverview Content model for multimedia retrieval
+ * @version 0.2.0
  * @author EXACTUM-dev
- * @description Handles content retrieval from database
+ * @description Handles multimedia content retrieval from database
  */
 
 import db from "../../database/db.js";
 
 /**
- * Gets a specific video by ID with its thumbnail
- * @param {string} videoId - Content ID to retrieve
- * @returns {Promise<Object>} Video data with thumbnail
- * @throws {Error} If video not found or database error
+ * Gets a specific content by ID with its thumbnail
+ * @param {string} contentId - Content ID to retrieve
+ * @returns {Promise<Object>} Content data with thumbnail
+ * @throws {Error} If content not found or database error
  */
-export async function obtenerVideo(videoId) {
+export async function getContentById(contentId) {
   const query = `
     SELECT 
-      v.IDContenido,
-      v.IDMultimedia,
-      v.nombre,
-      v.descripcion,
-      v.tipo,
-      v.tipoMembresia,
-      v.createdAt,
+      c.IDContenido,
+      c.IDMultimedia,
+      c.nombre,
+      c.descripcion,
+      c.tipo,
+      c.tipoMembresia,
+      c.createdAt,
       t.IDMultimedia as thumbnailMultimedia
-    FROM contenido v
-    LEFT JOIN contenido t ON t.nombre = v.nombre
+    FROM contenido c
+    LEFT JOIN contenido t ON t.nombre = c.nombre
                           AND t.eliminado = 0
                           AND t.deletedAt IS NULL
                           AND t.tipo = 'imagen'
-    WHERE v.IDContenido = ?
-      AND v.eliminado = 0
-      AND v.deletedAt IS NULL
-      AND v.tipo = 'video'
+    WHERE c.IDContenido = ?
+      AND c.eliminado = 0
+      AND c.deletedAt IS NULL
+      AND c.tipo IN ('video', 'articulo')
     LIMIT 1
   `;
 
   try {
-    const [rows] = await db.query(query, [videoId]);
+    const [rows] = await db.query(query, [contentId]);
 
     if (rows.length === 0) {
-      throw new Error("Video not found");
+      throw new Error("Content not found");
     }
 
     return rows[0];
   } catch (error) {
-    if (error.message === "Video not found") {
+    if (error.message === "Content not found") {
       throw error;
     }
-    console.error("Database error in obtenerVideo:", error);
+    console.error("Database error in getContentById:", error);
     throw new Error("Database error");
   }
 }
 
 /**
- * Gets all available videos for sidebar/carousel with thumbnails and pagination
- * @param {number} limit - Number of videos per page (default: 10)
- * @param {number} offset - Number of videos to skip (default: 0)
- * @returns {Promise<Object>} Object with videos array and total count
+ * Gets all available content for sidebar/carousel with thumbnails and pagination
+ * @param {number} limit - Number of content items per page (default: 10)
+ * @param {number} offset - Number of content items to skip (default: 0)
+ * @param {string|null} type - Filter by content type ('video' or 'article')
+ * @returns {Promise<Object>} Object with content array and total count
  * @throws {Error} If database error
  */
-export async function getAvailableVideos(limit = 10, offset = 0) {
+export async function getAvailableContent(limit = 10, offset = 0, type = null) {
+  let typeFilter = "AND c.tipo IN ('video', 'articulo')";
+  const params = [];
+
+  if (type) {
+    typeFilter = "AND c.tipo = ?";
+    params.push(type);
+  }
+
   const countQuery = `
     SELECT COUNT(*) as total
-    FROM contenido
-    WHERE eliminado = 0
-      AND deletedAt IS NULL
-      AND tipo = 'video'
+    FROM contenido c
+    WHERE c.eliminado = 0
+      AND c.deletedAt IS NULL
+      ${typeFilter}
   `;
 
-  const videosQuery = `
+  const contentQuery = `
     SELECT 
-      v.IDContenido,
-      v.nombre,
-      v.descripcion,
-      v.tipo,
-      v.tipoMembresia,
-      v.createdAt,
+      c.IDContenido,
+      c.nombre,
+      c.descripcion,
+      c.tipo,
+      c.tipoMembresia,
+      c.createdAt,
       t.IDMultimedia as thumbnailMultimedia
-    FROM contenido v
-    LEFT JOIN contenido t ON t.nombre = v.nombre
-                          AND t.eliminado = 0
-                          AND t.deletedAt IS NULL
-                          AND t.tipo = 'imagen'
-    WHERE v.eliminado = 0
-      AND v.deletedAt IS NULL
-      AND v.tipo = 'video'
-    ORDER BY v.createdAt DESC
+    FROM contenido c
+    LEFT JOIN contenido t 
+      ON t.nombre = c.nombre
+      AND t.tipo = 'imagen'
+      AND t.tipoMembresia = c.tipoMembresia
+      AND t.eliminado = 0
+      AND t.deletedAt IS NULL
+      AND (
+        (c.tipo = 'video')
+        OR
+        (c.tipo = 'articulo')
+      )
+    WHERE c.eliminado = 0
+      AND c.deletedAt IS NULL
+      ${typeFilter}
+    ORDER BY c.createdAt DESC
     LIMIT ? OFFSET ?
   `;
 
   try {
-    const [[{ total }]] = await db.query(countQuery);
-    const [rows] = await db.query(videosQuery, [limit, offset]);
+    const [[{ total }]] = await db.query(countQuery, params);
+    const [rows] = await db.query(contentQuery, [...params, limit, offset]);
 
     return {
-      videos: rows,
+      content: rows,
       total,
       hasMore: offset + limit < total,
     };
   } catch (error) {
-    console.error("Database error in getAvailableVideos:", error);
+    console.error("Database error in getAvailableContent:", error);
     throw new Error("Database error");
   }
 }

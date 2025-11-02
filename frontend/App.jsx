@@ -30,7 +30,7 @@ import buildRolePermissionsColumns from "./src/data/tableTemplates/rolePermissio
 import Hero from "./src/pages/hero";
 import LoginPage from "./src/pages/login";
 import RegisterPage from "./src/pages/register";
-import VideoPage from "./src/pages/video";
+import ContentPage from "./src/pages/content";
 import EmailPage from "./src/pages/email";
 import MembershipApplicationPage from "./src/pages/membershipApplication";
 
@@ -132,7 +132,10 @@ function Dashboard() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderBottomColor: '#CAD00F' }}></div>
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto"
+            style={{ borderBottomColor: "#CAD00F" }}
+          ></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -241,10 +244,10 @@ export default function App() {
         element={<MembershipApplicationPage />}
       />
       <Route
-        path="/video"
+        path="/content"
         element={
           <ProtectedRoute>
-            <VideoPage />
+            <ContentPage />
           </ProtectedRoute>
         }
       />
@@ -298,10 +301,10 @@ export default function App() {
         }
       />
       <Route
-        path="/video/:videoId"
+        path="/content/:contentId"
         element={
           <ProtectedRoute>
-            <VideoPage />
+            <ContentPage />
           </ProtectedRoute>
         }
       />

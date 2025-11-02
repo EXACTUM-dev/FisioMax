@@ -1,6 +1,6 @@
 /**
- * @fileoverview Content routes for video access
- * @version 0.1.0
+ * @fileoverview Content routes for multimedia access
+ * @version 0.2.0
  * @author EXACTUM-dev
  * @description Defines routes for content access with Clerk authentication
  */
@@ -12,7 +12,7 @@ import * as contentController from "../controllers/content.controller.js";
 const router = express.Router();
 
 // Protected routes - require Clerk authentication
-router.get("/videos", requireAuth, contentController.index);
-router.get("/videos/:videoId", requireAuth, contentController.show);
+router.get("/content", requireAuth, contentController.index);
+router.get("/content/:contentId", requireAuth, contentController.show);
 
 export default router;

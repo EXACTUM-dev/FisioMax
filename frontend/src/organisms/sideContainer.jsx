@@ -29,7 +29,12 @@ function CarouselSlideRow({ slide, onClick }) {
           src={slide.imageUrl}
           alt={slide.imageAlt}
           className="h-full"
+          variant="transparent"
           cover
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/SOMEFIPP-Logo.jpeg";
+          }}
         />
       </div>
       <div className="mt-2 mb-4">
