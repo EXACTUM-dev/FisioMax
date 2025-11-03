@@ -18,12 +18,12 @@ export const getUserRolesAndPermissions = async (clerkId) => {
       SELECT
         r.nombre AS rol,
         p.nombre AS privilegio
-      FROM Usuario u
-      JOIN Membresia m ON u.IDUsuario = m.IDUsuario
-      JOIN UsuarioRol ur ON u.IDUsuario = ur.IDUsuario
-      JOIN Rol r ON ur.IDRol = r.IDRol
-      JOIN RolPrivilegios rp ON r.IDRol = rp.IDRol
-      JOIN Privilegio p ON rp.IDPrivilegio = p.IDPrivilegio
+      FROM usuario u
+      JOIN membresia m ON u.IDUsuario = m.IDUsuario
+      JOIN usuarioRol ur ON u.IDUsuario = ur.IDUsuario
+      JOIN rol r ON ur.IDRol = r.IDRol
+      JOIN rolprivilegios rp ON r.IDRol = rp.IDRol
+      JOIN privilegio p ON rp.IDPrivilegio = p.IDPrivilegio
       WHERE
         u.clerkID = ?
         AND u.eliminado = 0
