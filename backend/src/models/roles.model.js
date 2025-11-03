@@ -1,6 +1,6 @@
 /**
  * @fileoverview Role model - Database interaction for roles
- * @version 0.2.0
+ * @version 0.3.0
  * @author EXACTUM-dev
  * @description Provides CRUD operations for roles and role-privilege assignments.
  */
@@ -27,6 +27,7 @@ export async function findRoleById(id) {
 
 /**
  * Get all roles from database with their privileges (comma-separated).
+ * Excludes "SinRol" from the list.
  * @returns {Promise<Array>} Array of role objects with privileges string.
  */
 export async function getAllRolesFromDB() {
@@ -46,6 +47,7 @@ export async function getAllRolesFromDB() {
         ON rp.IDPrivilegio = p.IDPrivilegio
       WHERE r.deletedAt IS NULL 
         AND r.eliminado = 0
+        AND r.nombre != 'SinRol'
       GROUP BY r.IDRol, r.nombre, r.descripcion`
     );
     return rows;
@@ -152,26 +154,28 @@ export async function assignRoleToUser(userId, roleId) {
   try {
     await connection.beginTransaction();
 
-    // Soft-delete all current role assignments for the user
-    await connection.query(
-      "UPDATE usuariorol SET eliminado = 1, deletedAt = NOW() WHERE IDUsuario = ?",
+    // Check if user already has a role assignment
+    const [existing] = await connection.query(
+      `SELECT IDUsuario, IDRol 
+       FROM usuariorol 
+       WHERE IDUsuario = ? 
+       LIMIT 1`,
       [userId]
     );
 
-    // Reactivate if the same relation exists, otherwise insert new
-    const [existing] = await connection.query(
-      "SELECT 1 FROM usuariorol WHERE IDUsuario = ? AND IDRol = ? LIMIT 1",
-      [userId, roleId]
-    );
-
     if (existing.length > 0) {
+      // Update existing role assignment
       await connection.query(
-        "UPDATE usuariorol SET eliminado = 0, deletedAt = NULL WHERE IDUsuario = ? AND IDRol = ?",
-        [userId, roleId]
+        `UPDATE usuariorol 
+         SET IDRol = ?, eliminado = 0, deletedAt = NULL 
+         WHERE IDUsuario = ?`,
+        [roleId, userId]
       );
     } else {
+      // Insert new role assignment
       await connection.query(
-        "INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)",
+        `INSERT INTO usuariorol (IDUsuario, IDRol) 
+         VALUES (?, ?)`,
         [userId, roleId]
       );
     }
@@ -221,6 +225,127 @@ export async function createRoleWithPrivileges(
   } catch (error) {
     await connection.rollback();
     console.error("Database error in createRoleWithPrivileges:", error);
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+/**
+ * Find users assigned to a role (active links only).
+ * @param {string|number} roleId
+ * @returns {Promise<Array<{IDUsuario:number, IDRol:number}>>}
+ */
+export async function findUsersByRole(roleId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT IDUsuario, IDRol
+         FROM usuariorol
+        WHERE IDRol = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [roleId]
+    );
+    return rows;
+  } catch (error) {
+    console.error("Error de base de datos en findUsersByRole:", error);
+    throw error;
+  }
+}
+
+/**
+ * Find a role by exact name (active only).
+ * @param {string} name
+ * @returns {Promise<Object|null>}
+ */
+export async function findRoleByName(name) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT *
+         FROM rol
+        WHERE nombre = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [name]
+    );
+    return rows.length > 0 ? rows[0] : null;
+  } catch (error) {
+    console.error("Error de base de datos en findRoleByName:", error);
+    throw error;
+  }
+}
+
+/**
+ * Mark all privileges of a role as soft-deleted.
+ * @param {string|number} roleId
+ * @returns {Promise<{affectedRows:number}>}
+ */
+export async function markRolePrivilegesDeleted(roleId) {
+  try {
+    const [result] = await dbPool.query(
+      `UPDATE rolprivilegios
+          SET eliminado = 1, deletedAt = NOW()
+        WHERE IDRol = ?
+          AND (deletedAt IS NULL AND eliminado = 0)`,
+      [roleId]
+    );
+    return { affectedRows: result.affectedRows };
+  } catch (error) {
+    console.error(
+      "Error de base de datos en markRolePrivilegesDeleted:",
+      error
+    );
+    throw error;
+  }
+}
+
+/**
+ * Soft-delete a role by id.
+ * @param {string|number} roleId
+ * @returns {Promise<{affectedRows:number}>}
+ */
+export async function markRoleDeleted(roleId) {
+  try {
+    const [result] = await dbPool.query(
+      `UPDATE rol
+          SET eliminado = 1, deletedAt = NOW()
+        WHERE IDRol = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [roleId]
+    );
+    return { affectedRows: result.affectedRows };
+  } catch (error) {
+    console.error("Error de base de datos en markRoleDeleted:", error);
+    throw error;
+  }
+}
+
+/**
+ * Reassign users from one role to another (only updates active relations).
+ * @param {number} oldRoleId - Current role ID to replace.
+ * @param {number} newRoleId - New role ID to assign.
+ * @returns {Promise<{success:boolean, affected:number}>}
+ */
+export async function reassignUsersToRole(oldRoleId, newRoleId) {
+  const connection = await dbPool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [result] = await connection.query(
+      `UPDATE usuariorol
+          SET IDRol = ?
+        WHERE IDRol = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [newRoleId, oldRoleId]
+    );
+
+    await connection.commit();
+    return { success: true, affected: result.affectedRows };
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error de base de datos en reassignUsersToRole:", error);
     throw error;
   } finally {
     connection.release();

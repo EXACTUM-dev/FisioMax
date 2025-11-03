@@ -11,6 +11,10 @@ import {
   updateRolePrivileges,
   createRoleWithPrivileges,
   assignRoleToUser,
+  findRoleByName,
+  reassignUsersToRole,
+  markRoleDeleted,
+  markRolePrivilegesDeleted,
 } from "../models/roles.model.js";
 import {
   getRolePrivileges,
@@ -276,6 +280,72 @@ export async function assignUserRole(req, res) {
     return res.status(500).json({
       success: false,
       error: error.message || "Error asignando rol a usuario",
+    });
+  }
+}
+
+/**
+ * Delete a role with logical deletion and user reassignment to "SinRol".
+ * @param {Object} req - Express request object with role ID in params
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ *
+ */
+export async function deleteRole(req, res) {
+  try {
+    const { id: roleId } = req.params;
+
+    // 1) Check if trying to delete "SinRol" (not allowed)
+    const roleToDelete = await findRoleById(roleId);
+    if (roleToDelete && roleToDelete.nombre === "SinRol") {
+      return res.status(400).json({
+        success: false,
+        message: 'No se puede eliminar el rol "SinRol". Es un rol del sistema.',
+      });
+    }
+
+    // 2) Find "SinRol" role (required for user reassignment)
+    const sinRol = await findRoleByName("SinRol");
+    if (!sinRol) {
+      return res.status(404).json({
+        success: false,
+        message: 'No se pudo encontrar el rol "SinRol".',
+      });
+    }
+
+    // 3) Reassign all users from this role to "SinRol" (simple UPDATE for 1:1)
+    await reassignUsersToRole(roleId, sinRol.IDRol);
+
+    // 4) Soft-delete all privileges associated with the role
+    await markRolePrivilegesDeleted(roleId);
+
+    // 5) Soft-delete the role itself
+    await markRoleDeleted(roleId);
+
+    return res.status(200).json({
+      success: true,
+      message: "El rol ha sido eliminado exitosamente",
+    });
+  } catch (error) {
+    // Check for database connectivity errors
+    const isConnError =
+      error?.code === "ECONNREFUSED" ||
+      error?.code === "PROTOCOL_CONNECTION_LOST" ||
+      error?.code === "ER_ACCESS_DENIED_ERROR" ||
+      /connect|connection|pool/i.test(error?.message || "");
+
+    if (isConnError) {
+      return res.status(503).json({
+        success: false,
+        message: "No hay conexión con el servidor. Intenta más tarde",
+      });
+    }
+
+    // Generic error handling
+    console.error("deleteRole error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo eliminar el rol. Por favor, intente nuevamente",
     });
   }
 }

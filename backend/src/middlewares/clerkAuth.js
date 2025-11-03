@@ -5,13 +5,13 @@
  *
  * Verifies Clerk JWT and attaches user information to the request.
  */
-import {ClerkExpressRequireAuth, clerkClient} from '@clerk/clerk-sdk-node';
-import config from '../../config.js';
+import { ClerkExpressRequireAuth, clerkClient } from "@clerk/clerk-sdk-node";
+import config from "../../config.js";
 import {
   getUserByClerkId,
   getUserByEmail,
   updateUserClerkId,
-} from '../models/users.model.js';
+} from "../models/users.model.js";
 
 /**
  * Clerk authentication middleware that requires valid authentication.
@@ -53,7 +53,7 @@ export const autoSyncClerkId = async (req, res, next) => {
     // Not linked, attempt to link by email
     const clerkUser = await clerkClient.users.getUser(clerkUserId);
     const email = clerkUser.emailAddresses.find(
-        (e) => e.id === clerkUser.primaryEmailAddressId
+      (e) => e.id === clerkUser.primaryEmailAddressId
     )?.emailAddress;
 
     if (!email) {
@@ -77,7 +77,7 @@ export const autoSyncClerkId = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Error in autoSyncClerkId:', error);
+    console.error("Error in autoSyncClerkId:", error);
     // Don't block the request due to a sync error
     next();
   }

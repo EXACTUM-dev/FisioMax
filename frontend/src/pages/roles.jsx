@@ -15,6 +15,7 @@ import AlertBanner from "../atoms/alertBanner";
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 import Button from "../atoms/button";
+import ConfirmationModal from "../molecules/confirmationModal";
 
 // Organisms
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
@@ -46,6 +47,10 @@ export default function RolesPage() {
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
 
+  // Confirmation modal state for delete
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState(null);
+
   const {
     roles,
     loading: rolesLoading,
@@ -64,11 +69,12 @@ export default function RolesPage() {
   } = useCreateRole();
 
   // Row action handler
-  const handleRowAction = (col, row) => {
+  const handleRowAction = async (col, row) => {
     if (col.key === "editar") {
       handleEditRole(row);
     } else if (col.key === "eliminar") {
-      deleteRoleById(row.id);
+      setRoleToDelete(row);
+      setDeleteConfirmOpen(true);
     }
   };
 
@@ -136,6 +142,44 @@ export default function RolesPage() {
         setShowModal(true);
       }
     }
+  };
+  /**
+   * Handle delete confirmation
+   */
+  const handleDeleteConfirm = async () => {
+    if (!roleToDelete) return;
+
+    try {
+      await deleteRoleById(roleToDelete.id);
+      await loadRoles();
+
+      setDeleteConfirmOpen(false);
+      setRoleToDelete(null);
+
+      setModalType("success");
+      setModalMessage("El rol ha sido eliminado exitosamente");
+      setShowModal(true);
+    } catch (err) {
+      setDeleteConfirmOpen(false);
+      setRoleToDelete(null);
+
+      setModalType("error");
+      setModalMessage(
+        toUserMessage(
+          err,
+          "No se pudo eliminar el rol. Por favor, intente nuevamente"
+        )
+      );
+      setShowModal(true);
+    }
+  };
+
+  /**
+   * Handle delete cancellation
+   */
+  const handleDeleteCancel = () => {
+    setDeleteConfirmOpen(false);
+    setRoleToDelete(null);
   };
 
   /**
@@ -240,7 +284,10 @@ export default function RolesPage() {
    */
   const roleColumns = buildRolePermissionsColumns({
     onEdit: handleEditRole,
-    onDelete: (row) => deleteRoleById(row.id),
+    onDelete: (row) => {
+      setRoleToDelete(row);
+      setDeleteConfirmOpen(true);
+    },
   });
 
   // Merge loading and error states from both hooks
@@ -305,6 +352,17 @@ export default function RolesPage() {
             }
           />
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          open={deleteConfirmOpen}
+          title="¿Eliminar rol?"
+          message={`¿Estás seguro de que deseas eliminar el rol "${roleToDelete?.rol}"? Los usuarios asignados a este rol serán reasignados a 'Sin Rol'.`}
+          confirmLabel="Eliminar"
+          cancelLabel="Cancelar"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
 
         {/* Edit Role Modal */}
         {editingRole && (
