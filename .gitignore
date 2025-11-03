@@ -145,7 +145,6 @@ backend/src/config/db.js
 #package-lock.json
 frontend/package-lock.json
 backend/package-lock.json
-backend/package.json
 package-lock.json
 
 # Base de datos
