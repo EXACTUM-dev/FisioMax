@@ -5,7 +5,7 @@
  * @author EXACTUM-dev
  */
 import { getUserById } from '../services/auth.service.js';
-import { getUserRolesAndPermissions } from '../models/role.js';
+import { getUserRolesAndPermissions } from '../models/rbac.model.js';
 
 /**
  * Retrieves the authenticated user's information combining Clerk and DB data.
