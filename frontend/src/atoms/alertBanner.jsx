@@ -1,24 +1,12 @@
 /**
- * @fileoverview Function to fetch user data from an API.
- * @version 0.2.0
+ * @fileoverview Attractive alert banner as a pop up over content
+ * @version 0.3.1
  * @author EXACTUM-dev
- * @description Optional description of the file
+ * @description Alert banner that overlays the page content as a pop up, without modal background
  */
 
 import React from "react";
 
-/**
- * Attractive, yet subtle alert banner.
- * @component
- * @param {Object} props
- * @param {"error"|"warning"|"info"|"success"} [props.type="error"]
- * @param {string} props.message
- * @param {Function} [props.onRetry]
- * @param {Function} [props.onClose]
- * @param {boolean} [props.closable=false]
- * @param {string} [props.className=""]
- * @returns {React.Element}
- */
 export default function AlertBanner({
   type = "error",
   message = "",
@@ -133,68 +121,64 @@ export default function AlertBanner({
   };
 
   return (
-    <div
-      role="alert"
-      aria-live="polite"
-      className={`rounded-lg overflow-hidden shadow-sm ring-1 ring-black/5 ${p.bg} ${p.text} ${className}`}
-    >
-      {/* Center vertically: icon, text and actions */}
-      <div className="flex items-center gap-4 p-4">
-        {/* icon */}
-        <div
-          className={`flex items-center justify-center w-10 h-10 rounded-md ${p.accent} bg-opacity-95 text-white shadow-sm flex-shrink-0`}
-          aria-hidden
-        >
-          <Icon />
-        </div>
-
-        {/* content */}
-        <div className="flex-1 min-w-0">
-          <p className="font-medium">{message}</p>
-        </div>
-
-        {/* actions */}
-        <div className="flex items-center gap-2 ml-4">
-          {onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className={`px-3 py-1.5 text-sm text-white rounded-md ${p.btn} transition-colors`}
-            >
-              Reintentar
-            </button>
-          )}
-
-          {closable && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Cerrar alerta"
-              className="p-1.5 rounded-md text-slate-600 hover:bg-slate-100 transition"
-            >
-              <svg
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden
+    <div className="fixed top-6 left-0 w-full z-[1000] flex justify-center pointer-events-none">
+      <div
+        role="alert"
+        aria-live="polite"
+        className={`relative rounded-lg overflow-hidden shadow-lg ring-1 ring-black/10 ${p.bg} ${p.text} max-w-[90vw] w-full sm:max-w-md mx-auto pointer-events-auto ${className}`}
+        style={{ zIndex: 1010 }}
+      >
+        <div className="flex items-center gap-4 p-4">
+          <div
+            className={`flex items-center justify-center w-10 h-10 rounded-md ${p.accent} bg-opacity-95 text-white shadow-sm flex-shrink-0`}
+            aria-hidden
+          >
+            <Icon />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium">{message}</p>
+          </div>
+          <div className="flex items-center gap-2 ml-4">
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className={`px-3 py-1.5 text-sm text-white rounded-md ${p.btn} transition-colors`}
               >
-                <path
-                  d="M18 6L6 18"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M6 6l12 12"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          )}
+                Reintentar
+              </button>
+            )}
+            {closable && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Cerrar alerta"
+                className="p-1.5 rounded-md text-slate-600 hover:bg-slate-100 transition"
+              >
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M6 6l12 12"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
