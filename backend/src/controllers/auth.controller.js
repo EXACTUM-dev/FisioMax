@@ -5,7 +5,7 @@
  * @author EXACTUM-dev
  */
 import { getUserById } from '../services/auth.service.js';
-
+import { getUserRolesAndPermissions } from '../models/rbac.model.js';
 
 /**
  * Retrieves the authenticated user's information combining Clerk and DB data.
@@ -29,6 +29,7 @@ export const getProfile = async (req, res) => {
 
         // getUserById now returns combined data from Clerk + DB
         const userData = await getUserById(userId);
+        const userPrivileges = await getUserRolesAndPermissions(userId);
         
         if (!userData.exists) {
             return res.status(403).json({ 
@@ -50,6 +51,8 @@ export const getProfile = async (req, res) => {
                 imageUrl: userData.imageUrl,
                 role: userData.role,
                 roleId: userData.roleId,
+                accept: userData.membershipState,
+                userPrivileges,
             }
         });
     } catch (error) {

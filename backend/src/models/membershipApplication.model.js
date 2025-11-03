@@ -71,15 +71,15 @@ class MembershipApplication {
 
       await conn.query(
         `INSERT INTO usuario 
-        (IDUsuario, nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento, pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, numInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
+        (nombres, apellidoP, apellidoM, correo, telefonoCasa, telefonoWhatsapp, fechaNacimiento, pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, numInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
         [ 
-          userId, 
           this.firstName, 
           this.lastName, 
           this.middleName, 
           this.email, 
-          this.whatsappPhone, 
+          this.homePhone,
+          this.whatsappPhone,
           this.birthDate,
           this.country, 
           this.state, 

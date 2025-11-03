@@ -132,47 +132,6 @@ export default function Hero() {
 
         <Carousel slides={rowSlides} variant="row" />
 
-        <DataSwitchContainer
-          initialKey="users"
-          views={[
-            {
-              key: "users",
-              label: "Users",
-              type: "table",
-              columns: userColumns,
-              rows: userRows,
-              searchPlaceholder: "Search users...",
-            },
-            {
-              key: "roles",
-              label: "Roles & Permissions",
-              type: "table",
-              columns: roleColumns,
-              rows: roleRows,
-              searchPlaceholder: "Search roles...",
-            },
-          ]}
-        />
-
-        <div className="max-w-[70rem] mx-auto">
-          <div className="flex justify-center py-6">
-            <Button size="sm" label="SOMEFIPP" />
-          </div>
-        </div>
-
-        <div className="max-w-md mx-auto">
-          {userFormFields.map((field) => (
-            <FormField
-              key={field.name}
-              label={field.label}
-              name={field.name}
-              type={field.type}
-              value={formValues[field.name]}
-              onChange={handleFormChange}
-              placeholder={field.placeholder}
-            />
-          ))}
-        </div>
       </main>
     </div>
   );
