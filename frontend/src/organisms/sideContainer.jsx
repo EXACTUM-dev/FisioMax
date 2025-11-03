@@ -39,7 +39,7 @@ function CarouselSlideRow({ slide, onClick }) {
       </div>
       <div className="mt-2 mb-4">
         <Title3
-          className="text-[1rem] text-left line-clamp-2 group-hover:text-blue-600 transition-colors"
+          className="text-[1rem] text-left line-clamp-2 group-hover:text-[#CAD00F] transition-colors"
           title={slide.title}
         >
           {slide.title}

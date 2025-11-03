@@ -128,6 +128,7 @@ export async function getAvailableContent(limit = 10, offset = 0, type = null) {
  * @param {string} contentData.descripcion - Content description
  * @param {string} contentData.tipo - Content type (video, articulo, imagen, etc.)
  * @param {string} contentData.IDMultimedia - S3 key for the multimedia file
+ * @param {string} [contentData.tipoMembresia] - Membership type (Básico, Estándar, Premium)
  * @returns {Promise<number>} Inserted content ID
  * @throws {Error} If database error
  */
@@ -138,9 +139,10 @@ export async function createContent(contentData) {
       descripcion,
       tipo,
       IDMultimedia,
+      tipoMembresia,
       eliminado,
       createdAt
-    ) VALUES (?, ?, ?, ?, 0, NOW())
+    ) VALUES (?, ?, ?, ?, ?, 0, NOW())
   `;
 
   try {
@@ -149,6 +151,7 @@ export async function createContent(contentData) {
       contentData.descripcion,
       contentData.tipo,
       contentData.IDMultimedia,
+      contentData.tipoMembresia || null,
     ]);
 
     return result.insertId;
@@ -178,5 +181,30 @@ export async function assignContentToRole(contentId, roleId) {
   } catch (error) {
     // If table doesn't exist, just log a warning
     console.warn("Could not assign content to role - table may not exist:", error.message);
+  }
+}
+
+/**
+ * Gets role name by role ID
+ * @param {number} roleId - Role ID
+ * @returns {Promise<string|null>} Role name or null if not found
+ * @throws {Error} If database error
+ */
+export async function getRoleName(roleId) {
+  const query = `
+    SELECT nombre
+    FROM rol
+    WHERE IDRol = ?
+      AND deletedAt IS NULL
+      AND eliminado = 0
+    LIMIT 1
+  `;
+
+  try {
+    const [rows] = await db.query(query, [roleId]);
+    return rows.length > 0 ? rows[0].nombre : null;
+  } catch (error) {
+    console.error("Database error in getRoleName:", error);
+    return null;
   }
 }

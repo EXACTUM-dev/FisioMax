@@ -10,6 +10,7 @@ import {
   getContentById,
   createContent,
   assignContentToRole,
+  getRoleName,
 } from "../models/content.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import S3Service from "../services/s3Service.js";
@@ -210,12 +211,20 @@ export async function upload(req, res) {
 
     // Insert content into database
     let contentId;
+    let tipoMembresia = null;
+    
     try {
+      // Get role name if role is provided
+      if (role) {
+        tipoMembresia = await getRoleName(parseInt(role));
+      }
+
       contentId = await createContent({
         nombre,
         descripcion,
         tipo: tipo.toLowerCase(),
         IDMultimedia: s3Key,
+        tipoMembresia,
       });
 
       // Assign content to role
@@ -240,6 +249,7 @@ export async function upload(req, res) {
           descripcion: `Miniatura de ${nombre}`,
           tipo: "imagen",
           IDMultimedia: thumbnailKey,
+          tipoMembresia,
         });
 
         // Assign thumbnail to same role

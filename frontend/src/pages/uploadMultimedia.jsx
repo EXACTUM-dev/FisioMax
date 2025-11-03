@@ -16,6 +16,9 @@ import FormField from "../molecules/form";
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 
+// Organisms
+import SuccessErrorModal from "../organisms/successErrorModal";
+
 /**
  * Component for uploading multimedia content with role-based access control.
  * Allows administrators to upload files, set metadata, and assign content to specific roles.
@@ -40,6 +43,12 @@ export default function UploadMultimedia() {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  // Modal states
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [uploadedContentName, setUploadedContentName] = useState("");
 
   /**
    * Fetches available roles from the API on component mount.
@@ -154,7 +163,9 @@ export default function UploadMultimedia() {
       const result = await response.json();
 
       if (result.success) {
-        alert("Contenido subido exitosamente");
+        // Save content name before resetting form
+        setUploadedContentName(formData.nombre);
+        
         // Reset form to initial state
         setFormData({
           nombre: "",
@@ -164,12 +175,17 @@ export default function UploadMultimedia() {
         setSelectedFile(null);
         setSelectedThumbnail(null);
         setSelectedRole("");
+        
+        // Show success modal
+        setSuccessModalOpen(true);
       } else {
-        alert("Error al subir contenido: " + result.message);
+        setErrorMessage(result.message || "Error al subir el contenido");
+        setErrorModalOpen(true);
       }
     } catch (error) {
       console.error("Error uploading content:", error);
-      alert("Error al subir el contenido");
+      setErrorMessage("Error al subir el contenido. Por favor, intenta nuevamente.");
+      setErrorModalOpen(true);
     } finally {
       setUploading(false);
     }
@@ -402,6 +418,26 @@ export default function UploadMultimedia() {
           </form>
         </div>
       </main>
+
+      {/* Success Modal */}
+      <SuccessErrorModal
+        open={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        type="success"
+        title="¡Contenido subido exitosamente!"
+        message={`El contenido "${uploadedContentName}" ha sido subido correctamente y estará disponible para los usuarios.`}
+        confirmLabel="Entendido"
+      />
+
+      {/* Error Modal */}
+      <SuccessErrorModal
+        open={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        type="error"
+        title="Error al subir contenido"
+        message={errorMessage}
+        confirmLabel="Cerrar"
+      />
     </div>
   );
 }   
