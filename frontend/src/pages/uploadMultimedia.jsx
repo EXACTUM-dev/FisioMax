@@ -185,10 +185,7 @@ export default function UploadMultimedia() {
       {/* Main content */}
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-4xl mx-auto">
-          <Title2 className="mb-2">Subir nuevo contenido multimedia</Title2>
-          <p className="text-sm text-slate-500 mb-8">
-            Completa la información para añadir un nuevo video
-          </p>
+          <Title2 className="mb-6">Subir nuevo contenido multimedia</Title2>
 
           <form onSubmit={handleSubmit}>
             <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">

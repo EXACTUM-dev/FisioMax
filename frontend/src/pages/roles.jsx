@@ -1,7 +1,7 @@
 /**
  * @fileoverview Role management page: list, edit and create roles
  * @author EXACTUM-dev
- * @version 0.4.0
+ * @version 0.5.0
  */
 
 import React, { useState } from "react";
@@ -10,6 +10,7 @@ import { useUser } from "@clerk/clerk-react";
 // Atoms
 import Loading from "../atoms/loading";
 import AlertBanner from "../atoms/alertBanner";
+import {Title2} from "../atoms/typography";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -272,11 +273,7 @@ export default function RolesPage() {
 
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold">
-              Administración de Roles y Permisos
-            </h1>
-          </div>
+          <Title2 className="mb-6">Administración de Roles y Permisos</Title2>
 
           {errorBanner}
 
@@ -297,11 +294,12 @@ export default function RolesPage() {
             toolbarRight={
               <Button
                 variant="brand"
-                label="Crear nuevo rol"
-                onClick={handleCreateRole}
                 size="sm"
-                className="whitespace-nowrap px-3 py-1.5 text-sm md:px-5 md:py-2.5 md:text-base"
-              />
+                radius="lg"
+                onClick={handleCreateRole}
+              >
+                Crear nuevo rol
+              </Button>
             }
           />
         </div>
