@@ -55,7 +55,8 @@ export async function getUsuarios() {
 export async function getMembershipUserStateById(userId) {
   try {
     const [rows] = await dbPool.query(
-      `SELECT aceptado FROM membresia WHERE IDUsuario = ?;`, [userId]
+      `SELECT aceptado FROM membresia WHERE IDUsuario = ?;`,
+      [userId]
     );
     return rows[0]?.aceptado ?? null;
   } catch (error) {
@@ -341,7 +342,7 @@ export async function createUserWithClerkId(userData) {
       ]
     );
 
-    if (result.affectedRows > 0) {
+    if (result.affectedRows === 0) {
       throw new Error("No se pudo crear el usuario");
     }
 

@@ -150,9 +150,12 @@ export async function getUserRole(userId) {
  * @returns {Promise<{success:boolean}>} Operation result.
  */
 export async function assignRoleToUser(userId, roleId) {
+  const connection = await dbPool.getConnection();
   try {
+    await connection.beginTransaction();
+
     // Check if user already has a role assignment
-    const [existing] = await dbPool.query(
+    const [existing] = await connection.query(
       `SELECT IDUsuario, IDRol 
        FROM usuariorol 
        WHERE IDUsuario = ? 
@@ -162,7 +165,7 @@ export async function assignRoleToUser(userId, roleId) {
 
     if (existing.length > 0) {
       // Update existing role assignment
-      await dbPool.query(
+      await connection.query(
         `UPDATE usuariorol 
          SET IDRol = ?, eliminado = 0, deletedAt = NULL 
          WHERE IDUsuario = ?`,
@@ -170,17 +173,21 @@ export async function assignRoleToUser(userId, roleId) {
       );
     } else {
       // Insert new role assignment
-      await dbPool.query(
+      await connection.query(
         `INSERT INTO usuariorol (IDUsuario, IDRol) 
          VALUES (?, ?)`,
         [userId, roleId]
       );
     }
 
+    await connection.commit();
     return { success: true };
   } catch (error) {
+    await connection.rollback();
     console.error("Error de base de datos en assignRoleToUser:", error);
     throw error;
+  } finally {
+    connection.release();
   }
 }
 
@@ -239,7 +246,7 @@ export async function findUsersByRole(roleId) {
           AND eliminado = 0`,
       [roleId]
     );
-    return rows; // El controlador solo usa IDUsuario
+    return rows;
   } catch (error) {
     console.error("Error de base de datos en findUsersByRole:", error);
     throw error;
@@ -321,8 +328,11 @@ export async function markRoleDeleted(roleId) {
  * @returns {Promise<{success:boolean, affected:number}>}
  */
 export async function reassignUsersToRole(oldRoleId, newRoleId) {
+  const connection = await dbPool.getConnection();
   try {
-    const [result] = await dbPool.query(
+    await connection.beginTransaction();
+
+    const [result] = await connection.query(
       `UPDATE usuariorol
           SET IDRol = ?
         WHERE IDRol = ?
@@ -330,9 +340,14 @@ export async function reassignUsersToRole(oldRoleId, newRoleId) {
           AND eliminado = 0`,
       [newRoleId, oldRoleId]
     );
+
+    await connection.commit();
     return { success: true, affected: result.affectedRows };
   } catch (error) {
+    await connection.rollback();
     console.error("Error de base de datos en reassignUsersToRole:", error);
     throw error;
+  } finally {
+    connection.release();
   }
 }
