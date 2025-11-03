@@ -55,7 +55,7 @@ export async function getUsuarios() {
 export async function getMembershipUserStateById(userId) {
   try {
     const [rows] = await dbPool.query(
-      `SELECT aceptado FROM Membresia WHERE IDUsuario = ?;`, [userId]
+      `SELECT aceptado FROM membresia WHERE IDUsuario = ?;`, [userId]
     );
     return rows[0]?.aceptado ?? null;
   } catch (error) {
