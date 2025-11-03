@@ -131,17 +131,14 @@ export async function getUserByClerkId(clerkId) {
           nombreArchivo,
           urlArchivo,
           createdAt
-        FROM DocumentosAdicionales
+        FROM documentosadicionales
         WHERE IDUsuario = ?`,
         [user.IDUsuario]
       );
       user.documentosAdicionales = docRows;
     } catch (docError) {
-      // If DocumentosAdicionales table doesn't exist, just set empty array
-      console.warn(
-        "DocumentosAdicionales table not found or error:",
-        docError.message
-      );
+      // If documentosadicionales table doesn't exist, just set empty array
+      console.warn('documentosadicionales table not found or error:', docError.message);
       user.documentosAdicionales = [];
     }
 
