@@ -98,6 +98,25 @@ export default function UploadMultimedia() {
   const handleFileChange = (e, type = 'content') => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file size based on type
+      let maxSize;
+      let maxSizeLabel;
+      
+      if (type === 'thumbnail') {
+        maxSize = 20 * 1024 * 1024; // 20MB for thumbnails
+        maxSizeLabel = '20MB';
+      } else {
+        maxSize = 5 * 1024 * 1024 * 1024; // 5GB for content files
+        maxSizeLabel = '5GB';
+      }
+      
+      if (file.size > maxSize) {
+        setErrorMessage(`El archivo es demasiado grande. El tamaño máximo permitido es ${maxSizeLabel}.`);
+        setErrorModalOpen(true);
+        e.target.value = ''; // Clear the input
+        return;
+      }
+      
       if (type === 'thumbnail') {
         setSelectedThumbnail(file);
       } else {
@@ -366,7 +385,7 @@ export default function UploadMultimedia() {
                           <span className="text-[#CAD00F] font-medium">Sube un archivo</span> o arrástralo aquí
                         </p>
                         <p className="text-xs text-slate-500">
-                          MP4, MOV, WEBP, PDF hasta 5gb
+                          MP4, MOV, WEBP, PDF hasta 5GB
                         </p>
                       </>
                     )}
@@ -414,7 +433,7 @@ export default function UploadMultimedia() {
                           <span className="text-[#CAD00F] font-medium">Sube una imagen</span> o arrástrala aquí
                         </p>
                         <p className="text-xs text-slate-500">
-                          PNG, JPG hasta 10mb
+                          PNG, JPG hasta 20MB
                         </p>
                       </>
                     )}
