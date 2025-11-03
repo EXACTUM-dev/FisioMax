@@ -97,7 +97,17 @@ app.use("/api/auth", authRoutes);
  * Routes for video content access.
  */
 import contentRoutes from "./src/routes/content.routes.js";
-app.use("/api", contentRoutes);
+app.use("/api/content", contentRoutes);
+
+/**
+ * Middleware for routes not found.
+ */
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Ruta no encontrada",
+  });
+});
 
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
@@ -177,16 +187,6 @@ app.use((error, req, res, next) => {
     success: false,
     message: error.message || "Error interno del servidor",
     ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
-  });
-});
-
-/**
- * Middleware for routes not found.
- */
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Ruta no encontrada",
   });
 });
 

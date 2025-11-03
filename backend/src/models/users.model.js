@@ -140,8 +140,8 @@ export async function getUserByClerkId(clerkId) {
       user.documentosadicionales = docRows;
     } catch (docError) {
       // If documentosadicionales table doesn't exist, just set empty array
-      console.warn('Documentosadicionales table not found or error:', docError.message);
-      user.documentosadicionales = [];
+      console.warn('documentosadicionales table not found or error:', docError.message);
+      user.documentosAdicionales = [];
     }
 
     return user;

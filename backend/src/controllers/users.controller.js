@@ -290,20 +290,38 @@ export async function getUserProfileById(req, res) {
         return res.status(400).json({ success: false, error: 'ID de usuario requerido' });
         }
 
+        // Get current user data to retrieve old document keys
+        const currentUser = await getUserById(userId);
+        if (!currentUser) {
+        return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        }
+
         const updateData = {};
 
         // Check if AWS is configured
         const isS3Configured = process.env.AWS_REGION && process.env.AWS_BUCKET_NAME;
 
         if (isS3Configured) {
-        // Upload files to S3 if provided
+        // Upload files to S3 if provided, and delete old ones
         if (req.files?.titulo?.[0]) {
+            // Delete old file if exists
+            if (currentUser.titulo) {
+            await S3Service.deleteFile(currentUser.titulo);
+            }
             updateData.titulo = await S3Service.uploadFile(req.files.titulo[0], 'titulos');
         }
         if (req.files?.cedula?.[0]) {
+            // Delete old file if exists
+            if (currentUser.cedula) {
+            await S3Service.deleteFile(currentUser.cedula);
+            }
             updateData.cedula = await S3Service.uploadFile(req.files.cedula[0], 'cedulas');
         }
         if (req.files?.constancias?.[0]) {
+            // Delete old file if exists
+            if (currentUser.constancias) {
+            await S3Service.deleteFile(currentUser.constancias);
+            }
             updateData.constancias = await S3Service.uploadFile(req.files.constancias[0], 'constancias');
         }
         } else {

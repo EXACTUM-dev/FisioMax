@@ -138,8 +138,8 @@ export default function RowCarousel({ slides = [] }) {
                     <VignetteImage
                       src={s.imageUrl}
                       alt={s.imageAlt}
-                      variant={vignette}
                       className="h-full"
+                      variant="transparent"
                       cover
                     />
                   </div>

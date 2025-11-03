@@ -5,7 +5,7 @@
  * @description Inlcudes basic S3 configuration
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import path from 'path';
 import crypto from 'crypto';
@@ -81,6 +81,36 @@ class S3Service {
     } catch (error) {
       console.error('Error generando URLs presignadas:', error);
       return [];
+    }
+  }
+
+  /**
+   * Delete a file from S3
+   * @param {string} key - S3 object key to delete
+   * @returns {Promise<boolean>} True if deleted successfully
+   */
+  static async deleteFile(key) {
+    if (!key) return false;
+
+    try {
+      // If the key is already a full URL, extract the key
+      let s3Key = key;
+      if (key.includes('amazonaws.com')) {
+        const url = new URL(key);
+        s3Key = url.pathname.substring(1); // Remove leading '/'
+      }
+
+      const params = {
+        Bucket: BUCKET_NAME,
+        Key: s3Key,
+      };
+
+      await s3.send(new DeleteObjectCommand(params));
+      console.log(`Archivo eliminado de S3: ${s3Key}`);
+      return true;
+    } catch (error) {
+      console.error('Error eliminando archivo de S3:', error);
+      return false;
     }
   }
 }
