@@ -147,3 +147,43 @@ export async function updateUserById(userId, payload, clerkToken) {
   }
 }
 
+/**
+ * Update user documents (titulo, cedula, constancias)
+ * @param {string} userId - database IDUsuario
+ * @param {FormData} formData - FormData containing files
+ * @param {string} clerkToken
+ * @returns {Promise<Object>} Updated user data with fresh presigned URLs
+ */
+export async function updateUserDocuments(userId, formData, clerkToken) {
+  try {
+    const url = buildApiUrl(`/api/users/${userId}/documents`);
+    const headers = {};
+    
+    if (clerkToken) {
+      headers['Authorization'] = `Bearer ${clerkToken}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+      throw new Error(errorData.error || 'No se pudieron actualizar los documentos');
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      return result.data;
+    } else {
+      throw new Error(result.error || 'No se pudieron actualizar los documentos');
+    }
+  } catch (error) {
+    console.error('Error updating user documents:', error);
+    throw error;
+  }
+}
+

@@ -22,6 +22,7 @@ import AddressCard from "../organisms/addressCard";
 import MembershipCard from "../organisms/membershipCard";
 import TicketsCard from "../organisms/ticketsCard";
 import DocumentsCard from "../organisms/documentsCard";
+import HistoryCard from "../organisms/historyCard";
 
 // Controllers
 import { getCurrentUserProfile, getUserProfileById, updateUserById } from "../controllers/profile.controller";
@@ -93,8 +94,14 @@ export default function ProfilePage() {
     }
     const token = await getToken();
     try {
-      const updated = await updateUserById(userId, fields, token);
-      setUserProfile(updated);
+      // If fields is already a full profile object (from documents update), use it directly
+      if (fields.IDUsuario) {
+        setUserProfile(fields);
+      } else {
+        // Otherwise, it's a partial update, call the API
+        const updated = await updateUserById(userId, fields, token);
+        setUserProfile(updated);
+      }
     } catch (err) {
       console.error('Error actualizando usuario:', err);
       setError(err.message || 'Error al actualizar el usuario');
@@ -144,26 +151,8 @@ export default function ProfilePage() {
             <div className="lg:col-span-2 space-y-6">
               <ProfileInfo data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
               <AddressCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
-              <DocumentsCard data={profileData} />
-
-                {/* History / stats placeholder (simple box) */}
-                <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
-                  <h3 className="text-lg font-semibold mb-3">Historial</h3>
-                  <div className="grid grid-cols-3 gap-4 text-center text-sm text-slate-700">
-                    <div>
-                      <div className="text-xs text-slate-500">Cursos Completados</div>
-                      <div className="font-medium mt-2">—</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-slate-500">Diplomados</div>
-                      <div className="font-medium mt-2">—</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-slate-500">Horas de servicio</div>
-                      <div className="font-medium mt-2">—</div>
-                    </div>
-                  </div>
-                </section>
+              <DocumentsCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} userId={userId} />
+              <HistoryCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
               </div>
 
               {/* Right column: membership and tickets */}

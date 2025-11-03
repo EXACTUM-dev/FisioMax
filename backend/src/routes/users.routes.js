@@ -6,13 +6,36 @@
  */
 
 import express from "express";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser } from "../controllers/users.controller.js";
+import multer from "multer";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments } from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
 import {authorize} from '../middlewares/rbacMiddleware.js';
 
 const router = express.Router();
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed'), false);
+    }
+  }
+});
+
+// Middleware to handle document file uploads
+const uploadDocuments = upload.fields([
+  { name: 'titulo', maxCount: 1 },
+  { name: 'cedula', maxCount: 1 },
+  { name: 'constancias', maxCount: 1 },
+]);
 
 /**
  * Route to get all users.
@@ -79,5 +102,25 @@ router.patch(
  * @param {function} handler - Request handler.
  */
 router.patch("/:userId/rol", requireAuth, authorize(["Gestión de Usuarios"]), autoSyncClerkId, requireDbUser, assignUserRole);
+
+/**
+ * Route to update user documents
+ * @name PATCH /:userId/documents
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication and authorization.
+ * @param {function} handler - Request handler.
+ */
+router.patch(
+  "/:userId/documents",
+  requireAuth,
+  authorize(["Gestión de Usuarios"]),
+  autoSyncClerkId,
+  requireDbUser,
+  uploadDocuments,
+  updateUserDocuments
+);
 
 export default router;
