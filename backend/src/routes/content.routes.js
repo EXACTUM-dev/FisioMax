@@ -29,69 +29,15 @@ const uploadThumbnail = multer({
 });
 
 // Combined upload middleware that handles both fields with different limits
-const uploadFields = (req, res, next) => {
-  // First, handle the main file with 5GB limit
-  const mainFileUpload = uploadContent.single('file');
-  
-  mainFileUpload(req, res, (err) => {
-    if (err instanceof multer.MulterError) {
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
-          success: false,
-          message: 'El archivo de contenido excede el tamaño máximo permitido de 5GB',
-        });
-      }
-      return res.status(400).json({
-        success: false,
-        message: `Error al subir archivo: ${err.message}`,
-      });
-    } else if (err) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error al procesar el archivo',
-      });
-    }
-    
-    // Then, handle the thumbnail with 20MB limit
-    const thumbnailUpload = uploadThumbnail.single('thumbnail');
-    
-    thumbnailUpload(req, res, (thumbnailErr) => {
-      if (thumbnailErr instanceof multer.MulterError) {
-        if (thumbnailErr.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({
-            success: false,
-            message: 'La miniatura excede el tamaño máximo permitido de 20MB',
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          message: `Error al subir miniatura: ${thumbnailErr.message}`,
-        });
-      } else if (thumbnailErr) {
-        return res.status(500).json({
-          success: false,
-          message: 'Error al procesar la miniatura',
-        });
-      }
-      
-      // Restructure files to match the expected format
-      if (!req.files) {
-        req.files = {};
-      }
-      if (req.file) {
-        // Move the single file to files array format
-        const fieldname = req.file.fieldname;
-        if (!req.files[fieldname]) {
-          req.files[fieldname] = [];
-        }
-        req.files[fieldname].push(req.file);
-        delete req.file;
-      }
-      
-      next();
-    });
-  });
-};
+const uploadFields = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 * 1024, // 5GB max
+  },
+}).fields([
+  { name: 'file', maxCount: 1 },
+  { name: 'thumbnail', maxCount: 1 }
+]);
 
 // Protected routes - require Clerk authentication
 router.get("/", requireAuth, contentController.index);

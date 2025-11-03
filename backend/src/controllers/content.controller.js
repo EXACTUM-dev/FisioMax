@@ -292,7 +292,7 @@ export async function upload(req, res) {
 
     // Upload thumbnail if provided
     let thumbnailId = null;
-    if (thumbnail) {
+    if (thumbnail && thumbnail.buffer) {
       try {
         const thumbnailKey = await S3Service.uploadFile(thumbnail, `${folder}/thumbnails`);
         thumbnailId = await createContent({
@@ -309,7 +309,7 @@ export async function upload(req, res) {
         }
       } catch (thumbError) {
         console.error("Error uploading thumbnail:", thumbError);
-        // Continue even if thumbnail fails
+        // Continue even if thumbnail fails - don't stop the upload
       }
     }
 
