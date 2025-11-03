@@ -31,6 +31,7 @@ import Hero from "./src/pages/hero";
 import LoginPage from "./src/pages/login";
 import RegisterPage from "./src/pages/register";
 import VideoPage from "./src/pages/video";
+import UploadMultimediaPage from "./src/pages/uploadMultimedia";
 import EmailPage from "./src/pages/email";
 import MembershipApplicationPage from "./src/pages/membershipApplication";
 
@@ -302,6 +303,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <VideoPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/uploadMultimedia"
+        element={
+          <ProtectedRoute allowedPrivileges={["Gestión de Roles"]}>
+            <UploadMultimediaPage />
           </ProtectedRoute>
         }
       />
