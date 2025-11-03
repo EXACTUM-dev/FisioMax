@@ -54,6 +54,6 @@ router.post(
     updateRole
 );
 
-router.delete("/:id", requireAuth, autoSyncClerkId, requireDbUser, deleteRole);
+router.delete("/:id", requireAuth, autoSyncClerkId, requireDbUser);
 
 export default router;

@@ -101,7 +101,7 @@ export function transformUserData(userData) {
     cedula: userData.cedula || null,
     titulo: userData.titulo || null,
     constancias: userData.constancias || null,
-    documentosAdicionales: userData.documentosAdicionales || [],
+    documentosadicionales: userData.documentosadicionales || [],
     
     // Role info
     rol: userData.rol || null,

@@ -26,6 +26,9 @@ import DocumentsCard from "../organisms/documentsCard";
 // Controllers
 import { getCurrentUserProfile, getUserProfileById, updateUserById } from "../controllers/profile.controller";
 
+// Hooks
+import { useDbUser } from "../hooks/useDbUser";
+
 /**
  * Renders the user profile page with personal information, address, membership, and documents.
  * Displays the authenticated user's profile by default or another user's profile when accessed via userId param.
@@ -41,6 +44,7 @@ export default function ProfilePage() {
   const {user, isLoaded} = useUser();
   const {getToken} = useAuth();
   const {userId} = useParams(); // Get userId from URL if present
+  const {userData} = useDbUser(); // Get user privileges for RBAC
 
   // Fetch user profile from backend
   useEffect(() => {
@@ -73,15 +77,28 @@ export default function ProfilePage() {
 
   const handleNavigate = (key) => setCurrent(key);
 
-  // Modo pruebas: habilitar edición siempre
-  const canEdit = true;
+  // RBAC: Check if user has "Gestión de Usuarios" privilege
+  // Only allow editing if:
+  // 1. User is viewing another user's profile (userId exists in URL)
+  // 2. User has "Gestión de Usuarios" privilege
+  const userPrivileges = userData?.userPrivileges?.privilegios || [];
+  const hasUserManagementPrivilege = userPrivileges.includes("Gestión de Usuarios");
+  const canEdit = Boolean(userId && hasUserManagementPrivilege);
 
   async function handleSaveEdits(fields) {
-    const targetId = userId || (currentUserProfile && currentUserProfile.IDUsuario);
-    if (!targetId) return;
+    // Only allow editing other users' profiles (userId must exist in URL)
+    if (!userId || !hasUserManagementPrivilege) {
+      console.error('No se puede editar: falta userId o privilegio');
+      return;
+    }
     const token = await getToken();
-    const updated = await updateUserById(targetId, fields, token);
-    setUserProfile(updated);
+    try {
+      const updated = await updateUserById(userId, fields, token);
+      setUserProfile(updated);
+    } catch (err) {
+      console.error('Error actualizando usuario:', err);
+      setError(err.message || 'Error al actualizar el usuario');
+    }
   }
 
   if (!isLoaded || loading) {

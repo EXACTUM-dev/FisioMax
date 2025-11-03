@@ -67,49 +67,51 @@ export async function getCurrentUserProfile(req, res) {
     ]);
 
     // Generate presigned URLs for additional documents
-    const documentosAdicionalesUrls = user.documentosAdicionales &&
-        user.documentosAdicionales.length > 0 ?
-      await S3Service.getPresignedUrls(user.documentosAdicionales) :
+    const documentosadicionalesUrls = user.documentosAdicionales &&
+        user.documentosadicionales.length > 0 ?
+      await S3Service.getPresignedUrls(user.documentosadicionales) :
       [];
 
-    const transformedUser = {
-      nombres: user.nombres || '',
-      apellidoP: user.apellidoP || '',
-      apellidoM: user.apellidoM || '',
-      email: user.correo || '',
-      telefono: user.telefono || '',
-      fechaNacimiento: user.fechaNacimiento || '',
-      foto: user.foto || null,
-      licenciatura: user.licenciatura || '',
-      pais: user.pais || '',
-      estado: user.estado || '',
-      ciudad: user.ciudad || '',
-      calle: user.calle || '',
-      numExterior: user.numExterior || '',
-      numInterior: user.numInterior || '',
-      colonia: user.colonia || '',
-      codigoPostal: user.codigoPostal || '',
-      instagram: user.instagram || '',
-      linkedin: user.linkedin || '',
-      facebook: user.facebook || '',
-      paginaWeb: user.paginaWeb || '',
-      cedula: cedulaUrl,
-      titulo: tituloUrl,
-      constancias: constanciasUrl,
-      documentosAdicionales: documentosAdicionalesUrls,
-      rol: user.rolNombre || null,
-      IDRol: user.IDRol || null,
-      IDUsuario: user.IDUsuario,
-      clerkID: user.clerkID,
-      createdAt: user.createdAt,
-    };
+        const transformedUser = {
+        nombres: user.nombres || '',
+        apellidoP: user.apellidoP || '',
+        apellidoM: user.apellidoM || '',
+        email: user.correo || '',
+        telefono: user.telefonoCasa || '',
+        telefonoCasa: user.telefonoCasa || '',
+        telefonoWhatsapp: user.telefonoWhatsapp || '',
+        fechaNacimiento: user.fechaNacimiento || '',
+        foto: user.foto || null,
+        licenciatura: user.licenciatura || '',
+        pais: user.pais || '',
+        estado: user.estado || '',
+        ciudad: user.ciudad || '',
+        calle: user.calle || '',
+        numExterior: user.numExterior || '',
+        numInterior: user.numInterior || '',
+        colonia: user.colonia || '',
+        codigoPostal: user.codigoPostal || '',
+        instagram: user.instagram || '',
+        linkedin: user.linkedin || '',
+        facebook: user.facebook || '',
+        paginaWeb: user.paginaWeb || '',
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
+        documentosadicionales: documentosadicionalesUrls,
+        rol: user.rolNombre || null,
+        IDRol: user.IDRol || null,
+        IDUsuario: user.IDUsuario,
+        clerkID: user.clerkID,
+        createdAt: user.createdAt,
+        };
 
-    res.status(200).json({
-      success: true,
-      data: transformedUser,
-    });
-  } catch (error) {
-    console.error('Error obteniendo perfil del usuario:', error);
+        res.status(200).json({
+        success: true,
+        data: transformedUser,
+        });
+    } catch (error) {
+        console.error('Error obteniendo perfil del usuario:', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener el perfil del usuario',
@@ -153,42 +155,44 @@ export async function getUserProfileById(req, res) {
     ]);
 
     // Generate presigned URLs for additional documents
-    const documentosAdicionalesUrls = user.documentosAdicionales &&
-        user.documentosAdicionales.length > 0 ?
-      await S3Service.getPresignedUrls(user.documentosAdicionales) :
+    const documentosadicionalesUrls = user.documentosadicionales &&
+        user.documentosadicionales.length > 0 ?
+      await S3Service.getPresignedUrls(user.documentosadicionales) :
       [];
 
-    const transformedUser = {
-      nombres: user.nombres || '',
-      apellidoP: user.apellidoP || '',
-      apellidoM: user.apellidoM || '',
-      email: user.correo || '',
-      telefono: user.telefono || '',
-      fechaNacimiento: user.fechaNacimiento || '',
-      foto: user.foto || null,
-      licenciatura: user.licenciatura || '',
-      pais: user.pais || '',
-      estado: user.estado || '',
-      ciudad: user.ciudad || '',
-      calle: user.calle || '',
-      numExterior: user.numExterior || '',
-      numInterior: user.numInterior || '',
-      colonia: user.colonia || '',
-      codigoPostal: user.codigoPostal || '',
-      instagram: user.instagram || '',
-      linkedin: user.linkedin || '',
-      facebook: user.facebook || '',
-      paginaWeb: user.paginaWeb || '',
-      cedula: cedulaUrl,
-      titulo: tituloUrl,
-      constancias: constanciasUrl,
-      documentosAdicionales: documentosAdicionalesUrls,
-      rol: user.rolNombre || null,
-      IDRol: user.IDRol || null,
-      IDUsuario: user.IDUsuario,
-      clerkID: user.clerkID,
-      createdAt: user.createdAt,
-    };
+        const transformedUser = {
+        nombres: user.nombres || '',
+        apellidoP: user.apellidoP || '',
+        apellidoM: user.apellidoM || '',
+        email: user.correo || '',
+        telefono: user.telefonoCasa || '',
+        telefonoCasa: user.telefonoCasa || '',
+        telefonoWhatsapp: user.telefonoWhatsapp || '',
+        fechaNacimiento: user.fechaNacimiento || '',
+        foto: user.foto || null,
+        licenciatura: user.licenciatura || '',
+        pais: user.pais || '',
+        estado: user.estado || '',
+        ciudad: user.ciudad || '',
+        calle: user.calle || '',
+        numExterior: user.numExterior || '',
+        numInterior: user.numInterior || '',
+        colonia: user.colonia || '',
+        codigoPostal: user.codigoPostal || '',
+        instagram: user.instagram || '',
+        linkedin: user.linkedin || '',
+        facebook: user.facebook || '',
+        paginaWeb: user.paginaWeb || '',
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
+        documentosadicionales: documentosadicionalesUrls,
+        rol: user.rolNombre || null,
+        IDRol: user.IDRol || null,
+        IDUsuario: user.IDUsuario,
+        clerkID: user.clerkID,
+        createdAt: user.createdAt,
+        };
 
         res.status(200).json({
         success: true,
@@ -217,6 +221,12 @@ export async function getUserProfileById(req, res) {
         return res.status(400).json({ success: false, error: 'ID de usuario requerido' });
         }
 
+        // Map 'telefono' from frontend to 'telefonoCasa' for database
+        if (updateData.telefono !== undefined && updateData.telefonoCasa === undefined) {
+            updateData.telefonoCasa = updateData.telefono;
+            delete updateData.telefono;
+        }
+
         const updated = await updateUserById(userId, updateData);
 
         if (!updated) {
@@ -229,7 +239,9 @@ export async function getUserProfileById(req, res) {
         apellidoP: updated.apellidoP || '',
         apellidoM: updated.apellidoM || '',
         email: updated.correo || '',
-        telefono: updated.telefono || '',
+        telefono: updated.telefonoCasa || '',
+        telefonoCasa: updated.telefonoCasa || '',
+        telefonoWhatsapp: updated.telefonoWhatsapp || '',
         fechaNacimiento: updated.fechaNacimiento || '',
         licenciatura: updated.licenciatura || '',
         pais: updated.pais || '',

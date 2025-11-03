@@ -52,10 +52,17 @@ router.get("/:userId", requireAuth, authorize(["Gestión de Usuarios"]), getUser
 /**
  * Route to update a user's information
  * @name PATCH /:userId
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication and authorization.
+ * @param {function} handler - Request handler.
  */
 router.patch(
   "/:userId",
   requireAuth,
+  authorize(["Gestión de Usuarios"]),
   autoSyncClerkId,
   requireDbUser,
   updateUser

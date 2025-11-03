@@ -103,7 +103,7 @@ class MembershipApplication {
       if (this.documents.extra && this.documents.extra.length > 0) {
         for (const extraDocUrl of this.documents.extra) {
           await conn.query(
-            `INSERT INTO DocumentosAdicionales 
+            `INSERT INTO documentosadicionales 
             (IDUsuario, nombreArchivo, urlArchivo, createdAt) 
             VALUES (?, ?, ?, NOW())`,
             [userId, 'Documento adicional', extraDocUrl]

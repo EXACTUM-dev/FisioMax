@@ -130,15 +130,15 @@ export async function getUserByClerkId(clerkId) {
           nombreArchivo,
           urlArchivo,
           createdAt
-        FROM DocumentosAdicionales
+        FROM documentosadicionales
         WHERE IDUsuario = ?`,
         [user.IDUsuario]
       );
-      user.documentosAdicionales = docRows;
+      user.documentosadicionales = docRows;
     } catch (docError) {
-      // If DocumentosAdicionales table doesn't exist, just set empty array
-      console.warn('DocumentosAdicionales table not found or error:', docError.message);
-      user.documentosAdicionales = [];
+      // If documentosadicionales table doesn't exist, just set empty array
+      console.warn('Documentosadicionales table not found or error:', docError.message);
+      user.documentosadicionales = [];
     }
 
     return user;
@@ -304,7 +304,7 @@ export async function updateUserById(userId, updateData) {
     }
 
     const allowedFields = [
-      'nombres', 'apellidoP', 'apellidoM', 'correo', 'telefono', 'fechaNacimiento',
+      'nombres', 'apellidoP', 'apellidoM', 'correo', 'telefonoCasa', 'telefonoWhatsapp', 'fechaNacimiento',
       'licenciatura', 'pais', 'estado', 'ciudad', 'calle', 'numExterior', 'numInterior',
       'colonia', 'codigoPostal', 'instagram', 'linkedin', 'facebook', 'paginaWeb'
     ];
