@@ -40,6 +40,7 @@ export default function UploadMultimedia() {
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [roles, setRoles] = useState([]);
+  const [uploading, setUploading] = useState(false);
   
   // Modal states
   const [successModalOpen, setSuccessModalOpen] = useState(false);
