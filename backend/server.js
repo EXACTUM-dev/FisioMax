@@ -97,7 +97,7 @@ app.use("/api/auth", authRoutes);
  * Routes for video content access.
  */
 import contentRoutes from "./src/routes/content.routes.js";
-app.use("/api", contentRoutes);
+app.use("/api/content", contentRoutes);
 
 /**
  * Middleware for routes not found.

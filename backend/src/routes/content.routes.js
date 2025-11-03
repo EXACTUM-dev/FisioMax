@@ -27,8 +27,8 @@ const uploadFields = upload.fields([
 ]);
 
 // Protected routes - require Clerk authentication
-router.get("/content", requireAuth, contentController.index);
-router.get("/content/:contentId", requireAuth, contentController.show);
-router.post("/content/upload", requireAuth, uploadFields, contentController.upload);
+router.get("/", requireAuth, contentController.index);
+router.get("/:contentId", requireAuth, contentController.show);
+router.post("/upload", requireAuth, uploadFields, contentController.upload);
 
 export default router;
