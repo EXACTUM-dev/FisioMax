@@ -18,7 +18,7 @@ import {useDbUser} from '../hooks/useDbUser';
  * @param {React.ReactNode} props.children - Content to render if authorized.
  * @return {React.Element} The protected route component.
  */
-export function ProtectedRoute({children,  allowedRoles = []}) {
+export function ProtectedRoute({children,  allowedPrivileges = []}) {
   const {isLoaded: isClerkLoaded} = useUser();
   const {isLoading: isDbLoading, existsInDB, userData, error} = useDbUser();
   const {signOut} = useClerk();
@@ -35,7 +35,9 @@ export function ProtectedRoute({children,  allowedRoles = []}) {
   //RBAC Permissions
   const userRole = userData?.role;
   const userState = userData?.accept;
-  const hasPermission = userRole !== undefined && (allowedRoles.length === 0 || allowedRoles.includes(userRole)) && userState === 1;
+  const userPrivileges = userData?.userPrivileges.privilegios;
+  const hasPrivileges = allowedPrivileges.some(valor => userPrivileges?.includes(valor));
+  const hasPermission = userRole !== undefined && (allowedPrivileges.length === 0 || hasPrivileges) && userState === 1;
 
   return (
     <>

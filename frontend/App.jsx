@@ -275,7 +275,7 @@ export default function App() {
       <Route
         path="/panel"
         element={
-          <ProtectedRoute allowedRoles={["Admin"]}>
+          <ProtectedRoute allowedPrivileges={["Gestión de Usuarios", "Gestión de Membresías"]}>
             <Panel />
           </ProtectedRoute>
         }
@@ -283,7 +283,7 @@ export default function App() {
       <Route
         path="/roles"
         element={
-          <ProtectedRoute allowedRoles={["Admin"]}>
+          <ProtectedRoute allowedPrivileges={["Gestión de Roles"]}>
             <RolesPage />
           </ProtectedRoute>
         }
