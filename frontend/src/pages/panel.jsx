@@ -224,41 +224,47 @@ export default function Panel() {
 
   const mappedUserRows = useMemo(() => {
     if (!Array.isArray(userRows)) {
+      console.warn("userRows is not an array:", userRows);
       return [];
     }
 
-    return userRows.map((user) => {
-      const nombreCompleto = `${user.nombres || ""} ${user.apellidoP || ""} ${
-        user.apellidoM || ""
-      }`.trim();
+    console.log("Current user clerkID:", user?.id);
+    console.log("Original userRows:", userRows);
 
-      const roleName =
-        user.rol ||
-        user.rolNombre ||
-        roleRows.find((r) => r.IDRol === user.IDRol)?.nombre ||
-        "Sin rol asignado";
+    return userRows
+      .filter((userRow) => userRow.clerkID !== user?.id) // Exclude only the current user
+      .map((user) => {
+        const nombreCompleto = `${user.nombres || ""} ${user.apellidoP || ""} ${
+          user.apellidoM || ""
+        }`.trim();
 
-      return {
-        // keep original payload
-        ...user,
+        const roleName =
+          user.rol ||
+          user.rolNombre ||
+          roleRows.find((r) => r.IDRol === user.IDRol)?.nombre ||
+          "Sin rol asignado";
 
-        // normalized display name
-        nombre: nombreCompleto || user.nombre || user.name,
+        return {
+          // keep original payload
+          ...user,
 
-        // normalized role name
-        rol: roleName,
-        roleName: roleName,
-        rolNombre: user.rolNombre ?? roleName,
+          // normalized display name
+          nombre: nombreCompleto || user.nombre || user.name,
 
-        // normalized primary key for table actions (force id to be the backend PK)
-        /**
-         * Ensures action handlers (edit/delete) receive the real backend PK.
-         * Many table builders rely on `row.id`, so force it to be IDUsuario.
-         */
-        id: user.IDUsuario ?? user.id,
-      };
-    });
-  }, [userRows, roleRows]);
+          // normalized role name
+          rol: roleName,
+          roleName: roleName,
+          rolNombre: user.rolNombre ?? roleName,
+
+          // normalized primary key for table actions (force id to be the backend PK)
+          /**
+           * Ensures action handlers (edit/delete) receive the real backend PK.
+           * Many table builders rely on `row.id`, so force it to be IDUsuario.
+           */
+          id: user.IDUsuario ?? user.id,
+        };
+      });
+  }, [userRows, roleRows, user]);
 
   // Define columns for the user table
   const userColumns = useMemo(
