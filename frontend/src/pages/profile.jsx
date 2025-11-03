@@ -1,7 +1,7 @@
 /**
  * @fileoverview User profile page displaying personal information, membership status, and documents.
  * Supports viewing both current user's profile and other users' profiles via URL parameter.
- * @version 1.0.0
+ * @version 1.2.0
  * @author EXACTUM-dev
  */
 
@@ -78,29 +78,44 @@ export default function ProfilePage() {
 
   const handleNavigate = (key) => setCurrent(key);
 
-  // RBAC: Check if user has "Gestión de Usuarios" privilege
-  // Only allow editing if:
-  // 1. User is viewing another user's profile (userId exists in URL)
-  // 2. User has "Gestión de Usuarios" privilege
+  // RBAC: Check if user can edit
+  // Allow editing if:
+  // 1. User is viewing their own profile (no userId in URL)
+  // 2. User is viewing another user's profile (userId exists) AND has "Gestión de Usuarios" privilege
   const userPrivileges = userData?.userPrivileges?.privilegios || [];
   const hasUserManagementPrivilege = userPrivileges.includes("Gestión de Usuarios");
-  const canEdit = Boolean(userId && hasUserManagementPrivilege);
+  const isOwnProfile = !userId; // No userId means viewing own profile
+  const canEdit = isOwnProfile || (userId && hasUserManagementPrivilege);
 
   async function handleSaveEdits(fields) {
-    // Only allow editing other users' profiles (userId must exist in URL)
-    if (!userId || !hasUserManagementPrivilege) {
-      console.error('No se puede editar: falta userId o privilegio');
-      return;
-    }
     const token = await getToken();
     try {
-      // If fields is already a full profile object (from documents update), use it directly
-      if (fields.IDUsuario) {
-        setUserProfile(fields);
+      // If viewing own profile, update current user
+      if (isOwnProfile) {
+        // If fields is already a full profile object (from documents update), use it directly
+        if (fields.IDUsuario) {
+          setUserProfile(fields);
+          setCurrentUserProfile(fields); // Also update current user profile
+        } else {
+          // Otherwise, it's a partial update, call the API with current user's ID
+          const updated = await updateUserById(currentUserProfile.IDUsuario, fields, token);
+          setUserProfile(updated);
+          setCurrentUserProfile(updated);
+        }
       } else {
-        // Otherwise, it's a partial update, call the API
-        const updated = await updateUserById(userId, fields, token);
-        setUserProfile(updated);
+        // Editing another user's profile - only allowed with "Gestión de Usuarios"
+        if (!hasUserManagementPrivilege) {
+          console.error('No se puede editar: falta privilegio de Gestión de Usuarios');
+          return;
+        }
+        // If fields is already a full profile object (from documents update), use it directly
+        if (fields.IDUsuario) {
+          setUserProfile(fields);
+        } else {
+          // Otherwise, it's a partial update, call the API
+          const updated = await updateUserById(userId, fields, token);
+          setUserProfile(updated);
+        }
       }
     } catch (err) {
       console.error('Error actualizando usuario:', err);
@@ -132,6 +147,9 @@ export default function ProfilePage() {
 
   // Use profile data from backend, or empty object as fallback
   const profileData = userProfile || {};
+  
+  // Use userId from URL if viewing another user, otherwise use current user's ID
+  const effectiveUserId = userId || currentUserProfile?.IDUsuario;
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
@@ -151,7 +169,7 @@ export default function ProfilePage() {
             <div className="lg:col-span-2 space-y-6">
               <ProfileInfo data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
               <AddressCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
-              <DocumentsCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} userId={userId} />
+              <DocumentsCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} userId={effectiveUserId} />
               <HistoryCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
               </div>
 

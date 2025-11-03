@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import FileUpload from '../molecules/fileUpload';
-import { updateUserDocuments, getUserProfileById } from '../controllers/profile.controller';
+import { updateUserDocuments, getUserProfileById, getCurrentUserProfile } from '../controllers/profile.controller';
 import editIcon from "../assets/icons/square-pen.png";
 import Button from "../atoms/button";
 
@@ -126,6 +126,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
       const updatedData = await updateUserDocuments(userId, formData, token);
       
       // Reload profile to get fresh presigned URLs
+      // Use getCurrentUserProfile if userId matches current user, otherwise getUserProfileById
       const refreshedProfile = await getUserProfileById(userId, token);
       
       // Call onSave with updated data to refresh parent component

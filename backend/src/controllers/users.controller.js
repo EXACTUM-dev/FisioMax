@@ -247,6 +247,13 @@ export async function getUserProfileById(req, res) {
         return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
         }
 
+        // Generate presigned URLs for documents
+        const [cedulaUrl, tituloUrl, constanciasUrl] = await Promise.all([
+        S3Service.getPresignedUrl(updated.cedula),
+        S3Service.getPresignedUrl(updated.titulo),
+        S3Service.getPresignedUrl(updated.constancias),
+        ]);
+
         // Transform minimal fields for frontend consistency
         const transformedUser = {
         nombres: updated.nombres || '',
@@ -270,10 +277,20 @@ export async function getUserProfileById(req, res) {
         linkedin: updated.linkedin || '',
         facebook: updated.facebook || '',
         paginaWeb: updated.paginaWeb || '',
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
         IDUsuario: updated.IDUsuario,
         IDRol: updated.IDRol || null,
         rol: updated.rolNombre || null,
         clerkID: updated.clerkID || null,
+        // Membership information
+        membershipType: updated.membresiaTipo || null,
+        membershipExpiresAt: updated.membresiaFechaVencimiento || null,
+        membershipRegisteredAt: updated.membresiaCreatedAt || null,
+        membershipHoursFormation: updated.membresiaHorasFormacion || null,
+        membershipStatus: updated.membresiaAceptado,
+        membershipPaymentStatus: updated.membresiaEstatusPago || null,
         };
 
         return res.status(200).json({ success: true, data: transformedUser });
