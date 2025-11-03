@@ -99,9 +99,6 @@ export async function getUserByClerkId(clerkId) {
         u.linkedin,
         u.facebook,
         u.paginaWeb,
-        u.cursosCompletados,
-        u.diplomados,
-        u.horasServicio,
         u.createdAt,
         r.IDRol,
         r.nombre as rolNombre,
@@ -189,9 +186,6 @@ export async function getUserById(userId) {
         u.linkedin,
         u.facebook,
         u.paginaWeb,
-        u.cursosCompletados,
-        u.diplomados,
-        u.horasServicio,
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion
@@ -250,9 +244,6 @@ export async function getUserByEmail(email) {
         u.linkedin,
         u.facebook,
         u.paginaWeb,
-        u.cursosCompletados,
-        u.diplomados,
-        u.horasServicio,
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion
@@ -316,7 +307,7 @@ export async function updateUserById(userId, updateData) {
       'nombres', 'apellidoP', 'apellidoM', 'correo', 'telefonoCasa', 'telefonoWhatsapp', 'fechaNacimiento',
       'licenciatura', 'pais', 'estado', 'ciudad', 'calle', 'numExterior', 'numInterior',
       'colonia', 'codigoPostal', 'instagram', 'linkedin', 'facebook', 'paginaWeb',
-      'cursosCompletados', 'diplomados', 'horasServicio', 'titulo', 'cedula', 'constancias'
+      'titulo', 'cedula', 'constancias'
     ];
 
     const setClauses = [];
