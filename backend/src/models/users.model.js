@@ -328,8 +328,8 @@ export async function markUserDeleted(userId) {
         SET eliminado = 1, deletedAt = NOW()
       WHERE IDUsuario = ?
         AND deletedAt IS NULL
-        AND (eliminado = 0 OR eliminado IS NULL)`,
-    [userId]
+        AND (eliminado = 0 OR eliminado IS NULL)`
+    , [userId]
   );
   return r.affectedRows;
 }

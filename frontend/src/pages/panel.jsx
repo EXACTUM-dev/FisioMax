@@ -492,7 +492,7 @@ export default function Panel() {
             setUserRows((prev) => prev.filter((r) => (r?.IDUsuario ?? r?.id) !== userToDelete?.IDUsuario));
             setDeleteConfirmOpen(false);
 
-            // Mostrar pop-up de éxito
+            // Show success modal
             setSuccessModalOpen(true);
           } catch (err) {
             console.error("Error al eliminar usuario:", err);

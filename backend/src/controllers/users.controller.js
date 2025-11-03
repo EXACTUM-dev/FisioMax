@@ -206,21 +206,26 @@ export async function getUserProfileById(req, res) {
 
 /**
  * Deletes a user (soft-delete) after reassigning "SinRol".
- * @name deleteUser
- * @function
- * @param {import('express').Request} req - Express request object
- * @param {import('express').Response} res - Express response object
- * @description
- * 1) Check existence
- * 2) Prevent deleting own account (if Clerk is enabled)
- * 3) Reassign role to "SinRol"
- * 4) Soft-delete the user
+ *
+ * This function performs the following steps:
+ * 1. Validates the provided user ID.
+ * 2. Prevents the authenticated user from deleting their own account.
+ * 3. Reassigns the user's role to "SinRol".
+ * 4. Marks the user as deleted in the database.
+ *
+ * @async
+ * @function deleteUser
+ * @param {import('express').Request} req - Express request object containing the user ID in params.
+ * @param {import('express').Response} res - Express response object for sending the result.
+ * @throws {Error} Returns appropriate HTTP status codes and messages for errors.
+ * @return {Promise<void>} Sends a JSON response indicating success or failure.
  */
 export async function deleteUser(req, res) {
   try {
     const { id } = req.params;
     const clerkId = req.auth?.userId;
 
+    // Validate user ID
     if (!id) {
       return res.status(400).json({
         success: false,
@@ -228,7 +233,7 @@ export async function deleteUser(req, res) {
       });
     }
 
-    // Verificar si el usuario está intentando eliminar su propia cuenta
+    // Prevent self-deletion
     const user = await getUsuarioByClerkId(clerkId);
     if (user?.IDUsuario?.toString() === id) {
       return res.status(403).json({
@@ -237,7 +242,7 @@ export async function deleteUser(req, res) {
       });
     }
 
-    // Verificar si el usuario existe
+    // Check if the user exists
     const userToDelete = await getUserById(id);
     if (!userToDelete) {
       return res.status(404).json({
@@ -246,12 +251,11 @@ export async function deleteUser(req, res) {
       });
     }
 
-    // Reasignar rol a "SinRol"
+    // Reassign role to "SinRol"
     await reassignUserToSinRol(id);
 
-    // Marcar al usuario como eliminado
+    // Mark the user as deleted
     const affectedRows = await markUserDeleted(id);
-
     if (affectedRows === 0) {
       return res.status(500).json({
         success: false,
@@ -259,6 +263,7 @@ export async function deleteUser(req, res) {
       });
     }
 
+    // Respond with success message
     res.status(200).json({
       success: true,
       message: `El usuario \"${userToDelete.nombres} ${userToDelete.apellidoP} ${userToDelete.apellidoM}\" fue eliminado con éxito.`
