@@ -6,7 +6,7 @@
  *              to access specific routes or perform certain actions.
  */
 
-import { getUserRolesAndPermissions } from "../models/role.js";
+import { getUserRolesAndPermissions } from "../models/rbac.model.js";
 
 /**
  * Middleware factory that verifies if the authenticated user has the required privileges.
