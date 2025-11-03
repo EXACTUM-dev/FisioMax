@@ -1,6 +1,6 @@
 /**
  * @fileoverview Content page component for displaying multimedia content
- * @version 0.3.1
+ * @version 0.3.2
  * @author EXACTUM-dev
  * @description Main page for multimedia content with player/viewer, description and related content
  */
@@ -21,6 +21,7 @@ import {
   getContentById,
   getAvailableContent,
 } from "../services/contentServices";
+import { useDbUser } from "../hooks/useDbUser";
 
 /**
  * Formats date to readable Spanish format
@@ -50,6 +51,7 @@ export default function ContentPage() {
   const { getToken } = useAuth();
   const { contentId } = useParams();
   const navigate = useNavigate();
+  const { userData } = useDbUser();
 
   const [current, setCurrent] = useState("content");
   const [activeContentId, setActiveContentId] = useState(null);
@@ -85,7 +87,14 @@ export default function ContentPage() {
       } catch (err) {
         console.error("Error cargando contenido:", err);
 
-        if (err.message.includes("membresía ha vencido")) {
+        if (
+          err.message.includes("permisos") ||
+          err.message.includes("Access denied") ||
+          err.message.includes("access_denied")
+        ) {
+          setError("No tienes permisos para acceder a este contenido.");
+          setErrorType("warning");
+        } else if (err.message.includes("membresía ha vencido")) {
           setError(
             "Tu membresía ha vencido. Por favor, renueva tu suscripción para acceder a este contenido."
           );

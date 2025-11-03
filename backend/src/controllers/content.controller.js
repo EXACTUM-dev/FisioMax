@@ -1,8 +1,8 @@
 /**
- * @fileoverview Content controller for handling multimedia requests
- * @version 0.2.0
+ * @fileoverview Content controller for handling multimedia requests with RBAC
+ * @version 0.3.0
  * @author EXACTUM-dev
- * @description Manages multimedia content delivery
+ * @description Manages multimedia content delivery with privilege validation
  */
 
 import {
@@ -10,10 +10,11 @@ import {
   getContentById,
 } from "../models/content.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
+import { getUserRolesAndPermissions } from "../models/role.js";
 
 /**
  * Determines S3 path based on content type
- * @param {string} type - Content type ('video' or 'article')
+ * @param {string} type - Content type ('video' or 'articulo')
  * @param {string} idMultimedia - Multimedia ID
  * @returns {string} S3 path
  */
@@ -22,15 +23,26 @@ function getS3Path(type, idMultimedia) {
 }
 
 /**
- * Shows a specific content with thumbnail
+ * Shows a specific content with thumbnail and validates user privileges
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 export async function show(req, res) {
   try {
     const { contentId } = req.params;
+    const userId = req.auth?.userId;
 
-    const content = await getContentById(contentId);
+    if (!userId) {
+      return res.status(401).json({
+        error: "unauthorized",
+        message: "Usuario no autenticado.",
+      });
+    }
+
+    // Get user privileges
+    const { privilegiosIds } = await getUserRolesAndPermissions(userId);
+
+    const content = await getContentById(contentId, privilegiosIds);
     if (!content) {
       throw new Error("Content not found");
     }
@@ -81,6 +93,13 @@ export async function show(req, res) {
       });
     }
 
+    if (error.message === "Access denied") {
+      return res.status(403).json({
+        error: "access_denied",
+        message: "No tienes permisos para acceder a este contenido.",
+      });
+    }
+
     if (error.message === "Database error") {
       return res.status(500).json({
         error: "database_error",
@@ -96,7 +115,7 @@ export async function show(req, res) {
 }
 
 /**
- * Lists available content for sidebar with thumbnails and pagination
+ * Lists available content filtered by user privileges with thumbnails and pagination
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -104,12 +123,24 @@ export async function index(req, res) {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const offset = parseInt(req.query.offset) || 0;
-    const type = req.query.type || null; // 'video' or 'article'
+    const type = req.query.type || null;
+    const userId = req.auth?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: "unauthorized",
+        message: "Usuario no autenticado.",
+      });
+    }
+
+    // Get user privileges
+    const { privilegiosIds } = await getUserRolesAndPermissions(userId);
 
     const { content, total, hasMore } = await getAvailableContent(
       limit,
       offset,
-      type
+      type,
+      privilegiosIds
     );
 
     const contentWithThumbnails = content.map((item) => {
