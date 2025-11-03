@@ -28,17 +28,6 @@ const uploadThumbnail = multer({
   },
 });
 
-// Combined upload middleware that handles both fields with different limits
-const uploadFields = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024 * 1024, // 5GB max
-  },
-}).fields([
-  { name: 'file', maxCount: 1 },
-  { name: 'thumbnail', maxCount: 1 }
-]);
-
 // Protected routes - require Clerk authentication
 router.get("/", requireAuth, contentController.index);
 router.get("/:contentId", requireAuth, contentController.show);

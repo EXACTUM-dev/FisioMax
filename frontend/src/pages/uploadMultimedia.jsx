@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useUser, useAuth} from "@clerk/clerk-react";
 
 // Atoms
@@ -12,7 +12,6 @@ import Button from "../atoms/button";
 import {Title2} from "../atoms/typography";
 
 // Molecules
-import FormField from "../molecules/form";
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 
@@ -41,8 +40,6 @@ export default function UploadMultimedia() {
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   
   // Modal states
   const [successModalOpen, setSuccessModalOpen] = useState(false);
@@ -58,7 +55,7 @@ export default function UploadMultimedia() {
     async function fetchRoles() {
       try {
         const token = await getToken();
-        const response = await fetch("http://localhost:5000/api/roles", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/roles`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -198,7 +195,7 @@ export default function UploadMultimedia() {
         uploadData.append("thumbnail", selectedThumbnail);
       }
 
-      const response = await fetch("http://localhost:5000/api/content/upload", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/content/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
