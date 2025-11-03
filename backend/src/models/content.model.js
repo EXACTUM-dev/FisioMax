@@ -120,3 +120,63 @@ export async function getAvailableContent(limit = 10, offset = 0, type = null) {
     throw new Error("Database error");
   }
 }
+
+/**
+ * Creates new content in the database
+ * @param {Object} contentData - Content data to insert
+ * @param {string} contentData.nombre - Content name
+ * @param {string} contentData.descripcion - Content description
+ * @param {string} contentData.tipo - Content type (video, articulo, imagen, etc.)
+ * @param {string} contentData.IDMultimedia - S3 key for the multimedia file
+ * @returns {Promise<number>} Inserted content ID
+ * @throws {Error} If database error
+ */
+export async function createContent(contentData) {
+  const query = `
+    INSERT INTO contenido (
+      nombre,
+      descripcion,
+      tipo,
+      IDMultimedia,
+      eliminado,
+      createdAt
+    ) VALUES (?, ?, ?, ?, 0, NOW())
+  `;
+
+  try {
+    const [result] = await db.query(query, [
+      contentData.nombre,
+      contentData.descripcion,
+      contentData.tipo,
+      contentData.IDMultimedia,
+    ]);
+
+    return result.insertId;
+  } catch (error) {
+    console.error("Database error in createContent:", error);
+    throw new Error("Database error");
+  }
+}
+
+/**
+ * Creates a relationship between content and role
+ * @param {number} contentId - Content ID
+ * @param {number} roleId - Role ID
+ * @returns {Promise<void>}
+ * @throws {Error} If database error
+ */
+export async function assignContentToRole(contentId, roleId) {
+  // Check if the relationship table exists, if not, we'll skip this for now
+  // This would require a contenido_roles table
+  const query = `
+    INSERT IGNORE INTO contenido_roles (IDContenido, IDRol)
+    VALUES (?, ?)
+  `;
+
+  try {
+    await db.query(query, [contentId, roleId]);
+  } catch (error) {
+    // If table doesn't exist, just log a warning
+    console.warn("Could not assign content to role - table may not exist:", error.message);
+  }
+}

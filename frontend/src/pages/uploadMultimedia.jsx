@@ -35,6 +35,7 @@ export default function UploadMultimedia() {
   });
 
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -83,11 +84,16 @@ export default function UploadMultimedia() {
    * Handles file selection from the file input.
    * 
    * @param {Event} e - The file input change event
+   * @param {string} type - Type of file ('content' or 'thumbnail')
    */
-  const handleFileChange = (e) => {
+  const handleFileChange = (e, type = 'content') => {
     const file = e.target.files[0];
     if (file) {
-      setSelectedFile(file);
+      if (type === 'thumbnail') {
+        setSelectedThumbnail(file);
+      } else {
+        setSelectedFile(file);
+      }
     }
   };
 
@@ -131,6 +137,11 @@ export default function UploadMultimedia() {
       uploadData.append("descripcion", formData.descripcion);
       uploadData.append("tipo", formData.tipo);
       uploadData.append("role", selectedRole);
+      
+      // Add thumbnail if selected
+      if (selectedThumbnail) {
+        uploadData.append("thumbnail", selectedThumbnail);
+      }
 
       const response = await fetch("http://localhost:5000/api/content/upload", {
         method: "POST",
@@ -151,6 +162,7 @@ export default function UploadMultimedia() {
           tipo: "Articulo",
         });
         setSelectedFile(null);
+        setSelectedThumbnail(null);
         setSelectedRole("");
       } else {
         alert("Error al subir contenido: " + result.message);
@@ -271,7 +283,7 @@ export default function UploadMultimedia() {
                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#CAD00F] transition-colors">
                   <input
                     type="file"
-                    onChange={handleFileChange}
+                    onChange={(e) => handleFileChange(e, 'content')}
                     className="hidden"
                     id="file-upload"
                     accept="video/*,audio/*,image/*,.pdf,.doc,.docx"
@@ -319,7 +331,7 @@ export default function UploadMultimedia() {
                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#CAD00F] transition-colors">
                   <input
                     type="file"
-                    onChange={handleFileChange}
+                    onChange={(e) => handleFileChange(e, 'thumbnail')}
                     className="hidden"
                     id="thumbnail-upload"
                     accept="image/png,image/jpeg,image/jpg"
@@ -341,12 +353,20 @@ export default function UploadMultimedia() {
                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    <p className="text-sm text-slate-600 mb-1">
-                      <span className="text-[#CAD00F] font-medium">Sube una imagen</span> o arrástrala aquí
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      PNG, JPG hasta 10mb
-                    </p>
+                    {selectedThumbnail ? (
+                      <span className="text-sm font-medium text-slate-700">
+                        {selectedThumbnail.name}
+                      </span>
+                    ) : (
+                      <>
+                        <p className="text-sm text-slate-600 mb-1">
+                          <span className="text-[#CAD00F] font-medium">Sube una imagen</span> o arrástrala aquí
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          PNG, JPG hasta 10mb
+                        </p>
+                      </>
+                    )}
                   </label>
                 </div>
               </div>
@@ -361,10 +381,10 @@ export default function UploadMultimedia() {
                       nombre: "",
                       descripcion: "",
                       tipo: "Articulo",
-                      tipoMembresia: "",
                     });
                     setSelectedFile(null);
-                    setSelectedRoles([]);
+                    setSelectedThumbnail(null);
+                    setSelectedRole("");
                   }}
                   disabled={uploading}
                 >

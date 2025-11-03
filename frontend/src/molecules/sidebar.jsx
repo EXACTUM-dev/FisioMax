@@ -113,9 +113,9 @@ export default function Sidebar({ current = "home", onNavigate }) {
       { key: "logout", label: "Cerrar sesión", icon: logoutSrc },
     ];
 
-    // Only add "Panel de control" if the user is admin
+    // Only add "Panel de Control" if the user is admin
     if (userRole === "Admin") {
-      baseLinks.splice(1, 0, { key: "bolt", label: "Panel de control", icon: boltSrc });
+      baseLinks.splice(1, 0, { key: "bolt", label: "Panel de Control", icon: boltSrc });
     }
 
     return baseLinks;

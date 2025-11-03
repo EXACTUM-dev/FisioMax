@@ -1,18 +1,34 @@
 /**
  * @fileoverview Content routes for multimedia access
- * @version 0.2.0
+ * @version 0.3.0
  * @author EXACTUM-dev
- * @description Defines routes for content access with Clerk authentication
+ * @description Defines routes for content access and upload with Clerk authentication
  */
 
 import express from "express";
+import multer from "multer";
 import { requireAuth } from "../middlewares/clerkAuth.js";
 import * as contentController from "../controllers/content.controller.js";
 
 const router = express.Router();
 
+// Configure multer for file uploads (store in memory)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 * 1024, // 5GB limit
+  },
+});
+
+// Upload middleware for content with optional thumbnail
+const uploadFields = upload.fields([
+  { name: 'file', maxCount: 1 },
+  { name: 'thumbnail', maxCount: 1 },
+]);
+
 // Protected routes - require Clerk authentication
 router.get("/content", requireAuth, contentController.index);
 router.get("/content/:contentId", requireAuth, contentController.show);
+router.post("/content/upload", requireAuth, uploadFields, contentController.upload);
 
 export default router;

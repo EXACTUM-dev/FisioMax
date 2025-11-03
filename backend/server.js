@@ -99,6 +99,16 @@ app.use("/api/auth", authRoutes);
 import contentRoutes from "./src/routes/content.routes.js";
 app.use("/api", contentRoutes);
 
+/**
+ * Middleware for routes not found.
+ */
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Ruta no encontrada",
+  });
+});
+
 // Middleware to handle JSON parsing errors
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
@@ -177,16 +187,6 @@ app.use((error, req, res, next) => {
     success: false,
     message: error.message || "Error interno del servidor",
     ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
-  });
-});
-
-/**
- * Middleware for routes not found.
- */
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Ruta no encontrada",
   });
 });
 

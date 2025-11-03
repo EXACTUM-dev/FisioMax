@@ -30,10 +30,10 @@ import buildRolePermissionsColumns from "./src/data/tableTemplates/rolePermissio
 import Hero from "./src/pages/hero";
 import LoginPage from "./src/pages/login";
 import RegisterPage from "./src/pages/register";
-import VideoPage from "./src/pages/video";
 import UploadMultimediaPage from "./src/pages/uploadMultimedia";
 import EmailPage from "./src/pages/email";
 import MembershipApplicationPage from "./src/pages/membershipApplication";
+import ContentPage from "./src/pages/content";
 
 // Protected routes with Clerk (only login use Clerk)
 import ProfilePage from "./src/pages/profile";

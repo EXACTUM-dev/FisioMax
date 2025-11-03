@@ -8,8 +8,11 @@
 import {
   getAvailableContent,
   getContentById,
+  createContent,
+  assignContentToRole,
 } from "../models/content.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
+import S3Service from "../services/s3Service.js";
 
 /**
  * Determines S3 path based on content type
@@ -153,6 +156,115 @@ export async function index(req, res) {
     return res.status(500).json({
       error: "internal_error",
       message: "No se pudo cargar el contenido.",
+    });
+  }
+}
+
+/**
+ * Creates new multimedia content
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function upload(req, res) {
+  try {
+    const { nombre, descripcion, tipo, role } = req.body;
+    const file = req.files?.file?.[0];
+    const thumbnail = req.files?.thumbnail?.[0];
+
+    // Validate required fields
+    if (!nombre || !descripcion || !tipo || !role) {
+      return res.status(400).json({
+        success: false,
+        message: "Faltan campos requeridos: nombre, descripcion, tipo, role",
+      });
+    }
+
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: "No se proporcionó ningún archivo",
+      });
+    }
+
+    // Map content type to folder
+    const folderMap = {
+      Video: "videos",
+      Articulo: "articulos",
+      Podcast: "podcasts",
+      Documento: "documentos",
+    };
+
+    const folder = folderMap[tipo] || "contenido";
+
+    // Upload main file to S3
+    let s3Key;
+    try {
+      s3Key = await S3Service.uploadFile(file, folder);
+    } catch (uploadError) {
+      console.error("Error uploading file to S3:", uploadError);
+      return res.status(500).json({
+        success: false,
+        message: "Error al subir el archivo a S3",
+      });
+    }
+
+    // Insert content into database
+    let contentId;
+    try {
+      contentId = await createContent({
+        nombre,
+        descripcion,
+        tipo: tipo.toLowerCase(),
+        IDMultimedia: s3Key,
+      });
+
+      // Assign content to role
+      if (role) {
+        await assignContentToRole(contentId, parseInt(role));
+      }
+    } catch (dbError) {
+      console.error("Error creating content in database:", dbError);
+      return res.status(500).json({
+        success: false,
+        message: "Error al guardar el contenido en la base de datos",
+      });
+    }
+
+    // Upload thumbnail if provided
+    let thumbnailId = null;
+    if (thumbnail) {
+      try {
+        const thumbnailKey = await S3Service.uploadFile(thumbnail, `${folder}/thumbnails`);
+        thumbnailId = await createContent({
+          nombre,
+          descripcion: `Miniatura de ${nombre}`,
+          tipo: "imagen",
+          IDMultimedia: thumbnailKey,
+        });
+
+        // Assign thumbnail to same role
+        if (role) {
+          await assignContentToRole(thumbnailId, parseInt(role));
+        }
+      } catch (thumbError) {
+        console.error("Error uploading thumbnail:", thumbError);
+        // Continue even if thumbnail fails
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Contenido subido exitosamente",
+      data: {
+        contentId,
+        thumbnailId,
+      },
+    });
+  } catch (error) {
+    console.error("Error in upload controller:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al procesar la solicitud",
     });
   }
 }
