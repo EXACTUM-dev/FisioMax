@@ -5,7 +5,7 @@
  * @author EXACTUM-dev
  */
 
-import {getUsuarioByClerkId, getUserById, getUsuarios} from '../models/users.model.js';
+import { getUsuarioByClerkId, getUserById, getUsuarios, reassignUserToSinRol, markUserDeleted } from '../models/users.model.js';
 import S3Service from '../services/s3Service.js';
 
 /**
@@ -204,3 +204,71 @@ export async function getUserProfileById(req, res) {
   }
 }
 
+/**
+ * Deletes a user (soft-delete) after reassigning "SinRol".
+ * @name deleteUser
+ * @function
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @description
+ * 1) Check existence
+ * 2) Prevent deleting own account (if Clerk is enabled)
+ * 3) Reassign role to "SinRol"
+ * 4) Soft-delete the user
+ */
+export async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+    const clerkId = req.auth?.userId;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de usuario no proporcionado."
+      });
+    }
+
+    // Verificar si el usuario está intentando eliminar su propia cuenta
+    const user = await getUsuarioByClerkId(clerkId);
+    if (user?.IDUsuario?.toString() === id) {
+      return res.status(403).json({
+        success: false,
+        message: "No puedes eliminar tu propia cuenta."
+      });
+    }
+
+    // Verificar si el usuario existe
+    const userToDelete = await getUserById(id);
+    if (!userToDelete) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado."
+      });
+    }
+
+    // Reasignar rol a "SinRol"
+    await reassignUserToSinRol(id);
+
+    // Marcar al usuario como eliminado
+    const affectedRows = await markUserDeleted(id);
+
+    if (affectedRows === 0) {
+      return res.status(500).json({
+        success: false,
+        message: "No se pudo eliminar el usuario."
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `El usuario \"${userToDelete.nombres} ${userToDelete.apellidoP} ${userToDelete.apellidoM}\" fue eliminado con éxito.`
+    });
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor.",
+      error: error.message
+    });
+  }
+}

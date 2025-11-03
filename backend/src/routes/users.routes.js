@@ -6,7 +6,7 @@
  */
 
 import express from "express";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers } from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, deleteUser } from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
@@ -59,5 +59,17 @@ router.get("/:userId", requireAuth, getUserProfileById);
  * @param {function} handler - Request handler.
  */
 router.patch("/:userId/rol", requireAuth, autoSyncClerkId, requireDbUser, assignUserRole);
+
+/**
+ * Route to soft-delete a user after reassigning "SinRol".
+ * @name DELETE /:id
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with id parameter.
+ * @param {function} middleware - Express middleware for authentication and DB user sync.
+ * @param {function} handler - Request handler for user deletion.
+ */
+router.delete("/:id", requireAuth, autoSyncClerkId, requireDbUser, deleteUser);
 
 export default router;
