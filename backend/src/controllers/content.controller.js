@@ -168,22 +168,73 @@ export async function index(req, res) {
  */
 export async function upload(req, res) {
   try {
-    const { nombre, descripcion, tipo, role } = req.body;
+    let { nombre, descripcion, tipo, role } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
 
+    // Sanitize input fields - trim whitespace and remove dangerous characters
+    nombre = nombre?.trim().replace(/[<>]/g, '') || '';
+    descripcion = descripcion?.trim().replace(/[<>]/g, '') || '';
+    tipo = tipo?.trim() || '';
+    
     // Validate required fields
-    if (!nombre || !descripcion || !tipo || !role) {
+    if (!nombre) {
       return res.status(400).json({
         success: false,
-        message: "Faltan campos requeridos: nombre, descripcion, tipo, role",
+        message: "El nombre del archivo es obligatorio",
+      });
+    }
+
+    if (nombre.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: "El nombre del archivo no puede exceder los 50 caracteres",
+      });
+    }
+
+    if (descripcion && descripcion.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "La descripción no puede exceder los 500 caracteres",
+      });
+    }
+
+    if (!tipo) {
+      return res.status(400).json({
+        success: false,
+        message: "El tipo de contenido es obligatorio",
+      });
+    }
+
+    // Validate tipo is one of the allowed values
+    const allowedTypes = ['Video', 'Articulo', 'Podcast', 'Documento'];
+    if (!allowedTypes.includes(tipo)) {
+      return res.status(400).json({
+        success: false,
+        message: "Tipo de contenido inválido",
+      });
+    }
+
+    if (!role) {
+      return res.status(400).json({
+        success: false,
+        message: "Debes seleccionar a quién va dirigido el contenido",
+      });
+    }
+
+    // Validate role is a number
+    const roleId = parseInt(role);
+    if (isNaN(roleId) || roleId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "El rol seleccionado no es válido",
       });
     }
 
     if (!file) {
       return res.status(400).json({
         success: false,
-        message: "No se proporcionó ningún archivo",
+        message: "Debes seleccionar un archivo de contenido",
       });
     }
 
@@ -215,21 +266,21 @@ export async function upload(req, res) {
     
     try {
       // Get role name if role is provided
-      if (role) {
-        tipoMembresia = await getRoleName(parseInt(role));
+      if (roleId) {
+        tipoMembresia = await getRoleName(roleId);
       }
 
       contentId = await createContent({
         nombre,
-        descripcion,
+        descripcion: descripcion || '',
         tipo: tipo.toLowerCase(),
         IDMultimedia: s3Key,
         tipoMembresia,
       });
 
       // Assign content to role
-      if (role) {
-        await assignContentToRole(contentId, parseInt(role));
+      if (roleId) {
+        await assignContentToRole(contentId, roleId);
       }
     } catch (dbError) {
       console.error("Error creating content in database:", dbError);
@@ -253,8 +304,8 @@ export async function upload(req, res) {
         });
 
         // Assign thumbnail to same role
-        if (role) {
-          await assignContentToRole(thumbnailId, parseInt(role));
+        if (roleId) {
+          await assignContentToRole(thumbnailId, roleId);
         }
       } catch (thumbError) {
         console.error("Error uploading thumbnail:", thumbError);

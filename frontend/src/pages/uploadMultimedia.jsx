@@ -125,13 +125,40 @@ export default function UploadMultimedia() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!selectedFile) {
-      alert("Por favor selecciona un archivo");
+    // Validate required fields
+    if (!formData.nombre.trim()) {
+      setErrorMessage("El nombre del archivo es obligatorio");
+      setErrorModalOpen(true);
+      return;
+    }
+
+    if (formData.nombre.length > 50) {
+      setErrorMessage("El nombre del archivo no puede exceder los 50 caracteres");
+      setErrorModalOpen(true);
+      return;
+    }
+
+    if (formData.descripcion && formData.descripcion.length > 500) {
+      setErrorMessage("La descripción no puede exceder los 500 caracteres");
+      setErrorModalOpen(true);
+      return;
+    }
+
+    if (!formData.tipo) {
+      setErrorMessage("El tipo de contenido es obligatorio");
+      setErrorModalOpen(true);
       return;
     }
 
     if (!selectedRole) {
-      alert("Por favor selecciona un rol");
+      setErrorMessage("Debes seleccionar a quién va dirigido el contenido");
+      setErrorModalOpen(true);
+      return;
+    }
+
+    if (!selectedFile) {
+      setErrorMessage("Debes seleccionar un archivo de contenido");
+      setErrorModalOpen(true);
       return;
     }
 
@@ -139,11 +166,11 @@ export default function UploadMultimedia() {
       setUploading(true);
       const token = await getToken();
 
-      // Prepare multipart form data with file and metadata
+      // Sanitize and prepare multipart form data with file and metadata
       const uploadData = new FormData();
       uploadData.append("file", selectedFile);
-      uploadData.append("nombre", formData.nombre);
-      uploadData.append("descripcion", formData.descripcion);
+      uploadData.append("nombre", formData.nombre.trim());
+      uploadData.append("descripcion", formData.descripcion.trim());
       uploadData.append("tipo", formData.tipo);
       uploadData.append("role", selectedRole);
       
@@ -220,7 +247,7 @@ export default function UploadMultimedia() {
               {/* Content name field */}
               <div className="mb-6">
                 <h3 className="text-base font-semibold text-slate-900 mb-4">
-                  Nombre del archivo
+                  Nombre del archivo <span className="text-red-500">*</span>
                 </h3>
                 <input
                   type="text"
@@ -228,9 +255,13 @@ export default function UploadMultimedia() {
                   value={formData.nombre}
                   onChange={handleInputChange}
                   placeholder="Ej. Introducción a la Fisioterapia Pélvica"
+                  maxLength={50}
                   className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
                   required
                 />
+                <p className="text-xs text-slate-500 mt-1">
+                  {formData.nombre.length}/50 caracteres
+                </p>
               </div>
 
               {/* Content description field */}
@@ -244,9 +275,12 @@ export default function UploadMultimedia() {
                   onChange={handleInputChange}
                   placeholder="Escribe una breve descripción del contenido"
                   rows="6"
+                  maxLength={500}
                   className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent resize-none"
-                  required
                 />
+                <p className="text-xs text-slate-500 mt-1">
+                  {formData.descripcion.length}/500 caracteres
+                </p>
               </div>
 
               {/* Content type and role selection */}
@@ -254,7 +288,7 @@ export default function UploadMultimedia() {
                 {/* Content type selector */}
                 <div>
                   <h3 className="text-base font-semibold text-slate-900 mb-4">
-                    Tipo de contenido
+                    Tipo de contenido <span className="text-red-500">*</span>
                   </h3>
                   <select
                     name="tipo"
@@ -273,7 +307,7 @@ export default function UploadMultimedia() {
                 {/* Role selector */}
                 <div>
                   <h3 className="text-base font-semibold text-slate-900 mb-4">
-                    Dirigido a
+                    Dirigido a <span className="text-red-500">*</span>
                   </h3>
                   <select
                     value={selectedRole}
@@ -294,7 +328,7 @@ export default function UploadMultimedia() {
               {/* Main content file upload area */}
               <div className="mb-8">
                 <h3 className="text-base font-semibold text-slate-900 mb-4">
-                  Archivo del contenido
+                  Archivo del contenido <span className="text-red-500">*</span>
                 </h3>
                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#CAD00F] transition-colors">
                   <input
@@ -303,6 +337,7 @@ export default function UploadMultimedia() {
                     className="hidden"
                     id="file-upload"
                     accept="video/*,audio/*,image/*,.pdf,.doc,.docx"
+                    required
                   />
                   <label
                     htmlFor="file-upload"
