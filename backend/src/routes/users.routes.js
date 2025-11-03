@@ -10,6 +10,7 @@ import { getCurrentUserProfile, getUserProfileById, getAllUsers } from "../contr
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
+import {authorize} from '../middlewares/rbacMiddleware.js';
 
 const router = express.Router();
 
@@ -46,7 +47,7 @@ router.get("/profile", requireAuth, getCurrentUserProfile);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/:userId", requireAuth, getUserProfileById);
+router.get("/:userId", requireAuth, authorize(["Gestión de Usuarios"]), getUserProfileById);
 
 /**
  * Route to assign a role to a user.
@@ -58,6 +59,6 @@ router.get("/:userId", requireAuth, getUserProfileById);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.patch("/:userId/rol", requireAuth, autoSyncClerkId, requireDbUser, assignUserRole);
+router.patch("/:userId/rol", requireAuth, authorize(["Gestión de Usuarios"]), autoSyncClerkId, requireDbUser, assignUserRole);
 
 export default router;
