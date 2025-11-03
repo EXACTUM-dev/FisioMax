@@ -6,7 +6,7 @@
  */
 import {clerkClient} from '@clerk/clerk-sdk-node';
 import config from '../../config.js';
-import {getUserByClerkId} from '../models/users.model.js';
+import {getUserByClerkId, getMembershipUserStateById} from '../models/users.model.js';
 
 /**
  * Gets complete user information combining Clerk and DB data.
@@ -37,7 +37,10 @@ export async function getUserById(clerkUserId) {
     // 2. Search user in DB by clerkID
     const dbUser = await getUserByClerkId(clerkUserId);
 
-    // 3. Combine data
+    // 3. Get membership state
+    const dbState = await getMembershipUserStateById(dbUser.IDUsuario);
+
+    // 4. Combine data
     return {
       clerkData: clerkUser,
       dbData: dbUser,
@@ -54,6 +57,7 @@ export async function getUserById(clerkUserId) {
       imageUrl: clerkUser.imageUrl || dbUser?.foto || null,
       role: dbUser?.rolNombre || null,
       roleId: dbUser?.IDRol || null,
+      membershipState: dbState,
     };
   } catch (err) {
     console.error('auth.service.getUserById error:', err?.message || err);
