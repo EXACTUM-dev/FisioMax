@@ -32,11 +32,10 @@ export default function UploadMultimedia() {
     nombre: "",
     descripcion: "",
     tipo: "Articulo",
-    tipoMembresia: "",
   });
 
   const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [selectedRole, setSelectedRole] = useState("");
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -93,19 +92,12 @@ export default function UploadMultimedia() {
   };
 
   /**
-   * Toggles role selection for content access control.
-   * Adds or removes a role ID from the selected roles array.
+   * Handles role selection change from dropdown.
    * 
-   * @param {number|string} roleId - The ID of the role to toggle
+   * @param {Event} e - The select change event
    */
-  const handleRoleToggle = (roleId) => {
-    setSelectedRoles((prev) => {
-      if (prev.includes(roleId)) {
-        return prev.filter((id) => id !== roleId);
-      } else {
-        return [...prev, roleId];
-      }
-    });
+  const handleRoleChange = (e) => {
+    setSelectedRole(e.target.value);
   };
 
   /**
@@ -123,8 +115,8 @@ export default function UploadMultimedia() {
       return;
     }
 
-    if (selectedRoles.length === 0) {
-      alert("Por favor selecciona al menos un rol");
+    if (!selectedRole) {
+      alert("Por favor selecciona un rol");
       return;
     }
 
@@ -138,8 +130,7 @@ export default function UploadMultimedia() {
       uploadData.append("nombre", formData.nombre);
       uploadData.append("descripcion", formData.descripcion);
       uploadData.append("tipo", formData.tipo);
-      uploadData.append("tipoMembresia", formData.tipoMembresia);
-      uploadData.append("roles", JSON.stringify(selectedRoles));
+      uploadData.append("role", selectedRole);
 
       const response = await fetch("http://localhost:5000/api/content/upload", {
         method: "POST",
@@ -158,10 +149,9 @@ export default function UploadMultimedia() {
           nombre: "",
           descripcion: "",
           tipo: "Articulo",
-          tipoMembresia: "",
         });
         setSelectedFile(null);
-        setSelectedRoles([]);
+        setSelectedRole("");
       } else {
         alert("Error al subir contenido: " + result.message);
       }
@@ -234,7 +224,7 @@ export default function UploadMultimedia() {
                 />
               </div>
 
-              {/* Content type and membership type selection */}
+              {/* Content type and role selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {/* Content type selector */}
                 <div>
@@ -255,59 +245,24 @@ export default function UploadMultimedia() {
                   </select>
                 </div>
 
-                {/* Membership type selector */}
+                {/* Role selector */}
                 <div>
                   <h3 className="text-base font-semibold text-slate-900 mb-4">
-                    Tipo de membresía
+                    Dirigido a
                   </h3>
                   <select
-                    name="tipoMembresia"
-                    value={formData.tipoMembresia}
-                    onChange={handleInputChange}
+                    value={selectedRole}
+                    onChange={handleRoleChange}
                     className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white"
                     required
                   >
                     <option value="">Seleccionar...</option>
-                    <option value="Ordinaria">Ordinaria</option>
-                    <option value="Premium">Premium</option>
-                    <option value="VIP">VIP</option>
+                    {roles.map((role) => (
+                      <option key={role.IDRol || role.id} value={role.IDRol || role.id}>
+                        {role.nombre || role.name}
+                      </option>
+                    ))}
                   </select>
-                </div>
-              </div>
-
-              {/* Role-based access control selector */}
-              <div className="mb-6">
-                <h3 className="text-base font-semibold text-slate-900 mb-4">
-                  Dirigido a
-                </h3>
-                <div className="border border-slate-300 rounded-lg p-4 max-h-60 overflow-y-auto">
-                  {roles.length === 0 ? (
-                    <p className="text-sm text-slate-500">Cargando roles...</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {roles.map((role) => (
-                        <label
-                          key={role.IDRol || role.id}
-                          className="flex items-center space-x-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedRoles.includes(role.IDRol || role.id)}
-                            onChange={() => handleRoleToggle(role.IDRol || role.id)}
-                            className="w-4 h-4 text-[#CAD00F] border-slate-300 rounded focus:ring-[#CAD00F]"
-                          />
-                          <div className="flex items-center justify-between flex-1">
-                            <span className="text-sm text-slate-700">
-                              {role.nombre || role.name}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                              {role.IDRol || role.id}
-                            </span>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -329,7 +284,7 @@ export default function UploadMultimedia() {
                     className="cursor-pointer flex flex-col items-center"
                   >
                     <svg
-                      className="w-12 h-12 text-slate-900 mb-3"
+                      className="w-12 h-12 text-slate-400 mb-3"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
