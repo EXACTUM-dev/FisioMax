@@ -104,6 +104,13 @@ export async function getCurrentUserProfile(req, res) {
         IDUsuario: user.IDUsuario,
         clerkID: user.clerkID,
         createdAt: user.createdAt,
+        // Membership information
+        membershipType: user.membresiaTipo || null,
+        membershipExpiresAt: user.membresiaFechaVencimiento || null,
+        membershipRegisteredAt: user.membresiaCreatedAt || null,
+        membershipHoursFormation: user.membresiaHorasFormacion || null,
+        membershipStatus: user.membresiaAceptado,
+        membershipPaymentStatus: user.membresiaEstatusPago || null,
         };
 
         res.status(200).json({
@@ -192,6 +199,13 @@ export async function getUserProfileById(req, res) {
         IDUsuario: user.IDUsuario,
         clerkID: user.clerkID,
         createdAt: user.createdAt,
+        // Membership information
+        membershipType: user.membresiaTipo || null,
+        membershipExpiresAt: user.membresiaFechaVencimiento || null,
+        membershipRegisteredAt: user.membresiaCreatedAt || null,
+        membershipHoursFormation: user.membresiaHorasFormacion || null,
+        membershipStatus: user.membresiaAceptado,
+        membershipPaymentStatus: user.membresiaEstatusPago || null,
         };
 
         res.status(200).json({

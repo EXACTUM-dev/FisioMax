@@ -9,6 +9,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import FileUpload from '../molecules/fileUpload';
 import { updateUserDocuments, getUserProfileById } from '../controllers/profile.controller';
+import editIcon from "../assets/icons/square-pen.png";
+import Button from "../atoms/button";
 
 /**
  * Displays user documents with preview and download options.
@@ -208,13 +210,14 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
           <button
             type="button"
             onClick={() => setIsEditing((v) => !v)}
-            className="text-slate-600 hover:text-slate-900"
+            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
             aria-label={isEditing ? 'Cancelar edición' : 'Editar documentación'}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-              <path d="M17.414 2.586a2 2 0 0 0-2.828 0L6.5 10.672V14h3.328l8.086-8.086a2 2 0 0 0 0-2.828z" />
-              <path d="M4 16h12v2H4a2 2 0 0 1-2-2V4h2v12z" />
-            </svg>
+            <img
+              src={editIcon}
+              alt="Editar"
+              className="w-5 h-5 object-contain opacity-80"
+            />
           </button>
         )}
       </div>
@@ -256,8 +259,11 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
       </div>
 
       {isEditing && (
-        <div className="mt-4 flex justify-end gap-2">
-          <button
+        <div className="mt-4 flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={() => {
               setIsEditing(false);
               // Restore original values
@@ -267,18 +273,18 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
                 constancias: null
               });
             }}
-            className="px-3 py-1 border rounded"
           >
             Cancelar
-          </button>
-          <button 
-            onClick={handleSave} 
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            size="sm"
+            onClick={handleSave}
             disabled={isUploading}
-            className="px-3 py-1 rounded text-white disabled:opacity-50 disabled:cursor-not-allowed" 
-            style={{background:'#CAD00F'}}
           >
             {isUploading ? 'Guardando...' : 'Guardar'}
-          </button>
+          </Button>
         </div>
       )}
     </section>

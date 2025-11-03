@@ -102,7 +102,14 @@ export async function getUserByClerkId(clerkId) {
         u.createdAt,
         r.IDRol,
         r.nombre as rolNombre,
-        r.descripcion as rolDescripcion
+        r.descripcion as rolDescripcion,
+        m.IDMembresia,
+        m.tipo as membresiaTipo,
+        m.fechaVencimiento as membresiaFechaVencimiento,
+        m.createdAt as membresiaCreatedAt,
+        m.horasFormacion as membresiaHorasFormacion,
+        m.aceptado as membresiaAceptado,
+        m.estatusPago as membresiaEstatusPago
       FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
@@ -110,6 +117,8 @@ export async function getUserByClerkId(clerkId) {
       LEFT JOIN rol r ON ur.IDRol = r.IDRol 
         AND r.deletedAt IS NULL 
         AND r.eliminado = 0
+      LEFT JOIN membresia m ON u.IDUsuario = m.IDUsuario
+        AND m.deletedAt IS NULL
       WHERE u.clerkID = ? 
         AND u.eliminado = 0
       LIMIT 1`,
@@ -188,7 +197,14 @@ export async function getUserById(userId) {
         u.paginaWeb,
         r.IDRol,
         r.nombre as rolNombre,
-        r.descripcion as rolDescripcion
+        r.descripcion as rolDescripcion,
+        m.IDMembresia,
+        m.tipo as membresiaTipo,
+        m.fechaVencimiento as membresiaFechaVencimiento,
+        m.createdAt as membresiaCreatedAt,
+        m.horasFormacion as membresiaHorasFormacion,
+        m.aceptado as membresiaAceptado,
+        m.estatusPago as membresiaEstatusPago
       FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
@@ -196,6 +212,8 @@ export async function getUserById(userId) {
       LEFT JOIN rol r ON ur.IDRol = r.IDRol 
         AND r.deletedAt IS NULL 
         AND r.eliminado = 0
+      LEFT JOIN membresia m ON u.IDUsuario = m.IDUsuario
+        AND m.deletedAt IS NULL
       WHERE u.IDUsuario = ? 
         AND u.deletedAt IS NULL 
         AND u.eliminado = 0

@@ -6,6 +6,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import editIcon from "../assets/icons/square-pen.png";
+import Button from "../atoms/button";
 
 // Variables for country, state and city APIs
 const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
@@ -27,7 +29,7 @@ const SelectField = ({ label, name, value, onChange, options, required, error })
       value={value}
       onChange={onChange}
       required={required}
-      className="mt-1 w-full border rounded px-2 py-1 bg-white text-slate-900"
+      className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white text-slate-900"
     >
       <option value="">Selecciona una opción</option>
       {options.map((option) => (
@@ -200,13 +202,14 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
           <button
             type="button"
             onClick={() => setIsEditing((v) => !v)}
-            className="text-slate-600 hover:text-slate-900"
+            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
             aria-label={isEditing ? 'Cancelar edición' : 'Editar domicilio'}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-              <path d="M17.414 2.586a2 2 0 0 0-2.828 0L6.5 10.672V14h3.328l8.086-8.086a2 2 0 0 0 0-2.828z" />
-              <path d="M4 16h12v2H4a2 2 0 0 1-2-2V4h2v12z" />
-            </svg>
+            <img
+              src={editIcon}
+              alt="Editar"
+              className="w-5 h-5 object-contain opacity-80"
+            />
           </button>
         )}
       </div>
@@ -256,7 +259,7 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
         <div>
           <label className="text-sm text-slate-600">Colonia</label>
           {isEditing ? (
-            <input name="colonia" value={form.colonia} onChange={handleChange} className="mt-1 w-full border rounded px-2 py-1" />
+            <input name="colonia" value={form.colonia} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
           ) : (
           <div className="mt-1 text-slate-900">{data.colonia || <span className="text-slate-400">No disponible</span>}</div>
           )}
@@ -265,7 +268,7 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
         <div>
           <label className="text-sm text-slate-600">Código Postal</label>
           {isEditing ? (
-            <input name="codigoPostal" value={form.codigoPostal} onChange={handleChange} className="mt-1 w-full border rounded px-2 py-1" />
+            <input name="codigoPostal" value={form.codigoPostal} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
           ) : (
           <div className="mt-1 text-slate-900">{data.codigoPostal || <span className="text-slate-400">No disponible</span>}</div>
           )}
@@ -274,7 +277,7 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
         <div>
           <label className="text-sm text-slate-600">Calle</label>
           {isEditing ? (
-            <input name="calle" value={form.calle} onChange={handleChange} className="mt-1 w-full border rounded px-2 py-1" />
+            <input name="calle" value={form.calle} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
           ) : (
           <div className="mt-1 text-slate-900">{data.calle || <span className="text-slate-400">No disponible</span>}</div>
           )}
@@ -283,7 +286,7 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
         <div>
           <label className="text-sm text-slate-600">Número Exterior</label>
           {isEditing ? (
-            <input name="numExterior" value={form.numExterior} onChange={handleChange} className="mt-1 w-full border rounded px-2 py-1" />
+            <input name="numExterior" value={form.numExterior} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
           ) : (
           <div className="mt-1 text-slate-900">{data.numExterior || <span className="text-slate-400">No disponible</span>}</div>
           )}
@@ -292,7 +295,7 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
         <div>
           <label className="text-sm text-slate-600">Número Interior</label>
           {isEditing ? (
-            <input name="numInterior" value={form.numInterior} onChange={handleChange} className="mt-1 w-full border rounded px-2 py-1" />
+            <input name="numInterior" value={form.numInterior} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
           ) : (
           <div className="mt-1 text-slate-900">{data.numInterior || <span className="text-slate-400">No disponible</span>}</div>
           )}
@@ -300,8 +303,11 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
       </div>
 
       {isEditing && (
-        <div className="mt-4 flex justify-end gap-2">
-          <button 
+        <div className="mt-4 flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={() => {
               setIsEditing(false);
               // Restore original values
@@ -315,12 +321,18 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
                 numExterior: data.numExterior || '',
                 numInterior: data.numInterior || ''
               });
-            }} 
-            className="px-3 py-1 border rounded"
+            }}
           >
             Cancelar
-          </button>
-          <button onClick={handleSave} className="px-3 py-1 rounded text-white" style={{background:'#CAD00F'}}>Guardar</button>
+          </Button>
+          <Button
+            type="button"
+            variant="brand"
+            size="sm"
+            onClick={handleSave}
+          >
+            Guardar
+          </Button>
         </div>
       )}
     </section>

@@ -6,6 +6,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import editIcon from "../assets/icons/square-pen.png";
+import Button from "../atoms/button";
 
 // Variables for country, state and city APIs
 const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
@@ -132,7 +134,7 @@ const ComboboxField = ({ label, name, value, onChange, options, required, error,
           onBlur={handleInputBlur}
           placeholder={placeholder}
           required={required}
-          className="mt-1 w-full border rounded px-2 py-1 bg-white text-slate-900"
+          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white text-slate-900"
         />
         <button
           type="button"
@@ -267,13 +269,14 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
             <button
               type="button"
               onClick={() => setIsEditingPersonal((v) => !v)}
-              className="text-slate-600 hover:text-slate-900"
+              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
               aria-label={isEditingPersonal ? 'Cancelar edición' : 'Editar información personal'}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                <path d="M17.414 2.586a2 2 0 0 0-2.828 0L6.5 10.672V14h3.328l8.086-8.086a2 2 0 0 0 0-2.828z" />
-                <path d="M4 16h12v2H4a2 2 0 0 1-2-2V4h2v12z" />
-              </svg>
+              <img
+                src={editIcon}
+                alt="Editar"
+                className="w-5 h-5 object-contain opacity-80"
+              />
             </button>
           )}
         </div>
@@ -282,7 +285,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           <div>
             <label className="text-sm text-slate-600">Nombre(s)</label>
             {isEditingPersonal ? (
-              <input name="nombres" value={personalForm.nombres} onChange={handlePersonalChange} className="mt-1 w-full border rounded px-2 py-1" />
+              <input name="nombres" value={personalForm.nombres} onChange={handlePersonalChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
             ) : (
               <div className="mt-1 text-slate-900">{data.nombres || <span className="text-slate-400">No disponible</span>}</div>
             )}
@@ -292,8 +295,8 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
             <label className="text-sm text-slate-600">Apellidos</label>
             {isEditingPersonal ? (
               <div className="grid grid-cols-2 gap-2 mt-1">
-                <input name="apellidoP" value={personalForm.apellidoP} onChange={handlePersonalChange} placeholder="Apellido paterno" className="border rounded px-2 py-1" />
-                <input name="apellidoM" value={personalForm.apellidoM} onChange={handlePersonalChange} placeholder="Apellido materno" className="border rounded px-2 py-1" />
+                <input name="apellidoP" value={personalForm.apellidoP} onChange={handlePersonalChange} placeholder="Apellido paterno" className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+                <input name="apellidoM" value={personalForm.apellidoM} onChange={handlePersonalChange} placeholder="Apellido materno" className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
               </div>
             ) : (
               <div className="mt-1 text-slate-900">{`${data.apellidoP || ''} ${data.apellidoM || ''}`.trim() || <span className="text-slate-400">No disponible</span>}</div>
@@ -303,7 +306,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           <div>
             <label className="text-sm text-slate-600">Fecha de nacimiento</label>
             {isEditingPersonal ? (
-              <input type="date" name="fechaNacimiento" value={personalForm.fechaNacimiento} onChange={handlePersonalChange} className="mt-1 w-full border rounded px-2 py-1" />
+              <input type="date" name="fechaNacimiento" value={personalForm.fechaNacimiento} onChange={handlePersonalChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
             ) : (
               <div className="mt-1 text-slate-900">{data.fechaNacimiento || <span className="text-slate-400">No disponible</span>}</div>
             )}
@@ -329,8 +332,11 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
         </div>
 
         {isEditingPersonal && (
-          <div className="mt-4 flex justify-end gap-2">
-            <button 
+          <div className="mt-4 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 setIsEditingPersonal(false);
                 // Restore original values
@@ -341,12 +347,18 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
                   fechaNacimiento: data.fechaNacimiento || '',
                   licenciatura: data.licenciatura || ''
                 });
-              }} 
-              className="px-3 py-1 border rounded"
+              }}
             >
               Cancelar
-            </button>
-            <button onClick={handleSavePersonal} className="px-3 py-1 rounded text-white" style={{background:'#CAD00F'}}>Guardar</button>
+            </Button>
+            <Button
+              type="button"
+              variant="brand"
+              size="sm"
+              onClick={handleSavePersonal}
+            >
+              Guardar
+            </Button>
           </div>
         )}
       </section>
@@ -359,13 +371,14 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
             <button
               type="button"
               onClick={() => setIsEditingContact((v) => !v)}
-              className="text-slate-600 hover:text-slate-900"
+              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
               aria-label={isEditingContact ? 'Cancelar edición' : 'Editar información de contacto'}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                <path d="M17.414 2.586a2 2 0 0 0-2.828 0L6.5 10.672V14h3.328l8.086-8.086a2 2 0 0 0 0-2.828z" />
-                <path d="M4 16h12v2H4a2 2 0 0 1-2-2V4h2v12z" />
-              </svg>
+              <img
+                src={editIcon}
+                alt="Editar"
+                className="w-5 h-5 object-contain opacity-80"
+              />
             </button>
           )}
         </div>
@@ -374,7 +387,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           <div>
             <label className="text-sm text-slate-600">Correo electrónico</label>
             {isEditingContact ? (
-              <input name="email" value={contactForm.email} onChange={handleContactChange} className="mt-1 w-full border rounded px-2 py-1" />
+              <input name="email" value={contactForm.email} onChange={handleContactChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
             ) : (
               <div className="mt-1 text-slate-900">{data.email || <span className="text-slate-400">No disponible</span>}</div>
             )}
@@ -383,7 +396,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           <div>
             <label className="text-sm text-slate-600">Teléfono</label>
             {isEditingContact ? (
-              <input name="telefono" value={contactForm.telefono} onChange={handleContactChange} className="mt-1 w-full border rounded px-2 py-1" />
+              <input name="telefono" value={contactForm.telefono} onChange={handleContactChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
             ) : (
               <div className="mt-1 text-slate-900">{data.telefono || <span className="text-slate-400">No disponible</span>}</div>
             )}
@@ -392,7 +405,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           <div>
             <label className="text-sm text-slate-600">Instagram</label>
             {isEditingContact ? (
-              <input name="instagram" value={contactForm.instagram} onChange={handleContactChange} className="mt-1 w-full border rounded px-2 py-1" />
+              <input name="instagram" value={contactForm.instagram} onChange={handleContactChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
             ) : (
               <div className="mt-1 text-slate-900">
                 {data.instagram ? (
@@ -409,7 +422,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           <div>
             <label className="text-sm text-slate-600">LinkedIn</label>
             {isEditingContact ? (
-              <input name="linkedin" value={contactForm.linkedin} onChange={handleContactChange} className="mt-1 w-full border rounded px-2 py-1" />
+              <input name="linkedin" value={contactForm.linkedin} onChange={handleContactChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
             ) : (
               <div className="mt-1 text-slate-900">
                 {data.linkedin ? (
@@ -426,7 +439,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           <div>
             <label className="text-sm text-slate-600">Facebook</label>
             {isEditingContact ? (
-              <input name="facebook" value={contactForm.facebook} onChange={handleContactChange} className="mt-1 w-full border rounded px-2 py-1" />
+              <input name="facebook" value={contactForm.facebook} onChange={handleContactChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
             ) : (
               <div className="mt-1 text-slate-900">
                 {data.facebook ? (
@@ -443,7 +456,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           <div>
             <label className="text-sm text-slate-600">Página Web</label>
             {isEditingContact ? (
-              <input name="paginaWeb" value={contactForm.paginaWeb} onChange={handleContactChange} className="mt-1 w-full border rounded px-2 py-1" />
+              <input name="paginaWeb" value={contactForm.paginaWeb} onChange={handleContactChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
             ) : (
               <div className="mt-1 text-slate-900">
                 {data.paginaWeb ? (
@@ -459,8 +472,11 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
         </div>
 
         {isEditingContact && (
-          <div className="mt-4 flex justify-end gap-2">
-            <button 
+          <div className="mt-4 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 setIsEditingContact(false);
                 // Restore original values
@@ -472,12 +488,18 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
                   facebook: data.facebook || '',
                   paginaWeb: data.paginaWeb || ''
                 });
-              }} 
-              className="px-3 py-1 border rounded"
+              }}
             >
               Cancelar
-            </button>
-            <button onClick={handleSaveContact} className="px-3 py-1 rounded text-white" style={{background:'#CAD00F'}}>Guardar</button>
+            </Button>
+            <Button
+              type="button"
+              variant="brand"
+              size="sm"
+              onClick={handleSaveContact}
+            >
+              Guardar
+            </Button>
           </div>
         )}
       </section>

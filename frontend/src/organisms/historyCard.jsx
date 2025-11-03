@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import editIcon from "../assets/icons/square-pen.png";
 
 export default function HistoryCard({ data = {}, canEdit = false, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -45,19 +46,6 @@ export default function HistoryCard({ data = {}, canEdit = false, onSave }) {
     <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
       <div className="flex justify-between items-start">
         <h3 className="text-lg font-semibold mb-3">Historial</h3>
-        {canEdit && (
-          <button
-            type="button"
-            onClick={() => setIsEditing((v) => !v)}
-            className="text-slate-600 hover:text-slate-900"
-            aria-label={isEditing ? 'Cancelar edición' : 'Editar historial'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-              <path d="M17.414 2.586a2 2 0 0 0-2.828 0L6.5 10.672V14h3.328l8.086-8.086a2 2 0 0 0 0-2.828z" />
-              <path d="M4 16h12v2H4a2 2 0 0 1-2-2V4h2v12z" />
-            </svg>
-          </button>
-        )}
       </div>
 
       <div className="grid grid-cols-3 gap-4 text-center text-sm text-slate-700">
