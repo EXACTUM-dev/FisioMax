@@ -56,7 +56,7 @@ export default function UploadMultimedia() {
     async function fetchRoles() {
       try {
         const token = await getToken();
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/roles`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/roles`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -196,7 +196,16 @@ export default function UploadMultimedia() {
         uploadData.append("thumbnail", selectedThumbnail);
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/content/upload`, {
+      // Debug: Log what we're sending
+      console.log("=== FormData being sent ===");
+      console.log("nombre:", formData.nombre.trim());
+      console.log("descripcion:", formData.descripcion.trim());
+      console.log("tipo:", formData.tipo);
+      console.log("role:", selectedRole);
+      console.log("file:", selectedFile?.name);
+      console.log("thumbnail:", selectedThumbnail?.name || "none");
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/content/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -30,6 +30,7 @@ import buildRolePermissionsColumns from "./src/data/tableTemplates/rolePermissio
 import Hero from "./src/pages/hero";
 import LoginPage from "./src/pages/login";
 import RegisterPage from "./src/pages/register";
+import UploadMultimediaPage from "./src/pages/uploadMultimedia";
 import EmailPage from "./src/pages/email";
 import MembershipApplicationPage from "./src/pages/membershipApplication";
 import ContentPage from "./src/pages/content";
@@ -305,6 +306,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ContentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/uploadMultimedia"
+        element={
+          <ProtectedRoute allowedPrivileges={["Gestión de Roles"]}>
+            <UploadMultimediaPage />
           </ProtectedRoute>
         }
       />

@@ -186,7 +186,7 @@ export async function index(req, res) {
  * @param {Object} res - Express response object
  */
 export async function upload(req, res) {
-  try {
+  try {    
     let { nombre, descripcion, tipo, role } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
