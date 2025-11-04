@@ -336,6 +336,17 @@ export default function Panel() {
       {/* Main content area */}
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-[1100px] mx-auto">
+          <Title2 className="mb-12">Panel de Control</Title2>
+          
+          <div className="flex justify-between mb-6">
+            <Button
+              variant="brand"
+              size="sm"
+              radius="lg"
+              onClick={() => navigate('/uploadMultimedia')}
+            >
+              Subir Contenido
+            </Button>
           <Title2 className="mb-4">Panel de Control</Title2>
 
           <div className="flex justify-end mb-6">

@@ -309,7 +309,7 @@ export async function deleteRole(req, res) {
     if (!sinRol) {
       return res.status(404).json({
         success: false,
-        message: 'Could not find "SinRol" role. Please create it first.',
+        message: 'No se pudo encontrar el rol "SinRol".',
       });
     }
 

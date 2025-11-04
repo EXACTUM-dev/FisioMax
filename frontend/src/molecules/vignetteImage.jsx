@@ -1,7 +1,8 @@
 /**
- * Version: 0.1.0
- * Component for displaying images with vignette effect
- * Allows different gradient variants (full, left, right)
+ * @fileoverview VignetteImage component for displaying images with a vignette effect
+ * @version 0.2.0
+ * @author EXACTUM-dev
+ * @description Image component that applies a vignette overlay for better visual integration
  */
 import React from "react";
 
@@ -13,6 +14,7 @@ export default function VignetteImage({
   style,
   children,
   cover = false,
+  onError,
 }) {
   // Gradient configuration based on selected variant
   const background =
@@ -44,6 +46,7 @@ export default function VignetteImage({
           height: cover ? "100%" : "auto",
           objectFit: cover ? "cover" : "initial",
         }}
+        onError={onError}
       />
       {/* Vignette layer with gradient */}
       <div
