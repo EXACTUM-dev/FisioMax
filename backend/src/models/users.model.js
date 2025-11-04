@@ -290,7 +290,7 @@ export async function getUserByEmail(email) {
  * Update a user's Clerk ID
  * @param {string} userId - The database user ID
  * @param {string} clerkID - The Clerk user ID to associate
- * @returns {Promise<boolean>} True if updated successfullysi 
+ * @returns {Promise<boolean>} True if updated successfully 
  */
 export async function updateUserClerkId(userId, clerkID) {
   try {
