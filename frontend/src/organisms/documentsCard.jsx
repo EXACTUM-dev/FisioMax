@@ -11,6 +11,8 @@ import FileUpload from '../molecules/fileUpload';
 import { updateUserDocuments, getUserProfileById, getCurrentUserProfile } from '../controllers/profile.controller';
 import editIcon from "../assets/icons/square-pen.png";
 import Button from "../atoms/button";
+import SuccessErrorModal from './successErrorModal';
+import Modal from '../molecules/modal';
 
 /**
  * Displays user documents with preview and download options.
@@ -29,6 +31,11 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
     constancias: null
   });
   const [isUploading, setIsUploading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('success');
+  const [modalMessage, setModalMessage] = useState('');
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const { getToken } = useAuth();
 
   const hasFile = (v) => !!v;
@@ -93,9 +100,35 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
     setFormFiles((prev) => ({ ...prev, [name]: file }));
   }
 
+  /**
+   * Validates that required documents are present
+   * @returns {boolean} True if valid, false otherwise
+   */
+  const validateDocuments = () => {
+    const missingFields = [];
+    
+    // Check if titulo exists (either in form or already in data)
+    if (!formFiles.titulo && !data.titulo) {
+      missingFields.push('Título / Kardex');
+    }
+    
+    if (missingFields.length > 0) {
+      setValidationErrors(missingFields);
+      setShowValidationModal(true);
+      return false;
+    }
+    
+    return true;
+  };
+
   async function handleSave() {
     if (!onSave || !userId) {
       console.error('onSave or userId is required');
+      return;
+    }
+
+    // Validate required documents
+    if (!validateDocuments()) {
       return;
     }
 
@@ -138,9 +171,17 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
         cedula: null,
         constancias: null
       });
+      
+      // Show success modal
+      setModalType('success');
+      setModalMessage('Los documentos se han actualizado exitosamente.');
+      setShowModal(true);
     } catch (error) {
       console.error('Error saving documents:', error);
-      alert('Error al guardar documentos: ' + (error.message || 'Error desconocido'));
+      // Show error modal
+      setModalType('error');
+      setModalMessage(error.message || 'Error desconocido al guardar los documentos. Por favor, intente nuevamente.');
+      setShowModal(true);
     } finally {
       setIsUploading(false);
     }
@@ -153,9 +194,10 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
    * @param {string} props.fileUrl - Document URL.
    * @param {string} props.filename - Suggested filename.
    * @param {string} props.fieldName - Field name for form.
+   * @param {boolean} props.required - Whether the document is required.
    * @return {!JSX.Element} Document row.
    */
-  const DocumentRow = ({label, fileUrl, filename, fieldName}) => {
+  const DocumentRow = ({label, fileUrl, filename, fieldName, required = false}) => {
     if (isEditing) {
       return (
         <div className="py-2 border-b border-slate-100 last:border-0">
@@ -165,6 +207,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
             value={formFiles[fieldName]}
             onChange={handleFileChange}
             accept=".pdf"
+            required={required}
           />
         </div>
       );
@@ -229,6 +272,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
           fileUrl={data.titulo} 
           filename="titulo.pdf"
           fieldName="titulo"
+          required={true}
         />
         <DocumentRow 
           label="Cédula profesional" 
@@ -288,6 +332,49 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
           </Button>
         </div>
       )}
+
+      {/* Success/Error Modal */}
+      <SuccessErrorModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        type={modalType}
+        message={modalMessage}
+        title={
+          modalType === "success"
+            ? "¡Operación exitosa!"
+            : "Error en la operación"
+        }
+      />
+
+      {/* Validation Modal for Required Fields */}
+      <Modal open={showValidationModal} onClose={() => setShowValidationModal(false)} size="md" position="center">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
+            <svg className="h-16 w-16 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Campos requeridos faltantes
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Por favor completa los siguientes campos obligatorios antes de guardar:
+          </p>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <ul className="text-left text-gray-700 space-y-2">
+              {validationErrors.map((field, index) => (
+                <li key={index} className="flex items-center">
+                  <span className="text-orange-500 mr-2">•</span>
+                  {field}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Button variant="brand" onClick={() => setShowValidationModal(false)} className="w-full">
+            Entendido
+          </Button>
+        </div>
+      </Modal>
     </section>
   );
 }

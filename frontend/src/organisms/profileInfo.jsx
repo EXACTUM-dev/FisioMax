@@ -6,6 +6,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import SuccessErrorModal from './successErrorModal';
+import Modal from '../molecules/modal';
 import editIcon from "../assets/icons/square-pen.png";
 import Button from "../atoms/button";
 
@@ -186,13 +188,74 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
   // Separate editing states for each section
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
+  
+  // Modal states
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('success');
+  const [modalMessage, setModalMessage] = useState('');
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
+
+  /**
+   * Format date from ISO string to dd/mm/aaaa
+   * @param {string} dateString - ISO date string or date string
+   * @returns {string} Formatted date as dd/mm/aaaa
+   */
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString; // Return original if invalid
+      
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      return dateString; // Return original if error
+    }
+  };
+
+  /**
+   * Convert date to YYYY-MM-DD format for input type="date"
+   * @param {string} dateString - Date string in any format
+   * @returns {string} Date in YYYY-MM-DD format
+   */
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      return '';
+    }
+  };
+
+  /**
+   * Calculate maximum date (15 years ago from today)
+   * @returns {string} Date in YYYY-MM-DD format
+   */
+  const getMaxDate = () => {
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 15, today.getMonth(), today.getDate());
+    return maxDate.toISOString().split('T')[0];
+  };
 
   // Separate forms for each section
   const [personalForm, setPersonalForm] = useState({
     nombres: data.nombres || '',
     apellidoP: data.apellidoP || '',
     apellidoM: data.apellidoM || '',
-    fechaNacimiento: data.fechaNacimiento || '',
+    fechaNacimiento: formatDateForInput(data.fechaNacimiento) || '',
     licenciatura: data.licenciatura || ''
   });
 
@@ -211,7 +274,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
       nombres: data.nombres || '',
       apellidoP: data.apellidoP || '',
       apellidoM: data.apellidoM || '',
-      fechaNacimiento: data.fechaNacimiento || '',
+      fechaNacimiento: formatDateForInput(data.fechaNacimiento) || '',
       licenciatura: data.licenciatura || ''
     });
     setContactForm({
@@ -234,29 +297,152 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
     setContactForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  /**
+   * Validates required fields for personal information
+   * @returns {boolean} True if valid, false otherwise
+   */
+  const validatePersonalInfo = () => {
+    const missingFields = [];
+    
+    if (!personalForm.nombres || personalForm.nombres.trim() === '') {
+      missingFields.push('Nombre(s)');
+    }
+    if (!personalForm.apellidoP || personalForm.apellidoP.trim() === '') {
+      missingFields.push('Apellido Paterno');
+    }
+    if (!personalForm.fechaNacimiento || personalForm.fechaNacimiento.trim() === '') {
+      missingFields.push('Fecha de nacimiento');
+    }
+    
+    if (missingFields.length > 0) {
+      setValidationErrors(missingFields);
+      setShowValidationModal(true);
+      return false;
+    }
+    
+    return true;
+  };
+
   async function handleSavePersonal() {
     if (!onSave) return;
-    await onSave({
-      nombres: personalForm.nombres,
-      apellidoP: personalForm.apellidoP,
-      apellidoM: personalForm.apellidoM,
-      fechaNacimiento: personalForm.fechaNacimiento,
-      licenciatura: personalForm.licenciatura
-    });
-    setIsEditingPersonal(false);
+    
+    // Validate required fields
+    if (!validatePersonalInfo()) {
+      return;
+    }
+    
+    // Validate date if provided
+    if (personalForm.fechaNacimiento) {
+      const birthDate = new Date(personalForm.fechaNacimiento);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const dayDiff = today.getDate() - birthDate.getDate();
+      
+      // Calculate actual age considering month and day
+      const actualAge = age - (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? 1 : 0);
+      
+      if (actualAge < 15) {
+        setModalType('error');
+        setModalMessage('La fecha de nacimiento debe corresponder a una persona mayor de 15 años.');
+        setShowModal(true);
+        return;
+      }
+      
+      // Check if date is in the future
+      if (birthDate > today) {
+        setModalType('error');
+        setModalMessage('La fecha de nacimiento no puede ser futura.');
+        setShowModal(true);
+        return;
+      }
+    }
+    
+    try {
+      await onSave({
+        nombres: personalForm.nombres,
+        apellidoP: personalForm.apellidoP,
+        apellidoM: personalForm.apellidoM,
+        fechaNacimiento: personalForm.fechaNacimiento,
+        licenciatura: personalForm.licenciatura
+      });
+      setIsEditingPersonal(false);
+      
+      // Show success modal
+      setModalType('success');
+      setModalMessage('La información personal se ha actualizado exitosamente.');
+      setShowModal(true);
+    } catch (error) {
+      console.error('Error saving personal info:', error);
+      // Show error modal
+      setModalType('error');
+      setModalMessage(error.message || 'Error al guardar la información personal. Por favor, intente nuevamente.');
+      setShowModal(true);
+    }
   }
+
+  /**
+   * Validates required fields for contact information
+   * @returns {boolean} True if valid, false otherwise
+   */
+  const validateContactInfo = () => {
+    const missingFields = [];
+    
+    if (!contactForm.email || contactForm.email.trim() === '') {
+      missingFields.push('Correo electrónico');
+    } else {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(contactForm.email)) {
+        setModalType('error');
+        setModalMessage('El formato del correo electrónico no es válido.');
+        setShowModal(true);
+        return false;
+      }
+    }
+    
+    // Note: telefonoWhatsApp is required in membershipApplication, but we'll use telefono (telefonoCasa) here
+    // If the backend expects telefonoWhatsApp, we may need to adjust
+    
+    if (missingFields.length > 0) {
+      setValidationErrors(missingFields);
+      setShowValidationModal(true);
+      return false;
+    }
+    
+    return true;
+  };
 
   async function handleSaveContact() {
     if (!onSave) return;
-    await onSave({
-      correo: contactForm.email,
-      telefono: contactForm.telefono,
-      instagram: contactForm.instagram,
-      linkedin: contactForm.linkedin,
-      facebook: contactForm.facebook,
-      paginaWeb: contactForm.paginaWeb
-    });
-    setIsEditingContact(false);
+    
+    // Validate required fields
+    if (!validateContactInfo()) {
+      return;
+    }
+    
+    try {
+      await onSave({
+        correo: contactForm.email,
+        telefono: contactForm.telefono,
+        instagram: contactForm.instagram,
+        linkedin: contactForm.linkedin,
+        facebook: contactForm.facebook,
+        paginaWeb: contactForm.paginaWeb
+      });
+      setIsEditingContact(false);
+      
+      // Show success modal
+      setModalType('success');
+      setModalMessage('La información de contacto se ha actualizado exitosamente.');
+      setShowModal(true);
+    } catch (error) {
+      console.error('Error saving contact info:', error);
+      // Show error modal
+      setModalType('error');
+      setModalMessage(error.message || 'Error al guardar la información de contacto. Por favor, intente nuevamente.');
+      setShowModal(true);
+    }
   }
 
   return (
@@ -283,20 +469,45 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="text-sm text-slate-600">Nombre(s)</label>
+            <label className="text-sm text-slate-600">
+              Nombre(s)
+              <span className="text-red-500 ml-1">*</span>
+            </label>
             {isEditingPersonal ? (
-              <input name="nombres" value={personalForm.nombres} onChange={handlePersonalChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+              <input 
+                name="nombres" 
+                value={personalForm.nombres} 
+                onChange={handlePersonalChange} 
+                required
+                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" 
+              />
             ) : (
               <div className="mt-1 text-slate-900">{data.nombres || <span className="text-slate-400">No disponible</span>}</div>
             )}
           </div>
 
           <div>
-            <label className="text-sm text-slate-600">Apellidos</label>
+            <label className="text-sm text-slate-600">
+              Apellidos
+              <span className="text-red-500 ml-1">*</span>
+            </label>
             {isEditingPersonal ? (
               <div className="grid grid-cols-2 gap-2 mt-1">
-                <input name="apellidoP" value={personalForm.apellidoP} onChange={handlePersonalChange} placeholder="Apellido paterno" className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
-                <input name="apellidoM" value={personalForm.apellidoM} onChange={handlePersonalChange} placeholder="Apellido materno" className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+                <input 
+                  name="apellidoP" 
+                  value={personalForm.apellidoP} 
+                  onChange={handlePersonalChange} 
+                  placeholder="Apellido paterno" 
+                  required
+                  className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" 
+                />
+                <input 
+                  name="apellidoM" 
+                  value={personalForm.apellidoM} 
+                  onChange={handlePersonalChange} 
+                  placeholder="Apellido materno" 
+                  className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" 
+                />
               </div>
             ) : (
               <div className="mt-1 text-slate-900">{`${data.apellidoP || ''} ${data.apellidoM || ''}`.trim() || <span className="text-slate-400">No disponible</span>}</div>
@@ -304,11 +515,24 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           </div>
 
           <div>
-            <label className="text-sm text-slate-600">Fecha de nacimiento</label>
+            <label className="text-sm text-slate-600">
+              Fecha de nacimiento
+              <span className="text-red-500 ml-1">*</span>
+            </label>
             {isEditingPersonal ? (
-              <input type="date" name="fechaNacimiento" value={personalForm.fechaNacimiento} onChange={handlePersonalChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+              <input 
+                type="date" 
+                name="fechaNacimiento" 
+                value={personalForm.fechaNacimiento} 
+                onChange={handlePersonalChange}
+                max={getMaxDate()}
+                required
+                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" 
+              />
             ) : (
-              <div className="mt-1 text-slate-900">{data.fechaNacimiento || <span className="text-slate-400">No disponible</span>}</div>
+              <div className="mt-1 text-slate-900">
+                {data.fechaNacimiento ? formatDate(data.fechaNacimiento) : <span className="text-slate-400">No disponible</span>}
+              </div>
             )}
           </div>
 
@@ -344,7 +568,7 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
                   nombres: data.nombres || '',
                   apellidoP: data.apellidoP || '',
                   apellidoM: data.apellidoM || '',
-                  fechaNacimiento: data.fechaNacimiento || '',
+                  fechaNacimiento: formatDateForInput(data.fechaNacimiento) || '',
                   licenciatura: data.licenciatura || ''
                 });
               }}
@@ -385,9 +609,19 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="text-sm text-slate-600">Correo electrónico</label>
+            <label className="text-sm text-slate-600">
+              Correo electrónico
+              <span className="text-red-500 ml-1">*</span>
+            </label>
             {isEditingContact ? (
-              <input name="email" value={contactForm.email} onChange={handleContactChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+              <input 
+                name="email" 
+                type="email"
+                value={contactForm.email} 
+                onChange={handleContactChange} 
+                required
+                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" 
+              />
             ) : (
               <div className="mt-1 text-slate-900">{data.email || <span className="text-slate-400">No disponible</span>}</div>
             )}
@@ -503,6 +737,49 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
           </div>
         )}
       </section>
+
+      {/* Success/Error Modal */}
+      <SuccessErrorModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        type={modalType}
+        message={modalMessage}
+        title={
+          modalType === "success"
+            ? "¡Operación exitosa!"
+            : "Error en la operación"
+        }
+      />
+
+      {/* Validation Modal for Required Fields */}
+      <Modal open={showValidationModal} onClose={() => setShowValidationModal(false)} size="md" position="center">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
+            <svg className="h-16 w-16 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Campos requeridos faltantes
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Por favor completa los siguientes campos obligatorios antes de guardar:
+          </p>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <ul className="text-left text-gray-700 space-y-2">
+              {validationErrors.map((field, index) => (
+                <li key={index} className="flex items-center">
+                  <span className="text-orange-500 mr-2">•</span>
+                  {field}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Button variant="brand" onClick={() => setShowValidationModal(false)} className="w-full">
+            Entendido
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
