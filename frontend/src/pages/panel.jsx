@@ -342,31 +342,54 @@ export default function Panel() {
 
       {/* Main content area */}
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
-        {/* Data switcher for toggling between views */}
-        <DataSwitchContainer
-          initialKey="solicitudes"
-          loading={loadingRoles || loadingUsers}
+        <div className="max-w-[1100px] mx-auto">
+          <Title2 className="mb-12">Panel de Control</Title2>
+          
+          <div className="flex justify-between mb-6">
+            <Button
+              variant="brand"
+              size="sm"
+              radius="lg"
+              onClick={() => navigate('/uploadMultimedia')}
+            >
+              Subir Contenido
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              radius="lg"
+              onClick={() => navigate('/roles')}
+            >
+              Roles
+            </Button>
+          </div>
+          
+          {/* Data switcher for toggling between views */}
+          <DataSwitchContainer
+            initialKey="solicitudes"
+            loading={loadingRoles || loadingUsers}
           views={[
-            {
-              key: "solicitudes",
-              label: "Solicitudes",
-              type: "table",
-              columns: membershipColumns,
-              rows: membershipRows,
-              searchPlaceholder: "Buscar Solicitudes...",
-              filterColumn: "estado",
+              {
+                key: "solicitudes",
+                label: "Solicitudes",
+                type: "table",
+                columns: membershipColumns,
+                rows: membershipRows,
+                searchPlaceholder: "Buscar Solicitudes...",
+                filterColumn: "estado",
               filterOptions: ["Rechazado", "Pendiente"],
             },
-            {
-              key: "users",
-              label: "Usuarios",
-              type: "table",
-              columns: userColumns,
-              rows: mappedUserRows,
-              searchPlaceholder: "Buscar Usuarios...",
-            },
-          ]}
-        />
+              {
+                key: "users",
+                label: "Usuarios",
+                type: "table",
+                columns: userColumns,
+                rows: mappedUserRows,
+                searchPlaceholder: "Buscar Usuarios...",
+              },
+            ]}
+          />
+        </div>
       </main>
 
       {/* Modal for viewing role permissions (read-only) */}

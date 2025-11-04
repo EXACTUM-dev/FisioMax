@@ -97,9 +97,16 @@ app.use("/api/auth", authRoutes);
  * Routes for video content access.
  */
 import contentRoutes from "./src/routes/content.routes.js";
-app.use("/api", contentRoutes);
+app.use("/api/content", contentRoutes);
 
-// Middleware to handle JSON parsing errors
+//-------------------------
+// ERROR HANDLING MIDDLEWARE
+// Order matters: JSON parsing errors -> Specific errors -> Generic errors -> 404
+//-------------------------
+
+/**
+ * Middleware to handle JSON parsing errors
+ */
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     // Malformed JSON error
@@ -170,6 +177,9 @@ const secureErrorHandler = (err, req, res, next) => {
  */
 app.use(secureErrorHandler);
 
+/**
+ * Fallback error handler for any remaining errors
+ */
 app.use((error, req, res, next) => {
   console.error("Error no manejado:", error);
 
@@ -181,7 +191,8 @@ app.use((error, req, res, next) => {
 });
 
 /**
- * Middleware for routes not found.
+ * 404 Handler - Must be last after all routes and error handlers
+ * Catches any requests that don't match defined routes
  */
 app.use((req, res) => {
   res.status(404).json({

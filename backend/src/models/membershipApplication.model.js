@@ -29,26 +29,23 @@ class MembershipApplication {
     if (!((data.correo && String(data.correo).trim() !== '') || (data.email && String(data.email).trim() !== ''))) {
       throw new Error('El email es obligatorio');
     }
-    if (!((data.fechaNacimiento && String(data.fechaNacimiento).trim() !== '') || (data.birthDate && String(data.birthDate).trim() !== ''))) {
-      throw new Error('La fecha de nacimiento es obligatoria');
-    }
 
-    this.nombres = data.nombres.trim();
-    this.apellidoP = data.apellidoP.trim();
-    this.apellidoM = data.apellidoM?.trim() || null;
-    this.telefonoCasa = data.telefonoCasa?.trim() || null;
-    this.telefonoWhatsapp = data.telefonoWhatsapp?.trim();
-    this.correo = data.correo.trim();
-    this.pais = data.pais?.trim() || null;
-    this.estado = data.estado?.trim() || null;
-    this.ciudad = data.ciudad?.trim() || null;
-    this.calle = data.calle?.trim() || null;
-    this.numExterior = data.numExterior?.trim() || null;
-    this.numInterior = data.numInterior?.trim() || null;
-    this.fechaNacimiento = (data.fechaNacimiento || data.birthDate) || null;
-    this.colonia = data.colonia?.trim() || null;
-    this.codigoPostal = data.codigoPostal?.trim() || null;
-    this.licenciatura = data.licenciatura?.trim() || null;
+    this.firstName = data.firstName.trim();
+    this.lastName = data.lastName.trim();
+    this.middleName = data.middleName?.trim() || null;
+    this.homePhone = data.homePhone?.trim() || null;
+    this.whatsappPhone = data.whatsappPhone.trim();
+    this.email = data.email.trim();
+    this.birthDate = data.birthDate?.trim() || null;
+    this.country = data.country?.trim() || null;
+    this.state = data.state?.trim() || null;
+    this.city = data.city?.trim() || null;
+    this.street = data.street?.trim() || null;
+    this.exteriorNumber = data.exteriorNumber?.trim() || null;
+    this.interiorNumber = data.interiorNumber?.trim() || null;
+    this.neighborhood = data.neighborhood?.trim() || null;
+    this.postalCode = data.postalCode?.trim() || null;
+    this.degree = data.degree?.trim() || null;
     this.instagram = data.instagram?.trim() || null;
     this.linkedin = data.linkedin?.trim() || null;
     this.facebook = data.facebook?.trim() || null;
@@ -71,44 +68,36 @@ class MembershipApplication {
   const certificatesUrl = this.documents.constancias || this.documents.certificates || null;
   const cedulaToInsert = professionalIdUrl || `__missing_cedula_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
-      const [result] = await conn.query(
-        `INSERT INTO Usuario 
-        (nombres, apellidoP, apellidoM, correo, telefonoCasa, telefonoWhatsapp, fechaNacimiento, cedula, titulo, pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, numInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, constancias, createdAt, eliminado)
+      await conn.query(
+        `INSERT INTO usuario 
+        (nombres, apellidoP, apellidoM, correo, telefonoCasa, telefonoWhatsapp, fechaNacimiento, pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, numInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
         [ 
-          this.nombres,
-          this.apellidoP,
-          this.apellidoM,
-          this.correo,
-          this.telefonoCasa,
-          this.telefonoWhatsapp,
-          this.fechaNacimiento,
-          cedulaToInsert,
-          degreeDocumentUrl,
-          this.pais,
-          this.estado,
-          this.ciudad,
-          this.colonia,
-          this.codigoPostal,
-          this.calle,
-          this.numExterior,
-          this.numInterior,
-          this.licenciatura,
-          this.instagram,
-          this.linkedin,
-          this.facebook,
-          this.paginaWeb,
+          this.firstName, 
+          this.lastName, 
+          this.middleName, 
+          this.email, 
+          this.homePhone,
+          this.whatsappPhone,
+          this.birthDate,
+          this.country, 
+          this.state, 
+          this.city, 
+          this.neighborhood, 
+          this.postalCode, 
+          this.street, 
+          this.exteriorNumber, 
+          this.interiorNumber, 
+          this.degree, 
+          this.instagram, 
+          this.linkedin, 
+          this.facebook, 
+          this.website, 
+          professionalIdUrl, 
+          degreeDocumentUrl, 
           certificatesUrl
         ]
       );
-
-      // Determine new user id: prefer insertId, otherwise try to look up by correo
-      let newUserId = result?.insertId || null;
-      if (!newUserId) {
-        const [found] = await conn.execute('SELECT IDUsuario FROM Usuario WHERE correo = ? ORDER BY createdAt DESC LIMIT 1', [this.correo]);
-        newUserId = found && found[0] ? found[0].IDUsuario : null;
-      }
-      this.id = newUserId;
 
       if (this.documents.extra && this.documents.extra.length > 0) {
         for (const extraDocUrl of this.documents.extra) {

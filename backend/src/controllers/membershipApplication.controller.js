@@ -30,68 +30,81 @@ export const createMembershipApplication = async (req, res) => {
   
   try {
   
-    // Save documents in S3
-  const professionalFile = req.files?.cedula?.[0] || req.files?.professionalId?.[0] || null;
-  const professionalUpload = professionalFile ? await S3Service.uploadFile(professionalFile, 'cedulas') : null;
-  const professionalKey = professionalUpload?.key || null;
-  console.log(professionalUpload);
+    // Save documents in S3 (or skip if S3 is not configured)
+    let professionalIdUrl = null;
+    let degreeDocumentUrl = null;
+    let certificatesUrl = null;
+    let extraDocsUrls = [];
 
-  const degreeFile = req.files?.titulo?.[0] || req.files?.degreeDocument?.[0] || null;
-  const degreeUpload = degreeFile ? await S3Service.uploadFile(degreeFile, 'titulos') : null;
-  const degreeKey = degreeUpload?.key || null;
-  console.log(degreeUpload);
+    // Check if AWS is configured
+    const isS3Configured = process.env.AWS_REGION && process.env.AWS_BUCKET_NAME;
 
-  const certificatesFile = req.files?.constancias?.[0] || req.files?.certificates?.[0] || null;
-  const certificatesUpload = certificatesFile ? await S3Service.uploadFile(certificatesFile, 'constancias') : null;
-  const certificatesKey = certificatesUpload?.key || null;
-  console.log(certificatesUpload);
+    if (isS3Configured) {
+      professionalIdUrl = req.files?.professionalId?.[0]
+        ? await S3Service.uploadFile(req.files.professionalId[0], 'cedulas')
+        : null;
 
-    // If there is an extra document
-    const extraDocs = [];
-    Object.keys(req.files || {}).forEach(key => {
-      if (key.startsWith('extraDoc')) {
-        extraDocs.push(req.files[key][0]);
-      }
-    });
+      degreeDocumentUrl = req.files?.degreeDocument?.[0]
+        ? await S3Service.uploadFile(req.files.degreeDocument[0], 'titulos')
+        : null;
 
-    const extraUploads = await Promise.all(
-      extraDocs.map(file => S3Service.uploadFile(file, 'documentos-extra'))
-    );
-      const extraKeys = extraUploads.map(u => u?.key || null).filter(Boolean);
-      const nombres = (req.body.nombres || req.body.nombre || '').toString().trim();
-      const apellidoP = (req.body.apellidoP || req.body.apellidoPaterno || '').toString().trim();
-      const apellidoM = (req.body.apellidoM || req.body.apellidoMaterno || '').toString().trim() || null;
-      const telefonoWhatsApp = (req.body.telefonoWhatsApp || '').toString().trim() || null;
-      const correo = (req.body.email || '').toString().trim();
-      const fechaNacimiento = (req.body.fechaNacimiento || '').toString().trim() || null;
-      const applicationData = {
-        nombres,
-        apellidoP,
-        apellidoM,
-        telefonoCasa: req.body.telefonoCasa || null,
-        telefonoWhatsApp,
-        correo: req.body.correo || req.body.email || null,
-        pais: req.body.pais || null,
-        estado: req.body.estado || null,
-        ciudad: req.body.ciudad || null,
-        colonia: req.body.colonia || null,
-        codigoPostal: req.body.codigoPostal || null,
-        calle: req.body.calle || null,
-        numExterior: req.body.numExterior || null,
-        numInterior: req.body.numInterior || null,
-        licenciatura: req.body.licenciatura || null,
-        instagram: req.body.instagram || null,
-        linkedin: req.body.linkedin || null,
-        facebook: req.body.facebook || null,
-        paginaWeb: req.body.paginaWeb || null,
-        fechaNacimiento,
-        documents: {
-          titulo: degreeUpload,
-          identificacionProfesional: professionalUpload,
-          constancias: certificatesUpload,
-          extra: extraUploads
+      certificatesUrl = req.files?.certificates?.[0]
+        ? await S3Service.uploadFile(req.files.certificates[0], 'constancias')
+        : null;
+
+      // If there is an extra document
+      const extraDocs = [];
+      Object.keys(req.files || {}).forEach(key => {
+        if (key.startsWith('extraDoc')) {
+          extraDocs.push(req.files[key][0]);
         }
-      };
+      });
+
+      extraDocsUrls = await Promise.all(
+        extraDocs.map(file => S3Service.uploadFile(file, 'documentos-extra'))
+      );
+    } else {
+      console.warn('AWS S3 not configured. Files will not be uploaded.');
+      // Store file names instead of URLs for development
+      if (req.files?.professionalId?.[0]) {
+        professionalIdUrl = req.files.professionalId[0].originalname;
+      }
+      if (req.files?.degreeDocument?.[0]) {
+        degreeDocumentUrl = req.files.degreeDocument[0].originalname;
+      }
+      if (req.files?.certificates?.[0]) {
+        certificatesUrl = req.files.certificates[0].originalname;
+      }
+    }
+
+    const applicationData = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      middleName: req.body.middleName,
+      homePhone: req.body.homePhone,
+      whatsappPhone: req.body.whatsappPhone,
+      email: req.body.email,
+      birthDate: req.body.birthDate,
+      country: req.body.country,
+      state: req.body.state,
+      city: req.body.city,
+      neighborhood: req.body.neighborhood,
+      postalCode: req.body.postalCode,
+      street: req.body.street,                    
+      exteriorNumber: req.body.exteriorNumber,  
+      interiorNumber: req.body.interiorNumber,
+      degree: req.body.degree,
+      instagram: req.body.instagram,
+      linkedin: req.body.linkedin,
+      facebook: req.body.facebook,
+      website: req.body.website,
+      documents: {
+        degreeDocument: degreeDocumentUrl,
+        professionalId: professionalIdUrl,
+        certificates: certificatesUrl,
+        extra: extraDocsUrls
+      }
+    };
 
     // Send data to archive model
     const application = new MembershipApplication(applicationData);

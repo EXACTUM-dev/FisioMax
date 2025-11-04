@@ -49,25 +49,6 @@ export async function getUsuarios() {
 }
 
 /**
- * Retrieves the membership status ("aceptado") of a specific user.
- * @async
- * @param {number|string} userId - The unique identifier of the user.
- * @returns {Promise<number|null>} - Returns `1` if the membership is accepted, `0` if the membership is denied, and `NULL` if the membership is pending.
- * @throws {Error} Throws an error if the database query fails.
- */
-export async function getMembershipUserStateById(userId) {
-  try {
-    const [rows] = await dbPool.query(
-      `SELECT aceptado, motivoRechazo FROM membresia WHERE IDUsuario = ?;`, [userId]
-    );
-    return rows[0] ?? null;
-  } catch (error) {
-    console.error("Error al consultar la base de datos:", error);
-    throw error; // Throw error to be handled by controller
-  }
-}
-
-/**
  * Get a single user by Clerk ID with all their information including documents
  * @param {string} clerkId - Clerk user ID
  * @returns {Promise<Object|null>} User object with all data or null if not found
@@ -133,14 +114,14 @@ export async function getUserByClerkId(clerkId) {
           nombreArchivo,
           urlArchivo,
           createdAt
-        FROM DocumentosAdicionales
+        FROM documentosadicionales
         WHERE IDUsuario = ?`,
         [user.IDUsuario]
       );
       user.documentosAdicionales = docRows;
     } catch (docError) {
-      // If DocumentosAdicionales table doesn't exist, just set empty array
-      console.warn('DocumentosAdicionales table not found or error:', docError.message);
+      // If documentosadicionales table doesn't exist, just set empty array
+      console.warn('documentosadicionales table not found or error:', docError.message);
       user.documentosAdicionales = [];
     }
 
@@ -341,12 +322,133 @@ export async function createUserWithClerkId(userData) {
       ]
     );
 
-    if (result.affectedRows > 0) {
-      return await getUserById(IDUsuario);
+    if (result.affectedRows === 0) {
+      throw new Error("No se pudo crear el usuario");
     }
-    throw new Error("No se pudo crear el usuario");
+
+    const sinRol = await findRoleByName("SinRol");
+
+    if (sinRol) {
+      await connection.query(
+        `INSERT INTO usuariorol (IDUsuario, IDRol) 
+         VALUES (?, ?)`,
+        [IDUsuario, sinRol.IDRol]
+      );
+    } else {
+      console.warn('"SinRol" not found - user created without role assignment');
+    }
+
+    await connection.commit();
+
+    return await getUserById(IDUsuario);
   } catch (error) {
+    await connection.rollback();
     console.error("Error al crear usuario con clerkID:", error);
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+/**
+ * Retrieves the membership status ("aceptado") of a specific user.
+ * @async
+ * @param {number|string} userId - The unique identifier of the user.
+ * @returns {Promise<number|null>} - Returns `1` if the membership is accepted, `0` if the membership is denied, and `NULL` if the membership is pending.
+ * @throws {Error} Throws an error if the database query fails.
+ */
+export async function getMembershipUserStateById(userId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT aceptado, motivoRechazo FROM membresia WHERE IDUsuario = ?;`, [userId]
+    );
+    return rows[0] ?? null;
+  } catch (error) {
+    console.error("Error al consultar la base de datos:", error);
+    throw error; // Throw error to be handled by controller
+  }
+}
+
+/**
+ * Get a single user by Clerk ID with all their information including documents
+ * @param {string} clerkId - Clerk user ID
+ * @returns {Promise<Object|null>} User object with all data or null if not found
+ */
+export async function getUserByClerkId(clerkId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT 
+        u.IDUsuario,
+        u.clerkID,
+        u.nombres,
+        u.apellidoP,
+        u.apellidoM,
+        u.foto,
+        u.correo,
+        u.telefonoCasa,
+        u.telefonoWhatsapp,
+        u.fechaNacimiento,
+        u.cedula,
+        u.titulo,
+        u.constancias,
+        u.licenciatura,
+        u.pais,
+        u.estado,
+        u.ciudad,
+        u.calle,
+        u.numExterior,
+        u.numInterior,
+        u.colonia,
+        u.codigoPostal,
+        u.instagram,
+        u.linkedin,
+        u.facebook,
+        u.paginaWeb,
+        u.createdAt,
+        r.IDRol,
+        r.nombre as rolNombre,
+        r.descripcion as rolDescripcion
+      FROM usuario u
+      LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
+        AND ur.deletedAt IS NULL 
+        AND ur.eliminado = 0
+      LEFT JOIN rol r ON ur.IDRol = r.IDRol 
+        AND r.deletedAt IS NULL 
+        AND r.eliminado = 0
+      WHERE u.clerkID = ? 
+        AND u.eliminado = 0
+      LIMIT 1`,
+      [clerkId]
+    );
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const user = rows[0];
+
+    // Try to get additional documents if the table exists
+    try {
+      const [docRows] = await dbPool.query(
+        `SELECT 
+          IDDocumento,
+          nombreArchivo,
+          urlArchivo,
+          createdAt
+        FROM DocumentosAdicionales
+        WHERE IDUsuario = ?`,
+        [user.IDUsuario]
+      );
+      user.documentosAdicionales = docRows;
+    } catch (docError) {
+      // If DocumentosAdicionales table doesn't exist, just set empty array
+      console.warn('DocumentosAdicionales table not found or error:', docError.message);
+      user.documentosAdicionales = [];
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Error al obtener usuario por Clerk ID:", error);
     throw error;
   }
 }
