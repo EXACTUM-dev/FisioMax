@@ -329,7 +329,7 @@ export default function UploadMultimedia() {
                     <option value="Articulo">Artículo</option>
                     <option value="Video">Video</option>
                     <option value="Podcast">Podcast</option>
-                    <option value="Documento">Documento</option>
+                    <option value="Libro">Libro</option>
                   </select>
                 </div>
 

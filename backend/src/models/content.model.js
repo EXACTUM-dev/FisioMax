@@ -15,7 +15,6 @@ const DISPLAYABLE_CONTENT_TYPES = [
   "video",
   "articulo",
   "podcast",
-  "documento",
   "libro",
 ];
 
