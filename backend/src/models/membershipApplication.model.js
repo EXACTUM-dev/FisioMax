@@ -307,7 +307,6 @@ export const approveMembershipApplicationById = async (id) => {
 export async function denyMembershipApplication(razonRechazo, id) {
   const conn = await db.getConnection();
 
-  console.log('Denying membership application ID:', id, 'with reason:', razonRechazo);
   try {
     await conn.beginTransaction();
     

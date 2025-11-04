@@ -230,7 +230,6 @@ export async function denyMembership(req, res) {
 
   try {
     // Update the application in the database with reason
-    console.log('Rechazando solicitud ID:', id, 'con razón:', razonRechazo);
     const result = await denyMembershipApplication(razonRechazo, id);
 
     res.status(200).json({ 
