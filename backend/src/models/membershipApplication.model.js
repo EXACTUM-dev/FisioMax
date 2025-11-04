@@ -49,7 +49,7 @@ class MembershipApplication {
     this.instagram = data.instagram?.trim() || null;
     this.linkedin = data.linkedin?.trim() || null;
     this.facebook = data.facebook?.trim() || null;
-    this.paginaWeb = data.paginaWeb?.trim() || null;
+    this.website = data.website?.trim() || null;
     this.documents = data.documents || {};
     this.id = null;
   }
@@ -63,14 +63,13 @@ class MembershipApplication {
     try {
       await conn.beginTransaction();
 
-      const userId = crypto.randomUUID().replace(/-/g, '');
 
       const professionalIdUrl = this.documents.identificacionProfesional || this.documents.cedula || this.documents.professionalId || null;
       const degreeDocumentUrl = this.documents.titulo || this.documents.degreeDocument || null;
       const certificatesUrl = this.documents.constancias || this.documents.certificates || null;
       const cedulaToInsert = professionalIdUrl || `__missing_cedula_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
-      await conn.query(
+      const [userResult] = await conn.query(
         `INSERT INTO usuario 
         (nombres, apellidoP, apellidoM, correo, telefonoCasa, telefonoWhatsapp, fechaNacimiento, pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, numInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
@@ -101,6 +100,13 @@ class MembershipApplication {
         ]
       );
 
+      const userId = userResult.insertId;
+      this.id = userId;
+
+      if (!this.id) {
+        throw new Error('No se pudo determinar IDUsuario tras insertar Usuario');
+      }
+
       if (this.documents.extra && this.documents.extra.length > 0) {
         for (const extraDocUrl of this.documents.extra) {
           await conn.query(
@@ -112,17 +118,10 @@ class MembershipApplication {
         }
       }
 
-      this.id = userId;
-
-      console.log(this.id);
-      if (!this.id) {
-        throw new Error('No se pudo determinar IDUsuario tras insertar Usuario');
-      }
-
       const [mres] = await conn.query(
         `INSERT INTO membresia (IDUsuario, tipo, fechaVencimiento, constanciaPago, certificado, horasFormacion, aceptado, estatusPago, createdAt)
          VALUES (?, ?, CURDATE(), ?, ?, ?, ?, ?, NOW())`,
-        [this.id, 'pendiente', '', '', 0, null, 'pendiente']
+        [userId, 'pendiente', '', '', 0, null, 'pendiente']
       );
       this.IDMembresia = mres?.insertId || null;
       await conn.commit();
@@ -196,15 +195,15 @@ export const getMembershipApplicationById = async (id) => {
     const isPlaceholder = (k) => !k || String(k).startsWith('__missing_');
 
     if (row.cedula && !isPlaceholder(row.cedula)) {
-      const cedulaUrl = await S3Service.getFileUrl(row.cedula);
+      const cedulaUrl = await S3Service.getPresignedUrl(row.cedula);
       documentos.push({ id: 'cedula', label: 'Cédula profesional', url: cedulaUrl, key: row.cedula });
     }
     if (row.titulo && !isPlaceholder(row.titulo)) {
-      const tituloUrl = await S3Service.getFileUrl(row.titulo);
+      const tituloUrl = await S3Service.getPresignedUrl(row.titulo);
       documentos.push({ id: 'titulo', label: 'Título', url: tituloUrl, key: row.titulo });
     }
     if (row.constancias && !isPlaceholder(row.constancias)) {
-      const constanciasUrl = await S3Service.getFileUrl(row.constancias);
+      const constanciasUrl = await S3Service.getPresignedUrl(row.constancias);
       documentos.push({ id: 'constancias', label: 'Constancias', url: constanciasUrl, key: row.constancias, hours: row.constanciaHoras});
     }
 
@@ -214,7 +213,7 @@ export const getMembershipApplicationById = async (id) => {
       const label = d.nombreArchivo || d.nombre || d.nombre_archivo || 'Documento adicional';
       const hours = d.documentoHoras || null;
       const fileKey = d.urlArchivo || d.url || d.url_archivo || null; // stored as S3 key
-      const url = fileKey && !isPlaceholder(fileKey) ? await S3Service.getFileUrl(fileKey) : null;
+      const url = fileKey && !isPlaceholder(fileKey) ? await S3Service.getPresignedUrl(fileKey) : null;
       documentos.push({ id: docId, label, url, key: fileKey, hours});
     }
 

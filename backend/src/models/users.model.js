@@ -58,10 +58,10 @@ export async function getUsuarios() {
 export async function getMembershipUserStateById(userId) {
   try {
     const [rows] = await dbPool.query(
-      `SELECT aceptado FROM membresia WHERE IDUsuario = ?;`,
+      `SELECT aceptado, motivoRechazo FROM membresia WHERE IDUsuario = ?;`,
       [userId]
     );
-    return rows[0]?.aceptado ?? null;
+    return rows[0] ?? null;
   } catch (error) {
     console.error("Error al consultar la base de datos:", error);
     throw error; // Throw error to be handled by controller

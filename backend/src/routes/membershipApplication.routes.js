@@ -13,6 +13,7 @@ import {
   approveMembership,
   denyMembership,
 } from '../controllers/membershipApplication.controller.js';
+import { authorize } from "../middlewares/rbacMiddleware.js";
 
 const router = express.Router();
 
@@ -59,14 +60,14 @@ router.post('/', uploadFields, createMembershipApplication);
  * @description Obtain all the membership application
  * @access Private
  */
-router.get('/', getMemberships);
+router.get('/',  authorize(["Gestión de Usuarios"]), getMemberships);
 
 /**
  * @route GET /api/membresias/{id}
  * @description Detail endpoint for a single membership application
  * @access Private
  */
-router.get('/:id', getMembershipById);
+router.get('/:id',  authorize(["Gestión de Usuarios"]), getMembershipById);
 
 
 /**
@@ -74,14 +75,14 @@ router.get('/:id', getMembershipById);
  * @description Approve the membership application
  * @access Private
  */
-router.post('/:id/aprobar', approveMembership);
+router.post('/:id/aprobar',  authorize(["Gestión de Usuarios"]), approveMembership);
 
 /**
  * @route POST /api/membresias/{id}/rechazar
  * @description Deny the membership application
  * @access Private
  */
-router.post('/:id/rechazar', denyMembership);
+router.post('/:id/rechazar',  authorize(["Gestión de Usuarios"]), denyMembership);
 
 
 export default router;
