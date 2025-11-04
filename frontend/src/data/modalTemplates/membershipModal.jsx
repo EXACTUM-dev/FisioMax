@@ -129,7 +129,7 @@ function MembershipModalContent({
       }
 
       const response = await fetchWithClerk(
-        `/api/membresias/${id}/aprobar`, 
+        `/api/membership-applications/${id}/aprobar`, 
         { method: 'POST' }, 
         token
       );
@@ -168,7 +168,7 @@ function MembershipModalContent({
 
       // Send rejection reason in request body
       const response = await fetchWithClerk(
-        `/api/membresias/${id}/rechazar`, 
+        `/api/membership-applications/${id}/rechazar`, 
         { 
           method: 'POST',
           headers: {

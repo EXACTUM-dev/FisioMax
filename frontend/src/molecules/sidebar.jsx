@@ -7,6 +7,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+import {useDbUser} from '../hooks/useDbUser';
 // Confirmation modal for logout
 import ConfirmationModal from "../molecules/confirmationModal";
 
@@ -95,29 +96,37 @@ export default function Sidebar({ current = "home", onNavigate }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(current);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const {userData} = useDbUser();
   const { signOut } = useClerk();
   const navigate = useNavigate();
+  const userRole = userData?.role;
 
   useEffect(() => {
     setActive(current);
   }, [current]);
 
   // Navigation links configuration
-  const links = useMemo(
-    () => [
+  const links = useMemo(() => {
+    const baseLinks = [
       { key: "home", label: "Inicio", icon: houseSrc },
-      { key: "bolt", label: "Panel de", icon: boltSrc },
       { key: "profile", label: "Perfil", icon: profileSrc },
       { key: "logout", label: "Cerrar sesión", icon: logoutSrc },
-    ],
-    []
-  );
+    ];
+
+    // Only add "Panel de control" if the user is admin
+    if (userRole === "Admin") {
+      baseLinks.splice(1, 0, { key: "bolt", label: "Panel de control", icon: boltSrc });
+    }
+
+    return baseLinks;
+  }, [userRole]);
+
 
   // Map keys to routes handled here
   const routeMap = useMemo(
     () => ({
       home: "/",
-      profile: "/ajustes/perfil",
+      profile: "/perfil",
       bolt: "/panel",
     }),
     []

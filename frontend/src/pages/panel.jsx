@@ -1,16 +1,19 @@
 /**
- * @fileoverview Main control panel view component.
+ * @fileoverview Admin control panel for managing users and roles.
+ * Provides data tables for user and role management with CRUD operations.
  * @version 1.2.0
  * @author EXACTUM-dev
  */
 
 // Import necessary libraries and components
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import React, {useEffect, useMemo, useState, useCallback} from "react";
+import {useUser, useAuth} from "@clerk/clerk-react";
+import {useNavigate} from "react-router-dom";
 
 // Atoms
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
+import Loading from "../atoms/loading";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -37,13 +40,16 @@ import MembershipModal from "../data/modalTemplates/membershipModal";
  * @returns {JSX.Element} Admin panel interface with navigation, data tables, and management modals.
  */
 export default function Panel() {
-  const { user, isLoaded } = useUser();
-  const { getToken } = useAuth();
-  const [current, setCurrent] = useState("panel");
+  const {user, isLoaded} = useUser();
+  const {getToken} = useAuth();
+  const navigate = useNavigate();
+  const [current, setCurrent] = useState("bolt");
   
   // State for UI data
   const [userRows, setUserRows] = useState([]); // Users from backend
   const [roleRows, setRoleRows] = useState([]); // Roles from backend
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingRoles, setLoadingRoles] = useState(true);
 
   const [membershipRows, setMembershipRows] = useState([]);
   const [selectedMembership, setSelectedMembership] = useState(null);
@@ -61,7 +67,7 @@ export default function Panel() {
   const fetchMemberships = useCallback(async () => {
     try {
       const token = await getToken();
-      const resp = await fetchWithClerk('/api/membresias', { method: 'GET' }, token);
+      const resp = await fetchWithClerk('/api/membership-applications', { method: 'GET' }, token);
 
       // backend may return { success, data } or an array
       const rows = Array.isArray(resp) ? resp : resp?.data || [];
@@ -94,7 +100,7 @@ export default function Panel() {
   const fetchMembershipDetail = useCallback(async (id) => {
     try {
       const token = await getToken();
-      const resp = await fetchWithClerk(`/api/membresias/${id}`, { method: 'GET' }, token);
+      const resp = await fetchWithClerk(`/api/membership-applications/${id}`, { method: 'GET' }, token);
       const detail = resp?.data ?? resp ?? null;
 
       if (detail) {
@@ -123,9 +129,10 @@ export default function Panel() {
 
     const fetchUsers = async () => {
       try {
+        setLoadingUsers(true);
         const token = await getToken();
         const usersResponse = await fetchWithClerk(
-            '/api/usuarios',
+            '/api/users',
             {method: 'GET'},
             token
         );
@@ -139,6 +146,8 @@ export default function Panel() {
       } catch (err) {
         console.error('Error de carga de usuarios:', err);
         setError('Error de carga de usuarios. Por favor intente más tarde.');
+      } finally {
+        if (alive) setLoadingUsers(false);
       }
     };
     fetchUsers();
@@ -154,6 +163,7 @@ export default function Panel() {
 
     const fetchRoles = async () => {
       try {
+        setLoadingRoles(true);
         const token = await getToken();
         const rolesResponse = await fetchWithClerk(
             '/api/roles',
@@ -167,6 +177,8 @@ export default function Panel() {
       } catch (err) {
         console.error('Error de carga de roles:', err);
         setError('Error de carga de roles. Por favor intente más tarde.');
+      } finally {
+        if (alive) setLoadingRoles(false);
       }
     };
 
@@ -175,6 +187,18 @@ export default function Panel() {
       alive = false;
     };
   }, [getToken]);
+
+  /**
+   * Handles clicking on a user name to view their profile.
+   * @param {Object} userRow User object from table row
+   */
+  const handleUserNameClick = useCallback((userRow) => {
+    // Navigate to user profile page with user ID
+    const userId = userRow.IDUsuario || userRow.id;
+    if (userId) {
+      navigate(`/profile/${userId}`);
+    }
+  }, [navigate]);
 
   /**
    * Updates user's role in the UI state.
@@ -270,8 +294,9 @@ export default function Panel() {
             row.id || row.IDUsuario,
             chosenRole
         ),
+        onClickName: handleUserNameClick,
       }),
-      [roleRows, updateUserRole]
+      [roleRows, updateUserRole, handleUserNameClick]
   );
 
   // Define columns for the role table with view action
@@ -304,14 +329,7 @@ export default function Panel() {
 
   // Show loading spinner until user data is loaded
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
+    return <Loading fullscreen message="Cargando..." />;
   }
 
   return (
@@ -327,6 +345,7 @@ export default function Panel() {
         {/* Data switcher for toggling between views */}
         <DataSwitchContainer
           initialKey="solicitudes"
+          loading={loadingRoles || loadingUsers}
           views={[
             {
               key: "solicitudes",

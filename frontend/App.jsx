@@ -7,6 +7,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+import ProtectedRoute from "./src/components/ProtectedRoute";
 import FormField from "./src/molecules/form";
 import {
   userFormFields,
@@ -37,18 +38,6 @@ import MembershipApplicationPage from "./src/pages/membershipApplication";
 import ProfilePage from "./src/pages/profile";
 import Panel from "./src/pages/panel";
 import RolesPage from "./src/pages/roles";
-
-// Rutes protected with Clerk
-function ProtectedRoute({ children }) {
-  return (
-    <>
-      <SignedIn>{children}</SignedIn>
-      <SignedOut>
-        <Navigate to="/login" replace />
-      </SignedOut>
-    </>
-  );
-}
 
 // Dashboard component
 function Dashboard() {
@@ -81,7 +70,7 @@ function Dashboard() {
   // Backend's Fetch
   useEffect(() => {
     if (isSignedIn && user) {
-      fetch("/api/usuarios")
+      fetch("/api/users")
         .then((res) => res.json())
         .then((data) => {
           console.log("Usuarios desde backend:", data);
@@ -143,7 +132,7 @@ function Dashboard() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderBottomColor: '#CAD00F' }}></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -268,7 +257,15 @@ export default function App() {
         }
       />
       <Route
-        path="/ajustes/perfil/*"
+        path="/perfil"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile/:userId"
         element={
           <ProtectedRoute>
             <ProfilePage />
@@ -278,7 +275,7 @@ export default function App() {
       <Route
         path="/panel"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedPrivileges={["Gestión de Usuarios", "Gestión de Membresías"]}>
             <Panel />
           </ProtectedRoute>
         }
@@ -286,7 +283,7 @@ export default function App() {
       <Route
         path="/roles"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedPrivileges={["Gestión de Roles"]}>
             <RolesPage />
           </ProtectedRoute>
         }
@@ -297,6 +294,14 @@ export default function App() {
           <ProtectedRoute>
             {/* Unique call to dashboard: Hero */}
             <Hero />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/video/:videoId"
+        element={
+          <ProtectedRoute>
+            <VideoPage />
           </ProtectedRoute>
         }
       />

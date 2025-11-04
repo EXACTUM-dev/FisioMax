@@ -23,7 +23,7 @@ class MembershipApplication {
     if (!((data.apellidoP && String(data.apellidoP).trim() !== '') || (data.lastName && String(data.lastName).trim() !== ''))) {
       throw new Error('El apellido paterno es obligatorio');
     }
-    if (!((data.telefonoWhatsapp && String(data.telefonoWhatsapp).trim() !== '') || (data.whatsappPhone && String(data.whatsappPhone).trim() !== '') || (data.telefonoWhatsApp && String(data.telefonoWhatsApp).trim() !== ''))) {
+    if (!((data.telefonoWhatsApp && String(data.telefonoWhatsApp).trim() !== '') || (data.whatsappPhone && String(data.whatsappPhone).trim() !== '') || (data.telefonoWhatsApp && String(data.telefonoWhatsApp).trim() !== ''))) {
       throw new Error('El teléfono (WhatsApp) es obligatorio');
     }
     if (!((data.correo && String(data.correo).trim() !== '') || (data.email && String(data.email).trim() !== ''))) {

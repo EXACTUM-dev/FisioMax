@@ -34,11 +34,59 @@ class S3Service {
         { expiresIn: 3600 }
       );
 
-      // Return both the object key (suitable for DB storage) and a signed URL for immediate preview/download
-      return { key, url };
+      return url;
     } catch (error) {
       console.error('Error subiendo archivo a S3:', error);
       throw new Error('Error al subir archivo a S3');
+    }
+  }
+
+  /**
+   * Generate a presigned URL for viewing a file
+   * @param {string} key - S3 object key
+   * @param {number} expiresIn - URL expiration time in seconds (default: 1 hour)
+   * @returns {Promise<string>} Presigned URL
+   */
+  static async getPresignedUrl(key, expiresIn = 3600) {
+    if (!key) return null;
+
+    try {
+      // If the key is already a full URL, extract the key
+      let s3Key = key;
+      if (key.includes('amazonaws.com')) {
+        const url = new URL(key);
+        s3Key = url.pathname.substring(1); // Remove leading '/'
+      }
+
+      const url = await getSignedUrl(
+        s3,
+        new GetObjectCommand({ Bucket: BUCKET_NAME, Key: s3Key }),
+        { expiresIn }
+      );
+
+      // Return both the object key (suitable for DB storage) and a signed URL for immediate preview/download
+      return { key, url };
+    } catch (error) {
+      console.error('Error generando URL presignada:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate presigned URLs for multiple files
+   * @param {Array<string>} keys - Array of S3 object keys
+   * @param {number} expiresIn - URL expiration time in seconds (default: 1 hour)
+   * @returns {Promise<Array<string>>} Array of presigned URLs
+   */
+  static async getPresignedUrls(keys, expiresIn = 3600) {
+    if (!keys || !Array.isArray(keys)) return [];
+
+    try {
+      const urlPromises = keys.map(key => this.getPresignedUrl(key, expiresIn));
+      return await Promise.all(urlPromises);
+    } catch (error) {
+      console.error('Error generando URLs presignadas:', error);
+      return [];
     }
   }
 
@@ -47,13 +95,31 @@ class S3Service {
     try {
       const url = await getSignedUrl(
         s3,
-        new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }),
+        new GetObjectCommand({ Bucket: BUCKET_NAME, Key: s3key }),
         { expiresIn }
       );
       return url;
-    } catch (err) {
-      console.error('Error generando signed URL para key:', key, err);
+    } catch (error) {
+      console.error('Error generando URL presignada:', error);
       return null;
+    }
+  }
+
+  /**
+   * Generate presigned URLs for multiple files
+   * @param {Array<string>} keys - Array of S3 object keys
+   * @param {number} expiresIn - URL expiration time in seconds (default: 1 hour)
+   * @returns {Promise<Array<string>>} Array of presigned URLs
+   */
+  static async getPresignedUrls(keys, expiresIn = 3600) {
+    if (!keys || !Array.isArray(keys)) return [];
+
+    try {
+      const urlPromises = keys.map(key => this.getPresignedUrl(key, expiresIn));
+      return await Promise.all(urlPromises);
+    } catch (error) {
+      console.error('Error generando URLs presignadas:', error);
+      return [];
     }
   }
 }

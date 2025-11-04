@@ -34,14 +34,17 @@ export const createMembershipApplication = async (req, res) => {
   const professionalFile = req.files?.cedula?.[0] || req.files?.professionalId?.[0] || null;
   const professionalUpload = professionalFile ? await S3Service.uploadFile(professionalFile, 'cedulas') : null;
   const professionalKey = professionalUpload?.key || null;
+  console.log(professionalUpload);
 
   const degreeFile = req.files?.titulo?.[0] || req.files?.degreeDocument?.[0] || null;
   const degreeUpload = degreeFile ? await S3Service.uploadFile(degreeFile, 'titulos') : null;
   const degreeKey = degreeUpload?.key || null;
+  console.log(degreeUpload);
 
   const certificatesFile = req.files?.constancias?.[0] || req.files?.certificates?.[0] || null;
   const certificatesUpload = certificatesFile ? await S3Service.uploadFile(certificatesFile, 'constancias') : null;
   const certificatesKey = certificatesUpload?.key || null;
+  console.log(certificatesUpload);
 
     // If there is an extra document
     const extraDocs = [];
@@ -58,17 +61,16 @@ export const createMembershipApplication = async (req, res) => {
       const nombres = (req.body.nombres || req.body.nombre || '').toString().trim();
       const apellidoP = (req.body.apellidoP || req.body.apellidoPaterno || '').toString().trim();
       const apellidoM = (req.body.apellidoM || req.body.apellidoMaterno || '').toString().trim() || null;
-      const telefonoWhatsapp = (req.body.telefonoWhatsapp || '').toString().trim() || null;
-      const correo = (req.body.correo || '').toString().trim();
+      const telefonoWhatsApp = (req.body.telefonoWhatsApp || '').toString().trim() || null;
+      const correo = (req.body.email || '').toString().trim();
       const fechaNacimiento = (req.body.fechaNacimiento || '').toString().trim() || null;
-
       const applicationData = {
         nombres,
         apellidoP,
         apellidoM,
         telefonoCasa: req.body.telefonoCasa || null,
-        telefonoWhatsapp,
-        correo,
+        telefonoWhatsApp,
+        correo: req.body.correo || req.body.email || null,
         pais: req.body.pais || null,
         estado: req.body.estado || null,
         ciudad: req.body.ciudad || null,
@@ -84,10 +86,10 @@ export const createMembershipApplication = async (req, res) => {
         paginaWeb: req.body.paginaWeb || null,
         fechaNacimiento,
         documents: {
-          titulo: degreeKey,
-          identificacionProfesional: professionalKey,
-          constancias: certificatesKey,
-          extra: extraKeys
+          titulo: degreeUpload,
+          identificacionProfesional: professionalUpload,
+          constancias: certificatesUpload,
+          extra: extraUploads
         }
       };
 
@@ -154,26 +156,6 @@ export const getMemberships = async (req, res) => {
       success: true,
       data: membershipApplication,
     });
-    
-  } catch (error) {
-    console.error("Error en getMemberships:", error);
-    res.status(500).json({
-      success: false,
-      error: "Error interno del servidor",
-      message: error.message
-    });
-  }
-};
-
-/**
- * Aprprove membership applications
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
-export const approveMemberships = async (req, res) => {
-  try {
-    const rows = await approveMembershipApplications();
-    res.json({ success: true, data: rows });
     
   } catch (error) {
     console.error("Error en getMemberships:", error);

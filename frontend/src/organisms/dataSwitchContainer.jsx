@@ -1,29 +1,33 @@
 /**
- * @fileoverview Switchable container with tabs and optional search.
- * @author EXACTUM-dev
+ * @fileoverview Tabbed container component with search and loading states.
+ * Supports both table and custom render views with optional search functionality.
  * @version 1.1.0
- * @description For table views, forwards onRowAction to DataTable.
+ * @author EXACTUM-dev
  */
 
-import React, { useMemo, useState } from "react";
+import React, {useMemo, useState} from "react";
 import DataTable from "./dataTable";
 import TabsNav from "../molecules/tabsNav";
 import SearchBar from "../molecules/searchBar";
+import Loading from "../atoms/loading";
 
 /**
- * DataSwitchContainer component properties.
- * @typedef {Object} DataSwitchContainerProps
- * @property {DataView[]} [views] - Array of view configurations.
- * @property {string} [initialKey] - Initial active view key.
- * @property {string} [className] - Additional CSS classes.
- * @property {React.ReactNode} [toolbarRight] - Right-aligned toolbar content (e.g., action button).
- * @return {React.ReactElement} Switchable data container component.
+ * Renders a switchable data container with tabs, search, and optional loading state.
+ * Supports table views (with automatic search) and custom render functions.
+ * @param {!Object} props - Component properties.
+ * @param {!Array<!Object>} props.views - Array of view configurations with key, label, type, etc.
+ * @param {string=} props.initialKey - Initial active view key.
+ * @param {string=} props.className - Additional CSS classes.
+ * @param {React.ReactNode=} props.toolbarRight - Right-aligned toolbar content (e.g., action button).
+ * @param {boolean=} props.loading - Show loading spinner when true.
+ * @return {!React.Component} Switchable data container with tabs and search.
  */
 export default function DataSwitchContainer({
   views = [], // [{ key, label, type: 'table'|'custom', columns?, rows?, render?, searchPlaceholder?, searchEnabled?, onRowAction? }]
   initialKey,
   className = "",
   toolbarRight = null,
+  loading = false,
 }) {
   const [activeKey, setActiveKey] = useState(initialKey ?? views[0]?.key);
   const [query, setQuery] = useState("");
@@ -87,7 +91,9 @@ export default function DataSwitchContainer({
         aria-labelledby={`tab-${activeKey}`}
         className="rounded-[18px] border border-slate-200 bg-white p-4 md:p-6"
       >
-        {activeView.type === "table" ? (
+        {loading ? (
+          <Loading fullscreen={false} message="Cargando datos..." size={40} />
+        ) : activeView.type === "table" ? (
           <DataTable
             columns={activeView.columns ?? []}
             data={filteredRows}

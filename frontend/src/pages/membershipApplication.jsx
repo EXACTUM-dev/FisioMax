@@ -218,9 +218,9 @@ export default function MembershipApplicationPage() {
     apellidoP: "",
     apellidoM: "",
     telefonoCasa: "",
-  telefonoWhatsapp: "",
-  correo: "",
-  fechaNacimiento: "",
+    telefonoWhatsApp: "",
+    email: "",
+    fechaNacimiento: "",
     pais: "",
     estado: "",
     ciudad: "",
@@ -420,17 +420,25 @@ export default function MembershipApplicationPage() {
       newErrors.apellidoP = "El apellido paterno es requerido";
       missingFields.push("Apellido Paterno");
     }
-    if (!formData.correo) {
-      newErrors.correo = "El email es requerido";
+    if (!formData.email) {
+      newErrors.email = "El email es requerido";
       missingFields.push("Correo electrónico");
-    }
-    if (!formData.telefonoWhatsapp) {
-      newErrors.telefonoWhatsapp = "El contacto profesional es requerido";
-      missingFields.push("Contacto profesional");
     }
     if (!formData.fechaNacimiento) {
       newErrors.fechaNacimiento = "La fecha de nacimiento es requerida";
       missingFields.push("Fecha de nacimiento");
+    }
+    if (!formData.telefonoWhatsApp) {
+      newErrors.telefonoWhatsApp = "El contacto personal es requerido";
+      missingFields.push("Contacto personal");
+    }
+    if (!formData.fechaNacimiento) {
+      newErrors.fechaNacimiento = "La fecha de nacimiento es requerida";
+      missingFields.push("Fecha de nacimiento");
+    }
+    if (!formData.titulo) {
+      newErrors.fechaNacimiento = "El título es requerida";
+      missingFields.push("Título");
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -486,7 +494,32 @@ export default function MembershipApplicationPage() {
 
     try {
       const formDataToSend = new FormData();
-
+      
+      const fieldMapping = {
+        nombres: 'firstName',
+        apellidoP: 'lastName',
+        apellidoM: 'middleName',
+        telefonoCasa: 'homePhone',
+        telefonoWhatsApp: 'whatsappPhone',
+        email: 'email',
+        fechaNacimiento: 'birthDate',
+        pais: 'country',
+        estado: 'state',
+        ciudad: 'city',
+        colonia: 'neighborhood',
+        codigoPostal: 'postalCode',
+        calle: 'street',
+        numeroExterior: 'exteriorNumber',
+        numeroInterior: 'interiorNumber',
+        licenciatura: 'degree',
+        instagram: 'instagram',
+        linkedin: 'linkedin',
+        facebook: 'facebook',
+        paginaWeb: 'website',
+        titulo: 'degreeDocument',
+        cedula: 'professionalId',
+        constancias: 'certificates'
+      };
       
       Object.entries(formData).forEach(([key, value]) => {
         if (value !== null && value !== undefined && value !== '') {
@@ -547,8 +580,9 @@ export default function MembershipApplicationPage() {
       apellidoP: "",
       apellidoM: "",
       telefonoCasa: "",
-      telefonoWhatsapp: "",
-      correo: "",
+      telefonoWhatsApp: "",
+      email: "",
+      fechaNacimiento: "",
       pais: "",
       estado: "",
       ciudad: "",
@@ -661,16 +695,16 @@ export default function MembershipApplicationPage() {
                 label="Apellido Materno" name="apellidoM" value={formData.apellidoM} onChange={handleInputChange} placeholder="Ingresa tu apellido materno" error={errors.apellidoM} 
               />
               <FormField 
-                label="Correo electrónico" name="correo" type="email" required value={formData.correo} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.correo}
+                label="Correo electrónico" name="email" type="email" required value={formData.correo} onChange={handleInputChange} placeholder="Ingresa tu email" error={errors.correo}
               />
               <FormField 
-                label="Contacto personal" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}
+                label="Fecha de nacimiento" name="fechaNacimiento" type="date" required value={formData.fechaNacimiento} onChange={handleInputChange} error={errors.fechaNacimiento}
+              />
+              <FormField 
+                label="Contacto profesional(Teléfono de oficina)" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}
               />
                <FormField 
-                label="Contacto profesional" name="telefonoWhatsapp" required value={formData.telefonoWhatsapp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsapp}
-              />
-              <FormField 
-                label="Fecha de nacimiento" name="fechaNacimiento" type="date" required value={formData.fechaNacimiento || ''} onChange={handleInputChange} placeholder="AAAA-MM-DD" error={errors.fechaNacimiento}
+                label="Contacto personal(WhatsApp)" name="telefonoWhatsApp" required value={formData.telefonoWhatsApp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsApp}
               />
               <FormField 
                 label="Facebook" name="facebook" value={formData.facebook} onChange={handleInputChange} placeholder="Ingresa tu cuenta de Facebook"
