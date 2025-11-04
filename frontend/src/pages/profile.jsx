@@ -105,8 +105,8 @@ export default function ProfilePage() {
       } else {
         // Editing another user's profile - only allowed with "Gestión de Usuarios"
         if (!hasUserManagementPrivilege) {
-          console.error('No se puede editar: falta privilegio de Gestión de Usuarios');
-          return;
+          const error = new Error('No se puede editar: falta privilegio de Gestión de Usuarios');
+          throw error;
         }
         // If fields is already a full profile object (from documents update), use it directly
         if (fields.IDUsuario) {
@@ -120,6 +120,8 @@ export default function ProfilePage() {
     } catch (err) {
       console.error('Error actualizando usuario:', err);
       setError(err.message || 'Error al actualizar el usuario');
+      // Re-throw error so components can catch it and show modals
+      throw err;
     }
   }
 
