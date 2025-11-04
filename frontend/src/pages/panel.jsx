@@ -338,7 +338,7 @@ export default function Panel() {
         <div className="max-w-[1100px] mx-auto">
           <Title2 className="mb-12">Panel de Control</Title2>
           
-          <div className="flex justify-between mb-6">
+          <div className="flex justify-between items-center mb-6">
             <Button
               variant="brand"
               size="sm"
@@ -347,9 +347,7 @@ export default function Panel() {
             >
               Subir Contenido
             </Button>
-          <Title2 className="mb-4">Panel de Control</Title2>
 
-          <div className="flex justify-end mb-6">
             <Button
               variant="secondary"
               size="sm"
