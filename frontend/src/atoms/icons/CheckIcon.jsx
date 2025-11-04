@@ -5,6 +5,12 @@
  */
 import React from "react";
 
+/**
+ * CheckIcon component displaying a check mark inside a green circle.
+ * @param {string} [props.className="h-16 w-16"] - CSS classes for sizing the icon.
+ * @param {string} [props.title="Éxito"] - Accessible title for the icon.
+ * @returns {JSX.Element} CheckIcon component
+ */
 export default function CheckIcon({ className = "h-16 w-16", title = "Éxito" }) {
   return (
     <div className={`${className} flex items-center justify-center`} role="img" aria-label={title}>

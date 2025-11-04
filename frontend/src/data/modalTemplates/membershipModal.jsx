@@ -52,12 +52,6 @@ function MembershipModalContent({
 
   const { getToken } = useAuth();
 
-  // Opens the PDF preview modal with the selected document.
-  const openPdfModal = (url) => {
-    setPdfUrl(url);
-    setPdfModalOpen(true);
-  };
-
   // Closes the PDF preview modal and clears the URL.
   const closePdfModal = () => {
     setPdfModalOpen(false);

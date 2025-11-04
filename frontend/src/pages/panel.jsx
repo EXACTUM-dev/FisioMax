@@ -5,27 +5,18 @@
  * @author EXACTUM-dev
  */
 
-// Import necessary libraries and components
 import React, {useEffect, useMemo, useState, useCallback} from "react";
 import {useUser, useAuth} from "@clerk/clerk-react";
 import {useNavigate} from "react-router-dom";
-
-// Atoms
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
 import Loading from "../atoms/loading";
-
-// Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 import Modal from "../molecules/modal";
-
-// Organisms
 import Carousel from "../organisms/carousel";
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import DataTable from "../organisms/dataTable";
-
-// Data and utilities
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import buildMembershipColumns from "../data/tableTemplates/membershipColumns";
@@ -508,7 +499,7 @@ export default function Panel() {
         }}
         solicitud={selectedMembership}
         onStatusChange={(membershipId, newStatus) => {
-          // Updated the initial state
+          // Update the initial state
           setMembershipRows(prev => 
             prev.map(membership => 
               membership.id === membershipId 

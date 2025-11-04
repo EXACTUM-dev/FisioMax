@@ -67,7 +67,6 @@ class MembershipApplication {
       const professionalIdUrl = this.documents.identificacionProfesional || this.documents.cedula || this.documents.professionalId || null;
       const degreeDocumentUrl = this.documents.titulo || this.documents.degreeDocument || null;
       const certificatesUrl = this.documents.constancias || this.documents.certificates || null;
-      const cedulaToInsert = professionalIdUrl || `__missing_cedula_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
       const [userResult] = await conn.query(
         `INSERT INTO usuario 
@@ -220,7 +219,7 @@ export const getMembershipApplicationById = async (id) => {
     // Map address / contact fields into a friendly shape
     const ubicacionParts = [];
     if (row.calle) ubicacionParts.push(row.calle);
-    if (row.numExterior) ubicacionParts.push('No. ' + (row.num));
+    if (row.numExterior) ubicacionParts.push('No. ' + (row.numExterior));
     if (row.numInterior) ubicacionParts.push('Int. ' + (row.numInterior));
     if (row.colonia) ubicacionParts.push(row.colonia);
     if (row.codigoPostal) ubicacionParts.push(row.codigoPostal);
@@ -280,7 +279,7 @@ export const approveMembershipApplicationById = async (id) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
-    const [res] = await conn.execute(
+    await conn.execute(
       `UPDATE membresia SET aceptado = 1 WHERE IDMembresia = ? AND deletedAt IS NULL`,
       [id]
     );
@@ -301,7 +300,7 @@ export const approveMembershipApplicationById = async (id) => {
 
 /**
  * Deny a membership application with reason
- * @param {number} id - Membership I
+ * @param {number} id - Membership ID
  * @returns {Promise} Query's answer
  */
 export async function denyMembershipApplication(razonRechazo, id) {

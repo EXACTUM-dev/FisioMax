@@ -1,5 +1,5 @@
 /**
- * @fileovervieweusable Filter component
+ * @fileoverview Reusable Filter component
  * @author EXACTUM-dev
  * @version 1.0.0
  * @description Advanced filter component with chips to tables

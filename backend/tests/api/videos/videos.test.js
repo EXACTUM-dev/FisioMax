@@ -7,7 +7,16 @@
 
 import { jest } from "@jest/globals";
 
-// Mock Clerk middleware for authentication and role management
+/**
+ * Mock Clerk middleware for authentication and role management
+ * imulates Clerk authentication behavior by checking authorization headers:
+ * - "valid_premium_token" → Premium user (user_premium_123)
+ * - "suspended_user_token" → Suspended user (user_suspended_456)
+ * - "basic_user_token" → Basic user (user_basic_789)
+ * - No header or invalid token → 401 Unauthorized
+ * 
+ * @returns {object} Mocked Clerk module with authentication middleware
+ */
 jest.unstable_mockModule("@clerk/express", () => ({
   ClerkExpressRequireAuth: jest.fn(() => (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -42,7 +51,7 @@ describe("Video Access - Integration Tests", () => {
   });
 
   /**
-   * Scenario 1: Successful video access with adequate role
+   * Scenario 1: Successful video access with adequate roles
    */
   describe("GET /api/content/:videoId - Successful access", () => {
     test("should return 200 and video data when user has sufficient privileges", async () => {
@@ -57,8 +66,10 @@ describe("Video Access - Integration Tests", () => {
     });
   });
 
-  /**
-   * Scenario 2: User not authenticated
+  /** 
+   * Tests for User not authenticated attempts.
+   * Verifies that requests without authentication tokens are properly rejected.
+   * 
    */
   describe("GET /api/content/:videoId - Not authenticated", () => {
     test("should return 401 when no token is provided", async () => {

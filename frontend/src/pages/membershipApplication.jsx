@@ -432,12 +432,8 @@ export default function MembershipApplicationPage() {
       newErrors.telefonoWhatsApp = "El contacto personal es requerido";
       missingFields.push("Contacto personal");
     }
-    if (!formData.fechaNacimiento) {
-      newErrors.fechaNacimiento = "La fecha de nacimiento es requerida";
-      missingFields.push("Fecha de nacimiento");
-    }
     if (!formData.titulo) {
-      newErrors.fechaNacimiento = "El título es requerida";
+      newErrors.titulo = "El título es requerido";
       missingFields.push("Título");
     }
     

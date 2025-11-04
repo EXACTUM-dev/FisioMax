@@ -112,7 +112,7 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
             </div>
           </div>
         )}
-        {/* Solicitud pendiente de aprobación */}
+        {/* Request pending approval */}
         {!isDbLoading && isClerkLoaded && isPending && (
           <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center px-4">
             <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -154,7 +154,7 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
             </div>
           </div>
         )}
-        {/* Usuario rechazado */}
+        {/* Deny request */}
         {!isDbLoading && isClerkLoaded && isRejected && (
           <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center px-4">
             <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
