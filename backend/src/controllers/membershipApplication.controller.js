@@ -76,7 +76,7 @@ export const createMembershipApplication = async (req, res) => {
         certificatesUrl = req.files.certificates[0].originalname;
       }
     }
-
+    
     const applicationData = {
       firstName: req.body.firstName,
       lastName: req.body.lastName,

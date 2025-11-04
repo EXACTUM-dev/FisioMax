@@ -63,10 +63,12 @@ class MembershipApplication {
     try {
       await conn.beginTransaction();
 
-  const professionalIdUrl = this.documents.identificacionProfesional || this.documents.cedula || this.documents.professionalId || null;
-  const degreeDocumentUrl = this.documents.titulo || this.documents.degreeDocument || null;
-  const certificatesUrl = this.documents.constancias || this.documents.certificates || null;
-  const cedulaToInsert = professionalIdUrl || `__missing_cedula_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+      const userId = crypto.randomUUID().replace(/-/g, '');
+
+      const professionalIdUrl = this.documents.identificacionProfesional || this.documents.cedula || this.documents.professionalId || null;
+      const degreeDocumentUrl = this.documents.titulo || this.documents.degreeDocument || null;
+      const certificatesUrl = this.documents.constancias || this.documents.certificates || null;
+      const cedulaToInsert = professionalIdUrl || `__missing_cedula_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
       await conn.query(
         `INSERT INTO usuario 
@@ -102,20 +104,23 @@ class MembershipApplication {
       if (this.documents.extra && this.documents.extra.length > 0) {
         for (const extraDocUrl of this.documents.extra) {
           await conn.query(
-            `INSERT INTO DocumentosAdicionales 
+            `INSERT INTO documentosadicionales 
             (IDUsuario, nombreArchivo, urlArchivo, createdAt) 
             VALUES (?, ?, ?, NOW())`,
-            [this.id, 'Documento adicional', extraDocUrl]
+            [userId, 'Documento adicional', extraDocUrl]
           );
         }
       }
 
+      this.id = userId;
+
+      console.log(this.id);
       if (!this.id) {
         throw new Error('No se pudo determinar IDUsuario tras insertar Usuario');
       }
 
       const [mres] = await conn.query(
-        `INSERT INTO Membresia (IDUsuario, tipo, fechaVencimiento, constanciaPago, certificado, horasFormacion, aceptado, estatusPago, createdAt)
+        `INSERT INTO membresia (IDUsuario, tipo, fechaVencimiento, constanciaPago, certificado, horasFormacion, aceptado, estatusPago, createdAt)
          VALUES (?, ?, CURDATE(), ?, ?, ?, ?, ?, NOW())`,
         [this.id, 'pendiente', '', '', 0, null, 'pendiente']
       );
@@ -141,8 +146,8 @@ export const getMembershipApplications = async () => {
     const query = `
       SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, u.IDUsuario, 
       u.nombres, u.apellidoP, u.correo, u.createdAt as createdAt
-      FROM Membresia m
-      JOIN Usuario u ON m.IDUsuario = u.IDUsuario
+      FROM membresia m
+      JOIN usuario u ON m.IDUsuario = u.IDUsuario
       WHERE m.deletedAt IS NULL AND u.eliminado = 0
     `;
 
@@ -167,8 +172,8 @@ export const getMembershipApplicationById = async (id) => {
   try {
     const query = `
       SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, m.IDUsuario, u.*
-      FROM Membresia m
-      JOIN Usuario u ON m.IDUsuario = u.IDUsuario
+      FROM membresia m
+      JOIN usuario u ON m.IDUsuario = u.IDUsuario
       WHERE m.IDMembresia = ? AND m.deletedAt IS NULL
     `;
 
@@ -180,7 +185,7 @@ export const getMembershipApplicationById = async (id) => {
 
     // fetch all columns from DocumentosAdicionales and map them defensively
     const [additionalDocs] = await conn.execute(
-      `SELECT * FROM DocumentosAdicionales WHERE IDUsuario = ?`,
+      `SELECT * FROM documentosadicionales WHERE IDUsuario = ?`,
       [userId]
     );
 
@@ -277,7 +282,7 @@ export const approveMembershipApplicationById = async (id) => {
   try {
     await conn.beginTransaction();
     const [res] = await conn.execute(
-      `UPDATE Membresia SET aceptado = 1 WHERE IDMembresia = ? AND deletedAt IS NULL`,
+      `UPDATE membresia SET aceptado = 1 WHERE IDMembresia = ? AND deletedAt IS NULL`,
       [id]
     );
 
@@ -308,7 +313,7 @@ export async function denyMembershipApplication(razonRechazo, id) {
     await conn.beginTransaction();
     
     const query = `
-       UPDATE Membresia 
+       UPDATE membresia 
       SET aceptado = 0, 
           motivoRechazo = ?
       WHERE IDMembresia = ? 

@@ -522,8 +522,9 @@ export default function MembershipApplicationPage() {
       };
       
       Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          formDataToSend.append(key, typeof value === "string" ? value.trim() : value);
+        if (value) {
+          const englishKey = fieldMapping[key] || key;
+          formDataToSend.append(englishKey, typeof value === "string" ? value.trim() : value);
         }
       });
       
