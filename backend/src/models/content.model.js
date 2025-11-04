@@ -1,11 +1,23 @@
 /**
  * @fileoverview Content model for multimedia retrieval
- * @version 0.2.0
+ * @version 0.4.0
  * @author EXACTUM-dev
  * @description Handles multimedia content retrieval from database
  */
 
 import db from "../../database/db.js";
+
+/**
+ * Valid content types that can be displayed
+ * @constant {string[]}
+ */
+const DISPLAYABLE_CONTENT_TYPES = [
+  "video",
+  "articulo",
+  "podcast",
+  "documento",
+  "libro",
+];
 
 /**
  * Gets a specific content by ID with its thumbnail
@@ -32,12 +44,15 @@ export async function getContentById(contentId) {
     WHERE c.IDContenido = ?
       AND c.eliminado = 0
       AND c.deletedAt IS NULL
-      AND c.tipo IN ('video', 'articulo')
+      AND c.tipo IN (?)
     LIMIT 1
   `;
 
   try {
-    const [rows] = await db.query(query, [contentId]);
+    const [rows] = await db.query(query, [
+      contentId,
+      DISPLAYABLE_CONTENT_TYPES,
+    ]);
 
     if (rows.length === 0) {
       throw new Error("Content not found");
@@ -57,17 +72,29 @@ export async function getContentById(contentId) {
  * Gets all available content for sidebar/carousel with thumbnails and pagination
  * @param {number} limit - Number of content items per page (default: 10)
  * @param {number} offset - Number of content items to skip (default: 0)
- * @param {string|null} type - Filter by content type ('video' or 'article')
+ * @param {string|null} type - Filter by content type (must be in DISPLAYABLE_CONTENT_TYPES)
  * @returns {Promise<Object>} Object with content array and total count
- * @throws {Error} If database error
+ * @throws {Error} If database error or invalid type
  */
 export async function getAvailableContent(limit = 10, offset = 0, type = null) {
-  let typeFilter = "AND c.tipo IN ('video', 'articulo')";
-  const params = [];
+  let typeFilter = "AND c.tipo IN (?)";
+  let params = [DISPLAYABLE_CONTENT_TYPES];
 
+  // If specific type is requested, validate and use it
   if (type) {
+    const normalizedType = type.toLowerCase().trim();
+
+    // Validate that the type is allowed
+    if (!DISPLAYABLE_CONTENT_TYPES.includes(normalizedType)) {
+      throw new Error(
+        `Invalid content type: ${type}. Allowed types: ${DISPLAYABLE_CONTENT_TYPES.join(
+          ", "
+        )}`
+      );
+    }
+
     typeFilter = "AND c.tipo = ?";
-    params.push(type);
+    params = [normalizedType];
   }
 
   const countQuery = `
@@ -94,11 +121,6 @@ export async function getAvailableContent(limit = 10, offset = 0, type = null) {
       AND t.tipoMembresia = c.tipoMembresia
       AND t.eliminado = 0
       AND t.deletedAt IS NULL
-      AND (
-        (c.tipo = 'video')
-        OR
-        (c.tipo = 'articulo')
-      )
     WHERE c.eliminado = 0
       AND c.deletedAt IS NULL
       ${typeFilter}
@@ -126,7 +148,7 @@ export async function getAvailableContent(limit = 10, offset = 0, type = null) {
  * @param {Object} contentData - Content data to insert
  * @param {string} contentData.nombre - Content name
  * @param {string} contentData.descripcion - Content description
- * @param {string} contentData.tipo - Content type (video, articulo, imagen, etc.)
+ * @param {string} contentData.tipo - Content type (video, articulo, imagen, podcast, documento)
  * @param {string} contentData.IDMultimedia - S3 key for the multimedia file
  * @param {string} [contentData.tipoMembresia] - Membership type (Básico, Estándar, Premium)
  * @returns {Promise<number>} Inserted content ID
@@ -162,49 +184,30 @@ export async function createContent(contentData) {
 }
 
 /**
- * Creates a relationship between content and role
+ * Assigns content to multiple privileges using the accede table
  * @param {number} contentId - Content ID
- * @param {number} roleId - Role ID
+ * @param {Array<number>} privilegeIds - Array of privilege IDs
  * @returns {Promise<void>}
  * @throws {Error} If database error
  */
-export async function assignContentToRole(contentId, roleId) {
-  // Check if the relationship table exists, if not, we'll skip this for now
-  // This would require a contenido_roles table
+export async function assignContentToPrivileges(contentId, privilegeIds) {
+  if (!privilegeIds || privilegeIds.length === 0) {
+    console.warn("No privileges to assign to content:", contentId);
+    return;
+  }
+
   const query = `
-    INSERT IGNORE INTO contenido_roles (IDContenido, IDRol)
+    INSERT IGNORE INTO accede (IDContenido, IDPrivilegio)
     VALUES (?, ?)
   `;
 
   try {
-    await db.query(query, [contentId, roleId]);
+    // Insert each privilege relation
+    for (const privilegeId of privilegeIds) {
+      await db.query(query, [contentId, privilegeId]);
+    }
   } catch (error) {
-    // If table doesn't exist, just log a warning
-    console.warn("Could not assign content to role - table may not exist:", error.message);
-  }
-}
-
-/**
- * Gets role name by role ID
- * @param {number} roleId - Role ID
- * @returns {Promise<string|null>} Role name or null if not found
- * @throws {Error} If database error
- */
-export async function getRoleName(roleId) {
-  const query = `
-    SELECT nombre
-    FROM rol
-    WHERE IDRol = ?
-      AND deletedAt IS NULL
-      AND eliminado = 0
-    LIMIT 1
-  `;
-
-  try {
-    const [rows] = await db.query(query, [roleId]);
-    return rows.length > 0 ? rows[0].nombre : null;
-  } catch (error) {
-    console.error("Database error in getRoleName:", error);
-    return null;
+    console.error("Database error in assignContentToPrivileges:", error);
+    throw new Error("Database error");
   }
 }

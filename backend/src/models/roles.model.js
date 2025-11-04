@@ -351,3 +351,26 @@ export async function reassignUsersToRole(oldRoleId, newRoleId) {
     connection.release();
   }
 }
+
+/**
+ * Get all privilege IDs for a given role
+ * @param {number} roleId - Role ID
+ * @returns {Promise<Array<number>>} Array of privilege IDs
+ * @throws {Error} If database error
+ */
+export async function getPrivilegeIdsByRole(roleId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT IDPrivilegio
+       FROM rolprivilegios
+       WHERE IDRol = ?
+         AND deletedAt IS NULL
+         AND eliminado = 0`,
+      [roleId]
+    );
+    return rows.map((row) => row.IDPrivilegio);
+  } catch (error) {
+    console.error("Error de base de datos en getPrivilegeIdsByRole:", error);
+    throw error;
+  }
+}
