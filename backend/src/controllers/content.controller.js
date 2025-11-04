@@ -1,6 +1,6 @@
 /**
  * @fileoverview Content controller for handling multimedia requests
- * @version 0.2.0
+ * @version 0.3.0
  * @author EXACTUM-dev
  * @description Manages multimedia content delivery
  */
@@ -9,9 +9,9 @@ import {
   getAvailableContent,
   getContentById,
   createContent,
-  assignContentToRole,
-  getRoleName,
+  assignContentToPrivileges,
 } from "../models/content.model.js";
+import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import S3Service from "../services/s3Service.js";
 
@@ -22,16 +22,16 @@ import S3Service from "../services/s3Service.js";
  * @returns {string} Sanitized string
  */
 function sanitizeInput(str) {
-  if (!str) return '';
-  
+  if (!str) return "";
+
   return str
     .trim()
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+    .replace(/\//g, "&#x2F;");
 }
 
 /**
@@ -181,7 +181,7 @@ export async function index(req, res) {
 }
 
 /**
- * Creates new multimedia content
+ * Creates new multimedia content and assigns it to role privileges
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -191,11 +191,11 @@ export async function upload(req, res) {
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
 
-    // Sanitize input fields - escape HTML special characters to prevent XSS
+    // Sanitize input fields
     nombre = sanitizeInput(nombre);
     descripcion = sanitizeInput(descripcion);
-    tipo = tipo?.trim() || '';
-    
+    tipo = tipo?.trim() || "";
+
     // Validate required fields
     if (!nombre) {
       return res.status(400).json({
@@ -225,8 +225,7 @@ export async function upload(req, res) {
       });
     }
 
-    // Validate tipo is one of the allowed values
-    const allowedTypes = ['Video', 'Articulo', 'Podcast', 'Documento'];
+    const allowedTypes = ["Video", "Articulo", "Podcast", "Documento"];
     if (!allowedTypes.includes(tipo)) {
       return res.status(400).json({
         success: false,
@@ -241,7 +240,6 @@ export async function upload(req, res) {
       });
     }
 
-    // Validate role is a number
     const roleId = parseInt(role);
     if (isNaN(roleId) || roleId <= 0) {
       return res.status(400).json({
@@ -254,6 +252,25 @@ export async function upload(req, res) {
       return res.status(400).json({
         success: false,
         message: "Debes seleccionar un archivo de contenido",
+      });
+    }
+
+    // Validate role exists
+    const roleData = await findRoleById(roleId);
+    if (!roleData) {
+      return res.status(400).json({
+        success: false,
+        message: "El rol seleccionado no existe",
+      });
+    }
+
+    // Get all privileges for the selected role
+    const privilegeIds = await getPrivilegeIdsByRole(roleId);
+
+    if (privilegeIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "El rol seleccionado no tiene privilegios asignados",
       });
     }
 
@@ -279,28 +296,19 @@ export async function upload(req, res) {
       });
     }
 
-    // Insert content into database
+    // Create main content
     let contentId;
-    let tipoMembresia = null;
-    
     try {
-      // Get role name if role is provided
-      if (roleId) {
-        tipoMembresia = await getRoleName(roleId);
-      }
-
       contentId = await createContent({
         nombre,
-        descripcion: descripcion || '',
+        descripcion: descripcion || "",
         tipo: tipo.toLowerCase(),
         IDMultimedia: s3Key,
-        tipoMembresia,
+        tipoMembresia: roleData.nombre,
       });
 
-      // Assign content to role
-      if (roleId) {
-        await assignContentToRole(contentId, roleId);
-      }
+      // Assign content to all role privileges in accede table
+      await assignContentToPrivileges(contentId, privilegeIds);
     } catch (dbError) {
       console.error("Error creating content in database:", dbError);
       return res.status(500).json({
@@ -313,22 +321,23 @@ export async function upload(req, res) {
     let thumbnailId = null;
     if (thumbnail && thumbnail.buffer) {
       try {
-        const thumbnailKey = await S3Service.uploadFile(thumbnail, `${folder}/thumbnails`);
+        const thumbnailKey = await S3Service.uploadFile(
+          thumbnail,
+          `${folder}/thumbnails`
+        );
         thumbnailId = await createContent({
           nombre,
           descripcion: `Miniatura de ${nombre}`,
           tipo: "imagen",
           IDMultimedia: thumbnailKey,
-          tipoMembresia,
+          tipoMembresia: roleData.nombre,
         });
 
-        // Assign thumbnail to same role
-        if (roleId) {
-          await assignContentToRole(thumbnailId, roleId);
-        }
+        // Assign thumbnail to same privileges
+        await assignContentToPrivileges(thumbnailId, privilegeIds);
       } catch (thumbError) {
         console.error("Error uploading thumbnail:", thumbError);
-        // Continue even if thumbnail fails - don't stop the upload
+        // Continue even if thumbnail fails
       }
     }
 
@@ -338,6 +347,7 @@ export async function upload(req, res) {
       data: {
         contentId,
         thumbnailId,
+        assignedPrivileges: privilegeIds.length,
       },
     });
   } catch (error) {

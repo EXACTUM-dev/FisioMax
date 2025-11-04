@@ -12,9 +12,9 @@
  */
 
 // Import necessary libraries and components
-import React, {useEffect, useMemo, useState, useCallback} from "react";
-import {useUser, useAuth} from "@clerk/clerk-react";
-import {useNavigate} from "react-router-dom";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useUser, useAuth } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 
 // Atoms
 import Button from "../atoms/button";
@@ -34,25 +34,25 @@ import DataTable from "../organisms/dataTable";
 // Data and utilities
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
-import {fetchWithClerk} from "../utils/api";
+import { fetchWithClerk } from "../utils/api";
 
 export default function Panel() {
-  const {user, isLoaded} = useUser();
-  const {getToken} = useAuth();
+  const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const [current, setCurrent] = useState("bolt");
-  
+
   // State for UI data
   const [userRows, setUserRows] = useState([]); // Users from backend
   const [roleRows, setRoleRows] = useState([]); // Roles from backend
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingRoles, setLoadingRoles] = useState(true);
-  
+
   // Modal state for viewing role permissions
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRoleForView, setSelectedRoleForView] = useState(null);
   const [rolePrivileges, setRolePrivileges] = useState([]);
-  
+
   const [error, setError] = useState(null);
 
   // Fetch initial data for the panel
@@ -64,20 +64,20 @@ export default function Panel() {
         setLoadingUsers(true);
         const token = await getToken();
         const usersResponse = await fetchWithClerk(
-            '/api/users',
-            {method: 'GET'},
-            token
+          "/api/users",
+          { method: "GET" },
+          token
         );
         if (!alive) return;
 
         setUserRows(
-            Array.isArray(usersResponse) ?
-            usersResponse :
-            usersResponse?.data || []
+          Array.isArray(usersResponse)
+            ? usersResponse
+            : usersResponse?.data || []
         );
       } catch (err) {
-        console.error('Error de carga de usuarios:', err);
-        setError('Error de carga de usuarios. Por favor intente más tarde.');
+        console.error("Error de carga de usuarios:", err);
+        setError("Error de carga de usuarios. Por favor intente más tarde.");
       } finally {
         if (alive) setLoadingUsers(false);
       }
@@ -98,17 +98,19 @@ export default function Panel() {
         setLoadingRoles(true);
         const token = await getToken();
         const rolesResponse = await fetchWithClerk(
-            '/api/roles',
-            {method: 'GET'},
-            token
+          "/roles",
+          { method: "GET" },
+          token
         );
         if (!alive) return;
         // Extract role array from backend response
-        const extractedRoles = Array.isArray(rolesResponse) ? rolesResponse : rolesResponse?.data || [];
+        const extractedRoles = Array.isArray(rolesResponse)
+          ? rolesResponse
+          : rolesResponse?.data || [];
         setRoleRows(extractedRoles);
       } catch (err) {
-        console.error('Error de carga de roles:', err);
-        setError('Error de carga de roles. Por favor intente más tarde.');
+        console.error("Error de carga de roles:", err);
+        setError("Error de carga de roles. Por favor intente más tarde.");
       } finally {
         if (alive) setLoadingRoles(false);
       }
@@ -124,74 +126,79 @@ export default function Panel() {
    * Handles clicking on a user name to view their profile.
    * @param {Object} userRow User object from table row
    */
-  const handleUserNameClick = useCallback((userRow) => {
-    // Navigate to user profile page with user ID
-    const userId = userRow.IDUsuario || userRow.id;
-    if (userId) {
-      navigate(`/profile/${userId}`);
-    }
-  }, [navigate]);
+  const handleUserNameClick = useCallback(
+    (userRow) => {
+      // Navigate to user profile page with user ID
+      const userId = userRow.IDUsuario || userRow.id;
+      if (userId) {
+        navigate(`/profile/${userId}`);
+      }
+    },
+    [navigate]
+  );
 
   /**
    * Updates user's role in the UI state.
    * @param {string|number} userId User identifier
    * @param {Object} newRoleObj Role object containing role information
    */
-  const updateUserRole = useCallback(
-    (userId, newRoleObj) => {
-      const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj;
-      const roleId = newRoleObj?.id || newRoleObj?.IDRol;
+  const updateUserRole = useCallback((userId, newRoleObj) => {
+    const roleName = newRoleObj?.name || newRoleObj?.nombre || newRoleObj;
+    const roleId = newRoleObj?.id || newRoleObj?.IDRol;
 
-      setUserRows((prev) =>
-        prev.map((user) => {
-          const matchesId = user.id === userId || user.IDUsuario === userId;
-          if (matchesId) {
-            return {
-              ...user,
-              rol: roleName,
-              rolNombre: roleName,
-              roleName: roleName,
-              IDRol: roleId,
-            };
-          }
-          return user;
-        })
-      );
-    },
-    []
-  );
+    setUserRows((prev) =>
+      prev.map((user) => {
+        const matchesId = user.id === userId || user.IDUsuario === userId;
+        if (matchesId) {
+          return {
+            ...user,
+            rol: roleName,
+            rolNombre: roleName,
+            roleName: roleName,
+            IDRol: roleId,
+          };
+        }
+        return user;
+      })
+    );
+  }, []);
 
   /**
    * Handles viewing role details with privileges.
    * @param {Object} roleRow Role object from table row
    */
-  const handleViewRole = useCallback(async (roleRow) => {
-    try {
-      const token = await getToken();
-      const response = await fetchWithClerk(
-          `/api/roles/${roleRow.id}`,
-          {method: 'GET'},
+  const handleViewRole = useCallback(
+    async (roleRow) => {
+      try {
+        const token = await getToken();
+        const response = await fetchWithClerk(
+          `/roles/${roleRow.id}`,
+          { method: "GET" },
           token
-      );
+        );
 
-      if (response?.success && response.data) {
-        const roleData = response.data;
-        
-        // Map privileges to table format (without checkboxes, just for display)
-        const mappedPrivileges = (roleData.privileges ?? []).map((p, index) => ({
-          id: p.id,
-          label: p.name,
-          sequenceNumber: index + 1,
-        }));
+        if (response?.success && response.data) {
+          const roleData = response.data;
 
-        setSelectedRoleForView(roleData);
-        setRolePrivileges(mappedPrivileges);
-        setModalOpen(true);
+          // Map privileges to table format (without checkboxes, just for display)
+          const mappedPrivileges = (roleData.privileges ?? []).map(
+            (p, index) => ({
+              id: p.id,
+              label: p.name,
+              sequenceNumber: index + 1,
+            })
+          );
+
+          setSelectedRoleForView(roleData);
+          setRolePrivileges(mappedPrivileges);
+          setModalOpen(true);
+        }
+      } catch (err) {
+        console.error("Error loading role details:", err);
       }
-    } catch (err) {
-      console.error('Error loading role details:', err);
-    }
-  }, [getToken]);
+    },
+    [getToken]
+  );
 
   const mappedUserRows = useMemo(() => {
     if (!Array.isArray(userRows)) {
@@ -199,12 +206,15 @@ export default function Panel() {
     }
 
     return userRows.map((user) => {
-      const nombreCompleto = `${user.nombres || ''} ${user.apellidoP || ''} ${user.apellidoM || ''}`.trim();
+      const nombreCompleto = `${user.nombres || ""} ${user.apellidoP || ""} ${
+        user.apellidoM || ""
+      }`.trim();
 
-      const roleName = user.rol ||
-                      user.rolNombre ||
-                      (roleRows.find((r) => r.IDRol === user.IDRol)?.nombre) ||
-                      'Sin rol asignado';
+      const roleName =
+        user.rol ||
+        user.rolNombre ||
+        roleRows.find((r) => r.IDRol === user.IDRol)?.nombre ||
+        "Sin rol asignado";
 
       return {
         ...user,
@@ -217,29 +227,28 @@ export default function Panel() {
 
   // Define columns for the user table
   const userColumns = useMemo(
-      () => buildUserRolesColumns({
+    () =>
+      buildUserRolesColumns({
         roles: roleRows,
-        onDelete: (row) => setUserRows(
-            (prev) => prev.filter((r) => r.id !== row.id)
-        ),
-        onChangeRole: (row, chosenRole) => updateUserRole(
-            row.id || row.IDUsuario,
-            chosenRole
-        ),
+        onDelete: (row) =>
+          setUserRows((prev) => prev.filter((r) => r.id !== row.id)),
+        onChangeRole: (row, chosenRole) =>
+          updateUserRole(row.id || row.IDUsuario, chosenRole),
         onClickName: handleUserNameClick,
       }),
-      [roleRows, updateUserRole, handleUserNameClick]
+    [roleRows, updateUserRole, handleUserNameClick]
   );
 
   // Define columns for the role table with view action
   const roleColumns = useMemo(
-      () => buildRolePermissionsColumns({
+    () =>
+      buildRolePermissionsColumns({
         onEdit: handleViewRole,
-        editLabel: 'Ver Permisos',
-        editTooltip: 'Ver detalles',
+        editLabel: "Ver Permisos",
+        editTooltip: "Ver detalles",
         showDelete: false,
       }),
-      [handleViewRole]
+    [handleViewRole]
   );
 
   // Show loading spinner until user data is loaded
@@ -259,13 +268,13 @@ export default function Panel() {
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-[1100px] mx-auto">
           <Title2 className="mb-12">Panel de Control</Title2>
-          
+
           <div className="flex justify-between mb-6">
             <Button
               variant="brand"
               size="sm"
               radius="lg"
-              onClick={() => navigate('/uploadMultimedia')}
+              onClick={() => navigate("/uploadMultimedia")}
             >
               Subir Contenido
             </Button>
@@ -273,12 +282,12 @@ export default function Panel() {
               variant="secondary"
               size="sm"
               radius="lg"
-              onClick={() => navigate('/roles')}
+              onClick={() => navigate("/roles")}
             >
               Roles
             </Button>
           </div>
-          
+
           {/* Data switcher for toggling between views */}
           <DataSwitchContainer
             initialKey="solicitudes"
@@ -307,13 +316,13 @@ export default function Panel() {
 
       {/* Modal for viewing role permissions (read-only) */}
       {selectedRoleForView && (
-        <Modal 
-          open={modalOpen} 
+        <Modal
+          open={modalOpen}
           onClose={() => {
             setModalOpen(false);
             setSelectedRoleForView(null);
             setRolePrivileges([]);
-          }} 
+          }}
           size="xl"
         >
           <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 w-full">
@@ -340,7 +349,7 @@ export default function Panel() {
                     Descripción del Rol
                   </label>
                   <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 min-h-[60px]">
-                    {selectedRoleForView.description || 'Sin descripción'}
+                    {selectedRoleForView.description || "Sin descripción"}
                   </div>
                 </div>
               </div>
@@ -351,23 +360,24 @@ export default function Panel() {
 
             {/* Right column - Privileges list (no checkboxes) */}
             <div className="flex-1 min-w-0 mt-4 lg:mt-0 min-h-0">
-              <div className="bg-white rounded-lg border border-slate-200 max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] overflow-y-auto p-2 sm:p-3
+              <div
+                className="bg-white rounded-lg border border-slate-200 max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] overflow-y-auto p-2 sm:p-3
                 [&::-webkit-scrollbar]:w-2 sm:[&::-webkit-scrollbar]:w-3
                 [&::-webkit-scrollbar-track]:bg-slate-100
                 [&::-webkit-scrollbar-track]:rounded-lg
                 [&::-webkit-scrollbar-thumb]:bg-slate-300
                 [&::-webkit-scrollbar-thumb]:rounded-lg
-                [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
-                
+                [&::-webkit-scrollbar-thumb]:hover:bg-slate-400"
+              >
                 {/* Mobile header for table section */}
                 <div className="lg:hidden mb-3 pb-2 border-b border-slate-200">
                   <h3 className="text-base font-semibold text-slate-700 text-center">
                     Lista de Permisos
                   </h3>
                 </div>
-                
+
                 {/* Privileges data table (read-only, no checkboxes) */}
-                <DataTable 
+                <DataTable
                   columns={[
                     {
                       key: "sequenceNumber",
@@ -398,11 +408,12 @@ export default function Panel() {
                   className="text-xs sm:text-sm"
                 />
               </div>
-              
+
               {/* Total privileges count */}
               {rolePrivileges.length > 0 && (
                 <div className="mt-3 text-center text-sm text-slate-600">
-                  Total de permisos: <span className="font-semibold">{rolePrivileges.length}</span>
+                  Total de permisos:{" "}
+                  <span className="font-semibold">{rolePrivileges.length}</span>
                 </div>
               )}
             </div>
