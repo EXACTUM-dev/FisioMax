@@ -14,6 +14,7 @@ import {
   denyMembership,
 } from '../controllers/membershipApplication.controller.js';
 import { authorize } from "../middlewares/rbacMiddleware.js";
+import { requireAuth } from "../middlewares/clerkAuth.js";
 
 const router = express.Router();
 
@@ -56,33 +57,33 @@ router.post('/', uploadFields, createMembershipApplication);
 
 
 /**
- * @route GET /api/membresias
+ * @route GET /api/membership-applications
  * @description Obtain all the membership application
  * @access Private
  */
-router.get('/',  authorize(["Gestión de Usuarios"]), getMemberships);
+router.get('/', requireAuth, authorize(["Gestión de Usuarios"]), getMemberships);
 
 /**
- * @route GET /api/membresias/{id}
+ * @route GET /api/membership-applications/{id}
  * @description Detail endpoint for a single membership application
  * @access Private
  */
-router.get('/:id',  authorize(["Gestión de Usuarios"]), getMembershipById);
+router.get('/:id', requireAuth, authorize(["Gestión de Usuarios"]), getMembershipById);
 
 
 /**
- * @route POST /api/membresias/{id}/aprobar
+ * @route POST /api/membership-applications/{id}/aprobar
  * @description Approve the membership application
  * @access Private
  */
-router.post('/:id/aprobar',  authorize(["Gestión de Usuarios"]), approveMembership);
+router.post('/:id/aprobar', requireAuth, authorize(["Gestión de Usuarios"]), approveMembership);
 
 /**
- * @route POST /api/membresias/{id}/rechazar
+ * @route POST /api/membership-applications/{id}/rechazar
  * @description Deny the membership application
  * @access Private
  */
-router.post('/:id/rechazar',  authorize(["Gestión de Usuarios"]), denyMembership);
+router.post('/:id/rechazar', requireAuth, authorize(["Gestión de Usuarios"]), denyMembership);
 
 
 export default router;
