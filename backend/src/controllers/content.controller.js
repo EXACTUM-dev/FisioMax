@@ -16,6 +16,25 @@ import { generateSignedUrl } from "../utils/cloudfront.js";
 import S3Service from "../services/s3Service.js";
 
 /**
+ * Sanitizes user input to prevent XSS attacks
+ * Escapes HTML special characters that could be used for script injection
+ * @param {string} str - String to sanitize
+ * @returns {string} Sanitized string
+ */
+function sanitizeInput(str) {
+  if (!str) return '';
+  
+  return str
+    .trim()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+}
+
+/**
  * Determines S3 path based on content type
  * @param {string} type - Content type ('video' or 'article')
  * @param {string} idMultimedia - Multimedia ID
@@ -172,9 +191,9 @@ export async function upload(req, res) {
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
 
-    // Sanitize input fields - trim whitespace and remove dangerous characters
-    nombre = nombre?.trim().replace(/[<>]/g, '') || '';
-    descripcion = descripcion?.trim().replace(/[<>]/g, '') || '';
+    // Sanitize input fields - escape HTML special characters to prevent XSS
+    nombre = sanitizeInput(nombre);
+    descripcion = sanitizeInput(descripcion);
     tipo = tipo?.trim() || '';
     
     // Validate required fields
@@ -292,7 +311,7 @@ export async function upload(req, res) {
 
     // Upload thumbnail if provided
     let thumbnailId = null;
-    if (thumbnail) {
+    if (thumbnail && thumbnail.buffer) {
       try {
         const thumbnailKey = await S3Service.uploadFile(thumbnail, `${folder}/thumbnails`);
         thumbnailId = await createContent({
@@ -309,7 +328,7 @@ export async function upload(req, res) {
         }
       } catch (thumbError) {
         console.error("Error uploading thumbnail:", thumbError);
-        // Continue even if thumbnail fails
+        // Continue even if thumbnail fails - don't stop the upload
       }
     }
 

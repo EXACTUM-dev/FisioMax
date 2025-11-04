@@ -1,6 +1,6 @@
 /**
  * @fileoverview Role model - Database interaction for roles
- * @version 0.2.0
+ * @version 0.3.0
  * @author EXACTUM-dev
  * @description Provides CRUD operations for roles and role-privilege assignments.
  */
@@ -27,6 +27,7 @@ export async function findRoleById(id) {
 
 /**
  * Get all roles from database with their privileges (comma-separated).
+ * Excludes "SinRol" from the list.
  * @returns {Promise<Array>} Array of role objects with privileges string.
  */
 export async function getAllRolesFromDB() {
@@ -46,6 +47,7 @@ export async function getAllRolesFromDB() {
         ON rp.IDPrivilegio = p.IDPrivilegio
       WHERE r.deletedAt IS NULL 
         AND r.eliminado = 0
+        AND r.nombre != 'SinRol'
       GROUP BY r.IDRol, r.nombre, r.descripcion`
     );
     return rows;
@@ -152,26 +154,28 @@ export async function assignRoleToUser(userId, roleId) {
   try {
     await connection.beginTransaction();
 
-    // Soft-delete all current role assignments for the user
-    await connection.query(
-      "UPDATE usuariorol SET eliminado = 1, deletedAt = NOW() WHERE IDUsuario = ?",
+    // Check if user already has a role assignment
+    const [existing] = await connection.query(
+      `SELECT IDUsuario, IDRol 
+       FROM usuariorol 
+       WHERE IDUsuario = ? 
+       LIMIT 1`,
       [userId]
     );
 
-    // Reactivate if the same relation exists, otherwise insert new
-    const [existing] = await connection.query(
-      "SELECT 1 FROM usuariorol WHERE IDUsuario = ? AND IDRol = ? LIMIT 1",
-      [userId, roleId]
-    );
-
     if (existing.length > 0) {
+      // Update existing role assignment
       await connection.query(
-        "UPDATE usuariorol SET eliminado = 0, deletedAt = NULL WHERE IDUsuario = ? AND IDRol = ?",
-        [userId, roleId]
+        `UPDATE usuariorol 
+         SET IDRol = ?, eliminado = 0, deletedAt = NULL 
+         WHERE IDUsuario = ?`,
+        [roleId, userId]
       );
     } else {
+      // Insert new role assignment
       await connection.query(
-        "INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)",
+        `INSERT INTO usuariorol (IDUsuario, IDRol) 
+         VALUES (?, ?)`,
         [userId, roleId]
       );
     }
@@ -242,7 +246,7 @@ export async function findUsersByRole(roleId) {
           AND eliminado = 0`,
       [roleId]
     );
-    return rows; // El controlador solo usa IDUsuario
+    return rows;
   } catch (error) {
     console.error("Error de base de datos en findUsersByRole:", error);
     throw error;
@@ -287,7 +291,10 @@ export async function markRolePrivilegesDeleted(roleId) {
     );
     return { affectedRows: result.affectedRows };
   } catch (error) {
-    console.error("Error de base de datos en markRolePrivilegesDeleted:", error);
+    console.error(
+      "Error de base de datos en markRolePrivilegesDeleted:",
+      error
+    );
     throw error;
   }
 }
@@ -315,56 +322,32 @@ export async function markRoleDeleted(roleId) {
 }
 
 /**
- * Update role assignment for many users (soft-delete previous and upsert new one).
- * @param {Array<number>} userIds
- * @param {number} newRoleId
+ * Reassign users from one role to another (only updates active relations).
+ * @param {number} oldRoleId - Current role ID to replace.
+ * @param {number} newRoleId - New role ID to assign.
  * @returns {Promise<{success:boolean, affected:number}>}
  */
-export async function updateUsersRole(roleID, userIds = [], newRoleId) {
-  if (!Array.isArray(userIds) || userIds.length === 0) {
-    return { success: true, affected: 0 };
-  }
-
+export async function reassignUsersToRole(oldRoleId, newRoleId) {
   const connection = await dbPool.getConnection();
   try {
     await connection.beginTransaction();
 
-    // 1) Soft-delete asignaciones actuales de estos usuarios
-    await connection.query(
+    const [result] = await connection.query(
       `UPDATE usuariorol
-          SET eliminado = 1, deletedAt = NOW()
-        WHERE IDRol = ?`,
-      [roleID]
+          SET IDRol = ?
+        WHERE IDRol = ?
+          AND deletedAt IS NULL
+          AND eliminado = 0`,
+      [newRoleId, oldRoleId]
     );
 
-    // 2) Para cada usuario, reactivar si ya existe la relación con el nuevo rol; si no, insertar
-    let affected = 0;
-    for (const uid of userIds) {
-      const [upd] = await connection.query(
-        `UPDATE usuariorol
-            SET eliminado = 0, deletedAt = NULL
-          WHERE IDUsuario = ? AND IDRol = ?`,
-        [uid, newRoleId]
-      );
-      if (upd.affectedRows === 0) {
-        const [ins] = await connection.query(
-          `INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)`,
-          [uid, newRoleId]
-        );
-        affected += ins.affectedRows || 0;
-      } else {
-        affected += upd.affectedRows || 0;
-      }
-    }
-
     await connection.commit();
-    return { success: true, affected };
+    return { success: true, affected: result.affectedRows };
   } catch (error) {
     await connection.rollback();
-    console.error("Error de base de datos en updateUsersRole:", error);
+    console.error("Error de base de datos en reassignUsersToRole:", error);
     throw error;
   } finally {
     connection.release();
   }
 }
-

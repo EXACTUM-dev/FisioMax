@@ -52,7 +52,10 @@ const uploadFields = (req, res, next) => {
       });
     }
     
-    // Then, handle the thumbnail with 20MB limit
+    // Store the main file temporarily
+    const mainFile = req.file;
+    
+    // Then, handle the thumbnail with 20MB limit (optional)
     const thumbnailUpload = uploadThumbnail.single('thumbnail');
     
     thumbnailUpload(req, res, (thumbnailErr) => {
@@ -68,25 +71,22 @@ const uploadFields = (req, res, next) => {
           message: `Error al subir miniatura: ${thumbnailErr.message}`,
         });
       } else if (thumbnailErr) {
-        return res.status(500).json({
-          success: false,
-          message: 'Error al procesar la miniatura',
-        });
+        // Ignore errors if thumbnail is optional
+        console.warn('Thumbnail upload warning:', thumbnailErr.message);
       }
       
-      // Restructure files to match the expected format
-      if (!req.files) {
-        req.files = {};
+      // Restructure files to match the expected format in controller
+      req.files = {};
+      
+      if (mainFile) {
+        req.files.file = [mainFile];
       }
-      if (req.file) {
-        // Move the single file to files array format
-        const fieldname = req.file.fieldname;
-        if (!req.files[fieldname]) {
-          req.files[fieldname] = [];
-        }
-        req.files[fieldname].push(req.file);
-        delete req.file;
+      
+      if (req.file && req.file.fieldname === 'thumbnail') {
+        req.files.thumbnail = [req.file];
       }
+      
+      delete req.file;
       
       next();
     });
