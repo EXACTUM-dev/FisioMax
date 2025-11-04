@@ -9,6 +9,15 @@ import React, { useState, useEffect } from 'react';
 import editIcon from "../assets/icons/square-pen.png";
 import SuccessErrorModal from './successErrorModal';
 
+/**
+ * Displays user history/stats card with editable fields for courses, diplomas, and service hours.
+ * @param {!Object} props - Component props.
+ * @param {!Object} props.data - User history data containing cursosCompletados, diplomados, and horasServicio.
+ * @param {boolean} [props.canEdit=false] - Whether editing is allowed.
+ * @param {Function} [props.onSave] - Callback function to save history changes.
+ * @return {!JSX.Element} History card component.
+ */
+
 export default function HistoryCard({ data = {}, canEdit = false, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);

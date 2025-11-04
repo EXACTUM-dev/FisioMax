@@ -18,7 +18,16 @@ const COUNTRIES_STATES_ENDPOINT = import.meta.env.VITE_COUNTRIES_STATES_ENDPOINT
 const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT;
 
 /**
- * Select field component for dropdowns.
+ * Select field component for dropdowns with validation support.
+ * @param {!Object} props - Component props.
+ * @param {string} props.label - Field label text.
+ * @param {string} props.name - Field name attribute.
+ * @param {string} props.value - Current selected value.
+ * @param {Function} props.onChange - Change event handler.
+ * @param {Array<Object|string>} props.options - Array of options with value/label or strings.
+ * @param {boolean} [props.required=false] - Whether field is required.
+ * @param {string} [props.error] - Error message to display.
+ * @return {!JSX.Element} Select field component.
  */
 const SelectField = ({ label, name, value, onChange, options, required, error }) => (
   <div>
@@ -44,6 +53,15 @@ const SelectField = ({ label, name, value, onChange, options, required, error })
   </div>
 );
 
+/**
+ * Displays user address card with editable fields for country, state, city, and address details.
+ * Supports dynamic loading of states and cities based on country selection.
+ * @param {!Object} props - Component props.
+ * @param {!Object} props.data - User address data containing pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, and numInterior.
+ * @param {boolean} [props.canEdit=false] - Whether editing is allowed.
+ * @param {Function} [props.onSave] - Callback function to save address changes.
+ * @return {!JSX.Element} Address card component.
+ */
 export default function AddressCard({ data = {}, canEdit = false, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -137,6 +155,10 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
+  /**
+   * Handles input field changes and updates form state.
+   * @param {!Event} e - Input change event.
+   */
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -144,6 +166,9 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
 
   /**
    * Handles country selection and fetches states for that country.
+   * Resets state and city fields when country changes.
+   * @param {string} value - Selected country name.
+   * @return {!Promise<void>}
    */
   const handlePaisChange = async (value) => {
     setForm((prev) => ({ ...prev, pais: value, estado: "", ciudad: "" }));
@@ -174,6 +199,10 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
 
   /**
    * Handles state selection and fetches cities for that state.
+   * Resets city field when state changes.
+   * @param {string} value - Selected state name.
+   * @param {string} [country=form.pais] - Country name for API request.
+   * @return {!Promise<void>}
    */
   const handleEstadoChange = async (value, country = form.pais) => {
     setForm((prev) => ({ ...prev, estado: value, ciudad: "" }));
@@ -197,8 +226,9 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
   };
 
   /**
-   * Validates required fields for address
-   * @returns {boolean} True if valid, false otherwise
+   * Validates required fields for address (pais, estado, ciudad).
+   * Shows validation modal with missing fields if validation fails.
+   * @return {boolean} True if valid, false otherwise.
    */
   const validateAddress = () => {
     const missingFields = [];
@@ -222,6 +252,11 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
     return true;
   };
 
+  /**
+   * Handles saving address changes after validation.
+   * Calls onSave callback with form data and shows success/error modal.
+   * @return {!Promise<void>}
+   */
   async function handleSave() {
     if (!onSave) return;
     
