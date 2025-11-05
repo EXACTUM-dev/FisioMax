@@ -12,11 +12,11 @@ import SuccessErrorModal from "./successErrorModal";
 import Modal from "../molecules/modal";
 
 // Variables for country, state and city APIs
-const COUNTRIES_API_BASE_URL = import.meta.env.COUNTRIES_API_BASE_URL;
+const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
 const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
-  .COUNTRIES_POSITIONS_ENDPOINT;
-const COUNTRIES_STATES_ENDPOINT = import.meta.env.COUNTRIES_STATES_ENDPOINT;
-const COUNTRIES_CITIES_ENDPOINT = import.meta.env.COUNTRIES_CITIES_ENDPOINT;
+  .VITE_COUNTRIES_POSITIONS_ENDPOINT;
+const COUNTRIES_STATES_ENDPOINT = import.meta.env.VITE_COUNTRIES_STATES_ENDPOINT;
+const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT;
 
 /**
  * Select field component for dropdowns with validation support.
