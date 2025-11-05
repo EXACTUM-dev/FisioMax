@@ -1,14 +1,20 @@
 /**
  * @fileoverview Router with endpoints for membership application managment.
  * @author EXACTUM-dev
- * @version 1.1.1
- * @description Defines endpoint to retrive membership applications
+ * @version 1.2.2
+ * @description Defines endpoint to retrive membership applications and manage their approval status.
  */
 import express from 'express';
 import multer from 'multer';
 import {
-  createMembershipApplication
+  createMembershipApplication,
+  getMemberships,
+  getMembershipById,
+  approveMembership,
+  denyMembership,
 } from '../controllers/membershipApplication.controller.js';
+import { authorize } from "../middlewares/rbacMiddleware.js";
+import { requireAuth } from "../middlewares/clerkAuth.js";
 
 const router = express.Router();
 
@@ -30,8 +36,11 @@ const upload = multer({
 // Middleware to handle multiple file uploads
 const uploadFields = upload.fields([
   { name: 'degreeDocument', maxCount: 1 },
+  { name: 'titulo', maxCount: 1 },
   { name: 'professionalId', maxCount: 1 },
+  { name: 'cedula', maxCount: 1 },
   { name: 'certificates', maxCount: 1 },
+  { name: 'constancias', maxCount: 1 },
   { name: 'extraDoc1', maxCount: 1 },
   { name: 'extraDoc2', maxCount: 1 },
   { name: 'extraDoc3', maxCount: 1 },
@@ -45,5 +54,36 @@ const uploadFields = upload.fields([
  * @access Public
  */
 router.post('/', uploadFields, createMembershipApplication);
+
+
+/**
+ * @route GET /api/membership-applications
+ * @description Obtain all the membership application
+ * @access Private
+ */
+router.get('/', requireAuth, authorize(["Gestión de Usuarios"]), getMemberships);
+
+/**
+ * @route GET /api/membership-applications/{id}
+ * @description Detail endpoint for a single membership application
+ * @access Private
+ */
+router.get('/:id', requireAuth, authorize(["Gestión de Usuarios"]), getMembershipById);
+
+
+/**
+ * @route POST /api/membership-applications/{id}/aprobar
+ * @description Approve the membership application
+ * @access Private
+ */
+router.post('/:id/aprobar', requireAuth, authorize(["Gestión de Usuarios"]), approveMembership);
+
+/**
+ * @route POST /api/membership-applications/{id}/rechazar
+ * @description Deny the membership application
+ * @access Private
+ */
+router.post('/:id/rechazar', requireAuth, authorize(["Gestión de Usuarios"]), denyMembership);
+
 
 export default router;

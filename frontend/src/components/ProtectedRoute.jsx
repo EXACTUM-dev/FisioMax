@@ -34,11 +34,15 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
 
   //RBAC Permissions
   const userRole = userData?.role;
-  const userState = userData?.accept;
+  const userState = userData?.accept.aceptado;
+  const rejectionReason = userData?.accept.motivoRechazo;
   const userPrivileges = userData?.userPrivileges.privilegios;
   const hasPrivileges = allowedPrivileges.some(valor => userPrivileges?.includes(valor));
-  const hasPermission = userRole !== undefined && (allowedPrivileges.length === 0 || hasPrivileges) && userState === 1;
+  const hasPermission =  userRole !== undefined && (allowedPrivileges.length === 0 || hasPrivileges) && userState === 1;
 
+  const isRejected = existsInDB && userState === 0;
+
+  const isPending = existsInDB && (userState === null || userState === undefined);
   return (
     <>
       {/* Redirect to login if not authenticated in Clerk */}
@@ -102,9 +106,93 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
                   onClick={handleSignOut}
                   className="block w-full bg-gray-100 text-gray-700 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
-                  Cerrar Sesión
+                  Regresar
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+        {/* Request pending approval */}
+        {!isDbLoading && isClerkLoaded && isPending && (
+          <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center px-4">
+            <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                <svg
+                  className="h-6 w-6 text-yellow-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Tu solicitud está siendo evaluada
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Por favor, sé paciente.
+              </p>
+              <p className="text-sm text-gray-600 mb-6">
+                Tu solicitud de membresía está siendo revisada por el equipo administrativo.
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+                <p className="text-xs text-yellow-800">
+                  💡 Tip: Revisa tu correo electrónico regularmente para no perderte ninguna actualización.
+                </p>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="block w-full bg-gray-100 text-gray-700 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Regresar
+              </button>
+            </div>
+          </div>
+        )}
+        {/* Deny request */}
+        {!isDbLoading && isClerkLoaded && isRejected && (
+          <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center px-4">
+            <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg
+                  className="h-6 w-6 text-red-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Solicitud Rechazada
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Tu solicitud fue rechazada por el siguiente motivo:
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+                <p className="text-sm text-red-800 font-medium">
+                  {rejectionReason || 'No se proporcionó un motivo específico'}
+                </p>
+              </div>
+              <p className="text-xs text-gray-500 mb-6">
+                Si consideras que esto es un error, por favor contacta al administrador.
+              </p>
+              <button
+                onClick={handleSignOut}
+                className="block w-full bg-gray-100 text-gray-700 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Regresar
+              </button>
             </div>
           </div>
         )}
@@ -112,6 +200,9 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
         {!isDbLoading &&
           isClerkLoaded &&
           existsInDB &&
+          !isRejected &&
+          !isPending &&
+          userState === 1 &&
           !hasPermission && (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#FAFAFA] text-center px-4">
               <div className="max-w-md bg-white p-8 rounded-lg shadow-md">
@@ -125,14 +216,13 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
                   onClick={handleSignOut}
                   className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
                 >
-                  Cerrar sesión
+                  Regresar
                 </button>
               </div>
             </div>
           )}
-
         {/* Display protected content if user exists in DB */}
-        {!isDbLoading && isClerkLoaded && existsInDB && hasPermission && children}
+        {!isDbLoading && isClerkLoaded && existsInDB && !isRejected && !isPending && hasPermission && children}
       </SignedIn>
     </>
   );
