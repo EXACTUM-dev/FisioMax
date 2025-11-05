@@ -438,14 +438,25 @@ export default function Panel() {
               Subir Contenido
             </Button>
 
-            <Button
-              variant="secondary"
-              size="sm"
-              radius="lg"
-              onClick={() => navigate("/roles")}
-            >
-              Roles
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                radius="lg"
+                onClick={() => navigate("/solicitud-membresia")}
+              >
+                Registrar Usuario
+              </Button>
+
+              <Button
+                variant="secondary"
+                size="sm"
+                radius="lg"
+                onClick={() => navigate("/roles")}
+              >
+                Roles
+              </Button>
+            </div>
           </div>
 
           {/* Data switcher for toggling between views */}
