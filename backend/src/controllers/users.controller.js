@@ -300,11 +300,16 @@ export async function deleteUser(req, res) {
     });
   }
 }
-    /**
-     * Update an existing user's basic information
-     * Expects fields in req.body (only allowed fields will be updated)
-     */
-    export async function updateUser(req, res) {
+/**
+ * Update an existing user's basic information.
+ * Expects fields in req.body (only allowed fields will be updated).
+ * @async
+ * @function updateUser
+ * @param {!Object} req - Express request object with params.userId and body containing update data.
+ * @param {!Object} res - Express response object.
+ * @return {!Promise<void>} Sends JSON response with updated user data or error.
+ */
+export async function updateUser(req, res) {
     try {
         const { userId } = req.params;
         const updateData = req.body || {};
@@ -376,13 +381,18 @@ export async function deleteUser(req, res) {
         console.error('Error actualizando usuario:', error);
         return res.status(500).json({ success: false, error: 'Error al actualizar el usuario', message: error.message });
     }
-    }
+}
 
-    /**
-     * Update user documents (titulo, cedula, constancias)
-     * Handles file uploads to S3 and updates database
-     */
-    export async function updateUserDocuments(req, res) {
+/**
+ * Update user documents (titulo, cedula, constancias).
+ * Handles file uploads to S3 and updates database.
+ * @async
+ * @function updateUserDocuments
+ * @param {!Object} req - Express request object with params.userId and files in req.files.
+ * @param {!Object} res - Express response object.
+ * @return {!Promise<void>} Sends JSON response with updated user data or error.
+ */
+export async function updateUserDocuments(req, res) {
     try {
         const { userId } = req.params;
 

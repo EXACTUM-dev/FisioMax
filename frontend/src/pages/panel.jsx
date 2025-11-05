@@ -330,7 +330,6 @@ export default function Panel() {
           roleName: roleName,
           rolNombre: user.rolNombre ?? roleName,
 
-          // normalized primary key for table actions (force id to be the backend PK)
           /**
            * Ensures action handlers (edit/delete) receive the real backend PK.
            * Many table builders rely on `row.id`, so force it to be IDUsuario.
