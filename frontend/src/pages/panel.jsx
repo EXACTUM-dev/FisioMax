@@ -155,38 +155,34 @@ export default function Panel() {
     }
   }, [getToken, membershipRows]);
 
+  // Fetch users list from database
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoadingUsers(true);
+      const token = await getToken();
+      const usersResponse = await fetchWithClerk(
+        "/api/users",
+        { method: "GET" },
+        token
+      );
+
+      // Extract payload from backend, then filter-out deleted
+      const raw = Array.isArray(usersResponse)
+        ? usersResponse
+        : usersResponse?.data || [];
+      setUserRows(normalizeActiveUsers(raw));
+    } catch (err) {
+      setError("Error de carga de usuarios. Por favor intente más tarde.");
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, [getToken, normalizeActiveUsers]);
+
   // Fetch initial data for the panel
   useEffect(() => {
-    let alive = true;
-
-    const fetchUsers = async () => {
-      try {
-        setLoadingUsers(true);
-        const token = await getToken();
-        const usersResponse = await fetchWithClerk(
-          "/api/users",
-          { method: "GET" },
-          token
-        );
-        if (!alive) return;
-
-        // Extract payload from backend, then filter-out deleted
-        const raw = Array.isArray(usersResponse)
-          ? usersResponse
-          : usersResponse?.data || [];
-        setUserRows(normalizeActiveUsers(raw));
-      } catch (err) {
-        setError("Error de carga de usuarios. Por favor intente más tarde.");
-      } finally {
-        if (alive) setLoadingUsers(false);
-      }
-    };
     fetchUsers();
     fetchMemberships();
-    return () => {
-      alive = false;
-    };
-  }, [getToken, normalizeActiveUsers, fetchMemberships]);
+  }, [fetchUsers, fetchMemberships]);
 
   // Fetch roles from the backend
   useEffect(() => {
@@ -602,6 +598,7 @@ export default function Panel() {
           setSelectedMembership(null);
           // refresh list after modal closes in case a status changed
           fetchMemberships();
+          fetchUsers(); // Refresh users list in case a membership was approved
         }}
         solicitud={selectedMembership}
         onStatusChange={(membershipId, newStatus) => {
@@ -613,6 +610,10 @@ export default function Panel() {
                 : membership
             )
           );
+          // If membership was approved, refresh users list
+          if (newStatus === 'Aprobado') {
+            fetchUsers();
+          }
         }}
       />
     )}
