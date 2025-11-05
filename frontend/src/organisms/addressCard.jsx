@@ -5,17 +5,18 @@
  * @author EXACTUM-dev
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import editIcon from "../assets/icons/square-pen.png";
 import Button from "../atoms/button";
-import SuccessErrorModal from './successErrorModal';
-import Modal from '../molecules/modal';
+import SuccessErrorModal from "./successErrorModal";
+import Modal from "../molecules/modal";
 
 // Variables for country, state and city APIs
-const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
-const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env.VITE_COUNTRIES_POSITIONS_ENDPOINT;
-const COUNTRIES_STATES_ENDPOINT = import.meta.env.VITE_COUNTRIES_STATES_ENDPOINT;
-const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT;
+const COUNTRIES_API_BASE_URL = import.meta.env.COUNTRIES_API_BASE_URL;
+const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
+  .COUNTRIES_POSITIONS_ENDPOINT;
+const COUNTRIES_STATES_ENDPOINT = import.meta.env.COUNTRIES_STATES_ENDPOINT;
+const COUNTRIES_CITIES_ENDPOINT = import.meta.env.COUNTRIES_CITIES_ENDPOINT;
 
 /**
  * Select field component for dropdowns with validation support.
@@ -29,7 +30,15 @@ const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT
  * @param {string} [props.error] - Error message to display.
  * @return {!JSX.Element} Select field component.
  */
-const SelectField = ({ label, name, value, onChange, options, required, error }) => (
+const SelectField = ({
+  label,
+  name,
+  value,
+  onChange,
+  options,
+  required,
+  error,
+}) => (
   <div>
     <label className="block text-sm font-medium text-slate-600 mb-1">
       {label}
@@ -65,19 +74,19 @@ const SelectField = ({ label, name, value, onChange, options, required, error })
 export default function AddressCard({ data = {}, canEdit = false, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('success');
-  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState("success");
+  const [modalMessage, setModalMessage] = useState("");
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [form, setForm] = useState({
-    pais: data.pais || '',
-    estado: data.estado || '',
-    ciudad: data.ciudad || '',
-    colonia: data.colonia || '',
-    codigoPostal: data.codigoPostal || '',
-    calle: data.calle || '',
-    numExterior: data.numExterior || '',
-    numInterior: data.numInterior || ''
+    pais: data.pais || "",
+    estado: data.estado || "",
+    ciudad: data.ciudad || "",
+    colonia: data.colonia || "",
+    codigoPostal: data.codigoPostal || "",
+    calle: data.calle || "",
+    numExterior: data.numExterior || "",
+    numInterior: data.numInterior || "",
   });
 
   const [countries, setCountries] = useState([]);
@@ -87,14 +96,14 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
   // Reset form when data changes
   useEffect(() => {
     setForm({
-      pais: data.pais || '',
-      estado: data.estado || '',
-      ciudad: data.ciudad || '',
-      colonia: data.colonia || '',
-      codigoPostal: data.codigoPostal || '',
-      calle: data.calle || '',
-      numExterior: data.numExterior || '',
-      numInterior: data.numInterior || ''
+      pais: data.pais || "",
+      estado: data.estado || "",
+      ciudad: data.ciudad || "",
+      colonia: data.colonia || "",
+      codigoPostal: data.codigoPostal || "",
+      calle: data.calle || "",
+      numExterior: data.numExterior || "",
+      numInterior: data.numInterior || "",
     });
   }, [data]);
 
@@ -102,10 +111,12 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await fetch(`${COUNTRIES_API_BASE_URL}${COUNTRIES_POSITIONS_ENDPOINT}`);
+        const res = await fetch(
+          `${COUNTRIES_API_BASE_URL}${COUNTRIES_POSITIONS_ENDPOINT}`
+        );
         const data = await res.json();
         const formatted = data.data
-          .map(c => ({ value: c.name, label: c.name }))
+          .map((c) => ({ value: c.name, label: c.name }))
           .sort((a, b) => a.label.localeCompare(b.label));
         setCountries(formatted);
       } catch (err) {
@@ -121,30 +132,42 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
       const loadInitialData = async () => {
         try {
           // Load states
-          const statesRes = await fetch(`${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ country: form.pais })
-          });
+          const statesRes = await fetch(
+            `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ country: form.pais }),
+            }
+          );
           const statesData = await statesRes.json();
-          const formattedStates = statesData.data?.states?.map(s => ({ value: s.name, label: s.name })) || [];
+          const formattedStates =
+            statesData.data?.states?.map((s) => ({
+              value: s.name,
+              label: s.name,
+            })) || [];
           setStates(formattedStates);
 
           // If we have a state, load cities
           const currentEstado = form.estado;
           if (currentEstado) {
-            const citiesRes = await fetch(`${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ country: form.pais, state: currentEstado })
-            });
+            const citiesRes = await fetch(
+              `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  country: form.pais,
+                  state: currentEstado,
+                }),
+              }
+            );
             const citiesData = await citiesRes.json();
-            const formattedCities = citiesData.data?.map(c => ({ value: c, label: c })) || [];
+            const formattedCities =
+              citiesData.data?.map((c) => ({ value: c, label: c })) || [];
             setCities(formattedCities);
           }
-        } catch (err) {
-          console.error("Error loading initial address data:", err);
-        }
+        } catch (err) {}
       };
       loadInitialData();
     } else if (!isEditing) {
@@ -174,19 +197,23 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
     setForm((prev) => ({ ...prev, pais: value, estado: "", ciudad: "" }));
     setStates([]);
     setCities([]);
-    
+
     if (!value) return;
 
     try {
-      const res = await fetch(`${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ country: value })
-      });
+      const res = await fetch(
+        `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country: value }),
+        }
+      );
       const data = await res.json();
-      const formattedStates = data.data?.states?.map(s => ({ value: s.name, label: s.name })) || [];
+      const formattedStates =
+        data.data?.states?.map((s) => ({ value: s.name, label: s.name })) || [];
       setStates(formattedStates);
-      
+
       // If we have a state value, load cities
       if (form.estado) {
         handleEstadoChange(form.estado, value);
@@ -207,17 +234,21 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
   const handleEstadoChange = async (value, country = form.pais) => {
     setForm((prev) => ({ ...prev, estado: value, ciudad: "" }));
     setCities([]);
-    
+
     if (!value || !country) return;
 
     try {
-      const res = await fetch(`${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ country, state: value })
-      });
+      const res = await fetch(
+        `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country, state: value }),
+        }
+      );
       const data = await res.json();
-      const formattedCities = data.data?.map(c => ({ value: c, label: c })) || [];
+      const formattedCities =
+        data.data?.map((c) => ({ value: c, label: c })) || [];
       setCities(formattedCities);
     } catch (err) {
       console.error("Error fetching cities:", err);
@@ -232,23 +263,23 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
    */
   const validateAddress = () => {
     const missingFields = [];
-    
-    if (!form.pais || form.pais.trim() === '') {
-      missingFields.push('País');
+
+    if (!form.pais || form.pais.trim() === "") {
+      missingFields.push("País");
     }
-    if (!form.estado || form.estado.trim() === '') {
-      missingFields.push('Estado / Provincia');
+    if (!form.estado || form.estado.trim() === "") {
+      missingFields.push("Estado / Provincia");
     }
-    if (!form.ciudad || form.ciudad.trim() === '') {
-      missingFields.push('Ciudad');
+    if (!form.ciudad || form.ciudad.trim() === "") {
+      missingFields.push("Ciudad");
     }
-    
+
     if (missingFields.length > 0) {
       setValidationErrors(missingFields);
       setShowValidationModal(true);
       return false;
     }
-    
+
     return true;
   };
 
@@ -259,12 +290,12 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
    */
   async function handleSave() {
     if (!onSave) return;
-    
+
     // Validate required fields
     if (!validateAddress()) {
       return;
     }
-    
+
     try {
       await onSave({
         pais: form.pais,
@@ -274,19 +305,22 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
         codigoPostal: form.codigoPostal,
         calle: form.calle,
         numExterior: form.numExterior,
-        numInterior: form.numInterior
+        numInterior: form.numInterior,
       });
       setIsEditing(false);
-      
+
       // Show success modal
-      setModalType('success');
-      setModalMessage('La dirección se ha actualizado exitosamente.');
+      setModalType("success");
+      setModalMessage("La dirección se ha actualizado exitosamente.");
       setShowModal(true);
     } catch (error) {
-      console.error('Error saving address:', error);
+      console.error("Error saving address:", error);
       // Show error modal
-      setModalType('error');
-      setModalMessage(error.message || 'Error al guardar la dirección. Por favor, intente nuevamente.');
+      setModalType("error");
+      setModalMessage(
+        error.message ||
+          "Error al guardar la dirección. Por favor, intente nuevamente."
+      );
       setShowModal(true);
     }
   }
@@ -299,7 +333,7 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
             type="button"
             onClick={() => setIsEditing((v) => !v)}
             className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
-            aria-label={isEditing ? 'Cancelar edición' : 'Editar domicilio'}
+            aria-label={isEditing ? "Cancelar edición" : "Editar domicilio"}
           >
             <img
               src={editIcon}
@@ -340,72 +374,129 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
           </>
         ) : (
           <>
-        <div>
-          <label className="text-sm text-slate-600">
-            País
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <div className="mt-1 text-slate-900">{data.pais || <span className="text-slate-400">No disponible</span>}</div>
-        </div>
-        <div>
-          <label className="text-sm text-slate-600">
-            Estado/Provincia
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <div className="mt-1 text-slate-900">{data.estado || <span className="text-slate-400">No disponible</span>}</div>
-        </div>
-        <div>
-          <label className="text-sm text-slate-600">
-            Ciudad
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <div className="mt-1 text-slate-900">{data.ciudad || <span className="text-slate-400">No disponible</span>}</div>
-        </div>
+            <div>
+              <label className="text-sm text-slate-600">
+                País
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="mt-1 text-slate-900">
+                {data.pais || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">
+                Estado/Provincia
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="mt-1 text-slate-900">
+                {data.estado || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">
+                Ciudad
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="mt-1 text-slate-900">
+                {data.ciudad || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
           </>
         )}
 
         <div>
           <label className="text-sm text-slate-600">Colonia</label>
           {isEditing ? (
-            <input name="colonia" value={form.colonia} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+            <input
+              name="colonia"
+              value={form.colonia}
+              onChange={handleChange}
+              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+            />
           ) : (
-          <div className="mt-1 text-slate-900">{data.colonia || <span className="text-slate-400">No disponible</span>}</div>
+            <div className="mt-1 text-slate-900">
+              {data.colonia || (
+                <span className="text-slate-400">No disponible</span>
+              )}
+            </div>
           )}
         </div>
 
         <div>
           <label className="text-sm text-slate-600">Código Postal</label>
           {isEditing ? (
-            <input name="codigoPostal" value={form.codigoPostal} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+            <input
+              name="codigoPostal"
+              value={form.codigoPostal}
+              onChange={handleChange}
+              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+            />
           ) : (
-          <div className="mt-1 text-slate-900">{data.codigoPostal || <span className="text-slate-400">No disponible</span>}</div>
+            <div className="mt-1 text-slate-900">
+              {data.codigoPostal || (
+                <span className="text-slate-400">No disponible</span>
+              )}
+            </div>
           )}
         </div>
 
         <div>
           <label className="text-sm text-slate-600">Calle</label>
           {isEditing ? (
-            <input name="calle" value={form.calle} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+            <input
+              name="calle"
+              value={form.calle}
+              onChange={handleChange}
+              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+            />
           ) : (
-          <div className="mt-1 text-slate-900">{data.calle || <span className="text-slate-400">No disponible</span>}</div>
+            <div className="mt-1 text-slate-900">
+              {data.calle || (
+                <span className="text-slate-400">No disponible</span>
+              )}
+            </div>
           )}
         </div>
 
         <div>
           <label className="text-sm text-slate-600">Número Exterior</label>
           {isEditing ? (
-            <input name="numExterior" value={form.numExterior} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+            <input
+              name="numExterior"
+              value={form.numExterior}
+              onChange={handleChange}
+              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+            />
           ) : (
-          <div className="mt-1 text-slate-900">{data.numExterior || <span className="text-slate-400">No disponible</span>}</div>
+            <div className="mt-1 text-slate-900">
+              {data.numExterior || (
+                <span className="text-slate-400">No disponible</span>
+              )}
+            </div>
           )}
         </div>
 
         <div>
           <label className="text-sm text-slate-600">Número Interior</label>
           {isEditing ? (
-            <input name="numInterior" value={form.numInterior} onChange={handleChange} className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent" />
+            <input
+              name="numInterior"
+              value={form.numInterior}
+              onChange={handleChange}
+              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+            />
           ) : (
-          <div className="mt-1 text-slate-900">{data.numInterior || <span className="text-slate-400">No disponible</span>}</div>
+            <div className="mt-1 text-slate-900">
+              {data.numInterior || (
+                <span className="text-slate-400">No disponible</span>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -420,25 +511,20 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
               setIsEditing(false);
               // Restore original values
               setForm({
-                pais: data.pais || '',
-                estado: data.estado || '',
-                ciudad: data.ciudad || '',
-                colonia: data.colonia || '',
-                codigoPostal: data.codigoPostal || '',
-                calle: data.calle || '',
-                numExterior: data.numExterior || '',
-                numInterior: data.numInterior || ''
+                pais: data.pais || "",
+                estado: data.estado || "",
+                ciudad: data.ciudad || "",
+                colonia: data.colonia || "",
+                codigoPostal: data.codigoPostal || "",
+                calle: data.calle || "",
+                numExterior: data.numExterior || "",
+                numInterior: data.numInterior || "",
               });
             }}
           >
             Cancelar
           </Button>
-          <Button
-            type="button"
-            variant="brand"
-            size="sm"
-            onClick={handleSave}
-          >
+          <Button type="button" variant="brand" size="sm" onClick={handleSave}>
             Guardar
           </Button>
         </div>
@@ -458,18 +544,34 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
       />
 
       {/* Validation Modal for Required Fields */}
-      <Modal open={showValidationModal} onClose={() => setShowValidationModal(false)} size="md" position="center">
+      <Modal
+        open={showValidationModal}
+        onClose={() => setShowValidationModal(false)}
+        size="md"
+        position="center"
+      >
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
-            <svg className="h-16 w-16 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            <svg
+              className="h-16 w-16 text-orange-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
             </svg>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
             Campos requeridos faltantes
           </h3>
           <p className="text-gray-600 mb-6">
-            Por favor completa los siguientes campos obligatorios antes de guardar:
+            Por favor completa los siguientes campos obligatorios antes de
+            guardar:
           </p>
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
             <ul className="text-left text-gray-700 space-y-2">
@@ -481,7 +583,11 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
               ))}
             </ul>
           </div>
-          <Button variant="brand" onClick={() => setShowValidationModal(false)} className="w-full">
+          <Button
+            variant="brand"
+            onClick={() => setShowValidationModal(false)}
+            className="w-full"
+          >
             Entendido
           </Button>
         </div>
@@ -489,4 +595,3 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
     </section>
   );
 }
-
