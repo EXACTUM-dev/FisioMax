@@ -55,7 +55,8 @@ export async function getUsuarios() {
 export async function getMembershipUserStateById(userId) {
   try {
     const [rows] = await dbPool.query(
-      `SELECT aceptado FROM membresia WHERE IDUsuario = ?;`, [userId]
+      `SELECT aceptado FROM membresia WHERE IDUsuario = ?;`,
+      [userId]
     );
     return rows[0]?.aceptado ?? null;
   } catch (error) {
@@ -130,14 +131,14 @@ export async function getUserByClerkId(clerkId) {
           nombreArchivo,
           urlArchivo,
           createdAt
-        FROM DocumentosAdicionales
+        FROM documentosadicionales
         WHERE IDUsuario = ?`,
         [user.IDUsuario]
       );
       user.documentosAdicionales = docRows;
     } catch (docError) {
-      // If DocumentosAdicionales table doesn't exist, just set empty array
-      console.warn('DocumentosAdicionales table not found or error:', docError.message);
+      // If documentosadicionales table doesn't exist, just set empty array
+      console.warn('documentosadicionales table not found or error:', docError.message);
       user.documentosAdicionales = [];
     }
 
@@ -338,12 +339,30 @@ export async function createUserWithClerkId(userData) {
       ]
     );
 
-    if (result.affectedRows > 0) {
-      return await getUserById(IDUsuario);
+    if (result.affectedRows === 0) {
+      throw new Error("No se pudo crear el usuario");
     }
-    throw new Error("No se pudo crear el usuario");
+
+    const sinRol = await findRoleByName("SinRol");
+
+    if (sinRol) {
+      await connection.query(
+        `INSERT INTO usuariorol (IDUsuario, IDRol) 
+         VALUES (?, ?)`,
+        [IDUsuario, sinRol.IDRol]
+      );
+    } else {
+      console.warn('"SinRol" not found - user created without role assignment');
+    }
+
+    await connection.commit();
+
+    return await getUserById(IDUsuario);
   } catch (error) {
+    await connection.rollback();
     console.error("Error al crear usuario con clerkID:", error);
     throw error;
+  } finally {
+    connection.release();
   }
 }
