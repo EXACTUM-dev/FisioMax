@@ -27,7 +27,8 @@ export async function getUsuarios() {
         u.fechaNacimiento,
         r.IDRol,
         r.nombre as rolNombre,
-        r.descripcion as rolDescripcion
+        r.descripcion as rolDescripcion,
+        m.estatusPago as membresiaEstatusPago
       FROM usuario u
       INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario 
         AND m.aceptado = 1

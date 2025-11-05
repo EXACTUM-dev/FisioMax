@@ -24,7 +24,7 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole, onCl
     {
       key: "nombre", // Unique column identifier
       label: "Nombre", // Visible label in the table
-      className: "w-[40%]", // CSS class for column width
+      className: "w-[45%]", // CSS class for column width
       render: (row) => {
         // Try to build full name with nombres, apellidoP and apellidoM
         const nombreCompleto = `${row?.nombres || ''} ${row?.apellidoP || ''} ${row?.apellidoM || ''}`.trim();
@@ -61,7 +61,7 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole, onCl
     {
       key: "rol",
       label: "Rol",
-      className: "w-[20%] text-center",
+      className: "w-[25%] text-center",
       render: (row) => (
         // Interactive component to select roles
         <RolePicker row={row} roles={roles} onSelect={(r) => onChangeRole?.(row, r)} />
@@ -71,12 +71,29 @@ export function buildUserRolesColumns({ roles = [], onDelete, onChangeRole, onCl
       key: "membresia",
       label: "Estado membresía",
       className: "w-[20%] text-center",
-      render: (row) => row?.membresia || row?.membership?.status || row?.estado || "",
+      render: (row) => {
+        const paymentStatus = row?.membershipPaymentStatus || row?.membresiaEstatusPago || 'pendiente';
+        
+        // Normalize status to capitalize first letter
+        const normalizedStatus = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1).toLowerCase();
+        
+        // Define color based on payment status
+        const statusColor = 
+          paymentStatus === 'Pagado' || paymentStatus === 'pagado' ? 'text-green-600' : 
+          paymentStatus === 'Pendiente' || paymentStatus === 'pendiente' ? 'text-yellow-600' : 
+          'text-red-600';
+        
+        return (
+          <span className={`font-medium capitalize ${statusColor}`}>
+            {normalizedStatus}
+          </span>
+        );
+      },
     },
     {
       key: "eliminar",
       label: "Eliminar",
-      className: "w-[20%] text-right",
+      className: "w-[10%] text-right",
       isAction: true, // Indicates this column contains actions
       render: (row) => (
         <button
