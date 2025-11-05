@@ -5,7 +5,7 @@
  * @author EXACTUM-dev
  */
 
-import { getUsuarioByClerkId, getUserById, getUsuarios, reassignUserToSinRol, markUserDeleted } from '../models/users.model.js';
+import { getUsuarioByClerkId, getUserById, getUsuarios, reassignUserToSinRol, markUserDeleted, updateUserById } from '../models/users.model.js';
 import S3Service from '../services/s3Service.js';
 
 /**
