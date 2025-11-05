@@ -456,9 +456,10 @@ export async function markUserDeleted(userId) {
 }
 
 /**
- * Reassign a user's role to "SinRol".
+ * Reassign a user's role to "SinRol" if it exists.
+ * If "SinRol" doesn't exist, just marks the user role as deleted.
  * @param {string|number} userId - User ID to reassign
- * @returns {Promise<boolean>} True if reassigned successfully
+ * @returns {Promise<boolean>} True if reassigned successfully or role marked as deleted
  */
 export async function reassignUserToSinRol(userId) {
   const connection = await dbPool.getConnection();
@@ -470,19 +471,27 @@ export async function reassignUserToSinRol(userId) {
       `SELECT IDRol FROM rol WHERE nombre = 'SinRol' AND deletedAt IS NULL AND eliminado = 0 LIMIT 1`
     );
 
-    if (sinRolRows.length === 0) {
-      throw new Error('No se pudo encontrar el rol "SinRol"');
+    if (sinRolRows.length > 0) {
+      // SinRol exists, reassign to it
+      const sinRolId = sinRolRows[0].IDRol;
+
+      // Update user's role assignment to SinRol
+      await connection.query(
+        `UPDATE usuariorol 
+         SET IDRol = ?, eliminado = 0, deletedAt = NULL 
+         WHERE IDUsuario = ?`,
+        [sinRolId, userId]
+      );
+    } else {
+      // SinRol doesn't exist, just mark the user's role as deleted
+      console.warn('Rol "SinRol" no encontrado. Marcando rol de usuario como eliminado.');
+      await connection.query(
+        `UPDATE usuariorol 
+         SET eliminado = 1, deletedAt = NOW() 
+         WHERE IDUsuario = ?`,
+        [userId]
+      );
     }
-
-    const sinRolId = sinRolRows[0].IDRol;
-
-    // Update user's role assignment to SinRol
-    await connection.query(
-      `UPDATE usuariorol 
-       SET IDRol = ?, eliminado = 0, deletedAt = NULL 
-       WHERE IDUsuario = ?`,
-      [sinRolId, userId]
-    );
 
     await connection.commit();
     return true;

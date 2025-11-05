@@ -78,6 +78,10 @@ export default function Panel() {
   // Success modal state for user deletion
   const [successModalOpen, setSuccessModalOpen] = useState(false);
 
+  // Error modal state for user deletion
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   /**
    * Normalizes and filters out deleted users for table rendering.
    * Keeps only non-deleted users (eliminado = 0/NULL and no deletedAt).
@@ -623,7 +627,6 @@ export default function Panel() {
             setSuccessModalOpen(true);
           } catch (err) {
             console.error("Error al eliminar usuario:", err);
-            alert(err?.message || "No se pudo eliminar el usuario.");
           }
         }}
         onCancel={() => setDeleteConfirmOpen(false)}
