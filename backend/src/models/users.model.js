@@ -321,13 +321,12 @@ export async function reassignUserToSinRol(userId) {
   );
   if (!rows.length) return 0;
 
-  // Pivot variant (usuario ↔ rol). Change to UPDATE usuario ... if your schema stores the role in usuario.IDRol
+  // This code uses the pivot table (usuariorol) for user-role assignment. If your schema stores the role directly in usuario (e.g., usuario.IDRol), you would update that column instead.
   const [r] = await dbPool.query(
     `UPDATE usuariorol
        SET IDRol = ?
      WHERE IDUsuario = ?
-       AND (eliminado = 0 OR eliminado IS NULL)
-       AND deletedAt IS NULL`,
+       AND (eliminado = 0 OR eliminado IS NULL)`,
     [rows[0].IDRol, userId]
   );
   return r.affectedRows;
@@ -398,7 +397,7 @@ export async function getUserById(userId) {
         AND r.deletedAt IS NULL 
         AND r.eliminado = 0
       WHERE u.IDUsuario = ? 
-        AND u.eliminado = 0
+        AND u.deletedAt IS NULL
       LIMIT 1`,
       [userId]
     );

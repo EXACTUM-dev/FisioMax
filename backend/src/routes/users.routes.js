@@ -71,6 +71,6 @@ router.patch("/:userId/rol", requireAuth, authorize(["Gestión de Usuarios"]), a
  * @param {function} middleware - Express middleware for authentication and DB user sync.
  * @param {function} handler - Request handler for user deletion.
  */
-router.delete("/:id", requireAuth, autoSyncClerkId, requireDbUser, deleteUser);
+router.delete("/:id", requireAuth, authorize(["Gestión de Usuarios"]), autoSyncClerkId, requireDbUser, deleteUser);
 
 export default router;
