@@ -698,10 +698,10 @@ export default function MembershipApplicationPage() {
                 label="Fecha de nacimiento" name="fechaNacimiento" type="date" required value={formData.fechaNacimiento} onChange={handleInputChange} error={errors.fechaNacimiento}
               />
               <FormField 
-                label="Contacto profesional(Teléfono de oficina)" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}
+                label="Contacto profesional (Teléfono de oficina)" name="telefonoCasa" value={formData.telefonoCasa} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoCasa}
               />
                <FormField 
-                label="Contacto personal(WhatsApp)" name="telefonoWhatsApp" required value={formData.telefonoWhatsApp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsApp}
+                label="Contacto personal (WhatsApp)" name="telefonoWhatsApp" required value={formData.telefonoWhatsApp} onChange={handleInputChange} placeholder="Ingresa tu teléfono" error={errors.telefonoWhatsApp}
               />
               <FormField 
                 label="Facebook" name="facebook" value={formData.facebook} onChange={handleInputChange} placeholder="Ingresa tu cuenta de Facebook"
