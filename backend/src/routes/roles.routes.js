@@ -23,7 +23,6 @@ const router = express.Router();
 router.get(
   "/",
   requireAuth,
-  authorize(["Gestión de Roles"]),
   autoSyncClerkId,
   requireDbUser,
   getAllRoles

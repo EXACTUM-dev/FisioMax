@@ -270,7 +270,16 @@ export async function deleteUser(req, res) {
     }
 
     // Reassign role to "SinRol"
-    await reassignUserToSinRol(id);
+    try {
+      await reassignUserToSinRol(id);
+    } catch (reassignError) {
+      console.error("Error al reasignar rol:", reassignError);
+      return res.status(500).json({
+        success: false,
+        message: 'No se pudo encontrar el rol "SinRol". Por favor, contacta al administrador del sistema.',
+        error: reassignError.message
+      });
+    }
 
     // Mark the user as deleted
     const affectedRows = await markUserDeleted(id);

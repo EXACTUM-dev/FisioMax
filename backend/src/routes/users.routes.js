@@ -7,7 +7,7 @@
 
 import express from "express";
 import multer from "multer";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments } from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser } from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
@@ -121,6 +121,25 @@ router.patch(
   requireDbUser,
   uploadDocuments,
   updateUserDocuments
+);
+
+/**
+ * Route to delete a user (soft delete)
+ * @name DELETE /:id
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with id parameter.
+ * @param {function} middleware - Express middleware for authentication and authorization.
+ * @param {function} handler - Request handler.
+ */
+router.delete(
+  "/:id",
+  requireAuth,
+  authorize(["Gestión de Usuarios"]),
+  autoSyncClerkId,
+  requireDbUser,
+  deleteUser
 );
 
 export default router;

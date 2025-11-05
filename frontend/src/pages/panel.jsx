@@ -193,7 +193,7 @@ export default function Panel() {
         setLoadingRoles(true);
         const token = await getToken();
         const rolesResponse = await fetchWithClerk(
-          "/roles",
+          "/api/roles",
           { method: "GET" },
           token
         );
@@ -204,7 +204,8 @@ export default function Panel() {
           : rolesResponse?.data || [];
         setRoleRows(extractedRoles);
       } catch (err) {
-
+        console.error("Error al cargar roles:", err);
+        setError("Error al cargar roles. Por favor intente más tarde.");
       } finally {
         if (alive) setLoadingRoles(false);
       }
