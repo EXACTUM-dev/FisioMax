@@ -156,64 +156,6 @@ export async function getUserByClerkId(clerkId) {
 export const getUsuarioByClerkId = getUserByClerkId;
 
 /**
- * Get a user by their database ID (IDUsuario)
- * @param {string} userId - The database user ID
- * @returns {Promise<Object|null>} User object with role information or null if not found
- */
-export async function getUserById(userId) {
-  try {
-    const [rows] = await dbPool.query(
-      `SELECT 
-        u.IDUsuario,
-        u.clerkID,
-        u.nombres, 
-        u.apellidoP, 
-        u.apellidoM,
-        u.foto,
-        u.correo,
-        u.telefonoCasa,
-        u.telefonoWhatsapp,
-        u.fechaNacimiento,
-        u.cedula,
-        u.titulo,
-        u.constancias,
-        u.licenciatura,
-        u.pais,
-        u.estado,
-        u.ciudad,
-        u.calle,
-        u.numExterior,
-        u.numInterior,
-        u.colonia,
-        u.codigoPostal,
-        u.instagram,
-        u.linkedin,
-        u.facebook,
-        u.paginaWeb,
-        r.IDRol,
-        r.nombre as rolNombre,
-        r.descripcion as rolDescripcion
-      FROM usuario u
-      LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
-        AND ur.deletedAt IS NULL 
-        AND ur.eliminado = 0
-      LEFT JOIN rol r ON ur.IDRol = r.IDRol 
-        AND r.deletedAt IS NULL 
-        AND r.eliminado = 0
-      WHERE u.IDUsuario = ? 
-        AND u.deletedAt IS NULL 
-        AND u.eliminado = 0
-      LIMIT 1`,
-      [userId]
-    );
-    return rows.length > 0 ? rows[0] : null;
-  } catch (error) {
-    console.error("Error al consultar usuario por ID:", error);
-    throw error;
-  }
-}
-
-/**
  * Get a user by their email address
  * @param {string} email - The user's email address
  * @returns {Promise<Object|null>} User object with role information or null if not found
@@ -367,5 +309,105 @@ export async function createUserWithClerkId(userData) {
     throw error;
   } finally {
     connection.release();
+  }
+}
+
+/**
+ * Reassigns a user's role to "SinRol".
+ * Updates the `usuariorol` table to set the role to "SinRol".
+ * @param {number|string} userId - The ID of the user to reassign.
+ * @returns {Promise<number>} Number of affected rows.
+ */
+export async function reassignUserToSinRol(userId) {
+  const [rows] = await dbPool.query(
+    `SELECT IDRol FROM rol WHERE nombre = 'SinRol' LIMIT 1`
+  );
+  if (!rows.length) return 0;
+
+  // This code uses the pivot table (usuariorol) for user-role assignment. If your schema stores the role directly in usuario (e.g., usuario.IDRol), you would update that column instead.
+  const [r] = await dbPool.query(
+    `UPDATE usuariorol
+       SET IDRol = ?
+     WHERE IDUsuario = ?
+       AND (eliminado = 0 OR eliminado IS NULL)`,
+    [rows[0].IDRol, userId]
+  );
+  return r.affectedRows;
+}
+
+/**
+ * Soft-deletes a user (logical deletion).
+ * Marks the user as deleted by setting `eliminado` to 1 and `deletedAt` to the current timestamp.
+ * @param {number|string} userId - The ID of the user to delete.
+ * @returns {Promise<number>} Number of affected rows.
+ */
+export async function markUserDeleted(userId) {
+  const [r] = await dbPool.query(
+    `UPDATE usuario
+        SET eliminado = 1, deletedAt = NOW()
+      WHERE IDUsuario = ?
+        AND deletedAt IS NULL
+        AND (eliminado = 0 OR eliminado IS NULL)`
+    , [userId]
+  );
+  return r.affectedRows;
+}
+
+/**
+ * Get a user by their ID.
+ * @param {number|string} userId - The ID of the user to retrieve.
+ * @returns {Promise<Object|null>} The user object or null if not found.
+ */
+export async function getUserById(userId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT 
+        u.IDUsuario,
+        u.clerkID,
+        u.nombres,
+        u.apellidoP,
+        u.apellidoM,
+        u.foto,
+        u.correo,
+        u.telefonoCasa,
+        u.telefonoWhatsapp,
+        u.fechaNacimiento,
+        u.cedula,
+        u.titulo,
+        u.constancias,
+        u.licenciatura,
+        u.pais,
+        u.estado,
+        u.ciudad,
+        u.calle,
+        u.numExterior,
+        u.numInterior,
+        u.colonia,
+        u.codigoPostal,
+        u.instagram,
+        u.linkedin,
+        u.facebook,
+        u.paginaWeb,
+        u.createdAt,
+        r.IDRol,
+        r.nombre as rolNombre,
+        r.descripcion as rolDescripcion
+      FROM usuario u
+      LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
+        AND ur.deletedAt IS NULL 
+        AND ur.eliminado = 0
+      LEFT JOIN rol r ON ur.IDRol = r.IDRol 
+        AND r.deletedAt IS NULL 
+        AND r.eliminado = 0
+      WHERE u.IDUsuario = ? 
+        AND u.deletedAt IS NULL
+      LIMIT 1`,
+      [userId]
+    );
+
+    return rows.length > 0 ? rows[0] : null;
+  } catch (error) {
+    console.error("Error al obtener usuario por ID:", error);
+    throw error;
   }
 }
