@@ -1,7 +1,7 @@
 /**
  * @fileoverview Admin control panel for managing users and roles.
  * Provides data tables for user and role management with CRUD operations.
- * @version 1.1.0
+ * @version 1.2.0
  * @author EXACTUM-dev
  */
 
@@ -20,8 +20,6 @@ import { useNavigate } from "react-router-dom";
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
 import Loading from "../atoms/loading";
-
-// Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 import Modal from "../molecules/modal";
@@ -31,12 +29,19 @@ import ConfirmationModal from "../molecules/confirmationModal";
 import Carousel from "../organisms/carousel";
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import DataTable from "../organisms/dataTable";
-
-// Data and utilities
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
-import { fetchWithClerk } from "../utils/api";
+import buildMembershipColumns from "../data/tableTemplates/membershipColumns";
+import {  fetchWithClerk  } from "../utils/api";
+import MembershipModal from "../data/modalTemplates/membershipModal";
 
+/**
+ * Panel Component
+ * @description Main administrative control panel view that manages users, roles, and membership requests.
+ * Fetches data from the backend using Clerk authentication and displays it in switchable, responsive table views.
+ * Handles user role updates, membership status changes, and role permission viewing through modals.
+ * @returns {JSX.Element} Admin panel interface with navigation, data tables, and management modals.
+ */
 // Services (NEW): user delete service
 import { deleteUser as deleteUserService } from "../services/usersServices";
 
@@ -52,6 +57,11 @@ export default function Panel() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingRoles, setLoadingRoles] = useState(true);
 
+  const [membershipRows, setMembershipRows] = useState([]);
+  const [selectedMembership, setSelectedMembership] = useState(null);
+  const [membershipModalOpen, setMembershipModalOpen] = useState(false);
+  
+  
   // Modal state for viewing role permissions
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRoleForView, setSelectedRoleForView] = useState(null);
@@ -78,6 +88,66 @@ export default function Panel() {
       (u) => (u?.eliminado === 0 || u?.eliminado == null) && !u?.deletedAt
     );
   }, []);
+
+  // Fetch memberships list from data base
+  const fetchMemberships = useCallback(async () => {
+    try {
+      const token = await getToken();
+      const resp = await fetchWithClerk('/api/membership-applications', { method: 'GET' }, token);
+
+      // backend may return { success, data } or an array
+      const rows = Array.isArray(resp) ? resp : resp?.data || [];
+
+      // Exclude already approved memberships: we only want Pendiente and Rechazado here
+      const visibleRows = (rows || []).filter((r) => {
+        const aceptado = typeof r.aceptado !== 'undefined' ? r.aceptado : (r.accepted ?? null);
+        return aceptado !== 1; // keep if not approved
+      });
+
+      const mapped = (visibleRows || []).map((r) => ({
+        id: r.IDMembresia ?? r.id ?? r.IDMembresia,
+        aceptado: typeof r.aceptado !== 'undefined' ? r.aceptado : (r.accepted ?? null),
+        estatusPago: typeof r.estatusPago !== 'undefined' ? r.estatusPago : (r.paymentStatus ?? null),
+        IDUsuario: r.IDUsuario || r.userId || null,
+        nombre: `${r.nombres || r.nombre || ''} ${r.apellidoP || ''} ${r.apellidoM || ''}`.trim() || 'Sin nombre',
+        estado: (typeof r.aceptado !== 'undefined' ? (r.aceptado === 1 ? 'Aprobado' : r.aceptado === 0 ? 'Rechazado' : 'Pendiente') : (r.status || 'Pendiente')),
+        fecha: r.createdAt || r.created_at || r.fecha || null,
+        __raw: r,
+      }));
+
+      setMembershipRows(mapped);
+    } catch (err) {
+      console.error('Error de carga de solicitudes:', err);
+      setError('Error de carga de solicitudes. Por favor intente más tarde.');
+    }
+  }, [getToken]);
+
+  // Fetch detailed membership by id and open modal with full data.
+  const fetchMembershipDetail = useCallback(async (id) => {
+    try {
+      const token = await getToken();
+      const resp = await fetchWithClerk(`/api/membership-applications/${id}`, { method: 'GET' }, token);
+      const detail = resp?.data ?? resp ?? null;
+
+      if (detail) {
+        setSelectedMembership(detail);
+        setMembershipModalOpen(true);
+        return;
+      }
+    } catch (err) {
+      // If endpoint doesn't exist or fails, fall back to list entry
+      console.warn('No se pudo obtener detalle de membresía:', err.message || err);
+    }
+
+    // fallback -> find in membershipRows
+    const fallback = membershipRows.find((m) => String(m.id) === String(id));
+    if (fallback) {
+      setSelectedMembership(fallback.__raw ? { ...fallback.__raw } : fallback);
+      setMembershipModalOpen(true);
+    } else {
+      setError('No se encontró la solicitud solicitada.');
+    }
+  }, [getToken, membershipRows]);
 
   // Fetch initial data for the panel
   useEffect(() => {
@@ -106,12 +176,12 @@ export default function Panel() {
         if (alive) setLoadingUsers(false);
       }
     };
-
     fetchUsers();
+    fetchMemberships();
     return () => {
       alive = false;
     };
-  }, [getToken, normalizeActiveUsers]);
+  }, [getToken, normalizeActiveUsers, fetchMemberships]);
 
   // Fetch roles from the backend
   useEffect(() => {
@@ -319,6 +389,23 @@ export default function Panel() {
       }),
     [handleViewRole]
   );
+  // Define columns for memberships table
+  const membershipColumns = useMemo(
+    () => buildMembershipColumns({
+      onView: (row) => {
+        // Prefer explicit id fields from backend raw data, fall back to row.id
+        const id = row?.id ?? row?.IDMembresia ?? row?.__raw?.IDMembresia ?? row?.__raw?.id;
+        if (id) {
+          fetchMembershipDetail(id);
+        } else {
+          // If no id available, open modal with provided row
+          setSelectedMembership(row);
+          setMembershipModalOpen(true);
+        }
+      },
+    }),
+    [fetchMembershipDetail]
+  );
 
   // Show loading spinner until user data is loaded
   if (!isLoaded) {
@@ -362,15 +449,17 @@ export default function Panel() {
           <DataSwitchContainer
             initialKey="solicitudes"
             loading={loadingRoles || loadingUsers}
-            views={[
+          views={[
               {
                 key: "solicitudes",
                 label: "Solicitudes",
                 type: "table",
-                columns: roleColumns,
-                rows: roleRows,
+                columns: membershipColumns,
+                rows: membershipRows,
                 searchPlaceholder: "Buscar Solicitudes...",
-              },
+                filterColumn: "estado",
+              filterOptions: ["Rechazado", "Pendiente"],
+            },
               {
                 key: "users",
                 label: "Usuarios",
@@ -490,6 +579,29 @@ export default function Panel() {
           </div>
         </Modal>
       )}
+      {/* New modal for memberships*/}
+    {selectedMembership && (
+      <MembershipModal
+        open={membershipModalOpen}
+        onClose={() => {
+          setMembershipModalOpen(false);
+          setSelectedMembership(null);
+          // refresh list after modal closes in case a status changed
+          fetchMemberships();
+        }}
+        solicitud={selectedMembership}
+        onStatusChange={(membershipId, newStatus) => {
+          // Update the initial state
+          setMembershipRows(prev => 
+            prev.map(membership => 
+              membership.id === membershipId 
+                ? { ...membership, estado: newStatus }
+                : membership
+            )
+          );
+        }}
+      />
+    )}
 
       {/* Confirmation modal for user deletion */}
       <ConfirmationModal

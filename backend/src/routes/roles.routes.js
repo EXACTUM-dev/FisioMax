@@ -4,7 +4,7 @@
  * @author EXACTUM-dev
  */
 
-import express from "express";
+import express from 'express';
 import {
   getRoleById,
   updateRole,

@@ -29,6 +29,9 @@ export async function getUsuarios() {
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion
       FROM usuario u
+      INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario 
+        AND m.aceptado = 1
+        AND m.deletedAt IS NULL
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
         AND ur.eliminado = 0
@@ -55,10 +58,10 @@ export async function getUsuarios() {
 export async function getMembershipUserStateById(userId) {
   try {
     const [rows] = await dbPool.query(
-      `SELECT aceptado FROM membresia WHERE IDUsuario = ?;`,
+      `SELECT aceptado, motivoRechazo FROM membresia WHERE IDUsuario = ?;`,
       [userId]
     );
-    return rows[0]?.aceptado ?? null;
+    return rows[0] ?? null;
   } catch (error) {
     console.error("Error al consultar la base de datos:", error);
     throw error; // Throw error to be handled by controller
