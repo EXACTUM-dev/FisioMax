@@ -433,3 +433,65 @@ export async function createUserWithClerkId(userData) {
     connection.release();
   }
 }
+
+/**
+ * Reassign a user's role to "SinRol".
+ * @param {string|number} userId - User ID to reassign
+ * @returns {Promise<boolean>} True if reassigned successfully
+ */
+export async function reassignUserToSinRol(userId) {
+  const connection = await dbPool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Find "SinRol" role
+    const [sinRolRows] = await connection.query(
+      `SELECT IDRol FROM rol WHERE nombre = 'SinRol' AND deletedAt IS NULL AND eliminado = 0 LIMIT 1`
+    );
+
+    if (sinRolRows.length === 0) {
+      throw new Error('No se pudo encontrar el rol "SinRol"');
+    }
+
+    const sinRolId = sinRolRows[0].IDRol;
+
+    // Update user's role assignment to SinRol
+    await connection.query(
+      `UPDATE usuariorol 
+       SET IDRol = ?, eliminado = 0, deletedAt = NULL 
+       WHERE IDUsuario = ?`,
+      [sinRolId, userId]
+    );
+
+    await connection.commit();
+    return true;
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error al reasignar usuario a SinRol:", error);
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+/**
+ * Soft-delete a user by ID (mark as deleted).
+ * @param {string|number} userId - User ID to delete
+ * @returns {Promise<number>} Number of affected rows
+ */
+export async function markUserDeleted(userId) {
+  try {
+    const [result] = await dbPool.query(
+      `UPDATE usuario
+       SET eliminado = 1, deletedAt = NOW()
+       WHERE IDUsuario = ?
+         AND deletedAt IS NULL
+         AND eliminado = 0`,
+      [userId]
+    );
+    return result.affectedRows;
+  } catch (error) {
+    console.error("Error de base de datos en markUserDeleted:", error);
+    throw error;
+  }
+}
