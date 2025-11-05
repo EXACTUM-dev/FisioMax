@@ -381,8 +381,6 @@ export default function Panel() {
   const roleColumns = useMemo(
     () =>
       buildRolePermissionsColumns({
-    () =>
-      buildRolePermissionsColumns({
         onEdit: handleViewRole,
         editLabel: "Ver Permisos",
         editTooltip: "Ver detalles",
