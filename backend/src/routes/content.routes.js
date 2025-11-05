@@ -1,6 +1,6 @@
 /**
  * @fileoverview Content routes for multimedia access
- * @version 0.3.0
+ * @version 0.3.2
  * @author EXACTUM-dev
  * @description Defines routes for content access and upload with Clerk authentication
  */
@@ -12,84 +12,147 @@ import * as contentController from "../controllers/content.controller.js";
 
 const router = express.Router();
 
-// Configure multer for main content file uploads (5GB limit)
-const uploadContent = multer({
-  storage: multer.memoryStorage(),
+// Configure multer storage and limits
+const storage = multer.memoryStorage();
+
+// File filter to validate file types
+const fileFilter = (req, file, cb) => {
+  console.log(`Procesando archivo: ${file.fieldname} - ${file.mimetype}`);
+
+  if (file.fieldname === "file") {
+    // Main content files
+    const allowedMainTypes = [
+      "video/mp4",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/webm",
+      "video/mpeg",
+      "application/pdf",
+      "audio/mpeg",
+      "audio/wav",
+      "audio/ogg",
+      "audio/mp3",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (allowedMainTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(`Tipo de archivo principal no permitido: ${file.mimetype}`),
+        false
+      );
+    }
+  } else if (file.fieldname === "thumbnail") {
+    // Thumbnail images
+    const allowedImageTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ];
+
+    if (allowedImageTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Tipo de miniatura no permitido: ${file.mimetype}`), false);
+    }
+  } else {
+    cb(new Error(`Campo no esperado: ${file.fieldname}`), false);
+  }
+};
+
+// Configure multer upload with different limits per field
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 * 1024, // 5GB limit for main content
+    fileSize: 5 * 1024 * 1024 * 1024, // 5GB global limit (will be checked per field below)
+    files: 2, // Max 2 files total
   },
 });
 
-// Configure multer for thumbnail uploads (20MB limit)
-const uploadThumbnail = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB limit for thumbnails
-  },
-});
-
-// Combined upload middleware that handles both fields with different limits
+// Middleware to handle multiple fields with individual size validation
 const uploadFields = (req, res, next) => {
-  // First, handle the main file with 5GB limit
-  const mainFileUpload = uploadContent.single('file');
-  
-  mainFileUpload(req, res, (err) => {
+  const uploader = upload.fields([
+    { name: "file", maxCount: 1 },
+    { name: "thumbnail", maxCount: 1 },
+  ]);
+
+  uploader(req, res, (err) => {
     if (err instanceof multer.MulterError) {
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
+      console.error("Multer error:", err);
+
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({
           success: false,
-          message: 'El archivo de contenido excede el tamaño máximo permitido de 5GB',
+          message:
+            "Archivo demasiado grande. Límite: 5GB para contenido, 20MB para miniatura",
         });
       }
+
+      if (err.code === "LIMIT_FILE_COUNT") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Demasiados archivos. Máximo: 1 archivo principal + 1 miniatura",
+        });
+      }
+
+      if (err.code === "LIMIT_UNEXPECTED_FILE") {
+        return res.status(400).json({
+          success: false,
+          message: `Campo inesperado. Solo se permiten 'file' y 'thumbnail'`,
+        });
+      }
+
       return res.status(400).json({
         success: false,
-        message: `Error al subir archivo: ${err.message}`,
-      });
-    } else if (err) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error al procesar el archivo',
+        message: `Error de carga: ${err.message}`,
       });
     }
-    
-    // Store the main file temporarily
-    const mainFile = req.file;
-    
-    // Then, handle the thumbnail with 20MB limit (optional)
-    const thumbnailUpload = uploadThumbnail.single('thumbnail');
-    
-    thumbnailUpload(req, res, (thumbnailErr) => {
-      if (thumbnailErr instanceof multer.MulterError) {
-        if (thumbnailErr.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({
-            success: false,
-            message: 'La miniatura excede el tamaño máximo permitido de 20MB',
-          });
-        }
-        return res.status(400).json({
+
+    if (err) {
+      console.error("Upload error:", err);
+      return res.status(400).json({
+        success: false,
+        message: err.message || "Error al procesar los archivos",
+      });
+    }
+
+    // Validate individual file sizes after upload
+    if (req.files?.file?.[0]) {
+      const mainFileSize = req.files.file[0].size;
+      const maxMainSize = 5 * 1024 * 1024 * 1024; // 5GB
+
+      if (mainFileSize > maxMainSize) {
+        return res.status(413).json({
           success: false,
-          message: `Error al subir miniatura: ${thumbnailErr.message}`,
+          message: "El archivo principal excede el tamaño máximo de 5GB",
         });
-      } else if (thumbnailErr) {
-        // Ignore errors if thumbnail is optional
-        console.warn('Thumbnail upload warning:', thumbnailErr.message);
       }
-      
-      // Restructure files to match the expected format in controller
-      req.files = {};
-      
-      if (mainFile) {
-        req.files.file = [mainFile];
+    }
+
+    if (req.files?.thumbnail?.[0]) {
+      const thumbnailSize = req.files.thumbnail[0].size;
+      const maxThumbnailSize = 20 * 1024 * 1024; // 20MB
+
+      if (thumbnailSize > maxThumbnailSize) {
+        return res.status(413).json({
+          success: false,
+          message: "La miniatura excede el tamaño máximo de 20MB",
+        });
       }
-      
-      if (req.file && req.file.fieldname === 'thumbnail') {
-        req.files.thumbnail = [req.file];
-      }
-      
-      delete req.file;
-      
-      next();
+    }
+
+    console.log("Archivos procesados correctamente:", {
+      file: req.files?.file?.[0]?.originalname,
+      thumbnail: req.files?.thumbnail?.[0]?.originalname,
     });
+
+    next();
   });
 };
 

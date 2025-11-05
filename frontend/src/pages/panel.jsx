@@ -51,6 +51,7 @@ export default function Panel() {
   const navigate = useNavigate();
   const [current, setCurrent] = useState("bolt");
 
+
   // State for UI data
   const [userRows, setUserRows] = useState([]); // Users from backend
   const [roleRows, setRoleRows] = useState([]); // Roles from backend
@@ -67,6 +68,7 @@ export default function Panel() {
   const [selectedRoleForView, setSelectedRoleForView] = useState(null);
   const [rolePrivileges, setRolePrivileges] = useState([]);
 
+
   const [error, setError] = useState(null);
 
   // Confirmation modal state for user deletion
@@ -75,6 +77,10 @@ export default function Panel() {
 
   // Success modal state for user deletion
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+
+  // Error modal state for user deletion
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   /**
    * Normalizes and filters out deleted users for table rendering.
@@ -170,7 +176,6 @@ export default function Panel() {
           : usersResponse?.data || [];
         setUserRows(normalizeActiveUsers(raw));
       } catch (err) {
-        console.error("Error de carga de usuarios:", err);
         setError("Error de carga de usuarios. Por favor intente más tarde.");
       } finally {
         if (alive) setLoadingUsers(false);
@@ -203,8 +208,8 @@ export default function Panel() {
           : rolesResponse?.data || [];
         setRoleRows(extractedRoles);
       } catch (err) {
-        console.error("Error de carga de roles:", err);
-        setError("Error de carga de roles. Por favor intente más tarde.");
+        console.error("Error al cargar roles:", err);
+        setError("Error al cargar roles. Por favor intente más tarde.");
       } finally {
         if (alive) setLoadingRoles(false);
       }
@@ -266,7 +271,7 @@ export default function Panel() {
       try {
         const token = await getToken();
         const response = await fetchWithClerk(
-          `/api/roles/${roleRow.id}`,
+          `/roles/${roleRow.id}`,
           { method: "GET" },
           token
         );
@@ -275,11 +280,13 @@ export default function Panel() {
           const roleData = response.data;
 
           // Map privileges to table format (without checkboxes, just for display)
-          const mappedPrivileges = (roleData.privileges ?? []).map((p, index) => ({
-            id: p.id,
-            label: p.name,
-            sequenceNumber: index + 1,
-          }));
+          const mappedPrivileges = (roleData.privileges ?? []).map(
+            (p, index) => ({
+              id: p.id,
+              label: p.name,
+              sequenceNumber: index + 1,
+            })
+          );
 
           setSelectedRoleForView(roleData);
           setRolePrivileges(mappedPrivileges);
@@ -298,9 +305,6 @@ export default function Panel() {
       return [];
     }
 
-    console.log("Current user clerkID:", user?.id);
-    console.log("Original userRows:", userRows);
-
     return userRows
       .filter((userRow) => userRow.clerkID !== user?.id) // Exclude only the current user
       .map((user) => {
@@ -308,11 +312,11 @@ export default function Panel() {
           user.apellidoM || ""
         }`.trim();
 
-        const roleName =
-          user.rol ||
-          user.rolNombre ||
-          roleRows.find((r) => r.IDRol === user.IDRol)?.nombre ||
-          "Sin rol asignado";
+      const roleName =
+        user.rol ||
+        user.rolNombre ||
+        roleRows.find((r) => r.IDRol === user.IDRol)?.nombre ||
+        "Sin rol asignado";
 
         return {
           // keep original payload
@@ -326,7 +330,6 @@ export default function Panel() {
           roleName: roleName,
           rolNombre: user.rolNombre ?? roleName,
 
-          // normalized primary key for table actions (force id to be the backend PK)
           /**
            * Ensures action handlers (edit/delete) receive the real backend PK.
            * Many table builders rely on `row.id`, so force it to be IDUsuario.
@@ -424,13 +427,13 @@ export default function Panel() {
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-[1100px] mx-auto">
           <Title2 className="mb-12">Panel de Control</Title2>
-          
-          <div className="flex justify-between items-center mb-6">
+
+          <div className="flex justify-between mb-6">
             <Button
               variant="brand"
               size="sm"
               radius="lg"
-              onClick={() => navigate('/uploadMultimedia')}
+              onClick={() => navigate("/uploadMultimedia")}
             >
               Subir Contenido
             </Button>
@@ -623,7 +626,6 @@ export default function Panel() {
             setSuccessModalOpen(true);
           } catch (err) {
             console.error("Error al eliminar usuario:", err);
-            alert(err?.message || "No se pudo eliminar el usuario.");
           }
         }}
         onCancel={() => setDeleteConfirmOpen(false)}
