@@ -27,7 +27,7 @@ export default function SearchBar({
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
-        className={`w-full rounded-lg border border-slate-300 bg-white px-10 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 ${inputClassName}`}
+        className={`w-full rounded-lg border border-slate-300 bg-white px-10 py-2 text-sm outline-none focus:ring-2 focus:ring-[#CAD00F] ${inputClassName}`}
       />
       <svg
         aria-hidden="true"
