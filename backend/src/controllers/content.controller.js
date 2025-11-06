@@ -187,14 +187,37 @@ export async function index(req, res) {
  */
 export async function upload(req, res) {
   try {    
-    let { nombre, descripcion, tipo, role } = req.body;
+    let { nombre, descripcion, tipo, roles } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
+    
+    console.log('=== UPLOAD REQUEST ===');
+    console.log('Body:', { nombre, descripcion, tipo, roles });
+    console.log('File:', file ? file.originalname : 'No file');
+    console.log('Thumbnail:', thumbnail ? thumbnail.originalname : 'No thumbnail');
 
     // Sanitize input fields
     nombre = sanitizeInput(nombre);
     descripcion = sanitizeInput(descripcion);
     tipo = tipo?.trim() || "";
+    
+    // Parse roles if it's a JSON string
+    let roleIds = [];
+    if (roles) {
+      try {
+        roleIds = typeof roles === 'string' ? JSON.parse(roles) : roles;
+        if (!Array.isArray(roleIds)) {
+          roleIds = [roleIds];
+        }
+        console.log('Parsed roleIds:', roleIds);
+      } catch (parseError) {
+        console.error('Error parsing roles:', parseError);
+        return res.status(400).json({
+          success: false,
+          message: "Formato de roles inválido",
+        });
+      }
+    }
 
     // Validate required fields
     if (!nombre) {
@@ -225,7 +248,7 @@ export async function upload(req, res) {
       });
     }
 
-    const allowedTypes = ["Video", "Articulo", "Podcast", "Documento"];
+    const allowedTypes = ["Video", "Articulo", "Podcast", "Libro"];
     if (!allowedTypes.includes(tipo)) {
       return res.status(400).json({
         success: false,
@@ -233,18 +256,23 @@ export async function upload(req, res) {
       });
     }
 
-    if (!role) {
+    if (!roleIds || roleIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Debes seleccionar a quién va dirigido el contenido",
+        message: "Debes seleccionar al menos un rol al que va dirigido el contenido",
       });
     }
 
-    const roleId = parseInt(role);
-    if (isNaN(roleId) || roleId <= 0) {
+    // Validate all role IDs
+    const validatedRoleIds = roleIds.map(id => parseInt(id)).filter(id => !isNaN(id) && id > 0);
+    
+    console.log('Validated roleIds:', validatedRoleIds);
+    
+    if (validatedRoleIds.length === 0) {
+      console.error('No valid role IDs found');
       return res.status(400).json({
         success: false,
-        message: "El rol seleccionado no es válido",
+        message: "Los roles seleccionados no son válidos",
       });
     }
 
@@ -255,22 +283,36 @@ export async function upload(req, res) {
       });
     }
 
-    // Validate role exists
-    const roleData = await findRoleById(roleId);
-    if (!roleData) {
-      return res.status(400).json({
-        success: false,
-        message: "El rol seleccionado no existe",
-      });
-    }
-
-    // Get all privileges for the selected role
-    const privilegeIds = await getPrivilegeIdsByRole(roleId);
-
-    if (privilegeIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "El rol seleccionado no tiene privilegios asignados",
+    // Validate all roles exist and collect all privilege IDs
+    let allPrivilegeIds = [];
+    let roleNames = [];
+    
+    for (const roleId of validatedRoleIds) {
+      const roleData = await findRoleById(roleId);
+      if (!roleData) {
+        return res.status(400).json({
+          success: false,
+          message: `El rol con ID ${roleId} no existe`,
+        });
+      }
+      
+      roleNames.push(roleData.nombre);
+      
+      // Get all privileges for this role
+      const privilegeIds = await getPrivilegeIdsByRole(roleId);
+      
+      if (privilegeIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: `El rol "${roleData.nombre}" no tiene privilegios asignados`,
+        });
+      }
+      
+      // Add privileges to the collection (avoid duplicates)
+      privilegeIds.forEach(privId => {
+        if (!allPrivilegeIds.includes(privId)) {
+          allPrivilegeIds.push(privId);
+        }
       });
     }
 
@@ -279,7 +321,7 @@ export async function upload(req, res) {
       Video: "videos",
       Articulo: "articulos",
       Podcast: "podcasts",
-      Documento: "documentos",
+      Libro: "libros",
     };
 
     const folder = folderMap[tipo] || "contenido";
@@ -304,11 +346,11 @@ export async function upload(req, res) {
         descripcion: descripcion || "",
         tipo: tipo.toLowerCase(),
         IDMultimedia: s3Key,
-        tipoMembresia: roleData.nombre,
+        tipoMembresia: roleNames.join(", "), // Store all role names
       });
 
-      // Assign content to all role privileges in accede table
-      await assignContentToPrivileges(contentId, privilegeIds);
+      // Assign content to all collected privileges in accede table
+      await assignContentToPrivileges(contentId, allPrivilegeIds);
     } catch (dbError) {
       console.error("Error creating content in database:", dbError);
       return res.status(500).json({
@@ -330,11 +372,11 @@ export async function upload(req, res) {
           descripcion: `Miniatura de ${nombre}`,
           tipo: "imagen",
           IDMultimedia: thumbnailKey,
-          tipoMembresia: roleData.nombre,
+          tipoMembresia: roleNames.join(", "),
         });
 
         // Assign thumbnail to same privileges
-        await assignContentToPrivileges(thumbnailId, privilegeIds);
+        await assignContentToPrivileges(thumbnailId, allPrivilegeIds);
       } catch (thumbError) {
         console.error("Error uploading thumbnail:", thumbError);
         // Continue even if thumbnail fails
@@ -347,7 +389,8 @@ export async function upload(req, res) {
       data: {
         contentId,
         thumbnailId,
-        assignedPrivileges: privilegeIds.length,
+        assignedPrivileges: allPrivilegeIds.length,
+        assignedRoles: roleNames,
       },
     });
   } catch (error) {
