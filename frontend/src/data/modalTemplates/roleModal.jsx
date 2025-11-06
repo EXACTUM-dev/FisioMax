@@ -125,7 +125,7 @@ function ChecklistModalContent({
     <Modal
       open={open}
       onClose={onClose}
-      size="xl"
+      size="sm"
       requireConfirmation={isDirty}
     >
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 w-full">
