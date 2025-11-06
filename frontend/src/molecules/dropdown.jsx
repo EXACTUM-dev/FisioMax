@@ -62,7 +62,7 @@ export default function Dropdown({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full px-3 py-2 text-left border rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors ${
+          className={`w-full px-3 py-2 text-left border rounded focus:outline-none focus:ring-2 focus:ring-[#CAD00F] transition-colors ${
             error 
               ? "border-red-300 bg-red-50" 
               : "border-gray-300 hover:border-gray-400"
@@ -91,7 +91,7 @@ export default function Dropdown({
                 type="button"
                 onClick={() => handleSelect(option.value)}
                 className={`w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors ${
-                  option.value === value ? "bg-blue-50 text-blue-700" : "text-gray-900"
+                  option.value === value ? "bg-[#CAD00F]/10 text-gray-900 font-medium" : "text-gray-900"
                 }`}
               >
                 {option.label}

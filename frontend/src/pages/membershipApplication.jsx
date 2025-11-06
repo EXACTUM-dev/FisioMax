@@ -15,6 +15,7 @@ import FormField from "../molecules/form";
 import FileUpload from "../molecules/fileUpload";
 import Modal from "../molecules/modal";
 import ConfirmModal from "../molecules/confirmationModal";
+import Dropdown from "../molecules/dropdown";
 import { MEMBERSHIP_API } from "../config/api";
 import logo from '../assets/icons/SOMEFIPPlogo.png';
 
@@ -41,42 +42,6 @@ const CAREER_OPTIONS = [
   "Nutrición",
   "Gerontología"
 ];
-
-/**
- * Select field component for dropdowns.
- * @param {Object} props - Component props.
- * @param {string} props.label - Field label.
- * @param {string} props.name - Field name.
- * @param {string} props.value - Current value.
- * @param {Function} props.onChange - Change handler.
- * @param {Array<{value: string, label: string}>} props.options - Options array.
- * @param {boolean} props.required - Whether field is required.
- * @param {string} props.error - Error message.
- * @returns {JSX.Element} Select field component.
- */
-const SelectField = ({ label, name, value, onChange, options, required, error }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      required={required}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
-    >
-      <option value="">Selecciona una opción</option>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-    {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-  </div>
-);
 
 /**
  * Combobox field component for dropdown with custom input option.
@@ -167,7 +132,7 @@ const ComboboxField = ({ label, name, value, onChange, options, required, error,
           onBlur={handleInputBlur}
           placeholder={placeholder}
           required={required}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white text-gray-900"
         />
         <button
           type="button"
@@ -720,14 +685,35 @@ export default function MembershipApplicationPage() {
             {/* Professional practice location section */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Ubicación de práctica profesional</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <SelectField
-                label="País" name="pais" required value={formData.pais} onChange={(e) => handlePaisChange(e.target.value)} options={countries} error={errors.pais}
+              <Dropdown
+                label="País" 
+                name="pais" 
+                required 
+                value={formData.pais} 
+                onChange={(e) => handlePaisChange(e.target.value)} 
+                options={countries} 
+                error={errors.pais}
+                placeholder="Selecciona un país"
               />
-              <SelectField
-                label="Estado / Provincia" name="estado" required value={formData.estado} onChange={(e) => handleEstadoChange(e.target.value)} options={states} error={errors.estado}
+              <Dropdown
+                label="Estado / Provincia" 
+                name="estado" 
+                required 
+                value={formData.estado} 
+                onChange={(e) => handleEstadoChange(e.target.value)} 
+                options={states} 
+                error={errors.estado}
+                placeholder="Selecciona un estado"
               />
-              <SelectField
-                label="Ciudad" name="ciudad" required value={formData.ciudad} onChange={handleInputChange} options={cities} error={errors.ciudad}
+              <Dropdown
+                label="Ciudad" 
+                name="ciudad" 
+                required 
+                value={formData.ciudad} 
+                onChange={handleInputChange} 
+                options={cities} 
+                error={errors.ciudad}
+                placeholder="Selecciona una ciudad"
               />
               <FormField
                 label="Colonia" name="colonia" value={formData.colonia} onChange={handleInputChange} placeholder="Ingresa tu colonia"
