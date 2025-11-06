@@ -9,7 +9,7 @@ import React, { useState, useEffect } from 'react';
 import SuccessErrorModal from './successErrorModal';
 import Modal from '../molecules/modal';
 import Dropdown from '../molecules/dropdown';
-import editIcon from "../assets/icons/square-pen.png";
+import EditButton from '../atoms/editButton';
 import Button from "../atoms/button";
 
 // Variables for country, state and city APIs
@@ -426,18 +426,12 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-semibold">Información personal</h3>
           {canEdit && (
-            <button
-              type="button"
+            <EditButton 
+              isEditing={isEditingPersonal}
               onClick={() => setIsEditingPersonal((v) => !v)}
-              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
-              aria-label={isEditingPersonal ? 'Cancelar edición' : 'Editar información personal'}
-            >
-              <img
-                src={editIcon}
-                alt="Editar"
-                className="w-5 h-5 object-contain opacity-80"
-              />
-            </button>
+              editLabel="Editar"
+              cancelLabel="Cancelar"
+            />
           )}
         </div>
 
@@ -566,18 +560,12 @@ export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-semibold">Información de contacto</h3>
           {canEdit && (
-            <button
-              type="button"
+            <EditButton 
+              isEditing={isEditingContact}
               onClick={() => setIsEditingContact((v) => !v)}
-              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
-              aria-label={isEditingContact ? 'Cancelar edición' : 'Editar información de contacto'}
-            >
-              <img
-                src={editIcon}
-                alt="Editar"
-                className="w-5 h-5 object-contain opacity-80"
-              />
-            </button>
+              editLabel="Editar"
+              cancelLabel="Cancelar"
+            />
           )}
         </div>
 

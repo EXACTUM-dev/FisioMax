@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import editIcon from "../assets/icons/square-pen.png";
+import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
 import Dropdown from "../molecules/dropdown";
 import SuccessErrorModal from "./successErrorModal";
@@ -286,18 +286,12 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
       <div className="flex justify-between items-start">
         <h3 className="text-lg font-semibold">Datos de domicilio</h3>
         {canEdit && (
-          <button
-            type="button"
+          <EditButton 
+            isEditing={isEditing}
             onClick={() => setIsEditing((v) => !v)}
-            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
-            aria-label={isEditing ? "Cancelar edición" : "Editar domicilio"}
-          >
-            <img
-              src={editIcon}
-              alt="Editar"
-              className="w-5 h-5 object-contain opacity-80"
-            />
-          </button>
+            editLabel="Editar"
+            cancelLabel="Cancelar"
+          />
         )}
       </div>
 

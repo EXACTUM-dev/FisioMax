@@ -9,7 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import FileUpload from '../molecules/fileUpload';
 import { updateUserDocuments, getUserProfileById, getCurrentUserProfile } from '../controllers/profile.controller';
-import editIcon from "../assets/icons/square-pen.png";
+import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
 import SuccessErrorModal from './successErrorModal';
 import Modal from '../molecules/modal';
@@ -251,18 +251,12 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-lg font-semibold">Documentación</h3>
         {canEdit && (
-          <button
-            type="button"
+          <EditButton 
+            isEditing={isEditing}
             onClick={() => setIsEditing((v) => !v)}
-            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
-            aria-label={isEditing ? 'Cancelar edición' : 'Editar documentación'}
-          >
-            <img
-              src={editIcon}
-              alt="Editar"
-              className="w-5 h-5 object-contain opacity-80"
-            />
-          </button>
+            editLabel="Editar"
+            cancelLabel="Cancelar"
+          />
         )}
       </div>
 
