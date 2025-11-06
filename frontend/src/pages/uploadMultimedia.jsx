@@ -38,7 +38,7 @@ export default function UploadMultimedia() {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedRoles, setSelectedRoles] = useState([]);
   const [roles, setRoles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
@@ -126,12 +126,20 @@ export default function UploadMultimedia() {
   };
 
   /**
-   * Handles role selection change from dropdown.
+   * Handles role selection change from checkbox.
    *
-   * @param {Event} e - The select change event
+   * @param {string} roleId - The role ID to toggle
    */
-  const handleRoleChange = (e) => {
-    setSelectedRole(e.target.value);
+  const handleRoleToggle = (roleId) => {
+    setSelectedRoles((prev) => {
+      if (prev.includes(roleId)) {
+        // Remove role if already selected
+        return prev.filter((id) => id !== roleId);
+      } else {
+        // Add role if not selected
+        return [...prev, roleId];
+      }
+    });
   };
 
   /**
@@ -171,8 +179,8 @@ export default function UploadMultimedia() {
       return;
     }
 
-    if (!selectedRole) {
-      setErrorMessage("Debes seleccionar a quién va dirigido el contenido");
+    if (!selectedRoles || selectedRoles.length === 0) {
+      setErrorMessage("Debes seleccionar al menos un rol al que va dirigido el contenido");
       setErrorModalOpen(true);
       return;
     }
@@ -193,7 +201,7 @@ export default function UploadMultimedia() {
       uploadData.append("nombre", formData.nombre.trim());
       uploadData.append("descripcion", formData.descripcion.trim());
       uploadData.append("tipo", formData.tipo);
-      uploadData.append("role", selectedRole);
+      uploadData.append("roles", JSON.stringify(selectedRoles));
 
       // Add thumbnail if selected
       if (selectedThumbnail) {
@@ -225,7 +233,7 @@ export default function UploadMultimedia() {
         });
         setSelectedFile(null);
         setSelectedThumbnail(null);
-        setSelectedRole("");
+        setSelectedRoles([]);
 
         // Show success modal
         setSuccessModalOpen(true);
@@ -338,22 +346,33 @@ export default function UploadMultimedia() {
                   <h3 className="text-base font-semibold text-slate-900 mb-4">
                     Dirigido a <span className="text-red-500">*</span>
                   </h3>
-                  <select
-                    value={selectedRole}
-                    onChange={handleRoleChange}
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white"
-                    required
-                  >
-                    <option value="">Seleccionar...</option>
-                    {roles.map((role) => (
-                      <option
-                        key={role.IDRol || role.id}
-                        value={role.IDRol || role.id}
-                      >
-                        {role.nombre || role.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2 border border-slate-300 rounded-lg p-4 max-h-48 overflow-y-auto">
+                    {roles.length === 0 ? (
+                      <p className="text-sm text-slate-500">Cargando roles...</p>
+                    ) : (
+                      roles.map((role) => (
+                        <label
+                          key={role.IDRol || role.id}
+                          className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedRoles.includes(role.IDRol || role.id)}
+                            onChange={() => handleRoleToggle(role.IDRol || role.id)}
+                            className="w-4 h-4 text-[#CAD00F] border-slate-300 rounded focus:ring-[#CAD00F] focus:ring-2"
+                          />
+                          <span className="text-sm text-slate-700">
+                            {role.nombre || role.name}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  {selectedRoles.length > 0 && (
+                    <p className="text-xs text-slate-500 mt-2">
+                      {selectedRoles.length} {selectedRoles.length === 1 ? 'rol seleccionado' : 'roles seleccionados'}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -473,7 +492,7 @@ export default function UploadMultimedia() {
                     });
                     setSelectedFile(null);
                     setSelectedThumbnail(null);
-                    setSelectedRole("");
+                    setSelectedRoles([]);
                   }}
                   disabled={uploading}
                 >
