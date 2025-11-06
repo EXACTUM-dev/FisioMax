@@ -15,15 +15,6 @@ import Button from "../atoms/button";
  * @return {!JSX.Element} Membership card component.
  */
 export default function MembershipCard({data = {}}) {
-  // Debug: verificar datos de membresía
-  console.log('MembershipCard - Full data:', data);
-  console.log('MembershipCard - Membership fields:', {
-    membershipType: data.membershipType,
-    membershipRegisteredAt: data.membershipRegisteredAt,
-    membershipExpiresAt: data.membershipExpiresAt,
-    membershipHoursFormation: data.membershipHoursFormation,
-    membershipPaymentStatus: data.membershipPaymentStatus
-  });
 
   const registeredAt = data.membershipRegisteredAt
     ? new Date(data.membershipRegisteredAt).toLocaleDateString('es-MX', {
