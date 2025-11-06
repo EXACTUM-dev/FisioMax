@@ -20,7 +20,7 @@ function FormInput({ type = "text", id, name, value, onChange, placeholder, mult
     	// Render multiline if the field is especified to
 		return (
 		<textarea
-			className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 resize-y"
+			className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#CAD00F] text-gray-900 resize-y"
 			id={id}
 			name={name}
 			value={value}
@@ -32,7 +32,7 @@ function FormInput({ type = "text", id, name, value, onChange, placeholder, mult
 	}
 	return (
 		<input
-			className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
+			className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#CAD00F] text-gray-900"
 			type={type}
 			id={id}
 			name={name}
