@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from "react";
 import editIcon from "../assets/icons/square-pen.png";
 import Button from "../atoms/button";
+import Dropdown from "../molecules/dropdown";
 import SuccessErrorModal from "./successErrorModal";
 import Modal from "../molecules/modal";
 
@@ -17,50 +18,6 @@ const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
   .VITE_COUNTRIES_POSITIONS_ENDPOINT;
 const COUNTRIES_STATES_ENDPOINT = import.meta.env.VITE_COUNTRIES_STATES_ENDPOINT;
 const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT;
-
-/**
- * Select field component for dropdowns with validation support.
- * @param {!Object} props - Component props.
- * @param {string} props.label - Field label text.
- * @param {string} props.name - Field name attribute.
- * @param {string} props.value - Current selected value.
- * @param {Function} props.onChange - Change event handler.
- * @param {Array<Object|string>} props.options - Array of options with value/label or strings.
- * @param {boolean} [props.required=false] - Whether field is required.
- * @param {string} [props.error] - Error message to display.
- * @return {!JSX.Element} Select field component.
- */
-const SelectField = ({
-  label,
-  name,
-  value,
-  onChange,
-  options,
-  required,
-  error,
-}) => (
-  <div>
-    <label className="block text-sm font-medium text-slate-600 mb-1">
-      {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      required={required}
-      className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white text-slate-900"
-    >
-      <option value="">Selecciona una opción</option>
-      {options.map((option) => (
-        <option key={option.value || option} value={option.value || option}>
-          {option.label || option}
-        </option>
-      ))}
-    </select>
-    {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-  </div>
-);
 
 /**
  * Displays user address card with editable fields for country, state, city, and address details.
@@ -347,29 +304,32 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         {isEditing ? (
           <>
-            <SelectField
+            <Dropdown
               label="País"
               name="pais"
               value={form.pais}
               onChange={(e) => handlePaisChange(e.target.value)}
               options={countries}
               required={true}
+              placeholder="Selecciona un país"
             />
-            <SelectField
+            <Dropdown
               label="Estado / Provincia"
               name="estado"
               value={form.estado}
               onChange={(e) => handleEstadoChange(e.target.value)}
               options={states}
               required={true}
+              placeholder="Selecciona un estado"
             />
-            <SelectField
+            <Dropdown
               label="Ciudad"
               name="ciudad"
               value={form.ciudad}
               onChange={handleChange}
               options={cities}
               required={true}
+              placeholder="Selecciona una ciudad"
             />
           </>
         ) : (

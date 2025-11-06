@@ -14,6 +14,7 @@ import { Title2 } from "../atoms/typography";
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
+import Dropdown from "../molecules/dropdown";
 
 // Organisms
 import SuccessErrorModal from "../organisms/successErrorModal";
@@ -324,21 +325,20 @@ export default function UploadMultimedia() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {/* Content type selector */}
                 <div>
-                  <h3 className="text-base font-semibold text-slate-900 mb-4">
-                    Tipo de contenido <span className="text-red-500">*</span>
-                  </h3>
-                  <select
+                  <Dropdown
                     name="tipo"
+                    label="Tipo de contenido"
+                    required={true}
                     value={formData.tipo}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white"
-                    required
-                  >
-                    <option value="Articulo">Artículo</option>
-                    <option value="Video">Video</option>
-                    <option value="Podcast">Podcast</option>
-                    <option value="Libro">Libro</option>
-                  </select>
+                    options={[
+                      { value: "Articulo", label: "Artículo" },
+                      { value: "Video", label: "Video" },
+                      { value: "Podcast", label: "Podcast" },
+                      { value: "Libro", label: "Libro" },
+                    ]}
+                    placeholder="Selecciona un tipo"
+                  />
                 </div>
 
                 {/* Role selector */}

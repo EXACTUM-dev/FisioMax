@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import SuccessErrorModal from './successErrorModal';
 import Modal from '../molecules/modal';
+import Dropdown from '../molecules/dropdown';
 import editIcon from "../assets/icons/square-pen.png";
 import Button from "../atoms/button";
 
@@ -34,33 +35,6 @@ const CAREER_OPTIONS = [
   "Nutrición",
   "Gerontología"
 ];
-
-/**
- * Select field component for dropdowns.
- */
-const SelectField = ({ label, name, value, onChange, options, required, error }) => (
-  <div>
-    <label className="block text-sm font-medium text-slate-600 mb-1">
-      {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      required={required}
-      className="mt-1 w-full border rounded px-2 py-1 bg-white text-slate-900"
-    >
-      <option value="">Selecciona una opción</option>
-      {options.map((option) => (
-        <option key={option.value || option} value={option.value || option}>
-          {option.label || option}
-        </option>
-      ))}
-    </select>
-    {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-  </div>
-);
 
 /**
  * Combobox field component for dropdown with custom input option.
