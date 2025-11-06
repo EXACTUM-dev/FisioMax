@@ -4,12 +4,12 @@
  * @version 1.0.0
  */
 
-import React, {useEffect, useState} from "react";
-import {useUser, useAuth} from "@clerk/clerk-react";
+import React, { useEffect, useState } from "react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 
 // Atoms
 import Button from "../atoms/button";
-import {Title2} from "../atoms/typography";
+import { Title2 } from "../atoms/typography";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -21,12 +21,12 @@ import SuccessErrorModal from "../organisms/successErrorModal";
 /**
  * Component for uploading multimedia content with role-based access control.
  * Allows administrators to upload files, set metadata, and assign content to specific roles.
- * 
+ *
  * @returns {JSX.Element} The upload multimedia page component
  */
 export default function UploadMultimedia() {
-  const {user, isLoaded} = useUser();
-  const {getToken} = useAuth();
+  const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const [current, setCurrent] = useState("uploadMultimedia");
 
   /** Form state for content metadata */
@@ -41,7 +41,7 @@ export default function UploadMultimedia() {
   const [selectedRole, setSelectedRole] = useState("");
   const [roles, setRoles] = useState([]);
   const [uploading, setUploading] = useState(false);
-  
+
   // Modal states
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
@@ -56,7 +56,7 @@ export default function UploadMultimedia() {
     async function fetchRoles() {
       try {
         const token = await getToken();
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/roles`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/roles`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -76,11 +76,11 @@ export default function UploadMultimedia() {
 
   /**
    * Updates form data when input fields change.
-   * 
+   *
    * @param {Event} e - The input change event
    */
   const handleInputChange = (e) => {
-    const {name, value} = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -89,33 +89,35 @@ export default function UploadMultimedia() {
 
   /**
    * Handles file selection from the file input.
-   * 
+   *
    * @param {Event} e - The file input change event
    * @param {string} type - Type of file ('content' or 'thumbnail')
    */
-  const handleFileChange = (e, type = 'content') => {
+  const handleFileChange = (e, type = "content") => {
     const file = e.target.files[0];
     if (file) {
       // Validate file size based on type
       let maxSize;
       let maxSizeLabel;
-      
-      if (type === 'thumbnail') {
+
+      if (type === "thumbnail") {
         maxSize = 20 * 1024 * 1024; // 20MB for thumbnails
-        maxSizeLabel = '20MB';
+        maxSizeLabel = "20MB";
       } else {
         maxSize = 5 * 1024 * 1024 * 1024; // 5GB for content files
-        maxSizeLabel = '5GB';
+        maxSizeLabel = "5GB";
       }
-      
+
       if (file.size > maxSize) {
-        setErrorMessage(`El archivo es demasiado grande. El tamaño máximo permitido es ${maxSizeLabel}.`);
+        setErrorMessage(
+          `El archivo es demasiado grande. El tamaño máximo permitido es ${maxSizeLabel}.`
+        );
         setErrorModalOpen(true);
-        e.target.value = ''; // Clear the input
+        e.target.value = ""; // Clear the input
         return;
       }
-      
-      if (type === 'thumbnail') {
+
+      if (type === "thumbnail") {
         setSelectedThumbnail(file);
       } else {
         setSelectedFile(file);
@@ -125,7 +127,7 @@ export default function UploadMultimedia() {
 
   /**
    * Handles role selection change from dropdown.
-   * 
+   *
    * @param {Event} e - The select change event
    */
   const handleRoleChange = (e) => {
@@ -136,12 +138,12 @@ export default function UploadMultimedia() {
    * Handles form submission and uploads content to the server.
    * Validates required fields before submission and sends file with metadata.
    * Resets form state on successful upload.
-   * 
+   *
    * @param {Event} e - The form submit event
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.nombre.trim()) {
       setErrorMessage("El nombre del archivo es obligatorio");
@@ -150,7 +152,9 @@ export default function UploadMultimedia() {
     }
 
     if (formData.nombre.length > 50) {
-      setErrorMessage("El nombre del archivo no puede exceder los 50 caracteres");
+      setErrorMessage(
+        "El nombre del archivo no puede exceder los 50 caracteres"
+      );
       setErrorModalOpen(true);
       return;
     }
@@ -190,26 +194,29 @@ export default function UploadMultimedia() {
       uploadData.append("descripcion", formData.descripcion.trim());
       uploadData.append("tipo", formData.tipo);
       uploadData.append("role", selectedRole);
-      
+
       // Add thumbnail if selected
       if (selectedThumbnail) {
         uploadData.append("thumbnail", selectedThumbnail);
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/content/upload`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: uploadData,
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/content/upload`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: uploadData,
+        }
+      );
 
       const result = await response.json();
 
       if (result.success) {
         // Save content name before resetting form
         setUploadedContentName(formData.nombre);
-        
+
         // Reset form to initial state
         setFormData({
           nombre: "",
@@ -219,7 +226,7 @@ export default function UploadMultimedia() {
         setSelectedFile(null);
         setSelectedThumbnail(null);
         setSelectedRole("");
-        
+
         // Show success modal
         setSuccessModalOpen(true);
       } else {
@@ -228,7 +235,9 @@ export default function UploadMultimedia() {
       }
     } catch (error) {
       console.error("Error uploading content:", error);
-      setErrorMessage("Error al subir el contenido. Por favor, intenta nuevamente.");
+      setErrorMessage(
+        "Error al subir el contenido. Por favor, intenta nuevamente."
+      );
       setErrorModalOpen(true);
     } finally {
       setUploading(false);
@@ -239,7 +248,10 @@ export default function UploadMultimedia() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{borderBottomColor: '#CAD00F'}}></div>
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto"
+            style={{ borderBottomColor: "#CAD00F" }}
+          ></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -317,7 +329,7 @@ export default function UploadMultimedia() {
                     <option value="Articulo">Artículo</option>
                     <option value="Video">Video</option>
                     <option value="Podcast">Podcast</option>
-                    <option value="Documento">Documento</option>
+                    <option value="Libro">Libro</option>
                   </select>
                 </div>
 
@@ -334,7 +346,10 @@ export default function UploadMultimedia() {
                   >
                     <option value="">Seleccionar...</option>
                     {roles.map((role) => (
-                      <option key={role.IDRol || role.id} value={role.IDRol || role.id}>
+                      <option
+                        key={role.IDRol || role.id}
+                        value={role.IDRol || role.id}
+                      >
                         {role.nombre || role.name}
                       </option>
                     ))}
@@ -350,7 +365,7 @@ export default function UploadMultimedia() {
                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#CAD00F] transition-colors">
                   <input
                     type="file"
-                    onChange={(e) => handleFileChange(e, 'content')}
+                    onChange={(e) => handleFileChange(e, "content")}
                     className="hidden"
                     id="file-upload"
                     accept="video/*,audio/*,image/*,.pdf,.doc,.docx"
@@ -380,7 +395,10 @@ export default function UploadMultimedia() {
                     ) : (
                       <>
                         <p className="text-sm text-slate-600 mb-1">
-                          <span className="text-[#CAD00F] font-medium">Sube un archivo</span> o arrástralo aquí
+                          <span className="text-[#CAD00F] font-medium">
+                            Sube un archivo
+                          </span>{" "}
+                          o arrástralo aquí
                         </p>
                         <p className="text-xs text-slate-500">
                           MP4, MOV, WEBP, PDF hasta 5GB
@@ -399,7 +417,7 @@ export default function UploadMultimedia() {
                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#CAD00F] transition-colors">
                   <input
                     type="file"
-                    onChange={(e) => handleFileChange(e, 'thumbnail')}
+                    onChange={(e) => handleFileChange(e, "thumbnail")}
                     className="hidden"
                     id="thumbnail-upload"
                     accept="image/png,image/jpeg,image/jpg"
@@ -428,7 +446,10 @@ export default function UploadMultimedia() {
                     ) : (
                       <>
                         <p className="text-sm text-slate-600 mb-1">
-                          <span className="text-[#CAD00F] font-medium">Sube una imagen</span> o arrástrala aquí
+                          <span className="text-[#CAD00F] font-medium">
+                            Sube una imagen
+                          </span>{" "}
+                          o arrástrala aquí
                         </p>
                         <p className="text-xs text-slate-500">
                           PNG, JPG hasta 20MB
@@ -458,11 +479,7 @@ export default function UploadMultimedia() {
                 >
                   Cancelar
                 </Button>
-                <Button
-                  type="submit"
-                  variant="brand"
-                  disabled={uploading}
-                >
+                <Button type="submit" variant="brand" disabled={uploading}>
                   {uploading ? "Subiendo..." : "Subir contenido"}
                 </Button>
               </div>
@@ -492,4 +509,4 @@ export default function UploadMultimedia() {
       />
     </div>
   );
-}   
+}

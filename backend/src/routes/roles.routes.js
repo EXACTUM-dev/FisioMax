@@ -4,7 +4,7 @@
  * @author EXACTUM-dev
  */
 
-import express from "express";
+import express from 'express';
 import {
   getRoleById,
   updateRole,
@@ -12,63 +12,52 @@ import {
   getCreateRole,
   createRole,
   deleteRole,
-} from "../controllers/roles.controller.js";
-import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
-import { requireDbUser } from "../middlewares/requireDbUser.js";
-import { authorize } from "../middlewares/rbacMiddleware.js";
+} from '../controllers/roles.controller.js';
+import {requireAuth, autoSyncClerkId} from '../middlewares/clerkAuth.js';
+import {requireDbUser} from '../middlewares/requireDbUser.js';
+import {authorize} from '../middlewares/rbacMiddleware.js';
 
 const router = express.Router();
 
-// Get all roles
+// No authorization required - needed for role dropdown in user management panel
+router.get('/', requireAuth, autoSyncClerkId, requireDbUser, getAllRoles);
+
 router.get(
-  "/",
-  requireAuth,
-  authorize(["Gestión de Roles"]),
-  autoSyncClerkId,
-  requireDbUser,
-  getAllRoles
+    '/create',
+    requireAuth,
+    authorize(['Gestión de Roles']),
+    autoSyncClerkId,
+    requireDbUser,
+    getCreateRole
 );
 
-// Get create role form/page
+router.post('/create', requireAuth, autoSyncClerkId, requireDbUser, createRole);
+
 router.get(
-  "/create",
-  requireAuth,
-  authorize(["Gestión de Roles"]),
-  autoSyncClerkId,
-  requireDbUser,
-  getCreateRole
+    '/edit/:id',
+    requireAuth,
+    authorize(['Gestión de Roles']),
+    autoSyncClerkId,
+    requireDbUser,
+    getRoleById
 );
 
-// Create new role
-router.post("/create", requireAuth, autoSyncClerkId, requireDbUser, createRole);
-
-// Get role by ID for editing
-router.get(
-  "/edit/:id",
-  requireAuth,
-  authorize(["Gestión de Roles"]),
-  autoSyncClerkId,
-  requireDbUser,
-  getRoleById
-);
-
-// Update role by ID
 router.post(
-  "/edit/:id",
-  requireAuth,
-  authorize(["Gestión de Roles"]),
-  autoSyncClerkId,
-  requireDbUser,
-  updateRole
+    '/edit/:id',
+    requireAuth,
+    authorize(['Gestión de Roles']),
+    autoSyncClerkId,
+    requireDbUser,
+    updateRole
 );
 
 router.delete(
-  "/:id",
-  requireAuth,
-  autoSyncClerkId,
-  requireDbUser,
-  authorize(["Gestión de Roles"]),
-  deleteRole
+    '/:id',
+    requireAuth,
+    autoSyncClerkId,
+    requireDbUser,
+    authorize(['Gestión de Roles']),
+    deleteRole
 );
 
 export default router;

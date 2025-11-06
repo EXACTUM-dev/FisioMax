@@ -49,6 +49,7 @@ export default function Modal({
     md: "max-w-md",
     lg: "max-w-lg",
     xl: "max-w-4xl",
+    x2: "max-w-6xl",
     full: "max-w-full mx-4",
   };
 
@@ -87,16 +88,16 @@ export default function Modal({
         className={`fixed inset-0 z-50 flex ${positionClasses[position]} bg-black/30 transition-opacity`}
         onClick={handleOverlayClick}
       >
-        {/* Contenedor relativo para posicionar el CloseButton */}
+        {/* Relative container for the CloseButton position*/}
         <div className="relative">
           {showCloseButton && (
             <CloseButton
-              onClose={handleCloseRequest} // Cambiado a handleCloseRequest
+              onClose={handleCloseRequest}
               size="lg"
               position={{ top: "top-1", right: "right-1" }}
             />
           )}
-          {/* Contenedor del modal con scroll */}
+          {/* Modal container with scroll */}
           <div
             className={`
             bg-white rounded-2xl shadow-xl w-full 

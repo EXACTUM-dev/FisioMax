@@ -60,8 +60,8 @@ export default function FileUpload({
       <div
         className={`relative border-2 border-dashed rounded-lg p-4 transition-colors ${
           dragActive 
-            ? "border-blue-400 bg-blue-50" 
-            : "border-gray-300 hover:border-gray-400"
+            ? "border-[#CAD00F] bg-[#CAD00F]/10" 
+            : "border-slate-300 hover:border-[#CAD00F]"
         } ${error ? "border-red-300 bg-red-50" : ""}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -109,7 +109,7 @@ export default function FileUpload({
             <div className="mt-2">
               <label
                 htmlFor={`${name}-file`}
-                className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-500"
+                className="cursor-pointer text-sm font-medium text-[#CAD00F] hover:text-[#b8bc0d]"
               >
                 Haz clic para seleccionar archivo
               </label>

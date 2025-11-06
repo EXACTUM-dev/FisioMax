@@ -5,7 +5,7 @@
  * @author EXACTUM-dev
  */
 
-import {getUsuarioByClerkId, getUserById, getUsuarios} from '../models/users.model.js';
+import { getUsuarioByClerkId, getUserById, getUsuarios, reassignUserToSinRol, markUserDeleted, updateUserById } from '../models/users.model.js';
 import S3Service from '../services/s3Service.js';
 
 /**
@@ -67,49 +67,58 @@ export async function getCurrentUserProfile(req, res) {
     ]);
 
     // Generate presigned URLs for additional documents
-    const documentosAdicionalesUrls = user.documentosAdicionales &&
-        user.documentosAdicionales.length > 0 ?
-      await S3Service.getPresignedUrls(user.documentosAdicionales) :
+    const documentosadicionalesUrls = user.documentosAdicionales &&
+        user.documentosadicionales.length > 0 ?
+      await S3Service.getPresignedUrls(user.documentosadicionales) :
       [];
 
-    const transformedUser = {
-      nombres: user.nombres || '',
-      apellidoP: user.apellidoP || '',
-      apellidoM: user.apellidoM || '',
-      email: user.correo || '',
-      telefono: user.telefono || '',
-      fechaNacimiento: user.fechaNacimiento || '',
-      foto: user.foto || null,
-      licenciatura: user.licenciatura || '',
-      pais: user.pais || '',
-      estado: user.estado || '',
-      ciudad: user.ciudad || '',
-      calle: user.calle || '',
-      numExterior: user.numExterior || '',
-      numInterior: user.numInterior || '',
-      colonia: user.colonia || '',
-      codigoPostal: user.codigoPostal || '',
-      instagram: user.instagram || '',
-      linkedin: user.linkedin || '',
-      facebook: user.facebook || '',
-      paginaWeb: user.paginaWeb || '',
-      cedula: cedulaUrl,
-      titulo: tituloUrl,
-      constancias: constanciasUrl,
-      documentosAdicionales: documentosAdicionalesUrls,
-      rol: user.rolNombre || null,
-      IDRol: user.IDRol || null,
-      IDUsuario: user.IDUsuario,
-      clerkID: user.clerkID,
-      createdAt: user.createdAt,
-    };
+        const transformedUser = {
+        nombres: user.nombres || '',
+        apellidoP: user.apellidoP || '',
+        apellidoM: user.apellidoM || '',
+        email: user.correo || '',
+        telefono: user.telefonoCasa || '',
+        telefonoCasa: user.telefonoCasa || '',
+        telefonoWhatsapp: user.telefonoWhatsapp || '',
+        fechaNacimiento: user.fechaNacimiento || '',
+        foto: user.foto || null,
+        licenciatura: user.licenciatura || '',
+        pais: user.pais || '',
+        estado: user.estado || '',
+        ciudad: user.ciudad || '',
+        calle: user.calle || '',
+        numExterior: user.numExterior || '',
+        numInterior: user.numInterior || '',
+        colonia: user.colonia || '',
+        codigoPostal: user.codigoPostal || '',
+        instagram: user.instagram || '',
+        linkedin: user.linkedin || '',
+        facebook: user.facebook || '',
+        paginaWeb: user.paginaWeb || '',
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
+        documentosadicionales: documentosadicionalesUrls,
+        rol: user.rolNombre || null,
+        IDRol: user.IDRol || null,
+        IDUsuario: user.IDUsuario,
+        clerkID: user.clerkID,
+        createdAt: user.createdAt,
+        // Membership information
+        membershipType: user.membresiaTipo || null,
+        membershipExpiresAt: user.membresiaFechaVencimiento || null,
+        membershipRegisteredAt: user.membresiaCreatedAt || null,
+        membershipHoursFormation: user.membresiaHorasFormacion || null,
+        membershipStatus: user.membresiaAceptado,
+        membershipPaymentStatus: user.membresiaEstatusPago || null,
+        };
 
-    res.status(200).json({
-      success: true,
-      data: transformedUser,
-    });
-  } catch (error) {
-    console.error('Error obteniendo perfil del usuario:', error);
+        res.status(200).json({
+        success: true,
+        data: transformedUser,
+        });
+    } catch (error) {
+        console.error('Error obteniendo perfil del usuario:', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener el perfil del usuario',
@@ -153,54 +162,346 @@ export async function getUserProfileById(req, res) {
     ]);
 
     // Generate presigned URLs for additional documents
-    const documentosAdicionalesUrls = user.documentosAdicionales &&
-        user.documentosAdicionales.length > 0 ?
-      await S3Service.getPresignedUrls(user.documentosAdicionales) :
+    const documentosadicionalesUrls = user.documentosadicionales &&
+        user.documentosadicionales.length > 0 ?
+      await S3Service.getPresignedUrls(user.documentosadicionales) :
       [];
 
-    const transformedUser = {
-      nombres: user.nombres || '',
-      apellidoP: user.apellidoP || '',
-      apellidoM: user.apellidoM || '',
-      email: user.correo || '',
-      telefono: user.telefono || '',
-      fechaNacimiento: user.fechaNacimiento || '',
-      foto: user.foto || null,
-      licenciatura: user.licenciatura || '',
-      pais: user.pais || '',
-      estado: user.estado || '',
-      ciudad: user.ciudad || '',
-      calle: user.calle || '',
-      numExterior: user.numExterior || '',
-      numInterior: user.numInterior || '',
-      colonia: user.colonia || '',
-      codigoPostal: user.codigoPostal || '',
-      instagram: user.instagram || '',
-      linkedin: user.linkedin || '',
-      facebook: user.facebook || '',
-      paginaWeb: user.paginaWeb || '',
-      cedula: cedulaUrl,
-      titulo: tituloUrl,
-      constancias: constanciasUrl,
-      documentosAdicionales: documentosAdicionalesUrls,
-      rol: user.rolNombre || null,
-      IDRol: user.IDRol || null,
-      IDUsuario: user.IDUsuario,
-      clerkID: user.clerkID,
-      createdAt: user.createdAt,
-    };
+        const transformedUser = {
+        nombres: user.nombres || '',
+        apellidoP: user.apellidoP || '',
+        apellidoM: user.apellidoM || '',
+        email: user.correo || '',
+        telefono: user.telefonoCasa || '',
+        telefonoCasa: user.telefonoCasa || '',
+        telefonoWhatsapp: user.telefonoWhatsapp || '',
+        fechaNacimiento: user.fechaNacimiento || '',
+        foto: user.foto || null,
+        licenciatura: user.licenciatura || '',
+        pais: user.pais || '',
+        estado: user.estado || '',
+        ciudad: user.ciudad || '',
+        calle: user.calle || '',
+        numExterior: user.numExterior || '',
+        numInterior: user.numInterior || '',
+        colonia: user.colonia || '',
+        codigoPostal: user.codigoPostal || '',
+        instagram: user.instagram || '',
+        linkedin: user.linkedin || '',
+        facebook: user.facebook || '',
+        paginaWeb: user.paginaWeb || '',
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
+        documentosadicionales: documentosadicionalesUrls,
+        rol: user.rolNombre || null,
+        IDRol: user.IDRol || null,
+        IDUsuario: user.IDUsuario,
+        clerkID: user.clerkID,
+        createdAt: user.createdAt,
+        // Membership information
+        membershipType: user.membresiaTipo || null,
+        membershipExpiresAt: user.membresiaFechaVencimiento || null,
+        membershipRegisteredAt: user.membresiaCreatedAt || null,
+        membershipHoursFormation: user.membresiaHorasFormacion || null,
+        membershipStatus: user.membresiaAceptado,
+        membershipPaymentStatus: user.membresiaEstatusPago || null,
+        };
 
+        res.status(200).json({
+        success: true,
+        data: transformedUser,
+        });
+    } catch (error) {
+        console.error('Error obteniendo perfil del usuario por ID:', error);
+        res.status(500).json({
+        success: false,
+        error: 'Error al obtener el perfil del usuario',
+        message: error.message, 
+        });
+    }
+    }
+
+/**
+ * Deletes a user (soft-delete) after reassigning "SinRol".
+ *
+ * This function performs the following steps:
+ * 1. Validates the provided user ID.
+ * 2. Prevents the authenticated user from deleting their own account.
+ * 3. Reassigns the user's role to "SinRol".
+ * 4. Marks the user as deleted in the database.
+ *
+ * @async
+ * @function deleteUser
+ * @param {import('express').Request} req - Express request object containing the user ID in params.
+ * @param {import('express').Response} res - Express response object for sending the result.
+ * @throws {Error} Returns appropriate HTTP status codes and messages for errors.
+ * @return {Promise<void>} Sends a JSON response indicating success or failure.
+ */
+export async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+    const clerkId = req.auth?.userId;
+
+    // Validate user ID
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de usuario no proporcionado."
+      });
+    }
+
+    // Prevent self-deletion
+    const user = await getUsuarioByClerkId(clerkId);
+    if (user?.IDUsuario?.toString() === id) {
+      return res.status(403).json({
+        success: false,
+        message: "No puedes eliminar tu propia cuenta."
+      });
+    }
+
+    // Check if the user exists
+    const userToDelete = await getUserById(id);
+    if (!userToDelete) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado."
+      });
+    }
+
+    // Try to reassign role to "SinRol" (or mark role as deleted if SinRol doesn't exist)
+    try {
+      await reassignUserToSinRol(id);
+    } catch (reassignError) {
+      // Log the error but continue with deletion
+      console.warn("Advertencia al reasignar rol:", reassignError.message);
+    }
+
+    // Mark the user as deleted
+    const affectedRows = await markUserDeleted(id);
+    if (affectedRows === 0) {
+      return res.status(500).json({
+        success: false,
+        message: "No se pudo eliminar el usuario."
+      });
+    }
+
+    // Respond with success message
     res.status(200).json({
       success: true,
-      data: transformedUser,
+      message: `El usuario \"${userToDelete.nombres} ${userToDelete.apellidoP} ${userToDelete.apellidoM}\" fue eliminado con éxito.`
     });
   } catch (error) {
-    console.error('Error obteniendo perfil del usuario por ID:', error);
+    console.error("Error al eliminar usuario:", error);
     res.status(500).json({
       success: false,
-      error: 'Error al obtener el perfil del usuario',
-      message: error.message,
+      message: "Error interno del servidor.",
+      error: error.message
     });
   }
 }
+/**
+ * Update an existing user's basic information.
+ * Expects fields in req.body (only allowed fields will be updated).
+ * @async
+ * @function updateUser
+ * @param {!Object} req - Express request object with params.userId and body containing update data.
+ * @param {!Object} res - Express response object.
+ * @return {!Promise<void>} Sends JSON response with updated user data or error.
+ */
+export async function updateUser(req, res) {
+    try {
+        const { userId } = req.params;
+        const updateData = req.body || {};
 
+        if (!userId) {
+        return res.status(400).json({ success: false, error: 'ID de usuario requerido' });
+        }
+
+        // Map 'telefono' from frontend to 'telefonoCasa' for database
+        if (updateData.telefono !== undefined && updateData.telefonoCasa === undefined) {
+            updateData.telefonoCasa = updateData.telefono;
+            delete updateData.telefono;
+        }
+
+        const updated = await updateUserById(userId, updateData);
+
+        if (!updated) {
+        return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        }
+
+        // Generate presigned URLs for documents
+        const [cedulaUrl, tituloUrl, constanciasUrl] = await Promise.all([
+        S3Service.getPresignedUrl(updated.cedula),
+        S3Service.getPresignedUrl(updated.titulo),
+        S3Service.getPresignedUrl(updated.constancias),
+        ]);
+
+        // Transform minimal fields for frontend consistency
+        const transformedUser = {
+        nombres: updated.nombres || '',
+        apellidoP: updated.apellidoP || '',
+        apellidoM: updated.apellidoM || '',
+        email: updated.correo || '',
+        telefono: updated.telefonoCasa || '',
+        telefonoCasa: updated.telefonoCasa || '',
+        telefonoWhatsapp: updated.telefonoWhatsapp || '',
+        fechaNacimiento: updated.fechaNacimiento || '',
+        licenciatura: updated.licenciatura || '',
+        pais: updated.pais || '',
+        estado: updated.estado || '',
+        ciudad: updated.ciudad || '',
+        calle: updated.calle || '',
+        numExterior: updated.numExterior || '',
+        numInterior: updated.numInterior || '',
+        colonia: updated.colonia || '',
+        codigoPostal: updated.codigoPostal || '',
+        instagram: updated.instagram || '',
+        linkedin: updated.linkedin || '',
+        facebook: updated.facebook || '',
+        paginaWeb: updated.paginaWeb || '',
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
+        IDUsuario: updated.IDUsuario,
+        IDRol: updated.IDRol || null,
+        rol: updated.rolNombre || null,
+        clerkID: updated.clerkID || null,
+        // Membership information
+        membershipType: updated.membresiaTipo || null,
+        membershipExpiresAt: updated.membresiaFechaVencimiento || null,
+        membershipRegisteredAt: updated.membresiaCreatedAt || null,
+        membershipHoursFormation: updated.membresiaHorasFormacion || null,
+        membershipStatus: updated.membresiaAceptado,
+        membershipPaymentStatus: updated.membresiaEstatusPago || null,
+        };
+
+        return res.status(200).json({ success: true, data: transformedUser });
+    } catch (error) {
+        console.error('Error actualizando usuario:', error);
+        return res.status(500).json({ success: false, error: 'Error al actualizar el usuario', message: error.message });
+    }
+}
+
+/**
+ * Update user documents (titulo, cedula, constancias).
+ * Handles file uploads to S3 and updates database.
+ * @async
+ * @function updateUserDocuments
+ * @param {!Object} req - Express request object with params.userId and files in req.files.
+ * @param {!Object} res - Express response object.
+ * @return {!Promise<void>} Sends JSON response with updated user data or error.
+ */
+export async function updateUserDocuments(req, res) {
+    try {
+        const { userId } = req.params;
+
+        if (!userId) {
+        return res.status(400).json({ success: false, error: 'ID de usuario requerido' });
+        }
+
+        // Get current user data to retrieve old document keys
+        const currentUser = await getUserById(userId);
+        if (!currentUser) {
+        return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        }
+
+        const updateData = {};
+
+        // Check if AWS is configured
+        const isS3Configured = process.env.AWS_REGION && process.env.AWS_BUCKET_NAME;
+
+        if (isS3Configured) {
+        // Upload files to S3 if provided, and delete old ones
+        if (req.files?.titulo?.[0]) {
+            // Delete old file if exists
+            if (currentUser.titulo) {
+            await S3Service.deleteFile(currentUser.titulo);
+            }
+            updateData.titulo = await S3Service.uploadFile(req.files.titulo[0], 'titulos');
+        }
+        if (req.files?.cedula?.[0]) {
+            // Delete old file if exists
+            if (currentUser.cedula) {
+            await S3Service.deleteFile(currentUser.cedula);
+            }
+            updateData.cedula = await S3Service.uploadFile(req.files.cedula[0], 'cedulas');
+        }
+        if (req.files?.constancias?.[0]) {
+            // Delete old file if exists
+            if (currentUser.constancias) {
+            await S3Service.deleteFile(currentUser.constancias);
+            }
+            updateData.constancias = await S3Service.uploadFile(req.files.constancias[0], 'constancias');
+        }
+        } else {
+        console.warn('AWS S3 not configured. Files will not be uploaded.');
+        // Store file names instead of URLs for development
+        if (req.files?.titulo?.[0]) {
+            updateData.titulo = req.files.titulo[0].originalname;
+        }
+        if (req.files?.cedula?.[0]) {
+            updateData.cedula = req.files.cedula[0].originalname;
+        }
+        if (req.files?.constancias?.[0]) {
+            updateData.constancias = req.files.constancias[0].originalname;
+        }
+        }
+
+        // If no files were uploaded, return error
+        if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ success: false, error: 'No se proporcionaron archivos para actualizar' });
+        }
+
+        // Update user in database
+        const updated = await updateUserById(userId, updateData);
+
+        if (!updated) {
+        return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        }
+
+        // Generate fresh presigned URLs for all documents
+        const [cedulaUrl, tituloUrl, constanciasUrl] = await Promise.all([
+        S3Service.getPresignedUrl(updated.cedula),
+        S3Service.getPresignedUrl(updated.titulo),
+        S3Service.getPresignedUrl(updated.constancias),
+        ]);
+
+        // Transform user data for frontend
+        const transformedUser = {
+        nombres: updated.nombres || '',
+        apellidoP: updated.apellidoP || '',
+        apellidoM: updated.apellidoM || '',
+        email: updated.correo || '',
+        telefono: updated.telefonoCasa || '',
+        telefonoCasa: updated.telefonoCasa || '',
+        telefonoWhatsapp: updated.telefonoWhatsapp || '',
+        fechaNacimiento: updated.fechaNacimiento || '',
+        licenciatura: updated.licenciatura || '',
+        pais: updated.pais || '',
+        estado: updated.estado || '',
+        ciudad: updated.ciudad || '',
+        calle: updated.calle || '',
+        numExterior: updated.numExterior || '',
+        numInterior: updated.numInterior || '',
+        colonia: updated.colonia || '',
+        codigoPostal: updated.codigoPostal || '',
+        instagram: updated.instagram || '',
+        linkedin: updated.linkedin || '',
+        facebook: updated.facebook || '',
+        paginaWeb: updated.paginaWeb || '',
+        cedula: cedulaUrl,
+        titulo: tituloUrl,
+        constancias: constanciasUrl,
+        IDUsuario: updated.IDUsuario,
+        IDRol: updated.IDRol || null,
+        rol: updated.rolNombre || null,
+        clerkID: updated.clerkID || null,
+        };
+
+        return res.status(200).json({ success: true, data: transformedUser });
+    } catch (error) {
+        console.error('Error actualizando documentos del usuario:', error);
+        return res.status(500).json({ success: false, error: 'Error al actualizar los documentos', message: error.message });
+    }
+    }

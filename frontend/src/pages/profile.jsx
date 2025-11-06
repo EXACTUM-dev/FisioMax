@@ -1,7 +1,7 @@
 /**
  * @fileoverview User profile page displaying personal information, membership status, and documents.
  * Supports viewing both current user's profile and other users' profiles via URL parameter.
- * @version 1.0.0
+ * @version 1.2.0
  * @author EXACTUM-dev
  */
 
@@ -22,9 +22,13 @@ import AddressCard from "../organisms/addressCard";
 import MembershipCard from "../organisms/membershipCard";
 import TicketsCard from "../organisms/ticketsCard";
 import DocumentsCard from "../organisms/documentsCard";
+import HistoryCard from "../organisms/historyCard";
 
 // Controllers
-import {getCurrentUserProfile, getUserProfileById} from "../controllers/profile.controller";
+import { getCurrentUserProfile, getUserProfileById, updateUserById } from "../controllers/profile.controller";
+
+// Hooks
+import { useDbUser } from "../hooks/useDbUser";
 
 /**
  * Renders the user profile page with personal information, address, membership, and documents.
@@ -34,12 +38,14 @@ import {getCurrentUserProfile, getUserProfileById} from "../controllers/profile.
 export default function ProfilePage() {
   const [current, setCurrent] = useState("profile");
   const [userProfile, setUserProfile] = useState(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const {user, isLoaded} = useUser();
   const {getToken} = useAuth();
   const {userId} = useParams(); // Get userId from URL if present
+  const {userData} = useDbUser(); // Get user privileges for RBAC
 
   // Fetch user profile from backend
   useEffect(() => {
@@ -51,12 +57,13 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         const token = await getToken();
-        
-        // If userId is in URL, fetch that user's profile, otherwise fetch current user
-        const profileData = userId 
-          ? await getUserProfileById(userId, token)
-          : await getCurrentUserProfile(token);
-          
+
+        // Always fetch current user's profile for permission checks
+        const me = await getCurrentUserProfile(token);
+        setCurrentUserProfile(me);
+
+        // If userId is in URL, fetch that user's profile, otherwise use my profile
+        const profileData = userId ? await getUserProfileById(userId, token) : me;
         setUserProfile(profileData);
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -70,6 +77,53 @@ export default function ProfilePage() {
   }, [isLoaded, user, getToken, userId]); // Added userId to dependencies
 
   const handleNavigate = (key) => setCurrent(key);
+
+  // RBAC: Check if user can edit
+  // Allow editing if:
+  // 1. User is viewing their own profile (no userId in URL)
+  // 2. User is viewing another user's profile (userId exists) AND has "Gestión de Usuarios" privilege
+  const userPrivileges = userData?.userPrivileges?.privilegios || [];
+  const hasUserManagementPrivilege = userPrivileges.includes("Gestión de Usuarios");
+  const isOwnProfile = !userId; // No userId means viewing own profile
+  const canEdit = isOwnProfile || (userId && hasUserManagementPrivilege);
+
+  async function handleSaveEdits(fields) {
+    const token = await getToken();
+    try {
+      // If viewing own profile, update current user
+      if (isOwnProfile) {
+        // If fields is already a full profile object (from documents update), use it directly
+        if (fields.IDUsuario) {
+          setUserProfile(fields);
+          setCurrentUserProfile(fields); // Also update current user profile
+        } else {
+          // Otherwise, it's a partial update, call the API with current user's ID
+          const updated = await updateUserById(currentUserProfile.IDUsuario, fields, token);
+          setUserProfile(updated);
+          setCurrentUserProfile(updated);
+        }
+      } else {
+        // Editing another user's profile - only allowed with "Gestión de Usuarios"
+        if (!hasUserManagementPrivilege) {
+          const error = new Error('No se puede editar: falta privilegio de Gestión de Usuarios');
+          throw error;
+        }
+        // If fields is already a full profile object (from documents update), use it directly
+        if (fields.IDUsuario) {
+          setUserProfile(fields);
+        } else {
+          // Otherwise, it's a partial update, call the API
+          const updated = await updateUserById(userId, fields, token);
+          setUserProfile(updated);
+        }
+      }
+    } catch (err) {
+      console.error('Error actualizando usuario:', err);
+      setError(err.message || 'Error al actualizar el usuario');
+      // Re-throw error so components can catch it and show modals
+      throw err;
+    }
+  }
 
   if (!isLoaded || loading) {
     return (
@@ -95,6 +149,9 @@ export default function ProfilePage() {
 
   // Use profile data from backend, or empty object as fallback
   const profileData = userProfile || {};
+  
+  // Use userId from URL if viewing another user, otherwise use current user's ID
+  const effectiveUserId = userId || currentUserProfile?.IDUsuario;
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
@@ -110,30 +167,12 @@ export default function ProfilePage() {
               {userId ? 'Perfil de Usuario' : 'Mi Perfil'}
             </Title2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left column: profile info + address */}
-              <div className="lg:col-span-2 space-y-6">
-                <ProfileInfo data={profileData} />
-                <AddressCard data={profileData} />
-                <DocumentsCard data={profileData} />
-
-                {/* History / stats placeholder (simple box) */}
-                <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
-                  <h3 className="text-lg font-semibold mb-3">Historial</h3>
-                  <div className="grid grid-cols-3 gap-4 text-center text-sm text-slate-700">
-                    <div>
-                      <div className="text-xs text-slate-500">Cursos Completados</div>
-                      <div className="font-medium mt-2">—</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-slate-500">Diplomados</div>
-                      <div className="font-medium mt-2">—</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-slate-500">Horas de servicio</div>
-                      <div className="font-medium mt-2">—</div>
-                    </div>
-                  </div>
-                </section>
+            {/* Left column: profile info + address */}
+            <div className="lg:col-span-2 space-y-6">
+              <ProfileInfo data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
+              <AddressCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
+              <DocumentsCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} userId={effectiveUserId} />
+              <HistoryCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
               </div>
 
               {/* Right column: membership and tickets */}

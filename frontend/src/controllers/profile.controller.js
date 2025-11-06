@@ -101,7 +101,7 @@ export function transformUserData(userData) {
     cedula: userData.cedula || null,
     titulo: userData.titulo || null,
     constancias: userData.constancias || null,
-    documentosAdicionales: userData.documentosAdicionales || [],
+    documentosadicionales: userData.documentosadicionales || [],
     
     // Role info
     rol: userData.rol || null,
@@ -112,5 +112,78 @@ export function transformUserData(userData) {
     clerkID: userData.clerkID,
     createdAt: userData.createdAt,
   };
+}
+
+/**
+ * Update a user's data by ID
+ * @param {string} userId - database IDUsuario
+ * @param {Object} payload - fields to update
+ * @param {string} clerkToken
+ * @returns {Promise<Object>} Updated user data
+ */
+export async function updateUserById(userId, payload, clerkToken) {
+  try {
+    const url = buildApiUrl(`/api/users/${userId}`);
+    const response = await fetchWithClerk(
+      url,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      },
+      clerkToken
+    );
+
+    if (response.success) {
+      return response.data;
+    } else {
+      throw new Error(response.error || 'No se pudo actualizar el usuario');
+    }
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update user documents (titulo, cedula, constancias)
+ * @param {string} userId - database IDUsuario
+ * @param {FormData} formData - FormData containing files
+ * @param {string} clerkToken
+ * @returns {Promise<Object>} Updated user data with fresh presigned URLs
+ */
+export async function updateUserDocuments(userId, formData, clerkToken) {
+  try {
+    const url = buildApiUrl(`/api/users/${userId}/documents`);
+    const headers = {};
+    
+    if (clerkToken) {
+      headers['Authorization'] = `Bearer ${clerkToken}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+      throw new Error(errorData.error || 'No se pudieron actualizar los documentos');
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      return result.data;
+    } else {
+      throw new Error(result.error || 'No se pudieron actualizar los documentos');
+    }
+  } catch (error) {
+    console.error('Error updating user documents:', error);
+    throw error;
+  }
 }
 
