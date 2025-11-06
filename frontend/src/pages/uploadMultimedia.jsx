@@ -359,7 +359,7 @@ export default function UploadMultimedia() {
                             type="checkbox"
                             checked={selectedRoles.includes(role.IDRol || role.id)}
                             onChange={() => handleRoleToggle(role.IDRol || role.id)}
-                            className="w-4 h-4 text-[#CAD00F] border-slate-300 rounded focus:ring-[#CAD00F] focus:ring-2"
+                            className="checkbox-brand"
                           />
                           <span className="text-sm text-slate-700">
                             {role.nombre || role.name}
