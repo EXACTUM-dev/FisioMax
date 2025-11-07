@@ -5,8 +5,9 @@
  * @author EXACTUM-dev
  */
 
-import { getUsuarioByClerkId, getUserById, getUsuarios, reassignUserToSinRol, markUserDeleted, updateUserById } from '../models/users.model.js';
+import {getUsuarioByClerkId, getUsuarios, getUserById, markUserDeleted, reassignUserToSinRol, updateUserById} from '../models/users.model.js';
 import S3Service from '../services/s3Service.js';
+import { sanitizeContentInput, sanitizeEmail } from '../utils/sanitization.js';
 
 /**
  * Gets all users with their roles from the database.
@@ -315,7 +316,7 @@ export async function updateUser(req, res) {
         const updateData = req.body || {};
 
         if (!userId) {
-        return res.status(400).json({ success: false, error: 'ID de usuario requerido' });
+            return res.status(400).json({ success: false, error: 'ID de usuario requerido' });
         }
 
         // Map 'telefono' from frontend to 'telefonoCasa' for database
@@ -324,9 +325,40 @@ export async function updateUser(req, res) {
             delete updateData.telefono;
         }
 
-        const updated = await updateUserById(userId, updateData);
+        // Sanitize user input
+        const sanitized = sanitizeContentInput(updateData, {
+            stringFields: ['nombres', 'apellidoP', 'apellidoM', 'telefonoCasa', 'telefonoWhatsapp', 
+                          'licenciatura', 'pais', 'estado', 'ciudad', 'calle', 'numExterior', 
+                          'numInterior', 'colonia', 'codigoPostal', 'instagram', 'linkedin', 
+                          'facebook', 'paginaWeb'],
+            maxLengths: {
+                nombres: 100,
+                apellidoP: 100,
+                apellidoM: 100,
+                telefonoCasa: 20,
+                telefonoWhatsapp: 20,
+                licenciatura: 200,
+                pais: 100,
+                estado: 100,
+                ciudad: 100,
+                calle: 200,
+                numExterior: 20,
+                numInterior: 20,
+                colonia: 100,
+                codigoPostal: 10,
+                instagram: 100,
+                linkedin: 200,
+                facebook: 200,
+                paginaWeb: 200
+            }
+        });
 
-        if (!updated) {
+        // Sanitize email separately if present
+        if (updateData.email) {
+            sanitized.email = sanitizeEmail(updateData.email);
+        }
+
+        const updated = await updateUserById(userId, sanitized);        if (!updated) {
         return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
         }
 
