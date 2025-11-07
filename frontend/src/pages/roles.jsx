@@ -10,7 +10,7 @@ import { useUser } from "@clerk/clerk-react";
 // Atoms
 import Loading from "../atoms/loading";
 import AlertBanner from "../atoms/alertBanner";
-import {Title2} from "../atoms/typography";
+import { Title2 } from "../atoms/typography";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -32,7 +32,7 @@ import { toUserMessage } from "../services/serviceErrors";
 export default function RolesPage() {
   const { user, isLoaded: isClerkLoaded } = useUser();
   const [current, setCurrent] = useState("roles");
-
+  const [searchQuery, setSearchQuery] = useState("");
   // Modal state for editing
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
@@ -315,7 +315,13 @@ export default function RolesPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      <AppHeader user={user} />
+      <AppHeader
+        user={user}
+        showSearch={true}
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Buscar roles..."
+      />
       <Sidebar current={current} onNavigate={setCurrent} />
 
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
@@ -326,6 +332,7 @@ export default function RolesPage() {
 
           <DataSwitchContainer
             initialKey="roles"
+            searchQuery={searchQuery}
             loading={loading}
             views={[
               {
@@ -334,7 +341,6 @@ export default function RolesPage() {
                 type: "table",
                 columns: roleColumns,
                 rows: roles,
-                searchPlaceholder: "Buscar roles...",
                 onRowAction: handleRowAction,
               },
             ]}

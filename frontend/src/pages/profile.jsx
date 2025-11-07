@@ -6,15 +6,15 @@
  */
 
 // Import necessary libraries and components
-import React, {useState, useEffect} from "react";
-import {useUser, useAuth} from "@clerk/clerk-react";
-import {useParams} from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useUser, useAuth } from "@clerk/clerk-react";
+import { useParams } from "react-router-dom";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 // Atoms
-import {Title2} from "../atoms/typography";
+import { Title2 } from "../atoms/typography";
 
 // Organisms
 import ProfileInfo from "../organisms/profileInfo";
@@ -25,7 +25,11 @@ import DocumentsCard from "../organisms/documentsCard";
 import HistoryCard from "../organisms/historyCard";
 
 // Controllers
-import { getCurrentUserProfile, getUserProfileById, updateUserById } from "../controllers/profile.controller";
+import {
+  getCurrentUserProfile,
+  getUserProfileById,
+  updateUserById,
+} from "../controllers/profile.controller";
 
 // Hooks
 import { useDbUser } from "../hooks/useDbUser";
@@ -42,10 +46,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const {user, isLoaded} = useUser();
-  const {getToken} = useAuth();
-  const {userId} = useParams(); // Get userId from URL if present
-  const {userData} = useDbUser(); // Get user privileges for RBAC
+  const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
+  const { userId } = useParams(); // Get userId from URL if present
+  const { userData } = useDbUser(); // Get user privileges for RBAC
 
   // Fetch user profile from backend
   useEffect(() => {
@@ -63,10 +67,12 @@ export default function ProfilePage() {
         setCurrentUserProfile(me);
 
         // If userId is in URL, fetch that user's profile, otherwise use my profile
-        const profileData = userId ? await getUserProfileById(userId, token) : me;
+        const profileData = userId
+          ? await getUserProfileById(userId, token)
+          : me;
         setUserProfile(profileData);
       } catch (err) {
-        console.error('Error fetching profile:', err);
+        console.error("Error fetching profile:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -83,7 +89,9 @@ export default function ProfilePage() {
   // 1. User is viewing their own profile (no userId in URL)
   // 2. User is viewing another user's profile (userId exists) AND has "Gestión de Usuarios" privilege
   const userPrivileges = userData?.userPrivileges?.privilegios || [];
-  const hasUserManagementPrivilege = userPrivileges.includes("Gestión de Usuarios");
+  const hasUserManagementPrivilege = userPrivileges.includes(
+    "Gestión de Usuarios"
+  );
   const isOwnProfile = !userId; // No userId means viewing own profile
   const canEdit = isOwnProfile || (userId && hasUserManagementPrivilege);
 
@@ -98,14 +106,20 @@ export default function ProfilePage() {
           setCurrentUserProfile(fields); // Also update current user profile
         } else {
           // Otherwise, it's a partial update, call the API with current user's ID
-          const updated = await updateUserById(currentUserProfile.IDUsuario, fields, token);
+          const updated = await updateUserById(
+            currentUserProfile.IDUsuario,
+            fields,
+            token
+          );
           setUserProfile(updated);
           setCurrentUserProfile(updated);
         }
       } else {
         // Editing another user's profile - only allowed with "Gestión de Usuarios"
         if (!hasUserManagementPrivilege) {
-          const error = new Error('No se puede editar: falta privilegio de Gestión de Usuarios');
+          const error = new Error(
+            "No se puede editar: falta privilegio de Gestión de Usuarios"
+          );
           throw error;
         }
         // If fields is already a full profile object (from documents update), use it directly
@@ -118,8 +132,8 @@ export default function ProfilePage() {
         }
       }
     } catch (err) {
-      console.error('Error actualizando usuario:', err);
-      setError(err.message || 'Error al actualizar el usuario');
+      console.error("Error actualizando usuario:", err);
+      setError(err.message || "Error al actualizar el usuario");
       // Re-throw error so components can catch it and show modals
       throw err;
     }
@@ -129,7 +143,10 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{borderBottomColor: '#CAD00F'}}></div>
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto"
+            style={{ borderBottomColor: "#CAD00F" }}
+          ></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -149,14 +166,14 @@ export default function ProfilePage() {
 
   // Use profile data from backend, or empty object as fallback
   const profileData = userProfile || {};
-  
+
   // Use userId from URL if viewing another user, otherwise use current user's ID
   const effectiveUserId = userId || currentUserProfile?.IDUsuario;
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* Header component with user info */}
-      <AppHeader user={user} />
+      <AppHeader user={user} showSearch={false} />
 
       <div className="flex">
         <Sidebar current={current} onNavigate={handleNavigate} />
@@ -164,15 +181,32 @@ export default function ProfilePage() {
         <main className="flex-1 p-6 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
           <div className="max-w-[1100px] mx-auto">
             <Title2 className="mb-6">
-              {userId ? 'Perfil de Usuario' : 'Mi Perfil'}
+              {userId ? "Perfil de Usuario" : "Mi Perfil"}
             </Title2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left column: profile info + address */}
-            <div className="lg:col-span-2 space-y-6">
-              <ProfileInfo data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
-              <AddressCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
-              <DocumentsCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} userId={effectiveUserId} />
-              <HistoryCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
+              {/* Left column: profile info + address */}
+              <div className="lg:col-span-2 space-y-6">
+                <ProfileInfo
+                  data={profileData}
+                  canEdit={canEdit}
+                  onSave={handleSaveEdits}
+                />
+                <AddressCard
+                  data={profileData}
+                  canEdit={canEdit}
+                  onSave={handleSaveEdits}
+                />
+                <DocumentsCard
+                  data={profileData}
+                  canEdit={canEdit}
+                  onSave={handleSaveEdits}
+                  userId={effectiveUserId}
+                />
+                <HistoryCard
+                  data={profileData}
+                  canEdit={canEdit}
+                  onSave={handleSaveEdits}
+                />
               </div>
 
               {/* Right column: membership and tickets */}

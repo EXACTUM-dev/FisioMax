@@ -1,15 +1,37 @@
 /**
- * Version: 1.0.0
- * Horizontal carousel component for displaying elements in a row
- * Includes responsive navigation, infinite scroll and group indicators
+ * @fileoverview RowCarousel component for horizontal scrolling of content cards
+ * @version 0.2.0
+ * @author EXACTUM-dev
+ * @description A horizontal carousel component that displays content cards in a row with responsive navigation, infinite scroll, group indicators, click navigation and dates.
  */
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import VignetteImage from "./vignetteImage";
 import { Title3, Paragraph2 } from "../atoms/typography";
 import { IconButton, RightArrowIcon, LeftArrowIcon } from "../atoms/arrowIcons";
 import { useVisibleCount } from "../organisms/carousel";
 
+/**
+ * Formats date to readable Spanish format
+ * @param {string} dateString - ISO date string
+ * @returns {string} Formatted date
+ */
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+  const options = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  };
+
+  return date.toLocaleDateString("es-ES", options);
+};
+
 export default function RowCarousel({ slides = [] }) {
+  const navigate = useNavigate();
+
   // Custom hook to determine visible elements based on screen size
   const visibleCount = useVisibleCount();
   const isMobile = visibleCount === 1;
@@ -26,15 +48,29 @@ export default function RowCarousel({ slides = [] }) {
   const hasPrev = start > 0;
   const hasNext = start + visibleCount < slides.length;
 
-  // Navigation functions
+  // Navigation functions with single-click loop
   const goPrev = () => {
-    if (infinite) setIndex((i) => (i - 1 + slides.length) % slides.length);
-    else setIndex((i) => Math.max(0, i - 1));
+    if (infinite) {
+      // If infinite mode, clicking prev from start goes to end
+      if (index === 0) {
+        setIndex(maxStart);
+      } else {
+        setIndex((i) => (i - 1 + slides.length) % slides.length);
+      }
+    } else {
+      setIndex((i) => Math.max(0, i - 1));
+    }
   };
 
   const goNext = () => {
-    if (infinite) setIndex((i) => (i + 1) % slides.length);
-    else {
+    if (infinite) {
+      // If infinite mode, clicking next from end goes to start
+      if (index >= maxStart) {
+        setIndex(0);
+      } else {
+        setIndex((i) => (i + 1) % slides.length);
+      }
+    } else {
       setIndex((i) => {
         const next = Math.min(maxStart, i + 1);
         if (next === maxStart) setInfinite(true);
@@ -43,10 +79,19 @@ export default function RowCarousel({ slides = [] }) {
     }
   };
 
+  /**
+   * Handles slide click to navigate to content page
+   * @param {Object} slide - Slide data
+   */
+  const handleSlideClick = (slide) => {
+    if (slide?.id) {
+      navigate(`/content/${slide.id}`);
+    }
+  };
+
   // CSS classes for responsive elements
-  // Fit 3 on md with gap-6; 2 on sm with gap-4; on mobile suggest scroll
   const itemClass =
-    "shrink-0 basis-[85%] sm:basis-[calc(50%-0.5rem)] md:basis-[calc(33.333%-1rem)]";
+    "shrink-0 basis-[85%] sm:basis-[calc(50%-0.5rem)] md:basis-[calc(33.333%-1rem)] cursor-pointer";
 
   // Effect for smooth scroll when changing slides
   useEffect(() => {
@@ -132,9 +177,13 @@ export default function RowCarousel({ slides = [] }) {
                   : "none";
 
               return (
-                <li key={s.id ?? i} className={itemClass}>
+                <li
+                  key={s.id ?? i}
+                  className={itemClass}
+                  onClick={() => handleSlideClick(s)}
+                >
                   {/* Image with vignette effect */}
-                  <div className="relative h-40 sm:h-48 md:h-60 rounded-[1rem] overflow-hidden">
+                  <div className="relative h-40 sm:h-48 md:h-60 rounded-[1rem] overflow-hidden group">
                     <VignetteImage
                       src={s.imageUrl}
                       alt={s.imageAlt}
@@ -142,13 +191,38 @@ export default function RowCarousel({ slides = [] }) {
                       variant="transparent"
                       cover
                     />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                   </div>
 
                   {/* Text content */}
                   <div className="mt-2">
-                    <Title3 className="text-[1rem] md:text-[1.125rem]">
+                    <Title3 className="text-[1rem] md:text-[1.125rem] group-hover:text-[#CAD00F] transition-colors">
                       {s.title}
                     </Title3>
+
+                    {/* Date if available */}
+                    {s.createdAt && (
+                      <div className="flex items-center gap-1.5 mt-1 mb-1">
+                        <svg
+                          className="w-3.5 h-3.5 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span className="text-[0.75rem] md:text-[0.8125rem] text-gray-500">
+                          {formatDate(s.createdAt)}
+                        </span>
+                      </div>
+                    )}
+
                     <Paragraph2 className="text-[0.8125rem] md:text-[0.875rem] text-slate-600 line-clamp-2">
                       {s.subtitle}
                     </Paragraph2>

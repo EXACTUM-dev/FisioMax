@@ -158,6 +158,7 @@ const uploadFields = (req, res, next) => {
 
 // Protected routes - require Clerk authentication
 router.get("/", requireAuth, contentController.index);
+router.get("/available", requireAuth, contentController.index);
 router.get("/:contentId", requireAuth, contentController.show);
 router.post("/upload", requireAuth, uploadFields, contentController.upload);
 

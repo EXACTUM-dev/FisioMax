@@ -181,7 +181,9 @@ export default function UploadMultimedia() {
     }
 
     if (!selectedRoles || selectedRoles.length === 0) {
-      setErrorMessage("Debes seleccionar al menos un rol al que va dirigido el contenido");
+      setErrorMessage(
+        "Debes seleccionar al menos un rol al que va dirigido el contenido"
+      );
       setErrorModalOpen(true);
       return;
     }
@@ -270,7 +272,7 @@ export default function UploadMultimedia() {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* Header */}
-      <AppHeader user={user} />
+      <AppHeader user={user} showSearch={false} />
 
       {/* Sidebar */}
       <Sidebar current={current} onNavigate={setCurrent} />
@@ -348,7 +350,9 @@ export default function UploadMultimedia() {
                   </h3>
                   <div className="space-y-2 border border-slate-300 rounded-lg p-4 max-h-48 overflow-y-auto">
                     {roles.length === 0 ? (
-                      <p className="text-sm text-slate-500">Cargando roles...</p>
+                      <p className="text-sm text-slate-500">
+                        Cargando roles...
+                      </p>
                     ) : (
                       roles.map((role) => (
                         <label
@@ -357,8 +361,12 @@ export default function UploadMultimedia() {
                         >
                           <input
                             type="checkbox"
-                            checked={selectedRoles.includes(role.IDRol || role.id)}
-                            onChange={() => handleRoleToggle(role.IDRol || role.id)}
+                            checked={selectedRoles.includes(
+                              role.IDRol || role.id
+                            )}
+                            onChange={() =>
+                              handleRoleToggle(role.IDRol || role.id)
+                            }
                             className="checkbox-brand"
                           />
                           <span className="text-sm text-slate-700">
@@ -370,7 +378,10 @@ export default function UploadMultimedia() {
                   </div>
                   {selectedRoles.length > 0 && (
                     <p className="text-xs text-slate-500 mt-2">
-                      {selectedRoles.length} {selectedRoles.length === 1 ? 'rol seleccionado' : 'roles seleccionados'}
+                      {selectedRoles.length}{" "}
+                      {selectedRoles.length === 1
+                        ? "rol seleccionado"
+                        : "roles seleccionados"}
                     </p>
                   )}
                 </div>

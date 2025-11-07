@@ -1,22 +1,47 @@
 /**
- * Version: 0.1.0
- * Individual slide component for carousel
- * Combines image with vignette and overlaid information card
+ * @fileoverview Individual slide component for carousel
+ * @version 0.2.0
+ * @author EXACTUM-dev
+ * @description Combines image with vignette and overlaid information card with fallback support and optional subtitle display
  */
+
 import React from "react";
 import VignetteImage from "./vignetteImage";
 import CaptionCard from "./captionCard";
 
-export default function CarouselSlide({ slide }) {
+/**
+ * CarouselSlide component with image fallback
+ * @component
+ * @param {Object} props - Component properties
+ * @param {Object} props.slide - Slide data object
+ * @param {string} props.slide.imageUrl - Image URL
+ * @param {string} props.slide.imageAlt - Image alt text
+ * @param {string} props.slide.title - Slide title
+ * @param {string} props.slide.subtitle - Slide subtitle
+ * @param {string} props.slide.createdAt - Creation date
+ * @param {boolean} [props.showSubtitle=true] - Whether to show subtitle
+ * @returns {React.Element} CarouselSlide component
+ */
+export default function CarouselSlide({ slide, showSubtitle = true }) {
+  if (!slide) return null;
+
   return (
-    // Main container with image and vignette effect
-    <VignetteImage
-      src={slide.imageUrl}
-      alt={slide.imageAlt}
-      style={{ borderRadius: 18 }}
-    >
-      {/* Information card overlaid at the bottom */}
-      <CaptionCard title={slide.title} subtitle={slide.subtitle} />
-    </VignetteImage>
+    <>
+      {/* Background image with vignette */}
+      <VignetteImage
+        src={slide.imageUrl}
+        alt={slide.imageAlt || slide.title}
+        variant="hero"
+        className="absolute inset-0"
+      />
+
+      {/* Caption card with optional subtitle */}
+      <CaptionCard
+        title={slide.title}
+        subtitle={slide.subtitle}
+        createdAt={slide.createdAt}
+        showSubtitle={showSubtitle}
+      />
+    </>
   );
 }
