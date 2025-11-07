@@ -8,13 +8,14 @@
 // Import necessary libraries and components
 import React, {useState, useEffect} from "react";
 import {useUser, useAuth} from "@clerk/clerk-react";
-import {useParams} from "react-router-dom";
+import {useParams, useNavigate} from "react-router-dom";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 // Atoms
 import {Title2} from "../atoms/typography";
+import BackButton from "../atoms/backButton";
 
 // Organisms
 import ProfileInfo from "../organisms/profileInfo";
@@ -46,6 +47,7 @@ export default function ProfilePage() {
   const {getToken} = useAuth();
   const {userId} = useParams(); // Get userId from URL if present
   const {userData} = useDbUser(); // Get user privileges for RBAC
+  const navigate = useNavigate();
 
   // Fetch user profile from backend
   useEffect(() => {
@@ -163,9 +165,13 @@ export default function ProfilePage() {
 
         <main className="flex-1 p-6 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
           <div className="max-w-[1100px] mx-auto">
-            <Title2 className="mb-6">
-              {userId ? 'Perfil de Usuario' : 'Mi Perfil'}
-            </Title2>
+            <div className="flex items-center gap-4 mb-6">
+              {/* Show BackButton only when viewing another user's profile */}
+              {userId && <BackButton onClick={() => navigate(-1)} />}
+              <Title2 className={userId ? "mb-0" : ""}>
+                {userId ? 'Perfil de Usuario' : 'Mi Perfil'}
+              </Title2>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left column: profile info + address */}
             <div className="lg:col-span-2 space-y-6">
