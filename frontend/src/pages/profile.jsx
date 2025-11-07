@@ -88,6 +88,9 @@ export default function ProfilePage() {
   const hasUserManagementPrivilege = userPrivileges.includes("Gestión de Usuarios");
   const isOwnProfile = !userId; // No userId means viewing own profile
   const canEdit = isOwnProfile || (userId && hasUserManagementPrivilege);
+  
+  // History can only be edited by users with "Gestión de Usuarios" privilege (not by the user themselves)
+  const canEditHistory = hasUserManagementPrivilege && userId;
 
   async function handleSaveEdits(fields) {
     const token = await getToken();
@@ -178,7 +181,7 @@ export default function ProfilePage() {
               <ProfileInfo data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
               <AddressCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
               <DocumentsCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} userId={effectiveUserId} />
-              <HistoryCard data={profileData} canEdit={canEdit} onSave={handleSaveEdits} />
+              <HistoryCard data={profileData} canEdit={canEditHistory} onSave={handleSaveEdits} />
               </div>
 
               {/* Right column: membership and tickets */}
