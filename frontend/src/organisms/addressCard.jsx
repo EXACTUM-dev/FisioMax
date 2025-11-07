@@ -28,8 +28,16 @@ const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT
  * @param {Function} [props.onSave] - Callback function to save address changes.
  * @return {!JSX.Element} Address card component.
  */
-export default function AddressCard({ data = {}, canEdit = false, onSave }) {
+export default function AddressCard({ data = {}, canEdit = false, onSave, onEditChange }) {
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Notify parent component when editing state changes
+  useEffect(() => {
+    if (onEditChange) {
+      onEditChange(isEditing);
+    }
+  }, [isEditing, onEditChange]);
+  
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");

@@ -156,12 +156,19 @@ const ComboboxField = ({ label, name, value, onChange, options, required, error,
  * @return {!JSX.Element} Profile information component.
  */
 
-export default function ProfileInfo({ data = {}, canEdit = false, onSave }) {
+export default function ProfileInfo({ data = {}, canEdit = false, onSave, onEditChange }) {
   const nombreCompleto = `${data.nombres || ''} ${data.apellidoP || ''} ${data.apellidoM || ''}`.trim();
 
   // Separate editing states for each section
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
+  
+  // Notify parent component when editing state changes
+  useEffect(() => {
+    if (onEditChange) {
+      onEditChange(isEditingPersonal || isEditingContact);
+    }
+  }, [isEditingPersonal, isEditingContact, onEditChange]);
   
   // Modal states
   const [showModal, setShowModal] = useState(false);

@@ -23,8 +23,16 @@ import Modal from '../molecules/modal';
  * @param {string} props.userId - User ID for updating documents (required if canEdit is true).
  * @return {!JSX.Element} Documents card component.
  */
-export default function DocumentsCard({data = {}, canEdit = false, onSave, userId}) {
+export default function DocumentsCard({data = {}, canEdit = false, onSave, userId, onEditChange}) {
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Notify parent component when editing state changes
+  useEffect(() => {
+    if (onEditChange) {
+      onEditChange(isEditing);
+    }
+  }, [isEditing, onEditChange]);
+  
   const [formFiles, setFormFiles] = useState({
     titulo: null,
     cedula: null,

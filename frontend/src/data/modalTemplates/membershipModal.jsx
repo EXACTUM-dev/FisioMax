@@ -396,32 +396,28 @@ function MembershipModalContent({
       <Modal 
         open={showConfirmModal} 
         onClose={() => setShowConfirmModal(false)} 
-        size="md"
+        size="sm"
       >
         <div className="p-6 text-center">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-4">
-            Última confirmación
+          <h2 className="text-lg font-bold text-slate-900 mb-2">
+            ¿Aceptar solicitud?
           </h2>
-          <p className="text-slate-700 mb-6 leading-relaxed">
-            Al darle Confirmar, se aceptará a <strong>{displayName}</strong> y 
-            podrá acceder a todos los beneficios de la membresía{' '}
-            <strong>{solicitud?.tipo || 'estándar'}</strong>.
+          <p className="text-slate-600 mb-6">
+            ¿Estás seguro de que deseas aceptar a <strong>{displayName}</strong>? Esta acción no se puede deshacer.
           </p>
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-3">
             <Button
               label="Cancelar"
               variant="outline"
               onClick={() => setShowConfirmModal(false)}
               radius="xl"
-              className="min-w-[140px] border-2 border-[#d6d900] text-[#8a7e00] hover:bg-yellow-50"
               disabled={isProcessing}
             />
             <Button
-              label={isProcessing ? "Procesando..." : "Confirmar"}
+              label={isProcessing ? "Procesando..." : "Aceptar"}
               variant="brand"
               onClick={handleConfirmApprove}
               radius="xl"
-              className="min-w-[140px] bg-[#d6d900] hover:bg-[#c6c600] text-black font-semibold"
               disabled={isProcessing}
             />
           </div>
@@ -445,46 +441,38 @@ function MembershipModalContent({
           if (typeof onClose === 'function') onClose(); 
         }} 
         size="md"
+        className="p-6"
       >
-        <div className="flex flex-col items-center p-6">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4">
-            <svg 
-              className="w-12 h-12 text-green-600" 
-              viewBox="0 0 24 24" 
-              fill="none" 
+        <div className="text-center">
+          <div className="flex justify-center items-center mb-4">
+            <svg
               xmlns="http://www.w3.org/2000/svg"
+              className="h-16 w-16 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
             >
-              <circle 
-                cx="12" 
-                cy="12" 
-                r="10" 
-                stroke="#16a34a" 
-                strokeWidth="1.5" 
-                fill="white" 
-              />
-              <path 
-                d="M7 12l3 3 7-7" 
-                stroke="#16a34a" 
-                strokeWidth="1.8" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
           </div>
-          <h3 className="text-2xl font-bold mb-4 text-center">
-            El miembro {displayName} ha sido aceptado en la sociedad
-          </h3>
-          <div>
-            <Button 
-              label="Entendido" 
-              variant="brand" 
-              onClick={() => { 
-                setShowAcceptedModal(false); 
-                if (typeof onClose === 'function') onClose(); 
-              }} 
-              className="px-8 py-3 bg-[#d6d900] text-black font-semibold" 
-            />
-          </div>
+          <Title2 className="mb-4">¡Solicitud Aceptada!</Title2>
+          <p className="text-lg">
+            {displayName} ha sido aceptado en la sociedad.
+          </p>
+          <Button 
+            label="Entendido" 
+            variant="brand"
+            onClick={() => { 
+              setShowAcceptedModal(false); 
+              if (typeof onClose === 'function') onClose(); 
+            }} 
+            className="mt-6"
+          />
         </div>
       </Modal>
 
@@ -496,48 +484,38 @@ function MembershipModalContent({
           if (typeof onClose === 'function') onClose(); 
         }} 
         size="md"
+        className="p-6"
       >
-        <div className="flex flex-col items-center p-6">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4">
-            <svg 
-              className="w-12 h-12 text-red-600" 
-              viewBox="0 0 24 24" 
-              fill="none" 
+        <div className="text-center">
+          <div className="flex justify-center items-center mb-4">
+            <svg
               xmlns="http://www.w3.org/2000/svg"
+              className="h-16 w-16 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
             >
-              <circle 
-                cx="12" 
-                cy="12" 
-                r="10" 
-                stroke="#dc2626" 
-                strokeWidth="1.5" 
-                fill="white" 
-              />
-              <path 
-                d="M8 8l8 8M16 8l-8 8" 
-                stroke="#dc2626" 
-                strokeWidth="1.8" 
-                strokeLinecap="round" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
           </div>
-          <h3 className="text-2xl font-bold mb-4 text-center text-slate-900">
-            La solicitud de {displayName} ha sido rechazada
-          </h3>
-          <p className="text-slate-600 mb-6 text-center">
-            El aplicante ha sido notificado de la decisión.
+          <Title2 className="mb-4">Solicitud Rechazada</Title2>
+          <p className="text-lg">
+            La solicitud de {displayName} ha sido rechazada.
           </p>
-          <div>
-            <Button 
-              label="Entendido" 
-              variant="brand" 
-              onClick={() => { 
-                setShowRejectedModal(false); 
-                if (typeof onClose === 'function') onClose(); 
-              }} 
-              className="px-8 py-3 bg-slate-600 hover:bg-slate-700 text-white font-semibold" 
-            />
-          </div>
+          <Button 
+            label="Entendido" 
+            variant="brand"
+            onClick={() => { 
+              setShowRejectedModal(false); 
+              if (typeof onClose === 'function') onClose(); 
+            }} 
+            className="mt-6"
+          />
         </div>
       </Modal>
     </>
