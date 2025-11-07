@@ -188,14 +188,6 @@ export async function upload(req, res) {
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
 
-    console.log("=== UPLOAD REQUEST ===");
-    console.log("Body:", { nombre, descripcion, tipo, roles });
-    console.log("File:", file ? file.originalname : "No file");
-    console.log(
-      "Thumbnail:",
-      thumbnail ? thumbnail.originalname : "No thumbnail"
-    );
-
     // Parse roles if it's a JSON string
     let roleIds = [];
     if (roles) {
@@ -204,7 +196,6 @@ export async function upload(req, res) {
         if (!Array.isArray(roleIds)) {
           roleIds = [roleIds];
         }
-        console.log("Parsed roleIds:", roleIds);
       } catch (parseError) {
         console.error("Error parsing roles:", parseError);
         return res.status(400).json({
@@ -242,8 +233,6 @@ export async function upload(req, res) {
     }
 
     const validatedRoleIds = sanitized.roles;
-
-    console.log("Validated roleIds:", validatedRoleIds);
 
     if (validatedRoleIds.length === 0) {
       console.error("No valid role IDs found");

@@ -42,20 +42,20 @@ export async function getContentByCategories() {
   `;
 
   try {
-    // Get 3 most recent videos
+    // Get 3 most recent videos for hero carousel
     const [recentVideos] = await db.query(`${baseQuery} LIMIT 3`, ["video"]);
 
-    // Get videos (monthly recordings)
-    const [videos] = await db.query(`${baseQuery} LIMIT 10`, ["video"]);
+    // Get 9 videos (monthly recordings) for row carousel
+    const [videos] = await db.query(`${baseQuery} LIMIT 9`, ["video"]);
 
-    // Get articles (weekly articles)
-    const [articles] = await db.query(`${baseQuery} LIMIT 10`, ["articulo"]);
+    // Get 9 articles (weekly articles) for row carousel
+    const [articles] = await db.query(`${baseQuery} LIMIT 9`, ["articulo"]);
 
-    // Get books/documents
-    const [books] = await db.query(`${baseQuery} LIMIT 10`, ["libro"]);
+    // Get 9 books/documents for row carousel
+    const [books] = await db.query(`${baseQuery} LIMIT 9`, ["libro"]);
 
-    // Get podcasts
-    const [podcasts] = await db.query(`${baseQuery} LIMIT 10`, ["podcast"]);
+    // Get 9 podcasts for row carousel
+    const [podcasts] = await db.query(`${baseQuery} LIMIT 9`, ["podcast"]);
 
     return {
       recentVideos,

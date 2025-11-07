@@ -17,8 +17,6 @@ const storage = multer.memoryStorage();
 
 // File filter to validate file types
 const fileFilter = (req, file, cb) => {
-  console.log(`Procesando archivo: ${file.fieldname} - ${file.mimetype}`);
-
   if (file.fieldname === "file") {
     // Main content files
     const allowedMainTypes = [
@@ -146,11 +144,6 @@ const uploadFields = (req, res, next) => {
         });
       }
     }
-
-    console.log("Archivos procesados correctamente:", {
-      file: req.files?.file?.[0]?.originalname,
-      thumbnail: req.files?.thumbnail?.[0]?.originalname,
-    });
 
     next();
   });
