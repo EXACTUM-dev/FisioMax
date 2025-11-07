@@ -20,6 +20,7 @@ import {
   getRolePrivileges,
   getAllPrivileges,
 } from "../models/privileges.model.js";
+import { sanitizeContentInput } from "../utils/sanitization.js";
 import crypto from "crypto";
 
 /**
@@ -82,8 +83,16 @@ export async function updateRole(req, res) {
     const { id } = req.params;
     const { name, description, privileges } = req.body;
 
-    // Validate required fields
-    if (!name || !Array.isArray(privileges)) {
+    // Sanitize and validate input
+    const sanitized = sanitizeContentInput(req.body, {
+      stringFields: ['name', 'description'],
+      idFields: ['privileges'],
+      requiredFields: ['name', 'privileges'],
+      maxLengths: { name: 100, description: 500 }
+    });
+
+    // Validate privileges is array
+    if (!Array.isArray(sanitized.privileges)) {
       return res.status(400).json({
         success: false,
         error: "Name and privileges array are required",
@@ -100,19 +109,19 @@ export async function updateRole(req, res) {
     }
 
     // Update role basic info (name and description)
-    await updateRoleById(id, { name, description });
+    await updateRoleById(id, { name: sanitized.name, description: sanitized.description });
 
     // Update role privileges
-    await updateRolePrivileges(id, privileges);
+    await updateRolePrivileges(id, sanitized.privileges);
 
     return res.status(200).json({
       success: true,
       message: "Role updated successfully",
       data: {
         id,
-        name,
-        description,
-        privileges,
+        name: sanitized.name,
+        description: sanitized.description,
+        privileges: sanitized.privileges,
       },
     });
   } catch (error) {
@@ -189,8 +198,16 @@ export async function createRole(req, res) {
   try {
     const { name, description, privileges } = req.body;
 
-    // Validate required fields
-    if (!name || !Array.isArray(privileges)) {
+    // Sanitize and validate input
+    const sanitized = sanitizeContentInput(req.body, {
+      stringFields: ['name', 'description'],
+      idFields: ['privileges'],
+      requiredFields: ['name', 'privileges'],
+      maxLengths: { name: 100, description: 500 }
+    });
+
+    // Validate privileges is array
+    if (!Array.isArray(sanitized.privileges)) {
       return res.status(400).json({
         success: false,
         error: "Name and privileges array are required",
@@ -199,8 +216,8 @@ export async function createRole(req, res) {
 
     // Let DB generate the ID and return it
     const createdRole = await createRoleWithPrivileges(
-      { name, description },
-      privileges
+      { name: sanitized.name, description: sanitized.description },
+      sanitized.privileges
     );
 
     return res.status(201).json({
@@ -208,9 +225,9 @@ export async function createRole(req, res) {
       message: "Role created successfully",
       data: {
         id: createdRole.id,
-        name,
-        description,
-        privileges,
+        name: sanitized.name,
+        description: sanitized.description,
+        privileges: sanitized.privileges,
       },
     });
   } catch (error) {
