@@ -1,25 +1,24 @@
 /**
- * @fileoverview Tabbed container component with optional external search support
+ * @fileoverview Tabbed container component with search and loading states
  * @version 0.3.0
  * @author EXACTUM-dev
- * @description Supports both table and custom render views with external search control from parent
+ * @description Supports both table and custom render views with static search bar
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import DataTable from "./dataTable";
 import TabsNav from "../molecules/tabsNav";
+import SearchBarStatic from "../molecules/searchBarStatic";
 import Loading from "../atoms/loading";
 
 /**
  * Renders a switchable data container with tabs and optional loading state
- * Search is now controlled by parent component through AppHeader
  * @component
  * @param {Object} props - Component properties
  * @param {Array<Object>} props.views - Array of view configurations
  * @param {string} [props.initialKey] - Initial active view key
  * @param {string} [props.activeKey] - Controlled active key from parent
  * @param {Function} [props.onTabChange] - Callback when tab changes
- * @param {string} [props.searchQuery=""] - External search query from parent
  * @param {string} [props.className=""] - Additional CSS classes
  * @param {React.ReactNode} [props.toolbarRight] - Right-aligned toolbar content
  * @param {boolean} [props.loading=false] - Show loading spinner
@@ -30,14 +29,14 @@ export default function DataSwitchContainer({
   initialKey,
   activeKey: controlledActiveKey,
   onTabChange,
-  searchQuery = "",
   className = "",
   toolbarRight = null,
   loading = false,
 }) {
-  const [internalActiveKey, setInternalActiveKey] = React.useState(
+  const [internalActiveKey, setInternalActiveKey] = useState(
     initialKey ?? views[0]?.key
   );
+  const [query, setQuery] = useState("");
 
   const activeKey = controlledActiveKey ?? internalActiveKey;
 
@@ -52,10 +51,14 @@ export default function DataSwitchContainer({
 
   const activeView = views.find((v) => v.key === activeKey) ?? views[0] ?? {};
 
-  // Filter rows based on external search query for table views
+  // Enable search by default for table views, allow override via searchEnabled prop
+  const searchEnabled =
+    activeView.searchEnabled ?? (activeView.type === "table" ? true : false);
+
+  // Filter rows based on search query for table views
   const filteredRows = useMemo(() => {
     if (activeView.type !== "table") return [];
-    const q = searchQuery.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
     if (!q) return activeView.rows ?? [];
 
     const cols = (activeView.columns ?? []).filter(
@@ -74,7 +77,7 @@ export default function DataSwitchContainer({
           .includes(q);
       })
     );
-  }, [activeView, searchQuery]);
+  }, [activeView, query]);
 
   return (
     <section className={`max-w-[70rem] mx-auto ${className}`}>
@@ -87,8 +90,17 @@ export default function DataSwitchContainer({
           ariaLabel="Data views"
         />
 
-        {/* Right side: actions only (search is in AppHeader now) */}
-        {toolbarRight && <div className="shrink-0">{toolbarRight}</div>}
+        {/* Right side: search + actions */}
+        <div className="flex items-center gap-2 md:gap-3">
+          {searchEnabled && (
+            <SearchBarStatic
+              value={query}
+              onChange={setQuery}
+              placeholder={activeView.searchPlaceholder ?? "Buscar..."}
+            />
+          )}
+          {toolbarRight && <div className="shrink-0">{toolbarRight}</div>}
+        </div>
       </div>
 
       {/* Content */}
@@ -109,7 +121,7 @@ export default function DataSwitchContainer({
             filterOptions={activeView.filterOptions}
           />
         ) : typeof activeView.render === "function" ? (
-          activeView.render({ searchQuery })
+          activeView.render({ query })
         ) : null}
       </div>
     </section>

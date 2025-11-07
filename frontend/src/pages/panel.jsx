@@ -461,13 +461,7 @@ export default function Panel() {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* Header component with user info */}
-      <AppHeader
-        user={user}
-        showSearch={true}
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder={getSearchPlaceholder()}
-      />
+      <AppHeader user={user} showSearch={false} />
 
       {/* Sidebar navigation */}
       <Sidebar current={current} onNavigate={setCurrent} />

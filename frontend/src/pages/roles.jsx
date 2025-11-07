@@ -318,13 +318,7 @@ export default function RolesPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      <AppHeader
-        user={user}
-        showSearch={true}
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Buscar roles..."
-      />
+      <AppHeader user={user} showSearch={false} />
       <Sidebar current={current} onNavigate={setCurrent} />
 
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
