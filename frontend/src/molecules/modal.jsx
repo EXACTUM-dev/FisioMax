@@ -89,7 +89,12 @@ export default function Modal({
         onClick={handleOverlayClick}
       >
         {/* Relative container for the CloseButton position*/}
-        <div className="relative">
+        <div
+          className={`
+            relative w-full mx-2 sm:mx-4 
+            ${sizeClasses[size]} 
+          `}
+        >
           {showCloseButton && (
             <CloseButton
               onClose={handleCloseRequest}
@@ -100,12 +105,12 @@ export default function Modal({
           {/* Modal container with scroll */}
           <div
             className={`
-            bg-white rounded-2xl shadow-xl w-full 
-            ${sizeClasses[size]} 
-            p-10 border border-slate-200 relative
-            overflow-y-auto max-h-[90vh]
-            animate-in fade-in-0 zoom-in-95 duration-200
-            ${className}
+              bg-white rounded-2xl shadow-xl border border-slate-200 
+              p-4 sm:p-6 lg:p-8
+              overflow-y-auto max-h-[90vh]
+              transition-all duration-200
+              animate-in fade-in-0 zoom-in-95
+              ${className}
           `}
           >
             {children}
