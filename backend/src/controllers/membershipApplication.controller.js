@@ -36,8 +36,8 @@ export const createMembershipApplication = async (req, res) => {
                     'birthDate', 'country', 'state', 'city', 'neighborhood', 'postalCode',
                     'street', 'exteriorNumber', 'interiorNumber', 'degree', 'instagram',
                     'linkedin', 'facebook', 'website'],
-      requiredFields: ['firstName', 'lastName', 'email', 'homePhone', 'birthDate',
-                      'country', 'state', 'city', 'degree'],
+      requiredFields: ['firstName', 'lastName', 'email', 'whatsappPhone', 'birthDate',
+                      'country', 'state', 'city'],
       maxLengths: {
         firstName: 100,
         lastName: 100,
