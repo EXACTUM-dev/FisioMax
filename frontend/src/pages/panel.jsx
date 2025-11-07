@@ -33,7 +33,6 @@ import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import buildMembershipColumns from "../data/tableTemplates/membershipColumns";
 import { fetchWithClerk } from "../utils/api";
-import { fetchWithClerk } from "../utils/api";
 import MembershipModal from "../data/modalTemplates/membershipModal";
 
 /**
@@ -63,7 +62,6 @@ export default function Panel() {
   const [membershipRows, setMembershipRows] = useState([]);
   const [selectedMembership, setSelectedMembership] = useState(null);
   const [membershipModalOpen, setMembershipModalOpen] = useState(false);
-
 
   // Modal state for viewing role permissions
   const [modalOpen, setModalOpen] = useState(false);
@@ -115,19 +113,12 @@ export default function Panel() {
         { method: "GET" },
         token
       );
-      const resp = await fetchWithClerk(
-        "/api/membership-applications",
-        { method: "GET" },
-        token
-      );
 
       // backend may return { success, data } or an array
       const rows = Array.isArray(resp) ? resp : resp?.data || [];
 
       // Exclude already approved memberships: we only want Pendiente and Rechazado here
       const visibleRows = (rows || []).filter((r) => {
-        const aceptado =
-          typeof r.aceptado !== "undefined" ? r.aceptado : r.accepted ?? null;
         const aceptado =
           typeof r.aceptado !== "undefined" ? r.aceptado : r.accepted ?? null;
         return aceptado !== 1; // keep if not approved
@@ -141,25 +132,7 @@ export default function Panel() {
           typeof r.estatusPago !== "undefined"
             ? r.estatusPago
             : r.paymentStatus ?? null,
-        aceptado:
-          typeof r.aceptado !== "undefined" ? r.aceptado : r.accepted ?? null,
-        estatusPago:
-          typeof r.estatusPago !== "undefined"
-            ? r.estatusPago
-            : r.paymentStatus ?? null,
         IDUsuario: r.IDUsuario || r.userId || null,
-        nombre:
-          `${r.nombres || r.nombre || ""} ${r.apellidoP || ""} ${
-            r.apellidoM || ""
-          }`.trim() || "Sin nombre",
-        estado:
-          typeof r.aceptado !== "undefined"
-            ? r.aceptado === 1
-              ? "Aprobado"
-              : r.aceptado === 0
-              ? "Rechazado"
-              : "Pendiente"
-            : r.status || "Pendiente",
         nombre:
           `${r.nombres || r.nombre || ""} ${r.apellidoP || ""} ${
             r.apellidoM || ""
@@ -196,16 +169,6 @@ export default function Panel() {
           token
         );
         const detail = resp?.data ?? resp ?? null;
-  const fetchMembershipDetail = useCallback(
-    async (id) => {
-      try {
-        const token = await getToken();
-        const resp = await fetchWithClerk(
-          `/api/membership-applications/${id}`,
-          { method: "GET" },
-          token
-        );
-        const detail = resp?.data ?? resp ?? null;
 
         if (detail) {
           setSelectedMembership(detail);
@@ -219,32 +182,12 @@ export default function Panel() {
           err.message || err
         );
       }
-        if (detail) {
-          setSelectedMembership(detail);
-          setMembershipModalOpen(true);
-          return;
-        }
-      } catch (err) {
-        // If endpoint doesn't exist or fails, fall back to list entry
-        console.warn(
-          "No se pudo obtener detalle de membresía:",
-          err.message || err
-        );
-      }
-
-      // fallback -> find in membershipRows
-      const fallback = membershipRows.find((m) => String(m.id) === String(id));
-      if (fallback) {
-        setSelectedMembership(
-          fallback.__raw ? { ...fallback.__raw } : fallback
-        );
+      if (detail) {
+        setSelectedMembership(detail);
         setMembershipModalOpen(true);
-      } else {
-        setError("No se encontró la solicitud solicitada.");
+        return;
       }
-    },
-    [getToken, membershipRows]
-  );
+
       // fallback -> find in membershipRows
       const fallback = membershipRows.find((m) => String(m.id) === String(id));
       if (fallback) {
@@ -273,10 +216,10 @@ export default function Panel() {
       // Extract payload from backend, then filter-out deleted
       const raw = Array.isArray(usersResponse)
         ? usersResponse
-        : usersResponse?.data || [];    
-      
+        : usersResponse?.data || [];
+
       const activeUsers = normalizeActiveUsers(raw);
-      
+
       setUserRows(activeUsers);
     } catch (err) {
       setError("Error de carga de usuarios. Por favor intente más tarde.");
@@ -415,11 +358,7 @@ export default function Panel() {
           user.apellidoM || ""
         }`.trim();
 
-        const roleName =
-          user.rol ||
-          user.rolNombre ||
-          roleRows.find((r) => r.IDRol === user.IDRol)?.nombre ||
-          "Sin rol asignado";
+        ("Sin rol asignado");
         const roleName =
           user.rol ||
           user.rolNombre ||
@@ -602,7 +541,6 @@ export default function Panel() {
             searchQuery={searchQuery}
             loading={loadingRoles || loadingUsers}
             views={[
-            views={[
               {
                 key: "solicitudes",
                 label: "Solicitudes",
@@ -610,9 +548,7 @@ export default function Panel() {
                 columns: membershipColumns,
                 rows: membershipRows,
                 searchPlaceholder: "Buscar Solicitudes...",
-                filterColumn: "estado",
-              filterOptions: ["Rechazado", "Pendiente"],
-            },
+              },
               {
                 key: "users",
                 label: "Usuarios",
@@ -759,45 +695,11 @@ export default function Panel() {
           }}
         />
       )}
-      {selectedMembership && (
-        <MembershipModal
-          open={membershipModalOpen}
-          onClose={() => {
-            setMembershipModalOpen(false);
-            setSelectedMembership(null);
-            // refresh list after modal closes in case a status changed
-            fetchMemberships();
-            fetchUsers(); // Refresh users list in case a membership was approved
-          }}
-          solicitud={selectedMembership}
-          onStatusChange={(membershipId, newStatus) => {
-            // Update the initial state
-            setMembershipRows((prev) =>
-              prev.map((membership) =>
-                membership.id === membershipId
-                  ? { ...membership, estado: newStatus }
-                  : membership
-              )
-            );
-            // If membership was approved, refresh users list
-            if (newStatus === "Aprobado") {
-              fetchUsers();
-            }
-          }}
-        />
-      )}
 
       {/* Confirmation modal for user deletion */}
       <ConfirmationModal
         open={deleteConfirmOpen}
         title="¿Eliminar usuario?"
-        message={`¿Estás seguro de que deseas eliminar al usuario "${[
-          userToDelete?.nombres,
-          userToDelete?.apellidoP,
-          userToDelete?.apellidoM,
-        ]
-          .filter(Boolean)
-          .join(" ")}"? Esta acción no se puede deshacer.`}
         message={`¿Estás seguro de que deseas eliminar al usuario "${[
           userToDelete?.nombres,
           userToDelete?.apellidoP,
@@ -816,11 +718,6 @@ export default function Panel() {
             );
 
             // Optimistic UI update
-            setUserRows((prev) =>
-              prev.filter(
-                (r) => (r?.IDUsuario ?? r?.id) !== userToDelete?.IDUsuario
-              )
-            );
             setUserRows((prev) =>
               prev.filter(
                 (r) => (r?.IDUsuario ?? r?.id) !== userToDelete?.IDUsuario
@@ -863,8 +760,6 @@ export default function Panel() {
           </div>
           <Title2 className="mb-4">¡Usuario Eliminado!</Title2>
           <p className="text-lg">
-            El usuario "{userToDelete?.nombres} {userToDelete?.apellidoP}" ha
-            sido eliminado con éxito.
             El usuario "{userToDelete?.nombres} {userToDelete?.apellidoP}" ha
             sido eliminado con éxito.
           </p>
