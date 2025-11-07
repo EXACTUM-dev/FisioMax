@@ -215,6 +215,8 @@ export default function ContentPage() {
 
   const isVideo = contentData?.contentData?.tipo === "video";
   const isArticle = contentData?.contentData?.tipo === "articulo";
+  const isBook = contentData?.contentData?.tipo === "libro";
+  const isPodcast = contentData?.contentData?.tipo === "podcast";
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
@@ -233,7 +235,7 @@ export default function ContentPage() {
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] 2xl:grid-cols-[1fr_450px] gap-6">
             <div className="w-full">
               <div className="mb-6">
-                {isVideo && (
+                {(isVideo || isPodcast) && (
                   <VideoPlayer
                     url={contentData?.signedUrl}
                     poster={contentData?.contentData?.thumbnailUrl}
@@ -242,7 +244,7 @@ export default function ContentPage() {
                     controls
                   />
                 )}
-                {isArticle && (
+                {(isArticle || isBook) && (
                   <PDFViewer
                     url={contentData?.signedUrl}
                     onError={handleContentError}

@@ -14,25 +14,7 @@ import {
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import S3Service from "../services/s3Service.js";
-
-/**
- * Sanitizes user input to prevent XSS attacks
- * Escapes HTML special characters that could be used for script injection
- * @param {string} str - String to sanitize
- * @returns {string} Sanitized string
- */
-function sanitizeInput(str) {
-  if (!str) return "";
-
-  return str
-    .trim()
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;");
-}
+import { sanitizeContentInput } from "../utils/sanitization.js";
 
 /**
  * Determines S3 path based on content type
@@ -187,64 +169,69 @@ export async function index(req, res) {
  */
 export async function upload(req, res) {
   try {    
-    let { nombre, descripcion, tipo, role } = req.body;
+    const { nombre, descripcion, tipo, roles } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
+    
+    console.log('=== UPLOAD REQUEST ===');
+    console.log('Body:', { nombre, descripcion, tipo, roles });
+    console.log('File:', file ? file.originalname : 'No file');
+    console.log('Thumbnail:', thumbnail ? thumbnail.originalname : 'No thumbnail');
 
-    // Sanitize input fields
-    nombre = sanitizeInput(nombre);
-    descripcion = sanitizeInput(descripcion);
-    tipo = tipo?.trim() || "";
+    // Parse roles if it's a JSON string
+    let roleIds = [];
+    if (roles) {
+      try {
+        roleIds = typeof roles === 'string' ? JSON.parse(roles) : roles;
+        if (!Array.isArray(roleIds)) {
+          roleIds = [roleIds];
+        }
+        console.log('Parsed roleIds:', roleIds);
+      } catch (parseError) {
+        console.error('Error parsing roles:', parseError);
+        return res.status(400).json({
+          success: false,
+          message: "Formato de roles inválido",
+        });
+      }
+    }
 
-    // Validate required fields
-    if (!nombre) {
+    // Validate and sanitize input using the generic sanitization utility
+    const allowedTypes = ["Video", "Articulo", "Podcast", "Libro"];
+    
+    let sanitized;
+    try {
+      sanitized = sanitizeContentInput(
+        { nombre, descripcion, tipo, roles: roleIds },
+        {
+          stringFields: ['nombre', 'descripcion', 'tipo'],
+          idFields: ['roles'],
+          requiredFields: ['nombre', 'tipo', 'roles'],
+          maxLengths: {
+            nombre: 50,
+            descripcion: 500,
+          },
+          allowedValues: {
+            tipo: allowedTypes,
+          },
+        }
+      );
+    } catch (validationError) {
       return res.status(400).json({
         success: false,
-        message: "El nombre del archivo es obligatorio",
+        message: validationError.message,
       });
     }
 
-    if (nombre.length > 50) {
+    const validatedRoleIds = sanitized.roles;
+    
+    console.log('Validated roleIds:', validatedRoleIds);
+    
+    if (validatedRoleIds.length === 0) {
+      console.error('No valid role IDs found');
       return res.status(400).json({
         success: false,
-        message: "El nombre del archivo no puede exceder los 50 caracteres",
-      });
-    }
-
-    if (descripcion && descripcion.length > 500) {
-      return res.status(400).json({
-        success: false,
-        message: "La descripción no puede exceder los 500 caracteres",
-      });
-    }
-
-    if (!tipo) {
-      return res.status(400).json({
-        success: false,
-        message: "El tipo de contenido es obligatorio",
-      });
-    }
-
-    const allowedTypes = ["Video", "Articulo", "Podcast", "Documento"];
-    if (!allowedTypes.includes(tipo)) {
-      return res.status(400).json({
-        success: false,
-        message: "Tipo de contenido inválido",
-      });
-    }
-
-    if (!role) {
-      return res.status(400).json({
-        success: false,
-        message: "Debes seleccionar a quién va dirigido el contenido",
-      });
-    }
-
-    const roleId = parseInt(role);
-    if (isNaN(roleId) || roleId <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "El rol seleccionado no es válido",
+        message: "Los roles seleccionados no son válidos",
       });
     }
 
@@ -255,22 +242,36 @@ export async function upload(req, res) {
       });
     }
 
-    // Validate role exists
-    const roleData = await findRoleById(roleId);
-    if (!roleData) {
-      return res.status(400).json({
-        success: false,
-        message: "El rol seleccionado no existe",
-      });
-    }
-
-    // Get all privileges for the selected role
-    const privilegeIds = await getPrivilegeIdsByRole(roleId);
-
-    if (privilegeIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "El rol seleccionado no tiene privilegios asignados",
+    // Validate all roles exist and collect all privilege IDs
+    let allPrivilegeIds = [];
+    let roleNames = [];
+    
+    for (const roleId of validatedRoleIds) {
+      const roleData = await findRoleById(roleId);
+      if (!roleData) {
+        return res.status(400).json({
+          success: false,
+          message: `El rol con ID ${roleId} no existe`,
+        });
+      }
+      
+      roleNames.push(roleData.nombre);
+      
+      // Get all privileges for this role
+      const privilegeIds = await getPrivilegeIdsByRole(roleId);
+      
+      if (privilegeIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: `El rol "${roleData.nombre}" no tiene privilegios asignados`,
+        });
+      }
+      
+      // Add privileges to the collection (avoid duplicates)
+      privilegeIds.forEach(privId => {
+        if (!allPrivilegeIds.includes(privId)) {
+          allPrivilegeIds.push(privId);
+        }
       });
     }
 
@@ -279,10 +280,10 @@ export async function upload(req, res) {
       Video: "videos",
       Articulo: "articulos",
       Podcast: "podcasts",
-      Documento: "documentos",
+      Libro: "libros",
     };
 
-    const folder = folderMap[tipo] || "contenido";
+    const folder = folderMap[sanitized.tipo] || "contenido";
 
     // Upload main file to S3
     let s3Key;
@@ -300,15 +301,15 @@ export async function upload(req, res) {
     let contentId;
     try {
       contentId = await createContent({
-        nombre,
-        descripcion: descripcion || "",
-        tipo: tipo.toLowerCase(),
+        nombre: sanitized.nombre,
+        descripcion: sanitized.descripcion || "",
+        tipo: sanitized.tipo.toLowerCase(),
         IDMultimedia: s3Key,
-        tipoMembresia: roleData.nombre,
+        tipoMembresia: roleNames.join(", "), // Store all role names
       });
 
-      // Assign content to all role privileges in accede table
-      await assignContentToPrivileges(contentId, privilegeIds);
+      // Assign content to all collected privileges in accede table
+      await assignContentToPrivileges(contentId, allPrivilegeIds);
     } catch (dbError) {
       console.error("Error creating content in database:", dbError);
       return res.status(500).json({
@@ -326,15 +327,15 @@ export async function upload(req, res) {
           `${folder}/thumbnails`
         );
         thumbnailId = await createContent({
-          nombre,
-          descripcion: `Miniatura de ${nombre}`,
+          nombre: sanitized.nombre,
+          descripcion: `Miniatura de ${sanitized.nombre}`,
           tipo: "imagen",
           IDMultimedia: thumbnailKey,
-          tipoMembresia: roleData.nombre,
+          tipoMembresia: roleNames.join(", "),
         });
 
         // Assign thumbnail to same privileges
-        await assignContentToPrivileges(thumbnailId, privilegeIds);
+        await assignContentToPrivileges(thumbnailId, allPrivilegeIds);
       } catch (thumbError) {
         console.error("Error uploading thumbnail:", thumbError);
         // Continue even if thumbnail fails
@@ -347,7 +348,8 @@ export async function upload(req, res) {
       data: {
         contentId,
         thumbnailId,
-        assignedPrivileges: privilegeIds.length,
+        assignedPrivileges: allPrivilegeIds.length,
+        assignedRoles: roleNames,
       },
     });
   } catch (error) {

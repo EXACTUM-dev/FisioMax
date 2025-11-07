@@ -1,16 +1,18 @@
 /**
  * @fileoverview Role management page: list, edit and create roles
  * @author EXACTUM-dev
- * @version 0.5.0
+ * @version 0.6.0
  */
 
 import React, { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 
 // Atoms
 import Loading from "../atoms/loading";
 import AlertBanner from "../atoms/alertBanner";
 import {Title2} from "../atoms/typography";
+import BackButton from "../atoms/backButton";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -31,6 +33,7 @@ import { toUserMessage } from "../services/serviceErrors";
 
 export default function RolesPage() {
   const { user, isLoaded: isClerkLoaded } = useUser();
+  const navigate = useNavigate();
   const [current, setCurrent] = useState("roles");
 
   // Modal state for editing
@@ -320,7 +323,10 @@ export default function RolesPage() {
 
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-6xl mx-auto">
-          <Title2 className="mb-6">Administración de Roles y Permisos</Title2>
+          <div className="flex items-center gap-4 mb-6">
+            <BackButton onClick={() => navigate(-1)} />
+            <Title2 className="mb-0">Administración de Roles y Permisos</Title2>
+          </div>
 
           {errorBanner}
 

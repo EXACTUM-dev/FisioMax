@@ -8,7 +8,7 @@
 
 import React from "react";
 import trashIcon from "../../assets/icons/trash-2.png";
-import editIcon from "../../assets/icons/square-pen.png";
+import EditButton from "../../atoms/editButton";
 
 /**
  * Build columns for roles/permissions table with Rol, Permisos, Editar, Eliminar
@@ -86,9 +86,8 @@ export function buildRolePermissionsColumns({
        * @returns {React.Element} Edit button with icon
        */
       render: (row) => (
-        <button
-          type="button"
-          title={editTooltip}
+        <EditButton
+          isEditing={false}
           onClick={(e) => {
             // Prevent default navigation behavior
             e.preventDefault();
@@ -96,14 +95,8 @@ export function buildRolePermissionsColumns({
             // Call the edit handler with row data
             onEdit?.(row);
           }}
-          className="inline-flex items-center cursor-pointer justify-center w-8 h-8 rounded hover:bg-blue-50"
-        >
-          <img
-            src={editIcon}
-            alt={editTooltip}
-            className="w-5 h-5 object-contain opacity-80"
-          />
-        </button>
+          editLabel={editTooltip}
+        />
       ),
     },
   ];

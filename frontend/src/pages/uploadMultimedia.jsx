@@ -4,16 +4,20 @@
  * @version 1.0.0
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 
 // Atoms
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
+import BackButton from "../atoms/backButton";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
+import Dropdown from "../molecules/dropdown";
+import ConfirmModal from "../molecules/confirmationModal";
 
 // Organisms
 import SuccessErrorModal from "../organisms/successErrorModal";
@@ -27,6 +31,7 @@ import SuccessErrorModal from "../organisms/successErrorModal";
 export default function UploadMultimedia() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
+  const navigate = useNavigate();
   const [current, setCurrent] = useState("uploadMultimedia");
 
   /** Form state for content metadata */
@@ -38,7 +43,7 @@ export default function UploadMultimedia() {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedRoles, setSelectedRoles] = useState([]);
   const [roles, setRoles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
@@ -47,6 +52,38 @@ export default function UploadMultimedia() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [uploadedContentName, setUploadedContentName] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const isNavigatingRef = useRef(false);
+
+  /**
+   * Checks if the form has any data entered.
+   * @returns {boolean} True if form has data, false otherwise.
+   */
+  const hasFormData = () => {
+    const hasTextData = formData.nombre.trim() !== '' || 
+                        formData.descripcion.trim() !== '' ||
+                        formData.tipo !== 'Articulo';
+    const hasFiles = selectedFile !== null || selectedThumbnail !== null;
+    const hasRoles = selectedRoles.length > 0;
+    return hasTextData || hasFiles || hasRoles;
+  };
+
+  /**
+   * Detects when user attempts to close the tab/window.
+   * Shows browser confirmation dialog if form has unsaved data.
+   */
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasFormData() && !isNavigatingRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, selectedFile, selectedThumbnail, selectedRoles]);
 
   /**
    * Fetches available roles from the API on component mount.
@@ -126,12 +163,20 @@ export default function UploadMultimedia() {
   };
 
   /**
-   * Handles role selection change from dropdown.
+   * Handles role selection change from checkbox.
    *
-   * @param {Event} e - The select change event
+   * @param {string} roleId - The role ID to toggle
    */
-  const handleRoleChange = (e) => {
-    setSelectedRole(e.target.value);
+  const handleRoleToggle = (roleId) => {
+    setSelectedRoles((prev) => {
+      if (prev.includes(roleId)) {
+        // Remove role if already selected
+        return prev.filter((id) => id !== roleId);
+      } else {
+        // Add role if not selected
+        return [...prev, roleId];
+      }
+    });
   };
 
   /**
@@ -171,8 +216,8 @@ export default function UploadMultimedia() {
       return;
     }
 
-    if (!selectedRole) {
-      setErrorMessage("Debes seleccionar a quién va dirigido el contenido");
+    if (!selectedRoles || selectedRoles.length === 0) {
+      setErrorMessage("Debes seleccionar al menos un rol al que va dirigido el contenido");
       setErrorModalOpen(true);
       return;
     }
@@ -193,7 +238,7 @@ export default function UploadMultimedia() {
       uploadData.append("nombre", formData.nombre.trim());
       uploadData.append("descripcion", formData.descripcion.trim());
       uploadData.append("tipo", formData.tipo);
-      uploadData.append("role", selectedRole);
+      uploadData.append("roles", JSON.stringify(selectedRoles));
 
       // Add thumbnail if selected
       if (selectedThumbnail) {
@@ -214,6 +259,9 @@ export default function UploadMultimedia() {
       const result = await response.json();
 
       if (result.success) {
+        // Mark as navigating to prevent confirmation modal
+        isNavigatingRef.current = true;
+        
         // Save content name before resetting form
         setUploadedContentName(formData.nombre);
 
@@ -225,7 +273,7 @@ export default function UploadMultimedia() {
         });
         setSelectedFile(null);
         setSelectedThumbnail(null);
-        setSelectedRole("");
+        setSelectedRoles([]);
 
         // Show success modal
         setSuccessModalOpen(true);
@@ -242,6 +290,34 @@ export default function UploadMultimedia() {
     } finally {
       setUploading(false);
     }
+  };
+
+  /**
+   * Confirms exit and clears all form data before navigating back.
+   */
+  const handleConfirmExit = () => {
+    isNavigatingRef.current = true;
+    setShowConfirmModal(false);
+    
+    // Clear form data
+    setFormData({
+      nombre: "",
+      descripcion: "",
+      tipo: "Articulo",
+    });
+    setSelectedFile(null);
+    setSelectedThumbnail(null);
+    setSelectedRoles([]);
+    
+    // Navigate back
+    navigate(-1);
+  };
+
+  /**
+   * Cancels exit and keeps user on the form.
+   */
+  const handleCancelExit = () => {
+    setShowConfirmModal(false);
   };
 
   if (!isLoaded) {
@@ -269,7 +345,17 @@ export default function UploadMultimedia() {
       {/* Main content */}
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-4xl mx-auto">
-          <Title2 className="mb-6">Subir nuevo contenido multimedia</Title2>
+          <div className="flex items-center gap-4 mb-6">
+            <BackButton onClick={() => {
+              if (hasFormData()) {
+                setShowConfirmModal(true);
+              } else {
+                isNavigatingRef.current = true;
+                navigate(-1);
+              }
+            }} />
+            <Title2 className="mb-0">Subir nuevo contenido multimedia</Title2>
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
@@ -316,21 +402,20 @@ export default function UploadMultimedia() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {/* Content type selector */}
                 <div>
-                  <h3 className="text-base font-semibold text-slate-900 mb-4">
-                    Tipo de contenido <span className="text-red-500">*</span>
-                  </h3>
-                  <select
+                  <Dropdown
                     name="tipo"
+                    label="Tipo de contenido"
+                    required={true}
                     value={formData.tipo}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white"
-                    required
-                  >
-                    <option value="Articulo">Artículo</option>
-                    <option value="Video">Video</option>
-                    <option value="Podcast">Podcast</option>
-                    <option value="Libro">Libro</option>
-                  </select>
+                    options={[
+                      { value: "Articulo", label: "Artículo" },
+                      { value: "Video", label: "Video" },
+                      { value: "Podcast", label: "Podcast" },
+                      { value: "Libro", label: "Libro" },
+                    ]}
+                    placeholder="Selecciona un tipo"
+                  />
                 </div>
 
                 {/* Role selector */}
@@ -338,22 +423,33 @@ export default function UploadMultimedia() {
                   <h3 className="text-base font-semibold text-slate-900 mb-4">
                     Dirigido a <span className="text-red-500">*</span>
                   </h3>
-                  <select
-                    value={selectedRole}
-                    onChange={handleRoleChange}
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white"
-                    required
-                  >
-                    <option value="">Seleccionar...</option>
-                    {roles.map((role) => (
-                      <option
-                        key={role.IDRol || role.id}
-                        value={role.IDRol || role.id}
-                      >
-                        {role.nombre || role.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2 border border-slate-300 rounded-lg p-4 max-h-48 overflow-y-auto">
+                    {roles.length === 0 ? (
+                      <p className="text-sm text-slate-500">Cargando roles...</p>
+                    ) : (
+                      roles.map((role) => (
+                        <label
+                          key={role.IDRol || role.id}
+                          className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedRoles.includes(role.IDRol || role.id)}
+                            onChange={() => handleRoleToggle(role.IDRol || role.id)}
+                            className="checkbox-brand"
+                          />
+                          <span className="text-sm text-slate-700">
+                            {role.nombre || role.name}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  {selectedRoles.length > 0 && (
+                    <p className="text-xs text-slate-500 mt-2">
+                      {selectedRoles.length} {selectedRoles.length === 1 ? 'rol seleccionado' : 'roles seleccionados'}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -362,7 +458,7 @@ export default function UploadMultimedia() {
                 <h3 className="text-base font-semibold text-slate-900 mb-4">
                   Archivo del contenido <span className="text-red-500">*</span>
                 </h3>
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#CAD00F] transition-colors">
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 transition-colors hover:border-[#CAD00F]">
                   <input
                     type="file"
                     onChange={(e) => handleFileChange(e, "content")}
@@ -371,41 +467,54 @@ export default function UploadMultimedia() {
                     accept="video/*,audio/*,image/*,.pdf,.doc,.docx"
                     required
                   />
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
-                    <svg
-                      className="w-12 h-12 text-slate-400 mb-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    {selectedFile ? (
-                      <span className="text-sm font-medium text-slate-700">
-                        {selectedFile.name}
-                      </span>
-                    ) : (
-                      <>
-                        <p className="text-sm text-slate-600 mb-1">
-                          <span className="text-[#CAD00F] font-medium">
-                            Sube un archivo
-                          </span>{" "}
-                          o arrástralo aquí
+                  
+                  {selectedFile ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          document.getElementById('file-upload').value = '';
+                        }}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <div className="mt-2">
+                        <label
+                          htmlFor="file-upload"
+                          className="cursor-pointer text-sm font-medium text-[#CAD00F] hover:text-[#b8bc0d]"
+                        >
+                          Haz clic para seleccionar archivo
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">
+                          o arrastra y suelta aquí
                         </p>
-                        <p className="text-xs text-slate-500">
-                          MP4, MOV, WEBP, PDF hasta 5GB
-                        </p>
-                      </>
-                    )}
-                  </label>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">
+                        MP4, MOV, WEBP, PDF hasta 5GB
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -414,7 +523,7 @@ export default function UploadMultimedia() {
                 <h3 className="text-base font-semibold text-slate-900 mb-4">
                   Miniatura del contenido
                 </h3>
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-[#CAD00F] transition-colors">
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 transition-colors hover:border-[#CAD00F]">
                   <input
                     type="file"
                     onChange={(e) => handleFileChange(e, "thumbnail")}
@@ -422,41 +531,54 @@ export default function UploadMultimedia() {
                     id="thumbnail-upload"
                     accept="image/png,image/jpeg,image/jpg"
                   />
-                  <label
-                    htmlFor="thumbnail-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
-                    <svg
-                      className="w-12 h-12 text-slate-400 mb-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    {selectedThumbnail ? (
-                      <span className="text-sm font-medium text-slate-700">
-                        {selectedThumbnail.name}
-                      </span>
-                    ) : (
-                      <>
-                        <p className="text-sm text-slate-600 mb-1">
-                          <span className="text-[#CAD00F] font-medium">
-                            Sube una imagen
-                          </span>{" "}
-                          o arrástrala aquí
+                  
+                  {selectedThumbnail ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{selectedThumbnail.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {(selectedThumbnail.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedThumbnail(null);
+                          document.getElementById('thumbnail-upload').value = '';
+                        }}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <div className="mt-2">
+                        <label
+                          htmlFor="thumbnail-upload"
+                          className="cursor-pointer text-sm font-medium text-[#CAD00F] hover:text-[#b8bc0d]"
+                        >
+                          Haz clic para seleccionar archivo
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">
+                          o arrastra y suelta aquí
                         </p>
-                        <p className="text-xs text-slate-500">
-                          PNG, JPG hasta 20MB
-                        </p>
-                      </>
-                    )}
-                  </label>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">
+                        PNG, JPG hasta 20MB
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -473,7 +595,7 @@ export default function UploadMultimedia() {
                     });
                     setSelectedFile(null);
                     setSelectedThumbnail(null);
-                    setSelectedRole("");
+                    setSelectedRoles([]);
                   }}
                   disabled={uploading}
                 >
@@ -506,6 +628,17 @@ export default function UploadMultimedia() {
         title="Error al subir contenido"
         message={errorMessage}
         confirmLabel="Cerrar"
+      />
+
+      {/* Confirm Exit Modal */}
+      <ConfirmModal
+        open={showConfirmModal}
+        title="¿Deseas salir de esta página?"
+        message="Tienes información sin guardar. Si sales ahora, perderás todos los datos ingresados."
+        confirmLabel="Sí, salir"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmExit}
+        onCancel={handleCancelExit}
       />
     </div>
   );
