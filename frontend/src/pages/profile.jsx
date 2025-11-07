@@ -138,6 +138,9 @@ export default function ProfilePage() {
   // History can only be edited by users with "Gestión de Usuarios" privilege (not by the user themselves)
   const canEditHistory = hasUserManagementPrivilege && userId;
 
+  // Membership can only be edited by users with "Gestión de Usuarios" privilege viewing another user's profile
+  const canEditMembership = hasUserManagementPrivilege && userId;
+
   async function handleSaveEdits(fields) {
     const token = await getToken();
     try {
@@ -273,7 +276,12 @@ export default function ProfilePage() {
 
               {/* Right column: membership and tickets */}
               <div className="space-y-6">
-                <MembershipCard data={profileData} />
+                <MembershipCard
+                  data={profileData}
+                  canEdit={canEditMembership}
+                  onSave={handleSaveEdits}
+                  onEditChange={setIsEditing}
+                />
                 <TicketsCard tickets={[]} />
               </div>
             </div>

@@ -68,10 +68,13 @@ export function UserProvider({ children }) {
 
         const data = await response.json();
 
+        // Check if user data exists
+        const userExists = data.success && data.user?.id;
+
         setState({
           isLoading: false,
-          existsInDB: data.success && data.user?.dbData !== null,
-          userData: data.user,
+          existsInDB: userExists,
+          userData: data.user || null,
           error: null,
         });
       } catch (err) {

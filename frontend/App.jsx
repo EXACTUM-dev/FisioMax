@@ -60,7 +60,7 @@ export default function App() {
       <Route
         path="/profile/:userId"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["Admin"]}>
             <ProfilePage />
           </ProtectedRoute>
         }
@@ -78,7 +78,7 @@ export default function App() {
       <Route
         path="/roles"
         element={
-          <ProtectedRoute allowedPrivileges={["Gestión de Roles"]}>
+          <ProtectedRoute allowedRoles={["Admin"]}>
             <RolesPage />
           </ProtectedRoute>
         }
@@ -110,7 +110,7 @@ export default function App() {
       <Route
         path="/uploadMultimedia"
         element={
-          <ProtectedRoute allowedPrivileges={["Gestión de Roles"]}>
+          <ProtectedRoute allowedRoles={["Admin"]}>
             <UploadMultimediaPage />
           </ProtectedRoute>
         }
