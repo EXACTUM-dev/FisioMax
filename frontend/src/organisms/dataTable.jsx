@@ -1,23 +1,33 @@
 /**
  * @fileoverview Generic data table with responsive mobile cards
  * @author EXACTUM-dev
- * @version 1.0.0
- * @description Columns are fully dynamic and can include custom renderers and metadata
+ * @version 1.1.0
+ * @description Columns are fully dynamic and can include custom renderers and metadata. Includes pagination support.
  */
 import React, { useMemo, useState} from "react";
 import TableRow from "../molecules/tableRow";
 import Button from "../atoms/button";
+import Pagination from "../molecules/pagination";
 
 /**
  * DataTable Component
- * @description Responsive, dynamic table component with optional filters and mobile cards
+ * @description Responsive, dynamic table component with optional filters, pagination, and mobile cards
  * @param {Object[]} columns - Column definitions with label, key, and optional render/align metadata
  * @param {Object[]} data - Array of row data objects
  * @param {string} [filterColumn] - Optional column key used for filtering
  * @param {string[]} [filterOptions] - Array of filter values for the filter chips
+ * @param {number} [itemsPerPage=20] - Number of items to display per page
+ * @param {boolean} [enablePagination=true] - Enable/disable pagination
  * @returns {JSX.Element} Responsive data table
  */
-export default function DataTable({ columns = [], data = [], filterColumn, filterOptions = [],}) {
+export default function DataTable({ 
+  columns = [], 
+  data = [], 
+  filterColumn, 
+  filterOptions = [],
+  itemsPerPage = 20,
+  enablePagination = true,
+}) {
   /* Helpers for mobile layout (generic, driven by column metadata)
    You can set col.isAction = true to show an action in the card header right area on mobile
    You can set col.mobileHidden = true to hide a column in mobile card body */
@@ -25,6 +35,7 @@ export default function DataTable({ columns = [], data = [], filterColumn, filte
   const actionCols = columns.filter((c) => c.isAction);
 
   const [activeFilter, setActiveFilter] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Header alignment helper: prefers headAlign, then align, then right for actions, else left
   const getHeaderAlignClass = (col) => {
@@ -34,11 +45,27 @@ export default function DataTable({ columns = [], data = [], filterColumn, filte
     if (align === "right") return "text-right";
     return "text-left";
   };
+  
   const filteredData = useMemo(() => {
     if (!activeFilter || !filterColumn) return data;
     return data.filter((row) => row[filterColumn] === activeFilter);
   }, [activeFilter, filterColumn, data]);
 
+  // Reset to page 1 when filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, data]);
+
+  // Pagination logic
+  const paginatedData = useMemo(() => {
+    if (!enablePagination) return filteredData;
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, itemsPerPage, enablePagination]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   return (
     <div className="max-w-[70rem] mx-auto">
@@ -66,58 +93,73 @@ export default function DataTable({ columns = [], data = [], filterColumn, filte
         </div>
       )}
       {/* Desktop/Tablet Table View */}
-      <div className="hidden md:block rounded-[18px] border border-neutral-200 bg-white overflow-hidden">
-        <div className="w-full overflow-x-auto">
-          <table className="w-full table-fixed">
-            {/* Table header */}
-            <thead>
-              <tr className="bg-neutral-50 text-[11px] uppercase tracking-wide text-slate-500">
-                {/* Dynamic columns */}
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    className={`py-3 px-4 font-medium ${col.className ?? ""} ${
-                      col.headClassName ?? ""
-                    } ${getHeaderAlignClass(col)}`}
-                  >
-                    {col.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+      <div className="hidden md:block">
+        <div className="rounded-[18px] border border-neutral-200 bg-white overflow-hidden">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full table-fixed">
+              {/* Table header */}
+              <thead>
+                <tr className="bg-neutral-50 text-[11px] uppercase tracking-wide text-slate-500">
+                  {/* Dynamic columns */}
+                  {columns.map((col) => (
+                    <th
+                      key={col.key}
+                      className={`py-3 px-4 font-medium ${col.className ?? ""} ${
+                        col.headClassName ?? ""
+                      } ${getHeaderAlignClass(col)}`}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
 
-            {/* Table body */}
-            <tbody>
-              {filteredData.map((row, rowIndex) => {
-                const id = row.id ?? row.IDUsuario ?? row.IDRol ?? row.name ?? rowIndex;
-                return (
-                  <tr key={id} className="border-t border-neutral-200">
-                    {columns.map((col) => (
-                      <td
-                        key={`${id}-${col.key}`}
-                        className={`py-3 px-4 ${
-                          col.align === "center"
-                            ? "text-center"
-                            : col.align === "right"
-                            ? "text-right"
-                            : "text-left"
-                        } ${col.className ?? ""}`}
-                      >
-                        {col.render ? col.render(row) : row[col.key]}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+              {/* Table body */}
+              <tbody>
+                {paginatedData.map((row, rowIndex) => {
+                  const id = row.id ?? row.IDUsuario ?? row.IDRol ?? row.name ?? rowIndex;
+                  return (
+                    <tr key={id} className="border-t border-neutral-200">
+                      {columns.map((col) => (
+                        <td
+                          key={`${id}-${col.key}`}
+                          className={`py-3 px-4 ${
+                            col.align === "center"
+                              ? "text-center"
+                              : col.align === "right"
+                              ? "text-right"
+                              : "text-left"
+                          } ${col.className ?? ""}`}
+                        >
+                          {col.render ? col.render(row) : row[col.key]}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
+        
+        {/* Pagination for desktop */}
+        {enablePagination && (
+          <div className="px-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredData.length}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {/* Mobile cards (generic) */}
-        {filteredData.map((row, rowIndex) => {
+        {paginatedData.map((row, rowIndex) => {
           const id = row.id ?? row.IDUsuario ?? row.IDRol ?? row.name ?? rowIndex;
 
           const primary = nonActionCols[0];
@@ -205,6 +247,17 @@ export default function DataTable({ columns = [], data = [], filterColumn, filte
             </div>
             <p className="text-slate-500 text-sm">No data available</p>
           </div>
+        )}
+        
+        {/* Pagination for mobile */}
+        {enablePagination && data.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredData.length}
+          />
         )}
       </div>
     </div>

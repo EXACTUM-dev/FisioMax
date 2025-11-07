@@ -31,7 +31,7 @@ export async function getUsuarios() {
         r.descripcion as rolDescripcion,
         m.estatusPago as membresiaEstatusPago
       FROM usuario u
-      INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario 
+      LEFT JOIN membresia m ON u.IDUsuario = m.IDUsuario 
         AND m.aceptado = 1
         AND m.deletedAt IS NULL
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 

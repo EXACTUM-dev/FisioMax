@@ -169,8 +169,11 @@ export default function Panel() {
       // Extract payload from backend, then filter-out deleted
       const raw = Array.isArray(usersResponse)
         ? usersResponse
-        : usersResponse?.data || [];
-      setUserRows(normalizeActiveUsers(raw));
+        : usersResponse?.data || [];    
+      
+      const activeUsers = normalizeActiveUsers(raw);
+      
+      setUserRows(activeUsers);
     } catch (err) {
       setError("Error de carga de usuarios. Por favor intente más tarde.");
     } finally {
