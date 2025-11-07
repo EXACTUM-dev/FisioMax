@@ -6,10 +6,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 
 // Atoms
 import Button from "../atoms/button";
 import { Title2 } from "../atoms/typography";
+import BackButton from "../atoms/backButton";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
@@ -28,6 +30,7 @@ import SuccessErrorModal from "../organisms/successErrorModal";
 export default function UploadMultimedia() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
+  const navigate = useNavigate();
   const [current, setCurrent] = useState("uploadMultimedia");
 
   /** Form state for content metadata */
@@ -278,7 +281,10 @@ export default function UploadMultimedia() {
       {/* Main content */}
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-4xl mx-auto">
-          <Title2 className="mb-6">Subir nuevo contenido multimedia</Title2>
+          <div className="flex items-center gap-4 mb-6">
+            <BackButton onClick={() => navigate(-1)} />
+            <Title2 className="mb-0">Subir nuevo contenido multimedia</Title2>
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
