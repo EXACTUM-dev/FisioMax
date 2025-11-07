@@ -8,6 +8,7 @@ import React from 'react';
 import {Navigate, Link} from 'react-router-dom';
 import {SignedIn, SignedOut, useUser, useClerk} from '@clerk/clerk-react';
 import {useDbUser} from '../hooks/useDbUser';
+import Button from '../atoms/button';
 
 /**
  * Component that protects routes by requiring:
@@ -96,18 +97,19 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
                 <p className="text-xs text-red-500 mb-4">Error: {error}</p>
               )}
               <div className="space-y-3">
-                <Link
-                  to="/solicitud-membresia"
-                  className="block w-full bg-[#CAD00F] text-gray-900 rounded-md px-4 py-2 text-sm font-medium hover:bg-[#B3BA0D] transition-colors"
-                >
-                  Solicitar Membresía
+                <Link to="/solicitud-membresia" className="block w-full">
+                  <Button
+                    label="Solicitar Membresía"
+                    variant="brand"
+                    fullWidth
+                  />
                 </Link>
-                <button
+                <Button
+                  label="Regresar"
+                  variant="secondary"
+                  fullWidth
                   onClick={handleSignOut}
-                  className="block w-full bg-gray-100 text-gray-700 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Regresar
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -145,12 +147,12 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
                   💡 Tip: Revisa tu correo electrónico regularmente para no perderte ninguna actualización.
                 </p>
               </div>
-              <button
+              <Button
+                label="Regresar"
+                variant="brand"
+                fullWidth
                 onClick={handleSignOut}
-                className="block w-full bg-gray-100 text-gray-700 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                Regresar
-              </button>
+              />
             </div>
           </div>
         )}
@@ -187,12 +189,12 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
               <p className="text-xs text-gray-500 mb-6">
                 Si consideras que esto es un error, por favor contacta al administrador.
               </p>
-              <button
+              <Button
+                label="Regresar"
+                variant="brand"
+                fullWidth
                 onClick={handleSignOut}
-                className="block w-full bg-gray-100 text-gray-700 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                Regresar
-              </button>
+              />
             </div>
           </div>
         )}
@@ -212,12 +214,12 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
                 <p className="text-sm text-gray-600 mb-4">
                   No tienes los permisos necesarios para acceder a esta sección.
                 </p>
-                <button
+                <Button
+                  label="Regresar"
+                  variant="brand"
+                  fullWidth
                   onClick={handleSignOut}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
-                >
-                  Regresar
-                </button>
+                />
               </div>
             </div>
           )}
