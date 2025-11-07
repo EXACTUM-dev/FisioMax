@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +17,7 @@ import BackButton from "../atoms/backButton";
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
 import Dropdown from "../molecules/dropdown";
+import ConfirmModal from "../molecules/confirmationModal";
 
 // Organisms
 import SuccessErrorModal from "../organisms/successErrorModal";
@@ -51,6 +52,38 @@ export default function UploadMultimedia() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [uploadedContentName, setUploadedContentName] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const isNavigatingRef = useRef(false);
+
+  /**
+   * Checks if the form has any data entered.
+   * @returns {boolean} True if form has data, false otherwise.
+   */
+  const hasFormData = () => {
+    const hasTextData = formData.nombre.trim() !== '' || 
+                        formData.descripcion.trim() !== '' ||
+                        formData.tipo !== 'Articulo';
+    const hasFiles = selectedFile !== null || selectedThumbnail !== null;
+    const hasRoles = selectedRoles.length > 0;
+    return hasTextData || hasFiles || hasRoles;
+  };
+
+  /**
+   * Detects when user attempts to close the tab/window.
+   * Shows browser confirmation dialog if form has unsaved data.
+   */
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasFormData() && !isNavigatingRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, selectedFile, selectedThumbnail, selectedRoles]);
 
   /**
    * Fetches available roles from the API on component mount.
@@ -226,6 +259,9 @@ export default function UploadMultimedia() {
       const result = await response.json();
 
       if (result.success) {
+        // Mark as navigating to prevent confirmation modal
+        isNavigatingRef.current = true;
+        
         // Save content name before resetting form
         setUploadedContentName(formData.nombre);
 
@@ -256,6 +292,34 @@ export default function UploadMultimedia() {
     }
   };
 
+  /**
+   * Confirms exit and clears all form data before navigating back.
+   */
+  const handleConfirmExit = () => {
+    isNavigatingRef.current = true;
+    setShowConfirmModal(false);
+    
+    // Clear form data
+    setFormData({
+      nombre: "",
+      descripcion: "",
+      tipo: "Articulo",
+    });
+    setSelectedFile(null);
+    setSelectedThumbnail(null);
+    setSelectedRoles([]);
+    
+    // Navigate back
+    navigate(-1);
+  };
+
+  /**
+   * Cancels exit and keeps user on the form.
+   */
+  const handleCancelExit = () => {
+    setShowConfirmModal(false);
+  };
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
@@ -282,7 +346,14 @@ export default function UploadMultimedia() {
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
-            <BackButton onClick={() => navigate(-1)} />
+            <BackButton onClick={() => {
+              if (hasFormData()) {
+                setShowConfirmModal(true);
+              } else {
+                isNavigatingRef.current = true;
+                navigate(-1);
+              }
+            }} />
             <Title2 className="mb-0">Subir nuevo contenido multimedia</Title2>
           </div>
 
@@ -557,6 +628,17 @@ export default function UploadMultimedia() {
         title="Error al subir contenido"
         message={errorMessage}
         confirmLabel="Cerrar"
+      />
+
+      {/* Confirm Exit Modal */}
+      <ConfirmModal
+        open={showConfirmModal}
+        title="¿Deseas salir de esta página?"
+        message="Tienes información sin guardar. Si sales ahora, perderás todos los datos ingresados."
+        confirmLabel="Sí, salir"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmExit}
+        onCancel={handleCancelExit}
       />
     </div>
   );
