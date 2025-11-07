@@ -5,6 +5,7 @@
  */
 
 import { dbPool } from "../../config.js";
+import { findRoleByName } from "./roles.model.js";
 
 /**
  * Get all users with their assigned roles from the database.
@@ -317,48 +318,86 @@ export async function updateUserClerkId(userId, clerkID) {
  * Update fields of a user by ID
  * Only updates the fields provided in updateData
  * @param {string|number} userId
- * @param {Object} updateData - allowed keys: nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento, licenciatura, pais, estado, ciudad, calle, numExterior, numInterior, colonia, codigoPostal, instagram, linkedin, facebook, paginaWeb
+ * @param {Object} updateData - allowed keys: nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento, licenciatura, pais, estado, ciudad, calle, numExterior, numInterior, colonia, codigoPostal, instagram, linkedin, facebook, paginaWeb, membershipType, membershipExpiresAt, membershipPaymentStatus
  * @returns {Promise<Object|null>} Updated user object or null if not found
  */
 export async function updateUserById(userId, updateData) {
+  const connection = await dbPool.getConnection();
   try {
     if (!userId) {
       throw new Error('ID de usuario requerido');
     }
 
-    const allowedFields = [
+    await connection.beginTransaction();
+
+    const userAllowedFields = [
       'nombres', 'apellidoP', 'apellidoM', 'correo', 'telefonoCasa', 'telefonoWhatsapp', 'fechaNacimiento',
       'licenciatura', 'pais', 'estado', 'ciudad', 'calle', 'numExterior', 'numInterior',
       'colonia', 'codigoPostal', 'instagram', 'linkedin', 'facebook', 'paginaWeb',
       'titulo', 'cedula', 'constancias'
     ];
 
-    const setClauses = [];
-    const values = [];
+    const membershipAllowedFields = [
+      'membershipType', 'membershipRegisteredAt', 'membershipExpiresAt', 'membershipPaymentStatus'
+    ];
 
-    for (const field of allowedFields) {
+    const userSetClauses = [];
+    const userValues = [];
+
+    for (const field of userAllowedFields) {
       if (Object.prototype.hasOwnProperty.call(updateData, field)) {
-        setClauses.push(`${field} = ?`);
-        values.push(updateData[field]);
+        userSetClauses.push(`${field} = ?`);
+        userValues.push(updateData[field]);
       }
     }
 
-    if (setClauses.length === 0) {
-      return await getUserById(userId);
+    // Update usuario table if there are user fields to update
+    if (userSetClauses.length > 0) {
+      const userSql = `UPDATE usuario SET ${userSetClauses.join(', ')} WHERE IDUsuario = ? AND deletedAt IS NULL AND eliminado = 0`;
+      userValues.push(userId);
+      await connection.query(userSql, userValues);
     }
 
-    const sql = `UPDATE usuario SET ${setClauses.join(', ')} WHERE IDUsuario = ? AND deletedAt IS NULL AND eliminado = 0`;
-    values.push(userId);
+    // Update membresia table if there are membership fields to update
+    const membershipSetClauses = [];
+    const membershipValues = [];
 
-    const [result] = await dbPool.query(sql, values);
-    if (result.affectedRows === 0) {
-      return null;
+    for (const field of membershipAllowedFields) {
+      if (Object.prototype.hasOwnProperty.call(updateData, field)) {
+        let dbField = field;
+        if (field === 'membershipType') dbField = 'tipo';
+        else if (field === 'membershipRegisteredAt') dbField = 'createdAt';
+        else if (field === 'membershipExpiresAt') dbField = 'fechaVencimiento';
+        else if (field === 'membershipPaymentStatus') dbField = 'estatusPago';
+        
+        membershipSetClauses.push(`${dbField} = ?`);
+        membershipValues.push(updateData[field]);
+      }
     }
 
-    return await getUserById(userId);
+    if (membershipSetClauses.length > 0) {
+      const membershipSql = `UPDATE membresia SET ${membershipSetClauses.join(', ')} WHERE IDUsuario = ? AND deletedAt IS NULL`;
+      membershipValues.push(userId);
+      const [result] = await connection.query(membershipSql, membershipValues);
+      
+      // If no membership exists, log a warning but don't fail
+      if (result.affectedRows === 0) {
+        console.warn(`No se encontró membresía para el usuario ${userId}`);
+      }
+    }
+
+    await connection.commit();
+    
+    // Return updated user data
+    const updatedUser = await getUserById(userId);
+    return updatedUser;
+    
   } catch (error) {
+    await connection.rollback();
     console.error('Error actualizando usuario:', error);
     throw error;
+  } finally {
+    connection.release();
   }
 }
 

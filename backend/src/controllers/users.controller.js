@@ -330,7 +330,7 @@ export async function updateUser(req, res) {
             stringFields: ['nombres', 'apellidoP', 'apellidoM', 'telefonoCasa', 'telefonoWhatsapp', 
                           'licenciatura', 'pais', 'estado', 'ciudad', 'calle', 'numExterior', 
                           'numInterior', 'colonia', 'codigoPostal', 'instagram', 'linkedin', 
-                          'facebook', 'paginaWeb'],
+                          'facebook', 'paginaWeb', 'membershipType', 'membershipPaymentStatus'],
             maxLengths: {
                 nombres: 100,
                 apellidoP: 100,
@@ -349,13 +349,25 @@ export async function updateUser(req, res) {
                 instagram: 100,
                 linkedin: 200,
                 facebook: 200,
-                paginaWeb: 200
+                paginaWeb: 200,
+                membershipType: 50,
+                membershipPaymentStatus: 50
             }
         });
 
         // Sanitize email separately if present
         if (updateData.email) {
             sanitized.email = sanitizeEmail(updateData.email);
+        }
+
+        // Pass through membershipExpiresAt as date (already validated by database)
+        if (updateData.membershipExpiresAt) {
+            sanitized.membershipExpiresAt = updateData.membershipExpiresAt;
+        }
+
+        // Pass through membershipRegisteredAt as date (already validated by database)
+        if (updateData.membershipRegisteredAt) {
+            sanitized.membershipRegisteredAt = updateData.membershipRegisteredAt;
         }
 
         const updated = await updateUserById(userId, sanitized);        if (!updated) {
