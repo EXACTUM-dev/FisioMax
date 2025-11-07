@@ -29,10 +29,11 @@ export async function getUsuarios() {
         r.IDRol,
         r.nombre as rolNombre,
         r.descripcion as rolDescripcion,
-        m.estatusPago as membresiaEstatusPago
+        m.estatusPago as membresiaEstatusPago,
+        m.aceptado as membresiaAceptado
       FROM usuario u
-      INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario 
-        AND m.aceptado = 1
+      INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario
+      AND m.aceptado = 1
         AND m.deletedAt IS NULL
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
@@ -152,7 +153,10 @@ export async function getUserByClerkId(clerkId) {
       user.documentosadicionales = docRows;
     } catch (docError) {
       // If documentosadicionales table doesn't exist, just set empty array
-      console.warn('documentosadicionales table not found or error:', docError.message);
+      console.warn(
+        "documentosadicionales table not found or error:",
+        docError.message
+      );
       user.documentosAdicionales = [];
     }
 
@@ -295,7 +299,7 @@ export async function getUserByEmail(email) {
  * Update a user's Clerk ID
  * @param {string} userId - The database user ID
  * @param {string} clerkID - The Clerk user ID to associate
- * @returns {Promise<boolean>} True if updated successfully 
+ * @returns {Promise<boolean>} True if updated successfully
  */
 export async function updateUserClerkId(userId, clerkID) {
   try {
@@ -325,20 +329,42 @@ export async function updateUserById(userId, updateData) {
   const connection = await dbPool.getConnection();
   try {
     if (!userId) {
-      throw new Error('ID de usuario requerido');
+      throw new Error("ID de usuario requerido");
     }
 
     await connection.beginTransaction();
 
     const userAllowedFields = [
-      'nombres', 'apellidoP', 'apellidoM', 'correo', 'telefonoCasa', 'telefonoWhatsapp', 'fechaNacimiento',
-      'licenciatura', 'pais', 'estado', 'ciudad', 'calle', 'numExterior', 'numInterior',
-      'colonia', 'codigoPostal', 'instagram', 'linkedin', 'facebook', 'paginaWeb',
-      'titulo', 'cedula', 'constancias'
+      "nombres",
+      "apellidoP",
+      "apellidoM",
+      "correo",
+      "telefonoCasa",
+      "telefonoWhatsapp",
+      "fechaNacimiento",
+      "licenciatura",
+      "pais",
+      "estado",
+      "ciudad",
+      "calle",
+      "numExterior",
+      "numInterior",
+      "colonia",
+      "codigoPostal",
+      "instagram",
+      "linkedin",
+      "facebook",
+      "paginaWeb",
+      "titulo",
+      "cedula",
+      "constancias",
     ];
 
     const membershipAllowedFields = [
-      'membershipType', 'membershipRegisteredAt', 'membershipExpiresAt', 'membershipPaymentStatus'
+      "membershipType",
+      "membershipRegisteredAt",
+      "membershipExpiresAt",
+      "membershipPaymentStatus",
     ];
 
     const userSetClauses = [];
@@ -353,7 +379,9 @@ export async function updateUserById(userId, updateData) {
 
     // Update usuario table if there are user fields to update
     if (userSetClauses.length > 0) {
-      const userSql = `UPDATE usuario SET ${userSetClauses.join(', ')} WHERE IDUsuario = ? AND deletedAt IS NULL AND eliminado = 0`;
+      const userSql = `UPDATE usuario SET ${userSetClauses.join(
+        ", "
+      )} WHERE IDUsuario = ? AND deletedAt IS NULL AND eliminado = 0`;
       userValues.push(userId);
       await connection.query(userSql, userValues);
     }
@@ -365,21 +393,23 @@ export async function updateUserById(userId, updateData) {
     for (const field of membershipAllowedFields) {
       if (Object.prototype.hasOwnProperty.call(updateData, field)) {
         let dbField = field;
-        if (field === 'membershipType') dbField = 'tipo';
-        else if (field === 'membershipRegisteredAt') dbField = 'createdAt';
-        else if (field === 'membershipExpiresAt') dbField = 'fechaVencimiento';
-        else if (field === 'membershipPaymentStatus') dbField = 'estatusPago';
-        
+        if (field === "membershipType") dbField = "tipo";
+        else if (field === "membershipRegisteredAt") dbField = "createdAt";
+        else if (field === "membershipExpiresAt") dbField = "fechaVencimiento";
+        else if (field === "membershipPaymentStatus") dbField = "estatusPago";
+
         membershipSetClauses.push(`${dbField} = ?`);
         membershipValues.push(updateData[field]);
       }
     }
 
     if (membershipSetClauses.length > 0) {
-      const membershipSql = `UPDATE membresia SET ${membershipSetClauses.join(', ')} WHERE IDUsuario = ? AND deletedAt IS NULL`;
+      const membershipSql = `UPDATE membresia SET ${membershipSetClauses.join(
+        ", "
+      )} WHERE IDUsuario = ? AND deletedAt IS NULL`;
       membershipValues.push(userId);
       const [result] = await connection.query(membershipSql, membershipValues);
-      
+
       // If no membership exists, log a warning but don't fail
       if (result.affectedRows === 0) {
         console.warn(`No se encontró membresía para el usuario ${userId}`);
@@ -387,14 +417,13 @@ export async function updateUserById(userId, updateData) {
     }
 
     await connection.commit();
-    
+
     // Return updated user data
     const updatedUser = await getUserById(userId);
     return updatedUser;
-    
   } catch (error) {
     await connection.rollback();
-    console.error('Error actualizando usuario:', error);
+    console.error("Error actualizando usuario:", error);
     throw error;
   } finally {
     connection.release();
@@ -489,8 +518,8 @@ export async function markUserDeleted(userId) {
         SET eliminado = 1, deletedAt = NOW()
       WHERE IDUsuario = ?
         AND deletedAt IS NULL
-        AND (eliminado = 0 OR eliminado IS NULL)`
-    , [userId]
+        AND (eliminado = 0 OR eliminado IS NULL)`,
+    [userId]
   );
   return r.affectedRows;
 }
@@ -524,7 +553,9 @@ export async function reassignUserToSinRol(userId) {
       );
     } else {
       // SinRol doesn't exist, just mark the user's role as deleted
-      console.warn('Rol "SinRol" no encontrado. Marcando rol de usuario como eliminado.');
+      console.warn(
+        'Rol "SinRol" no encontrado. Marcando rol de usuario como eliminado.'
+      );
       await connection.query(
         `UPDATE usuariorol 
          SET eliminado = 1, deletedAt = NOW() 

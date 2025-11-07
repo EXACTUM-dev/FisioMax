@@ -1,28 +1,34 @@
 /**
- * @fileoverview Generic data table with responsive mobile cards and sortable columns
+ * @fileoverview Generic data table with responsive mobile cards, sortable columns, and pagination
  * @author EXACTUM-dev
  * @version 0.2.0
- * @description Columns are fully dynamic and can include custom renderers, metadata, and sorting
+ * @description Columns are fully dynamic and can include custom renderers, metadata, sorting, and pagination
  */
 import React, { useMemo, useState } from "react";
 import Button from "../atoms/button";
+import Pagination from "../molecules/pagination";
 
 /**
  * DataTable Component
- * @description Responsive, dynamic table component with optional filters, sorting, and mobile cards
+ * @description Responsive, dynamic table component with optional filters, sorting, pagination, and mobile cards
  * @param {Object[]} columns - Column definitions with label, key, sortable, and optional render/align metadata
  * @param {Object[]} data - Array of row data objects
  * @param {string} [filterColumn] - Optional column key used for filtering
  * @param {string[]} [filterOptions] - Array of filter values for the filter chips
- * @returns {JSX.Element} Responsive data table with sorting
+ * @param {number} [itemsPerPage=20] - Number of items to display per page
+ * @param {boolean} [enablePagination=true] - Enable/disable pagination
+ * @returns {JSX.Element} Responsive data table with sorting and pagination
  */
 export default function DataTable({
   columns = [],
   data = [],
   filterColumn,
   filterOptions = [],
+  itemsPerPage = 20,
+  enablePagination = true,
 }) {
   const [activeFilter, setActiveFilter] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: null, // 'asc' | 'desc' | null
@@ -87,6 +93,11 @@ export default function DataTable({
     return data.filter((row) => row[filterColumn] === activeFilter);
   }, [activeFilter, filterColumn, data]);
 
+  // Reset to page 1 when filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, data]);
+
   /**
    * Sorts filtered data based on sort configuration
    */
@@ -120,6 +131,19 @@ export default function DataTable({
     // Reverse if descending
     return sortConfig.direction === "desc" ? sorted.reverse() : sorted;
   }, [filteredData, sortConfig, columns]);
+
+  /**
+   * Pagination logic - applies after sorting
+   */
+  const paginatedData = useMemo(() => {
+    if (!enablePagination) return sortedData;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedData.slice(startIndex, endIndex);
+  }, [sortedData, currentPage, itemsPerPage, enablePagination]);
+
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
   /**
    * Renders sort indicator icon
@@ -208,76 +232,95 @@ export default function DataTable({
       )}
 
       {/* Desktop/Tablet Table View */}
-      <div className="hidden md:block rounded-[18px] border border-neutral-200 bg-white overflow-hidden">
-        <div className="w-full overflow-x-auto">
-          <table className="w-full table-fixed">
-            {/* Table header */}
-            <thead>
-              <tr className="bg-neutral-50 text-[11px] uppercase tracking-wide text-slate-500">
-                {/* Dynamic columns */}
-                {columns.map((col) => {
-                  const isSortable = col.sortable !== false && !col.isAction;
+      <div className="hidden md:block">
+        <div className="rounded-[18px] border border-neutral-200 bg-white overflow-hidden">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full table-fixed">
+              {/* Table header */}
+              <thead>
+                <tr className="bg-neutral-50 text-[11px] uppercase tracking-wide text-slate-500">
+                  {/* Dynamic columns */}
+                  {columns.map((col) => {
+                    const isSortable = col.sortable !== false && !col.isAction;
 
-                  return (
-                    <th
-                      key={col.key}
-                      className={`py-3 px-4 font-medium ${
-                        col.className ?? ""
-                      } ${col.headClassName ?? ""} ${
-                        isSortable
-                          ? "cursor-pointer select-none hover:bg-neutral-100 transition-colors"
-                          : ""
-                      }`}
-                      onClick={() => isSortable && handleSort(col)}
-                    >
-                      {/* Always use flex container for consistent alignment */}
-                      <div
-                        className={`flex items-center gap-1 ${getHeaderAlignClass(
-                          col
-                        )}`}
+                    return (
+                      <th
+                        key={col.key}
+                        className={`py-3 px-4 font-medium ${
+                          col.className ?? ""
+                        } ${col.headClassName ?? ""} ${
+                          isSortable
+                            ? "cursor-pointer select-none hover:bg-neutral-100 transition-colors"
+                            : ""
+                        }`}
+                        onClick={() => isSortable && handleSort(col)}
                       >
-                        <span>{col.label}</span>
-                        <SortIndicator col={col} />
-                      </div>
-                    </th>
+                        {/* Always use flex container for consistent alignment */}
+                        <div
+                          className={`flex items-center gap-1 ${getHeaderAlignClass(
+                            col
+                          )}`}
+                        >
+                          <span>{col.label}</span>
+                          <SortIndicator col={col} />
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+
+              {/* Table body */}
+              <tbody>
+                {paginatedData.map((row, rowIndex) => {
+                  const id =
+                    row.id ??
+                    row.IDUsuario ??
+                    row.IDRol ??
+                    row.name ??
+                    rowIndex;
+                  return (
+                    <tr key={id} className="border-t border-neutral-200">
+                      {columns.map((col) => (
+                        <td
+                          key={`${id}-${col.key}`}
+                          className={`py-3 px-4 ${
+                            col.align === "center"
+                              ? "text-center"
+                              : col.align === "right"
+                              ? "text-right"
+                              : "text-left"
+                          } ${col.className ?? ""}`}
+                        >
+                          {col.render ? col.render(row) : row[col.key]}
+                        </td>
+                      ))}
+                    </tr>
                   );
                 })}
-              </tr>
-            </thead>
-
-            {/* Table body */}
-            <tbody>
-              {sortedData.map((row, rowIndex) => {
-                const id =
-                  row.id ?? row.IDUsuario ?? row.IDRol ?? row.name ?? rowIndex;
-                return (
-                  <tr key={id} className="border-t border-neutral-200">
-                    {columns.map((col) => (
-                      <td
-                        key={`${id}-${col.key}`}
-                        className={`py-3 px-4 ${
-                          col.align === "center"
-                            ? "text-center"
-                            : col.align === "right"
-                            ? "text-right"
-                            : "text-left"
-                        } ${col.className ?? ""}`}
-                      >
-                        {col.render ? col.render(row) : row[col.key]}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* Pagination for desktop */}
+        {enablePagination && sortedData.length > 0 && (
+          <div className="px-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={sortedData.length}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {/* Mobile cards (generic) */}
-        {sortedData.map((row, rowIndex) => {
+        {paginatedData.map((row, rowIndex) => {
           const id =
             row.id ?? row.IDUsuario ?? row.IDRol ?? row.name ?? rowIndex;
 
@@ -366,6 +409,17 @@ export default function DataTable({
             </div>
             <p className="text-slate-500 text-sm">No hay datos disponibles</p>
           </div>
+        )}
+
+        {/* Pagination for mobile */}
+        {enablePagination && sortedData.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={sortedData.length}
+          />
         )}
       </div>
     </div>
