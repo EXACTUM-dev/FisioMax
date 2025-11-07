@@ -16,12 +16,15 @@ import {Title2} from '../atoms/typography';
  * Component that protects routes by requiring:
  * 1. Clerk authentication
  * 2. Database registration
+ * 3. Optional: Specific roles or privileges
  *
  * @param {Object} props - Component props.
  * @param {React.ReactNode} props.children - Content to render if authorized.
+ * @param {Array<string>} props.allowedPrivileges - List of privileges that grant access.
+ * @param {Array<string>} props.allowedRoles - List of roles that grant access.
  * @return {React.Element} The protected route component.
  */
-export function ProtectedRoute({children,  allowedPrivileges = []}) {
+export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles = []}) {
   const {isLoaded: isClerkLoaded} = useUser();
   const {isLoading: isDbLoading, existsInDB, userData, error} = useDbUser();
   const {signOut} = useClerk();
@@ -40,8 +43,15 @@ export function ProtectedRoute({children,  allowedPrivileges = []}) {
   const userState = userData?.accept.aceptado;
   const rejectionReason = userData?.accept.motivoRechazo;
   const userPrivileges = userData?.userPrivileges.privilegios;
-  const hasPrivileges = allowedPrivileges.some(valor => userPrivileges?.includes(valor));
-  const hasPermission =  userRole !== undefined && (allowedPrivileges.length === 0 || hasPrivileges) && userState === 1;
+  
+  // Check if user has required privileges
+  const hasPrivileges = allowedPrivileges.length === 0 || allowedPrivileges.some(valor => userPrivileges?.includes(valor));
+  
+  // Check if user has required role
+  const hasRole = allowedRoles.length === 0 || allowedRoles.includes(userRole);
+  
+  // User has permission if they have the required role AND privileges AND their membership is accepted
+  const hasPermission = userRole !== undefined && hasRole && hasPrivileges && userState === 1;
 
   const isRejected = existsInDB && userState === 0;
 
