@@ -6,15 +6,17 @@
  */
 
 // Import necessary libraries and components
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 // Molecules
 import Sidebar from "../molecules/sidebar";
 import AppHeader from "../molecules/appHeader";
+import ConfirmModal from "../molecules/confirmationModal";
 // Atoms
 import { Title2 } from "../atoms/typography";
+import BackButton from "../atoms/backButton";
 
 // Organisms
 import ProfileInfo from "../organisms/profileInfo";
@@ -45,11 +47,32 @@ export default function ProfilePage() {
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const isNavigatingRef = useRef(false);
 
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
   const { userId } = useParams(); // Get userId from URL if present
   const { userData } = useDbUser(); // Get user privileges for RBAC
+  const navigate = useNavigate();
+
+  /**
+   * Detects when user attempts to close the tab/window.
+   * Shows browser confirmation dialog if user is editing.
+   */
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isEditing && !isNavigatingRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isEditing]);
 
   // Fetch user profile from backend
   useEffect(() => {
@@ -84,6 +107,23 @@ export default function ProfilePage() {
 
   const handleNavigate = (key) => setCurrent(key);
 
+  /**
+   * Confirms exit and navigates back.
+   */
+  const handleConfirmExit = () => {
+    isNavigatingRef.current = true;
+    setShowConfirmModal(false);
+    setIsEditing(false);
+    navigate(-1);
+  };
+
+  /**
+   * Cancels exit and keeps user on the page.
+   */
+  const handleCancelExit = () => {
+    setShowConfirmModal(false);
+  };
+
   // RBAC: Check if user can edit
   // Allow editing if:
   // 1. User is viewing their own profile (no userId in URL)
@@ -94,6 +134,9 @@ export default function ProfilePage() {
   );
   const isOwnProfile = !userId; // No userId means viewing own profile
   const canEdit = isOwnProfile || (userId && hasUserManagementPrivilege);
+
+  // History can only be edited by users with "Gestión de Usuarios" privilege (not by the user themselves)
+  const canEditHistory = hasUserManagementPrivilege && userId;
 
   async function handleSaveEdits(fields) {
     const token = await getToken();
@@ -180,9 +223,24 @@ export default function ProfilePage() {
 
         <main className="flex-1 p-6 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
           <div className="max-w-[1100px] mx-auto">
-            <Title2 className="mb-6">
-              {userId ? "Perfil de Usuario" : "Mi Perfil"}
-            </Title2>
+            <div className="flex items-center gap-4 mb-6">
+              {/* Show BackButton only when viewing another user's profile */}
+              {userId && (
+                <BackButton
+                  onClick={() => {
+                    if (isEditing) {
+                      setShowConfirmModal(true);
+                    } else {
+                      isNavigatingRef.current = true;
+                      navigate(-1);
+                    }
+                  }}
+                />
+              )}
+              <Title2 className={userId ? "mb-0" : ""}>
+                {userId ? "Perfil de Usuario" : "Mi Perfil"}
+              </Title2>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left column: profile info + address */}
               <div className="lg:col-span-2 space-y-6">
@@ -190,22 +248,26 @@ export default function ProfilePage() {
                   data={profileData}
                   canEdit={canEdit}
                   onSave={handleSaveEdits}
+                  onEditChange={setIsEditing}
                 />
                 <AddressCard
                   data={profileData}
                   canEdit={canEdit}
                   onSave={handleSaveEdits}
+                  onEditChange={setIsEditing}
                 />
                 <DocumentsCard
                   data={profileData}
                   canEdit={canEdit}
                   onSave={handleSaveEdits}
                   userId={effectiveUserId}
+                  onEditChange={setIsEditing}
                 />
                 <HistoryCard
                   data={profileData}
-                  canEdit={canEdit}
+                  canEdit={canEditHistory}
                   onSave={handleSaveEdits}
+                  onEditChange={setIsEditing}
                 />
               </div>
 
@@ -218,6 +280,17 @@ export default function ProfilePage() {
           </div>
         </main>
       </div>
+
+      {/* Confirm Exit Modal */}
+      <ConfirmModal
+        open={showConfirmModal}
+        title="¿Deseas salir sin guardar?"
+        message="Tienes cambios sin guardar. Si sales ahora, perderás toda la información editada."
+        confirmLabel="Sí, salir"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmExit}
+        onCancel={handleCancelExit}
+      />
     </div>
   );
 }

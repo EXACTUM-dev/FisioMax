@@ -19,6 +19,7 @@ import MembershipApplication, {
 } from '../models/membershipApplication.model.js';
 import { sendEmail } from '../services/emailServices.js';
 import S3Service from '../services/s3Service.js';
+import { sanitizeContentInput, sanitizeEmail } from '../utils/sanitization.js';
 
 /**
  * Creates a new membership application and sends email notification to admin.
@@ -29,6 +30,44 @@ import S3Service from '../services/s3Service.js';
 export const createMembershipApplication = async (req, res) => {
   
   try {
+    // Sanitize input data
+    const sanitized = sanitizeContentInput(req.body, {
+      stringFields: ['firstName', 'lastName', 'middleName', 'homePhone', 'whatsappPhone',
+                    'birthDate', 'country', 'state', 'city', 'neighborhood', 'postalCode',
+                    'street', 'exteriorNumber', 'interiorNumber', 'degree', 'instagram',
+                    'linkedin', 'facebook', 'website'],
+      requiredFields: ['firstName', 'lastName', 'email', 'whatsappPhone', 'birthDate',
+                      'country', 'state', 'city'],
+      maxLengths: {
+        firstName: 100,
+        lastName: 100,
+        middleName: 100,
+        homePhone: 20,
+        whatsappPhone: 20,
+        country: 100,
+        state: 100,
+        city: 100,
+        neighborhood: 100,
+        postalCode: 10,
+        street: 200,
+        exteriorNumber: 20,
+        interiorNumber: 20,
+        degree: 200,
+        instagram: 100,
+        linkedin: 200,
+        facebook: 200,
+        website: 200
+      }
+    });
+
+    // Sanitize email
+    sanitized.email = sanitizeEmail(req.body.email);
+    if (!sanitized.email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email válido es requerido'
+      });
+    }
   
     // Save documents in S3 (or skip if S3 is not configured)
     let professionalIdUrl = null;
@@ -78,26 +117,26 @@ export const createMembershipApplication = async (req, res) => {
     }
     
     const applicationData = {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      middleName: req.body.middleName,
-      homePhone: req.body.homePhone,
-      whatsappPhone: req.body.whatsappPhone,
-      email: req.body.email,
-      birthDate: req.body.birthDate,
-      country: req.body.country,
-      state: req.body.state,
-      city: req.body.city,
-      neighborhood: req.body.neighborhood,
-      postalCode: req.body.postalCode,
-      street: req.body.street,                    
-      exteriorNumber: req.body.exteriorNumber,  
-      interiorNumber: req.body.interiorNumber,
-      degree: req.body.degree,
-      instagram: req.body.instagram,
-      linkedin: req.body.linkedin,
-      facebook: req.body.facebook,
-      website: req.body.website,
+      firstName: sanitized.firstName,
+      lastName: sanitized.lastName,
+      middleName: sanitized.middleName,
+      homePhone: sanitized.homePhone,
+      whatsappPhone: sanitized.whatsappPhone,
+      email: sanitized.email,
+      birthDate: sanitized.birthDate,
+      country: sanitized.country,
+      state: sanitized.state,
+      city: sanitized.city,
+      neighborhood: sanitized.neighborhood,
+      postalCode: sanitized.postalCode,
+      street: sanitized.street,                    
+      exteriorNumber: sanitized.exteriorNumber,  
+      interiorNumber: sanitized.interiorNumber,
+      degree: sanitized.degree,
+      instagram: sanitized.instagram,
+      linkedin: sanitized.linkedin,
+      facebook: sanitized.facebook,
+      website: sanitized.website,
       documents: {
         degreeDocument: degreeDocumentUrl,
         professionalId: professionalIdUrl,
@@ -120,8 +159,8 @@ export const createMembershipApplication = async (req, res) => {
           html: `
               <h1>¡Atención!</h1>
               <p>Se ha registrado una nueva solicitud de membresía.</p>
-              <p><strong>Nombre:</strong> ${req.body.nombres || req.body.firstName || ''} ${req.body.apellidoP || req.body.lastName || ''} ${req.body.apellidoM || req.body.middleName || ''}</p>
-              <p><strong>Email:</strong> ${req.body.correo || req.body.email || ''}</p>
+              <p><strong>Nombre:</strong> ${sanitized.firstName || ''} ${sanitized.lastName || ''} ${sanitized.middleName || ''}</p>
+              <p><strong>Email:</strong> ${sanitized.email || ''}</p>
             `
         });
       } catch (err) {
@@ -229,8 +268,15 @@ export async function denyMembership(req, res) {
   const { razonRechazo } = req.body;
 
   try {
+    // Sanitize rejection reason
+    const sanitized = sanitizeContentInput(req.body, {
+      stringFields: ['razonRechazo'],
+      requiredFields: ['razonRechazo'],
+      maxLengths: { razonRechazo: 1000 }
+    });
+
     // Update the application in the database with reason
-    await denyMembershipApplication(razonRechazo, id);
+    await denyMembershipApplication(sanitized.razonRechazo, id);
 
     res.status(200).json({ 
       success: true,

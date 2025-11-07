@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../atoms/button";
+import BackButton from "../atoms/backButton";
 import FormField from "../molecules/form";
 import FileUpload from "../molecules/fileUpload";
 import Modal from "../molecules/modal";
@@ -216,7 +217,6 @@ export default function MembershipApplicationPage() {
   const [modalMessage, setModalMessage] = useState("");
   
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState(null);
   const isNavigatingRef = useRef(false);
   
   const [showValidationModal, setShowValidationModal] = useState(false);
@@ -250,26 +250,6 @@ export default function MembershipApplicationPage() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [formData, extraDocs]);
-
-  /**
-   * Detects browser back button navigation.
-   * Shows confirmation modal if form has unsaved data.
-   */
-  useEffect(() => {
-    const handlePopState = () => {
-      if (hasFormData() && !isNavigatingRef.current) {
-        setShowConfirmModal(true);
-    
-        window.history.pushState(null, '', window.location.href);
-      }
-    };
-
-    
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
-    
-    return () => window.removeEventListener('popstate', handlePopState);
   }, [formData, extraDocs]);
 
   /**
@@ -530,13 +510,13 @@ export default function MembershipApplicationPage() {
   };
 
   /**
-   * Confirms exit and clears all form data before navigating to login.
+   * Confirms exit and clears all form data before navigating back.
    */
   const handleConfirmExit = () => {
     isNavigatingRef.current = true;
     setShowConfirmModal(false);
     
-  
+    // Clear form data
     setFormData({
       nombres: "",
       apellidoP: "",
@@ -567,8 +547,8 @@ export default function MembershipApplicationPage() {
     setStates([]);
     setCities([]);
     
-  
-    navigate("/login");
+    // Navigate back
+    navigate(-1);
   };
 
   /**
@@ -576,7 +556,6 @@ export default function MembershipApplicationPage() {
    */
   const handleCancelExit = () => {
     setShowConfirmModal(false);
-    setPendingNavigation(null);
   };
 
   /**
@@ -644,7 +623,17 @@ export default function MembershipApplicationPage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* My profile */}
           <div className="bg-white p-6 rounded-lg">
-            <h2 className="text-center text-2xl font-bold text-gray-800 mb-8">Registro de solicitud</h2>
+            <div className="flex items-center gap-4 mb-8">
+              <BackButton onClick={() => {
+                if (hasFormData()) {
+                  setShowConfirmModal(true);
+                } else {
+                  isNavigatingRef.current = true;
+                  navigate(-1);
+                }
+              }} />
+              <h2 className="text-center text-2xl font-bold text-gray-800">Registro de solicitud</h2>
+            </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Mi perfil</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField 

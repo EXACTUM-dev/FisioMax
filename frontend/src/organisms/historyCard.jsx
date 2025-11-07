@@ -18,8 +18,16 @@ import SuccessErrorModal from './successErrorModal';
  * @return {!JSX.Element} History card component.
  */
 
-export default function HistoryCard({ data = {}, canEdit = false, onSave }) {
+export default function HistoryCard({ data = {}, canEdit = false, onSave, onEditChange }) {
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Notify parent component when editing state changes
+  useEffect(() => {
+    if (onEditChange) {
+      onEditChange(isEditing);
+    }
+  }, [isEditing, onEditChange]);
+  
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('success');
   const [modalMessage, setModalMessage] = useState('');

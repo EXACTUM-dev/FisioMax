@@ -62,6 +62,8 @@ export default function Button({
       "bg-tra text-black hover:bg-brand/10 focus-visible:ring-brand/40",
     cancel:
       "bg-cancel text-white hover:bg-brand/10 focus-visible:ring-brand/40",
+    gray:
+      "bg-gray-100 text-gray-700 hover:bg-gray-200 focus-visible:ring-gray-400",
   };
   const variantCls = variants[variant] ?? variants.brand;
 

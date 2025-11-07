@@ -14,25 +14,7 @@ import {
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import S3Service from "../services/s3Service.js";
-
-/**
- * Sanitizes user input to prevent XSS attacks
- * Escapes HTML special characters that could be used for script injection
- * @param {string} str - String to sanitize
- * @returns {string} Sanitized string
- */
-function sanitizeInput(str) {
-  if (!str) return "";
-
-  return str
-    .trim()
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;");
-}
+import { sanitizeContentInput } from "../utils/sanitization.js";
 
 /**
  * Determines S3 path based on content type
@@ -202,7 +184,7 @@ export async function index(req, res) {
  */
 export async function upload(req, res) {
   try {
-    let { nombre, descripcion, tipo, roles } = req.body;
+    const { nombre, descripcion, tipo, roles } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
 
@@ -213,11 +195,6 @@ export async function upload(req, res) {
       "Thumbnail:",
       thumbnail ? thumbnail.originalname : "No thumbnail"
     );
-
-    // Sanitize input fields
-    nombre = sanitizeInput(nombre);
-    descripcion = sanitizeInput(descripcion);
-    tipo = tipo?.trim() || "";
 
     // Parse roles if it's a JSON string
     let roleIds = [];
@@ -237,55 +214,34 @@ export async function upload(req, res) {
       }
     }
 
-    // Validate required fields
-    if (!nombre) {
-      return res.status(400).json({
-        success: false,
-        message: "El nombre del archivo es obligatorio",
-      });
-    }
-
-    if (nombre.length > 50) {
-      return res.status(400).json({
-        success: false,
-        message: "El nombre del archivo no puede exceder los 50 caracteres",
-      });
-    }
-
-    if (descripcion && descripcion.length > 500) {
-      return res.status(400).json({
-        success: false,
-        message: "La descripción no puede exceder los 500 caracteres",
-      });
-    }
-
-    if (!tipo) {
-      return res.status(400).json({
-        success: false,
-        message: "El tipo de contenido es obligatorio",
-      });
-    }
-
+    // Validate and sanitize input using the generic sanitization utility
     const allowedTypes = ["Video", "Articulo", "Podcast", "Libro"];
-    if (!allowedTypes.includes(tipo)) {
+
+    let sanitized;
+    try {
+      sanitized = sanitizeContentInput(
+        { nombre, descripcion, tipo, roles: roleIds },
+        {
+          stringFields: ["nombre", "descripcion", "tipo"],
+          idFields: ["roles"],
+          requiredFields: ["nombre", "tipo", "roles"],
+          maxLengths: {
+            nombre: 50,
+            descripcion: 500,
+          },
+          allowedValues: {
+            tipo: allowedTypes,
+          },
+        }
+      );
+    } catch (validationError) {
       return res.status(400).json({
         success: false,
-        message: "Tipo de contenido inválido",
+        message: validationError.message,
       });
     }
 
-    if (!roleIds || roleIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Debes seleccionar al menos un rol al que va dirigido el contenido",
-      });
-    }
-
-    // Validate all role IDs
-    const validatedRoleIds = roleIds
-      .map((id) => parseInt(id))
-      .filter((id) => !isNaN(id) && id > 0);
+    const validatedRoleIds = sanitized.roles;
 
     console.log("Validated roleIds:", validatedRoleIds);
 
@@ -345,7 +301,7 @@ export async function upload(req, res) {
       Libro: "libros",
     };
 
-    const folder = folderMap[tipo] || "contenido";
+    const folder = folderMap[sanitized.tipo] || "contenido";
 
     // Upload main file to S3
     let s3Key;
@@ -363,9 +319,9 @@ export async function upload(req, res) {
     let contentId;
     try {
       contentId = await createContent({
-        nombre,
-        descripcion: descripcion || "",
-        tipo: tipo.toLowerCase(),
+        nombre: sanitized.nombre,
+        descripcion: sanitized.descripcion || "",
+        tipo: sanitized.tipo.toLowerCase(),
         IDMultimedia: s3Key,
         tipoMembresia: roleNames.join(", "), // Store all role names
       });
@@ -389,8 +345,8 @@ export async function upload(req, res) {
           `${folder}/thumbnails`
         );
         thumbnailId = await createContent({
-          nombre,
-          descripcion: `Miniatura de ${nombre}`,
+          nombre: sanitized.nombre,
+          descripcion: `Miniatura de ${sanitized.nombre}`,
           tipo: "imagen",
           IDMultimedia: thumbnailKey,
           tipoMembresia: roleNames.join(", "),
