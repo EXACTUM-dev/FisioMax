@@ -37,7 +37,6 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
     try {
       await signOut({ redirectUrl: '/login' });
     } catch (error) {
-      console.error('Error during sign out:', error);
       // Fallback to manual redirect if signOut fails
       window.location.href = '/login';
     }
@@ -63,8 +62,11 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
   const registeredDate = membershipRegisteredAt ? new Date(membershipRegisteredAt) : null;
   const expiresDate = membershipExpiresAt ? new Date(membershipExpiresAt) : null;
   
-  const isWithinMembershipPeriod = registeredDate && expiresDate && 
-    now >= registeredDate && now <= expiresDate;
+  // Add 1 day to expiration date since the expiration date is the last valid day
+  const effectiveExpiresDate = expiresDate ? new Date(expiresDate.getTime() + 24 * 60 * 60 * 1000) : null;
+  
+  const isWithinMembershipPeriod = registeredDate && effectiveExpiresDate && 
+    now >= registeredDate && now < effectiveExpiresDate;
   
   const hasValidPayment = paymentStatus === 'Pagado' && isWithinMembershipPeriod;
   
@@ -77,8 +79,8 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
 
   const isPending = existsInDB && (userState === null || userState === undefined);
   
-  // Membership expired - payment was made but membership period ended
-  const isMembershipExpired = existsInDB && userState === 1 && paymentStatus === 'Pagado' && expiresDate && now > expiresDate;
+  // Membership expired - payment was made but membership period ended (after expiration date + 1 day)
+  const isMembershipExpired = existsInDB && userState === 1 && paymentStatus === 'Pagado' && effectiveExpiresDate && now >= effectiveExpiresDate;
   
   // Membership not started yet
   const isMembershipNotStarted = existsInDB && userState === 1 && paymentStatus === 'Pagado' && registeredDate && now < registeredDate;
@@ -86,33 +88,6 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
   // Payment pending - membership accepted but not paid or expired
   const isPaymentPending = existsInDB && userState === 1 && (paymentStatus !== 'Pagado' || !isWithinMembershipPeriod) && !isMembershipExpired && !isMembershipNotStarted;
   
-  // Debug logs
-  React.useEffect(() => {
-    if (!isDbLoading && isClerkLoaded) {
-      console.log('ProtectedRoute Debug:', {
-        existsInDB,
-        userState,
-        paymentStatus,
-        hasValidPayment,
-        isPaymentPending,
-        isMembershipExpired,
-        isMembershipNotStarted,
-        isPending,
-        isRejected,
-        hasRole,
-        hasPrivileges,
-        hasBasicPermission,
-        hasPermission,
-        allowedRolesLength: allowedRoles.length,
-        allowedPrivilegesLength: allowedPrivileges.length,
-        now: now.toISOString(),
-        registeredDate: registeredDate?.toISOString(),
-        expiresDate: expiresDate?.toISOString(),
-        userRole,
-        userPrivileges
-      });
-    }
-  }, [isDbLoading, isClerkLoaded, existsInDB, userState, paymentStatus, hasValidPayment, isPaymentPending, isMembershipExpired, isMembershipNotStarted]);
   return (
     <>
       {/* Redirect to login if not authenticated in Clerk */}
