@@ -223,7 +223,7 @@ function MembershipModalContent({
             <p className="text-lg font-semibold text-center mb-4">{displayName}</p>
 
             {/* Applicant contact and social info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <FieldBox 
                 label="Correo" 
                 value={correo || "No se envió"} 
@@ -285,7 +285,7 @@ function MembershipModalContent({
           <div className="hidden lg:block w-px bg-slate-200 mx-2" />
 
           {/* Right column - Document list */}
-          <div className="flex-2 min-w-0 mt-4 lg:mt-0 min-h-0">
+          <div className="flex-2 min-w-0 lg:mt-0 min-h-0">
             <div className="bg-white rounded-lg border border-slate-200 p-2 sm:p-3">
               <DataTable
                 columns={[
@@ -358,7 +358,7 @@ function MembershipModalContent({
         </div>
 
         {/* Action buttons */}
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex justify-end gap-3">
           <Button 
             label="Rechazar" 
             variant="cancel" 
