@@ -106,7 +106,7 @@ export default function Modal({
           <div
             className={`
               bg-white rounded-2xl shadow-xl border border-slate-200 
-              p-4 sm:p-6 lg:p-8
+              p-4 sm:p-6 lg:p-5
               overflow-y-auto max-h-[90vh]
               transition-all duration-200
               animate-in fade-in-0 zoom-in-95
