@@ -125,10 +125,10 @@ function ChecklistModalContent({
     <Modal
       open={open}
       onClose={onClose}
-      size="sm"
+      size="x2"
       requireConfirmation={isDirty}
     >
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 w-full">
+      <div className="flex flex-col md:flex-row gap-6 w-full">
         {/* Left column - form */}
         <div className="flex-1 min-w-0 flex flex-col">
           <Title2 className="mb-4 sm:mb-6 lg:mb-8 text-lg sm:text-xl lg:text-2xl text-center">
@@ -175,14 +175,7 @@ function ChecklistModalContent({
           {/* Fixed-height scroll area so the modal does not grow */}
           <div
             className="
-              bg-white rounded-lg border border-slate-200
-              h-64 sm:h-80 lg:h-96 overflow-y-auto p-2 sm:p-3
-              [&::-webkit-scrollbar]:w-2 sm:[&::-webkit-scrollbar]:w-3
-              [&::-webkit-scrollbar-track]:bg-slate-100
-              [&::-webkit-scrollbar-track]:rounded-lg
-              [&::-webkit-scrollbar-thumb]:bg-slate-300
-              [&::-webkit-scrollbar-thumb]:rounded-lg
-              [&::-webkit-scrollbar-thumb]:hover:bg-slate-400
+              bg-white rounded-lg border border-slate-200 p-2 sm:p-3
             "
           >
             <DataTable
