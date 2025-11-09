@@ -31,6 +31,7 @@ export default function Dropdown({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -39,9 +40,24 @@ export default function Dropdown({
       }
     };
 
+    const handleKeyDown = (event) => {
+      // Detect key "esc"
+      if (event.key === "Escape") {
+        setIsOpen(false);
+
+        // Keep the focus on the main button
+        if (buttonRef.current) {
+          buttonRef.current.focus();
+        }
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 

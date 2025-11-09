@@ -61,6 +61,7 @@ const ComboboxField = ({ label, name, value, onChange, options, required, error,
   const [isOpen, setIsOpen] = useState(false);
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [inputValue, setInputValue] = useState(value);
+  const buttonRef = useRef(null);
 
   // Filter options based on input
   useEffect(() => {
@@ -73,6 +74,34 @@ const ComboboxField = ({ label, name, value, onChange, options, required, error,
       setFilteredOptions(options);
     }
   }, [inputValue, options]);
+
+  useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+          setIsOpen(false);
+        }
+      };
+  
+      const handleKeyDown = (event) => {
+        // Detect key "esc"
+        if (event.key === "Escape") {
+          setIsOpen(false);
+  
+          // Keep the focus on the main button
+          if (buttonRef.current) {
+            buttonRef.current.focus();
+          }
+        }
+      };
+  
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+  
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }, []);
 
   // Update input value when prop value changes
   useEffect(() => {
