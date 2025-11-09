@@ -19,7 +19,7 @@ import { Title2 } from "../atoms/typography";
 import BackButton from "../atoms/backButton";
 
 // Organisms
-import ProfileInfo from "../organisms/profileInfo";
+import ProfileFormSection from "../organisms/ProfileFormSection";
 import AddressCard from "../organisms/addressCard";
 import MembershipCard from "../organisms/membershipCard";
 import TicketsCard from "../organisms/ticketsCard";
@@ -247,7 +247,8 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left column: profile info + address */}
               <div className="lg:col-span-2 space-y-6">
-                <ProfileInfo
+                <ProfileFormSection
+                  mode="sections"
                   data={profileData}
                   canEdit={canEdit}
                   onSave={handleSaveEdits}

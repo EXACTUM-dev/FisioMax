@@ -93,16 +93,6 @@ export default function Panel() {
       (u) => (u?.eliminado === 0 || u?.eliminado == null) && !u?.deletedAt
     );
   }, []);
-  const getSearchPlaceholder = () => {
-    switch (activeTab) {
-      case "solicitudes":
-        return "Buscar solicitud...";
-      case "users":
-        return "Buscar usuario...";
-      default:
-        return "Buscar...";
-    }
-  };
 
   // Fetch memberships list from data base
   const fetchMemberships = useCallback(async () => {
