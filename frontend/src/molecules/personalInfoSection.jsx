@@ -8,9 +8,11 @@ import React from "react";
 import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
 import CareerDropdown from "./CareerDropdown";
+import FormField from "./form";
 import {
   formatDateForDisplay,
   getMaxBirthDate,
+  FIELD_MAX_LENGTHS,
 } from "../utils/profileFormValidation";
 
 export default function PersonalInfoSection({
@@ -41,24 +43,23 @@ export default function PersonalInfoSection({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         {/* Nombre(s) */}
         <div>
-          <label className="text-sm text-slate-600">
-            Nombre(s)
-            <span className="text-red-500 ml-1">*</span>
-          </label>
+          {!isEditing && (
+            <label className="text-sm text-slate-600 mb-1 block">
+              Nombre(s)
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+          )}
           {isEditing ? (
-            <>
-              <input
-                name="nombres"
-                value={formData.nombres}
-                onChange={onChange}
-                required
-                maxLength={50}
-                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-              />
-              {errors.nombres && (
-                <p className="mt-1 text-sm text-red-500">{errors.nombres}</p>
-              )}
-            </>
+            <FormField
+              label="Nombre(s)"
+              name="nombres"
+              value={formData.nombres}
+              onChange={onChange}
+              placeholder="Ingresa tu(s) nombre(s)"
+              maxLength={FIELD_MAX_LENGTHS.nombres}
+              required
+              error={errors.nombres}
+            />
           ) : (
             <div className="mt-1 text-slate-900">
               {data.nombres || (
@@ -70,25 +71,23 @@ export default function PersonalInfoSection({
 
         {/* Apellido Paterno */}
         <div>
-          <label className="text-sm text-slate-600">
-            {isEditing ? "Apellido Paterno" : "Apellidos"}
-            <span className="text-red-500 ml-1">*</span>
-          </label>
+          {!isEditing && (
+            <label className="text-sm text-slate-600 mb-1 block">
+              Apellidos
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+          )}
           {isEditing ? (
-            <>
-              <input
-                name="apellidoP"
-                value={formData.apellidoP}
-                onChange={onChange}
-                placeholder="Apellido Paterno"
-                required
-                maxLength={50}
-                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-              />
-              {errors.apellidoP && (
-                <p className="mt-1 text-sm text-red-500">{errors.apellidoP}</p>
-              )}
-            </>
+            <FormField
+              label="Apellido Paterno"
+              name="apellidoP"
+              value={formData.apellidoP}
+              onChange={onChange}
+              placeholder="Apellido Paterno"
+              maxLength={FIELD_MAX_LENGTHS.apellidoP}
+              required
+              error={errors.apellidoP}
+            />
           ) : (
             <div className="mt-1 text-slate-900">
               {`${data.apellidoP || ""} ${data.apellidoM || ""}`.trim() || (
@@ -101,29 +100,32 @@ export default function PersonalInfoSection({
         {/* Apellido Materno - Solo visible en modo edición */}
         {isEditing && (
           <div>
-            <label className="text-sm text-slate-600">Apellido Materno</label>
-            <input
+            <FormField
+              label="Apellido Materno"
               name="apellidoM"
               value={formData.apellidoM}
               onChange={onChange}
               placeholder="Apellido Materno"
-              maxLength={50}
-              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+              maxLength={FIELD_MAX_LENGTHS.apellidoM}
+              error={errors.apellidoM}
             />
-            {errors.apellidoM && (
-              <p className="mt-1 text-sm text-red-500">{errors.apellidoM}</p>
-            )}
           </div>
         )}
 
         {/* Fecha de nacimiento */}
         <div>
-          <label className="text-sm text-slate-600">
-            Fecha de nacimiento
-            <span className="text-red-500 ml-1">*</span>
-          </label>
+          {!isEditing && (
+            <label className="text-sm text-slate-600 mb-1 block">
+              Fecha de nacimiento
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+          )}
           {isEditing ? (
-            <>
+            <div className="flex flex-col items-start w-full">
+              <label className="text-sm font-semibold text-gray-700 mb-1">
+                Fecha de nacimiento
+                <span className="text-red-500 ml-1">*</span>
+              </label>
               <input
                 type="date"
                 name="fechaNacimiento"
@@ -131,14 +133,14 @@ export default function PersonalInfoSection({
                 onChange={onChange}
                 max={getMaxBirthDate()}
                 required
-                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#CAD00F] text-gray-900"
               />
               {errors.fechaNacimiento && (
                 <p className="mt-1 text-sm text-red-500">
                   {errors.fechaNacimiento}
                 </p>
               )}
-            </>
+            </div>
           ) : (
             <div className="mt-1 text-slate-900">
               {data.fechaNacimiento ? (

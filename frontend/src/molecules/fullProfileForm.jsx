@@ -8,21 +8,10 @@ import React from "react";
 import FormField from "./form";
 import Dropdown from "./dropdown";
 import CareerDropdown from "./CareerDropdown";
-import { getMaxBirthDate } from "../utils/profileFormValidation";
-
-/**
- * Full profile form component for membership application
- * @param {Object} props
- * @param {Object} props.formData - Current form data
- * @param {Object} props.errors - Validation errors
- * @param {Function} props.onChange - Change handler for form fields
- * @param {Array} props.countries - List of country options
- * @param {Array} props.states - List of state options
- * @param {Array} props.cities - List of city options
- * @param {Function} props.onCountryChange - Handler for country selection change
- * @param {Function} props.onStateChange - Handler for state selection change
- * @returns {JSX.Element} FullProfileForm component
- */
+import {
+  getMaxBirthDate,
+  FIELD_MAX_LENGTHS,
+} from "../utils/profileFormValidation";
 
 export default function FullProfileForm({
   formData,
@@ -46,6 +35,7 @@ export default function FullProfileForm({
           value={formData.nombres}
           onChange={onChange}
           placeholder="Ingresa tu(s) nombre(s)"
+          maxLength={FIELD_MAX_LENGTHS.nombres}
           error={errors.nombres}
         />
         <FormField
@@ -55,6 +45,7 @@ export default function FullProfileForm({
           value={formData.apellidoP}
           onChange={onChange}
           placeholder="Ingresa tu apellido paterno"
+          maxLength={FIELD_MAX_LENGTHS.apellidoP}
           error={errors.apellidoP}
         />
         <FormField
@@ -63,6 +54,7 @@ export default function FullProfileForm({
           value={formData.apellidoM}
           onChange={onChange}
           placeholder="Ingresa tu apellido materno"
+          maxLength={FIELD_MAX_LENGTHS.apellidoM}
           error={errors.apellidoM}
         />
         <FormField
@@ -73,6 +65,7 @@ export default function FullProfileForm({
           value={formData.email}
           onChange={onChange}
           placeholder="Ingresa tu email"
+          maxLength={FIELD_MAX_LENGTHS.email}
           error={errors.email}
         />
         <FormField
@@ -91,6 +84,7 @@ export default function FullProfileForm({
           value={formData.telefonoCasa}
           onChange={onChange}
           placeholder="10-13 dígitos"
+          maxLength={FIELD_MAX_LENGTHS.telefonoCasa}
           error={errors.telefonoCasa}
         />
         <FormField
@@ -100,6 +94,7 @@ export default function FullProfileForm({
           value={formData.telefonoWhatsApp}
           onChange={onChange}
           placeholder="10-13 dígitos"
+          maxLength={FIELD_MAX_LENGTHS.telefonoWhatsApp}
           error={errors.telefonoWhatsApp}
         />
         <FormField
@@ -108,6 +103,7 @@ export default function FullProfileForm({
           value={formData.facebook}
           onChange={onChange}
           placeholder="Ingresa tu cuenta de Facebook"
+          maxLength={FIELD_MAX_LENGTHS.facebook}
           error={errors.facebook}
         />
         <FormField
@@ -116,6 +112,7 @@ export default function FullProfileForm({
           value={formData.instagram}
           onChange={onChange}
           placeholder="Ingresa tu cuenta de Instagram"
+          maxLength={FIELD_MAX_LENGTHS.instagram}
           error={errors.instagram}
         />
         <FormField
@@ -124,6 +121,7 @@ export default function FullProfileForm({
           value={formData.linkedin}
           onChange={onChange}
           placeholder="Ingresa tu cuenta de LinkedIn"
+          maxLength={FIELD_MAX_LENGTHS.linkedin}
           error={errors.linkedin}
         />
         <FormField
@@ -132,6 +130,7 @@ export default function FullProfileForm({
           value={formData.paginaWeb}
           onChange={onChange}
           placeholder="Ingresa tu página web"
+          maxLength={FIELD_MAX_LENGTHS.paginaWeb}
           error={errors.paginaWeb}
         />
       </div>
@@ -177,6 +176,7 @@ export default function FullProfileForm({
           value={formData.colonia}
           onChange={onChange}
           placeholder="Ingresa tu colonia"
+          maxLength={FIELD_MAX_LENGTHS.colonia}
           error={errors.colonia}
         />
         <FormField
@@ -185,6 +185,7 @@ export default function FullProfileForm({
           value={formData.codigoPostal}
           onChange={onChange}
           placeholder="5 dígitos"
+          maxLength={FIELD_MAX_LENGTHS.codigoPostal}
           error={errors.codigoPostal}
         />
         <FormField
@@ -193,6 +194,7 @@ export default function FullProfileForm({
           value={formData.calle}
           onChange={onChange}
           placeholder="Ingresa tu calle"
+          maxLength={FIELD_MAX_LENGTHS.calle}
           error={errors.calle}
         />
         <FormField
@@ -201,6 +203,7 @@ export default function FullProfileForm({
           value={formData.numExterior}
           onChange={onChange}
           placeholder="Número"
+          maxLength={FIELD_MAX_LENGTHS.numExterior}
           error={errors.numExterior}
         />
         <FormField
@@ -209,6 +212,7 @@ export default function FullProfileForm({
           value={formData.numInterior}
           onChange={onChange}
           placeholder="Número (opcional)"
+          maxLength={FIELD_MAX_LENGTHS.numInterior}
           error={errors.numInterior}
         />
       </div>

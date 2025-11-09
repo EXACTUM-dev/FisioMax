@@ -1,7 +1,7 @@
 /**
  * @fileoverview Address card component for displaying user address information.
  * Shows country, state, city, and detailed address fields.
- * @version 1.0.0
+ * @version 0.2.0
  * @author EXACTUM-dev
  */
 
@@ -9,15 +9,19 @@ import React, { useState, useEffect } from "react";
 import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
 import Dropdown from "../molecules/dropdown";
+import FormField from "../molecules/form";
 import SuccessErrorModal from "./successErrorModal";
 import Modal from "../molecules/modal";
+import { FIELD_MAX_LENGTHS } from "../utils/profileFormValidation";
 
 // Variables for country, state and city APIs
 const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
 const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
   .VITE_COUNTRIES_POSITIONS_ENDPOINT;
-const COUNTRIES_STATES_ENDPOINT = import.meta.env.VITE_COUNTRIES_STATES_ENDPOINT;
-const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT;
+const COUNTRIES_STATES_ENDPOINT = import.meta.env
+  .VITE_COUNTRIES_STATES_ENDPOINT;
+const COUNTRIES_CITIES_ENDPOINT = import.meta.env
+  .VITE_COUNTRIES_CITIES_ENDPOINT;
 
 /**
  * Displays user address card with editable fields for country, state, city, and address details.
@@ -28,16 +32,21 @@ const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT
  * @param {Function} [props.onSave] - Callback function to save address changes.
  * @return {!JSX.Element} Address card component.
  */
-export default function AddressCard({ data = {}, canEdit = false, onSave, onEditChange }) {
+export default function AddressCard({
+  data = {},
+  canEdit = false,
+  onSave,
+  onEditChange,
+}) {
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Notify parent component when editing state changes
   useEffect(() => {
     if (onEditChange) {
       onEditChange(isEditing);
     }
   }, [isEditing, onEditChange]);
-  
+
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
@@ -91,12 +100,11 @@ export default function AddressCard({ data = {}, canEdit = false, onSave, onEdit
     fetchCountries();
   }, []);
 
-  // Load states and cities when editing starts and data exists
   useEffect(() => {
-    if (isEditing && form.pais) {
-      const loadInitialData = async () => {
+    async function fetchStatesAndCities() {
+      if (isEditing && form.pais) {
         try {
-          // Load states
+          // Fetch states
           const statesRes = await fetch(
             `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
             {
@@ -113,9 +121,8 @@ export default function AddressCard({ data = {}, canEdit = false, onSave, onEdit
             })) || [];
           setStates(formattedStates);
 
-          // If we have a state, load cities
-          const currentEstado = form.estado;
-          if (currentEstado) {
+          // Fetch cities if state exists
+          if (form.estado) {
             const citiesRes = await fetch(
               `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
               {
@@ -123,7 +130,7 @@ export default function AddressCard({ data = {}, canEdit = false, onSave, onEdit
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   country: form.pais,
-                  state: currentEstado,
+                  state: form.estado,
                 }),
               }
             );
@@ -132,16 +139,20 @@ export default function AddressCard({ data = {}, canEdit = false, onSave, onEdit
               citiesData.data?.map((c) => ({ value: c, label: c })) || [];
             setCities(formattedCities);
           }
-        } catch (err) {}
-      };
-      loadInitialData();
-    } else if (!isEditing) {
-      // Reset dropdowns when closing edit mode
-      setStates([]);
-      setCities([]);
+        } catch (err) {
+          console.error("Error fetching location data:", err);
+        }
+      }
+
+      // Reset dropdowns when exiting edit mode
+      if (!isEditing) {
+        setStates([]);
+        setCities([]);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
+
+    fetchStatesAndCities();
+  }, [isEditing, form.pais, form.estado]);
 
   /**
    * Handles input field changes and updates form state.
@@ -294,7 +305,7 @@ export default function AddressCard({ data = {}, canEdit = false, onSave, onEdit
       <div className="flex justify-between items-start">
         <h3 className="text-lg font-semibold">Datos de domicilio</h3>
         {canEdit && (
-          <EditButton 
+          <EditButton
             isEditing={isEditing}
             onClick={() => setIsEditing((v) => !v)}
             editLabel="Editar"
@@ -372,95 +383,100 @@ export default function AddressCard({ data = {}, canEdit = false, onSave, onEdit
           </>
         )}
 
-        <div>
-          <label className="text-sm text-slate-600">Colonia</label>
-          {isEditing ? (
-            <input
-              name="colonia"
-              value={form.colonia}
-              onChange={handleChange}
-              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-            />
-          ) : (
+        {isEditing ? (
+          <FormField
+            label="Colonia"
+            name="colonia"
+            value={form.colonia}
+            onChange={handleChange}
+            maxLength={FIELD_MAX_LENGTHS.colonia}
+          />
+        ) : (
+          <div>
+            <label className="text-sm text-slate-600">Colonia</label>
             <div className="mt-1 text-slate-900">
               {data.colonia || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div>
-          <label className="text-sm text-slate-600">Código Postal</label>
-          {isEditing ? (
-            <input
-              name="codigoPostal"
-              value={form.codigoPostal}
-              onChange={handleChange}
-              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-            />
-          ) : (
+        {isEditing ? (
+          <FormField
+            label="Código Postal"
+            name="codigoPostal"
+            value={form.codigoPostal}
+            onChange={handleChange}
+            maxLength={FIELD_MAX_LENGTHS.codigoPostal}
+          />
+        ) : (
+          <div>
+            <label className="text-sm text-slate-600">Código Postal</label>
             <div className="mt-1 text-slate-900">
               {data.codigoPostal || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div>
-          <label className="text-sm text-slate-600">Calle</label>
-          {isEditing ? (
-            <input
-              name="calle"
-              value={form.calle}
-              onChange={handleChange}
-              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-            />
-          ) : (
+        {isEditing ? (
+          <FormField
+            label="Calle"
+            name="calle"
+            value={form.calle}
+            onChange={handleChange}
+            maxLength={FIELD_MAX_LENGTHS.calle}
+          />
+        ) : (
+          <div>
+            <label className="text-sm text-slate-600">Calle</label>
             <div className="mt-1 text-slate-900">
               {data.calle || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div>
-          <label className="text-sm text-slate-600">Número Exterior</label>
-          {isEditing ? (
-            <input
-              name="numExterior"
-              value={form.numExterior}
-              onChange={handleChange}
-              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-            />
-          ) : (
+        {isEditing ? (
+          <FormField
+            label="Número Exterior"
+            name="numExterior"
+            value={form.numExterior}
+            onChange={handleChange}
+            maxLength={FIELD_MAX_LENGTHS.numExterior}
+          />
+        ) : (
+          <div>
+            <label className="text-sm text-slate-600">Número Exterior</label>
             <div className="mt-1 text-slate-900">
               {data.numExterior || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div>
-          <label className="text-sm text-slate-600">Número Interior</label>
-          {isEditing ? (
-            <input
-              name="numInterior"
-              value={form.numInterior}
-              onChange={handleChange}
-              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-            />
-          ) : (
+        {isEditing ? (
+          <FormField
+            label="Número Interior"
+            name="numInterior"
+            value={form.numInterior}
+            onChange={handleChange}
+            maxLength={FIELD_MAX_LENGTHS.numInterior}
+          />
+        ) : (
+          <div>
+            <label className="text-sm text-slate-600">Número Interior</label>
             <div className="mt-1 text-slate-900">
               {data.numInterior || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {isEditing && (

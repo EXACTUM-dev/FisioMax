@@ -7,6 +7,8 @@
 import React from "react";
 import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
+import FormField from "./form";
+import { FIELD_MAX_LENGTHS } from "../utils/profileFormValidation";
 
 export default function ContactInfoSection({
   data,
@@ -19,7 +21,12 @@ export default function ContactInfoSection({
   onSave,
   onCancel,
 }) {
-  const socialFields = ["instagram", "linkedin", "facebook", "paginaWeb"];
+  const socialFields = [
+    { key: "instagram", label: "Instagram" },
+    { key: "linkedin", label: "LinkedIn" },
+    { key: "facebook", label: "Facebook" },
+    { key: "paginaWeb", label: "Página Web" },
+  ];
 
   return (
     <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
@@ -36,26 +43,26 @@ export default function ContactInfoSection({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        {/* Correo electrónico */}
         <div>
-          <label className="text-sm text-slate-600">
-            Correo electrónico
-            <span className="text-red-500 ml-1">*</span>
-          </label>
+          {!isEditing && (
+            <label className="text-sm text-slate-600 mb-1 block">
+              Correo electrónico
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+          )}
           {isEditing ? (
-            <>
-              <input
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={onChange}
-                required
-                maxLength={100}
-                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-              )}
-            </>
+            <FormField
+              label="Correo electrónico"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={onChange}
+              placeholder="correo@ejemplo.com"
+              maxLength={FIELD_MAX_LENGTHS.email}
+              required
+              error={errors.email}
+            />
           ) : (
             <div className="mt-1 text-slate-900">
               {data.email || data.correo || (
@@ -65,22 +72,23 @@ export default function ContactInfoSection({
           )}
         </div>
 
+        {/* Teléfono */}
         <div>
-          <label className="text-sm text-slate-600">Teléfono</label>
+          {!isEditing && (
+            <label className="text-sm text-slate-600 mb-1 block">
+              Teléfono
+            </label>
+          )}
           {isEditing ? (
-            <>
-              <input
-                name="telefono"
-                value={formData.telefono}
-                onChange={onChange}
-                maxLength={13}
-                placeholder="10-13 dígitos"
-                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-              />
-              {errors.telefono && (
-                <p className="mt-1 text-sm text-red-500">{errors.telefono}</p>
-              )}
-            </>
+            <FormField
+              label="Teléfono"
+              name="telefono"
+              value={formData.telefono}
+              onChange={onChange}
+              placeholder="10-13 dígitos"
+              maxLength={FIELD_MAX_LENGTHS.telefono}
+              error={errors.telefono}
+            />
           ) : (
             <div className="mt-1 text-slate-900">
               {data.telefono || data.telefonoCasa || (
@@ -90,52 +98,27 @@ export default function ContactInfoSection({
           )}
         </div>
 
-        {socialFields.map((field) => (
-          <div key={field}>
-            <label className="text-sm text-slate-600">
-              {field === "paginaWeb"
-                ? "Página Web"
-                : field.charAt(0).toUpperCase() + field.slice(1)}
-            </label>
+        {/* Redes sociales - SIN ENLACES NI COLORES */}
+        {socialFields.map(({ key, label }) => (
+          <div key={key}>
+            {!isEditing && (
+              <label className="text-sm text-slate-600 mb-1 block">
+                {label}
+              </label>
+            )}
             {isEditing ? (
-              <>
-                <input
-                  name={field}
-                  value={formData[field]}
-                  onChange={onChange}
-                  maxLength={
-                    field === "paginaWeb"
-                      ? 200
-                      : field === "instagram"
-                      ? 50
-                      : 100
-                  }
-                  className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-                />
-                {errors[field] && (
-                  <p className="mt-1 text-sm text-red-500">{errors[field]}</p>
-                )}
-              </>
+              <FormField
+                label={label}
+                name={key}
+                value={formData[key]}
+                onChange={onChange}
+                placeholder={`Tu ${label.toLowerCase()}`}
+                maxLength={FIELD_MAX_LENGTHS[key]}
+                error={errors[key]}
+              />
             ) : (
               <div className="mt-1 text-slate-900">
-                {data[field] ? (
-                  <a
-                    href={data[field]}
-                    className={`${
-                      field === "instagram"
-                        ? "text-pink-600"
-                        : field === "linkedin"
-                        ? "text-sky-600"
-                        : field === "facebook"
-                        ? "text-blue-600"
-                        : "text-slate-600"
-                    } hover:underline`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {data[field]}
-                  </a>
-                ) : (
+                {data[key] || (
                   <span className="text-slate-400">No disponible</span>
                 )}
               </div>

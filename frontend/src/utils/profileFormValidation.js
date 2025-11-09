@@ -1,6 +1,6 @@
 /**
  * @fileoverview Shared validation and sanitization logic for profile and membership forms
- * @version 0.1.0
+ * @version 0.2.0
  * @author EXACTUM-dev
  * @description Centralized validation rules, sanitization handlers, and form field configurations
  * with real-time prevention of invalid input
@@ -56,50 +56,43 @@ export const CAREER_OPTIONS = [
  * @type {Object.<string, number>}
  */
 export const FIELD_MAX_LENGTHS = {
-  nombres: 50,
-  apellidoP: 50,
-  apellidoM: 50,
-  email: 100,
-  telefonoCasa: 13,
-  telefonoWhatsApp: 13,
-  telefono: 13,
-  codigoPostal: 5,
-  calle: 100,
-  numExterior: 10,
-  numInterior: 10,
-  colonia: 100,
-  licenciatura: 100,
-  instagram: 50,
-  linkedin: 100,
-  facebook: 100,
-  paginaWeb: 200,
+  // Personal Information
+  nombres: 60, // varchar(60)
+  apellidoP: 60, // varchar(60)
+  apellidoM: 60, // varchar(60)
+
+  // Contact Information
+  email: 60, // varchar(60)
+  correo: 60, // varchar(60)
+  telefonoCasa: 13, // varchar(13)
+  telefonoWhatsApp: 13, // varchar(13)
+  telefono: 13, // varchar(13)
+
+  // Address Information
+  pais: 60, // varchar(60)
+  estado: 60, // varchar(60)
+  ciudad: 60, // varchar(60) -
+  colonia: 60, // varchar(60) -
+  codigoPostal: 5, // varchar(5)
+  calle: 25, // varchar(25) -
+  numExterior: 10, // varchar(10)
+  numInterior: 10, // varchar(10)
+
+  // Professional Information
+  licenciatura: 100, // varchar(100)
+
+  // Social Media
+  instagram: 25, // varchar(25)
+  linkedin: 25, // varchar(25)
+  facebook: 25, // varchar(25)
+  paginaWeb: 255, // varchar(255)
+
+  // Documents (S3 keys)
+  foto: 60, // varchar(60)
+  cedula: 60, // varchar(60)
+  titulo: 60, // varchar(60)
+  constancias: 255, // varchar(255)
 };
-/**
- * Validates entire form with custom or default rules
- * @param {Object} formData - Form data to validate
- * @param {Object} customRules - Custom validation rules (optional, defaults to PROFILE_VALIDATION_RULES)
- */
-export function validateFormSubmission(
-  formData,
-  customRules = PROFILE_VALIDATION_RULES
-) {
-  const formErrors = validateForm(formData, customRules);
-
-  const missingFields = [];
-  Object.entries(formErrors).forEach(([field, error]) => {
-    if (error && error.includes("requerido")) {
-      if (FIELD_LABELS[field]) {
-        missingFields.push(FIELD_LABELS[field]);
-      }
-    }
-  });
-
-  return {
-    errors: formErrors,
-    missingFields,
-    isValid: !hasErrors(formErrors),
-  };
-}
 
 /**
  * Validation rules for profile/membership form fields
@@ -110,24 +103,24 @@ export const PROFILE_VALIDATION_RULES = {
     required("El nombre es requerido"),
     alphabetic("Solo se permiten letras y espacios"),
     minLength(2, "El nombre"),
-    maxLength(50, "El nombre"),
+    maxLength(60, "El nombre"),
   ],
   apellidoP: [
     required("El apellido paterno es requerido"),
     alphabetic("Solo se permiten letras y espacios"),
     minLength(2, "El apellido paterno"),
-    maxLength(50, "El apellido paterno"),
+    maxLength(60, "El apellido paterno"),
   ],
   apellidoM: [
     alphabetic("Solo se permiten letras y espacios"),
-    maxLength(50, "El apellido materno"),
+    maxLength(60, "El apellido materno"),
   ],
 
   // Contact Information
   email: [
     required("El correo electrónico es requerido"),
     email(),
-    maxLength(100, "El correo"),
+    maxLength(60, "El correo"),
   ],
   telefonoCasa: [phone()],
   telefonoWhatsApp: [required("El contacto personal es requerido"), phone()],
@@ -141,10 +134,13 @@ export const PROFILE_VALIDATION_RULES = {
   ],
 
   // Address Information
-  codigoPostal: [postalCode()],
+  pais: [maxLength(60, "El país")],
+  estado: [maxLength(60, "El estado")],
+  ciudad: [maxLength(60, "La ciudad")],
+  codigoPostal: [maxLength(5, "El código postal")],
   calle: [
     alphanumeric("Solo se permiten letras, números y espacios"),
-    maxLength(100, "La calle"),
+    maxLength(25, "La calle"),
   ],
   numExterior: [
     alphanumeric("Solo se permiten letras y números"),
@@ -156,17 +152,17 @@ export const PROFILE_VALIDATION_RULES = {
   ],
   colonia: [
     alphanumeric("Solo se permiten letras, números y espacios"),
-    maxLength(100, "La colonia"),
+    maxLength(60, "La colonia"),
   ],
 
   // Professional Information
   licenciatura: [maxLength(100, "La licenciatura")],
 
   // Social Media
-  instagram: [maxLength(50, "Instagram")],
-  linkedin: [maxLength(100, "LinkedIn")],
-  facebook: [maxLength(100, "Facebook")],
-  paginaWeb: [maxLength(200, "La página web")],
+  instagram: [maxLength(25, "Instagram")],
+  linkedin: [maxLength(25, "LinkedIn")],
+  facebook: [maxLength(25, "Facebook")],
+  paginaWeb: [maxLength(255, "La página web")],
 
   // Documents
   titulo: [
