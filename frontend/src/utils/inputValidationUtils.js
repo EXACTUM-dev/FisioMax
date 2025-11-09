@@ -30,47 +30,68 @@ export const required = (customMessage = "Este campo es requerido") => {
 };
 
 /**
- * Minimum length validator
+ * FACTORY FUNCTION: Creates length validators with consistent messaging
+ * @param {string} type - Type of length validation ('min', 'max', 'exact')
+ * @param {number} length - The length value
+ * @param {string} fieldLabel - Human-readable field name (e.g., "El nombre")
+ * @returns {Function} Validation function
+ */
+export const createLengthValidator = (
+  type,
+  length,
+  fieldLabel = "Este campo"
+) => {
+  const messages = {
+    min: `${fieldLabel} debe tener al menos ${length} caracteres`,
+    max: `${fieldLabel} no puede exceder ${length} caracteres`,
+    exact: `${fieldLabel} debe tener exactamente ${length} caracteres`,
+  };
+
+  return (value) => {
+    if (!value) return null;
+    const len = String(value).length;
+
+    switch (type) {
+      case "min":
+        return len < length ? messages.min : null;
+      case "max":
+        return len > length ? messages.max : null;
+      case "exact":
+        return len !== length ? messages.exact : null;
+      default:
+        return null;
+    }
+  };
+};
+
+/**
+ * Minimum length validator (using factory)
  * @param {number} min - Minimum length
- * @param {string} customMessage - Custom error message
+ * @param {string} fieldLabel - Field label or custom message
  * @returns {Function} Validation function
  */
-export const minLength = (min, customMessage) => {
-  return (value) => {
-    if (!value) return null; // Skip if empty (use required() for that)
-    const length = String(value).length;
-    return length < min ? customMessage || `Mínimo ${min} caracteres` : null;
-  };
+export const minLength = (min, fieldLabel) => {
+  return createLengthValidator("min", min, fieldLabel);
 };
 
 /**
- * Maximum length validator
+ * Maximum length validator (using factory)
  * @param {number} max - Maximum length
- * @param {string} customMessage - Custom error message
+ * @param {string} fieldLabel - Field label or custom message
  * @returns {Function} Validation function
  */
-export const maxLength = (max, customMessage) => {
-  return (value) => {
-    if (!value) return null;
-    const length = String(value).length;
-    return length > max ? customMessage || `Máximo ${max} caracteres` : null;
-  };
+export const maxLength = (max, fieldLabel) => {
+  return createLengthValidator("max", max, fieldLabel);
 };
 
 /**
- * Exact length validator
+ * Exact length validator (using factory)
  * @param {number} exactLen - Exact length required
- * @param {string} customMessage - Custom error message
+ * @param {string} fieldLabel - Field label or custom message
  * @returns {Function} Validation function
  */
-export const exactLength = (exactLen, customMessage) => {
-  return (value) => {
-    if (!value) return null;
-    const length = String(value).length;
-    return length !== exactLen
-      ? customMessage || `Debe tener exactamente ${exactLen} caracteres`
-      : null;
-  };
+export const exactLength = (exactLen, fieldLabel) => {
+  return createLengthValidator("exact", exactLen, fieldLabel);
 };
 
 /**
@@ -78,7 +99,7 @@ export const exactLength = (exactLen, customMessage) => {
  * @param {string} customMessage - Custom error message
  * @returns {Function} Validation function
  */
-export const email = (customMessage = "Email inválido") => {
+export const email = (customMessage = "Formato de correo inválido") => {
   return (value) => {
     if (!value) return null;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -156,48 +177,71 @@ export const pattern = (pattern, customMessage = "Formato inválido") => {
 };
 
 /**
- * Minimum value validator (for numbers)
- * @param {number} min - Minimum value
- * @param {string} customMessage - Custom error message
+ * FACTORY FUNCTION: Creates numeric range validators with consistent messaging
+ * @param {string} type - Type of validation ('min', 'max', 'range')
+ * @param {number} value1 - First value (min or exact value)
+ * @param {number} value2 - Second value (only for range)
+ * @param {string} fieldLabel - Human-readable field name
  * @returns {Function} Validation function
  */
-export const minValue = (min, customMessage) => {
+export const createValueValidator = (
+  type,
+  value1,
+  value2,
+  fieldLabel = "El valor"
+) => {
+  const messages = {
+    min: `${fieldLabel} debe ser al menos ${value1}`,
+    max: `${fieldLabel} no puede ser mayor a ${value1}`,
+    range: `${fieldLabel} debe estar entre ${value1} y ${value2}`,
+  };
+
   return (value) => {
     if (!value) return null;
     const num = Number(value);
-    return num < min ? customMessage || `El valor mínimo es ${min}` : null;
+
+    switch (type) {
+      case "min":
+        return num < value1 ? messages.min : null;
+      case "max":
+        return num > value1 ? messages.max : null;
+      case "range":
+        return num < value1 || num > value2 ? messages.range : null;
+      default:
+        return null;
+    }
   };
 };
 
 /**
- * Maximum value validator (for numbers)
- * @param {number} max - Maximum value
- * @param {string} customMessage - Custom error message
+ * Minimum value validator (using factory)
+ * @param {number} min - Minimum value
+ * @param {string} fieldLabel - Field label or custom message
  * @returns {Function} Validation function
  */
-export const maxValue = (max, customMessage) => {
-  return (value) => {
-    if (!value) return null;
-    const num = Number(value);
-    return num > max ? customMessage || `El valor máximo es ${max}` : null;
-  };
+export const minValue = (min, fieldLabel) => {
+  return createValueValidator("min", min, null, fieldLabel);
 };
 
 /**
- * Range validator (for numbers)
- * @param {number} min - Minimum value
+ * Maximum value validator (using factory)
  * @param {number} max - Maximum value
- * @param {string} customMessage - Custom error message
+ * @param {string} fieldLabel - Field label or custom message
  * @returns {Function} Validation function
  */
-export const range = (min, max, customMessage) => {
-  return (value) => {
-    if (!value) return null;
-    const num = Number(value);
-    return num < min || num > max
-      ? customMessage || `El valor debe estar entre ${min} y ${max}`
-      : null;
-  };
+export const maxValue = (max, fieldLabel) => {
+  return createValueValidator("max", max, null, fieldLabel);
+};
+
+/**
+ * Range validator (using factory)
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @param {string} fieldLabel - Field label or custom message
+ * @returns {Function} Validation function
+ */
+export const range = (min, max, fieldLabel) => {
+  return createValueValidator("range", min, max, fieldLabel);
 };
 
 /**
@@ -219,7 +263,7 @@ export const url = (customMessage = "URL inválida") => {
  * @param {string} customMessage - Custom error message
  * @returns {Function} Validation function
  */
-export const dateFormat = (customMessage = "Fecha inválida") => {
+export const dateFormat = (customMessage = "Formato de fecha inválido") => {
   return (value) => {
     if (!value) return null;
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -331,38 +375,116 @@ export const noSpecialChars = (
 };
 
 /**
- * File size validator (in MB)
+ * FACTORY FUNCTION: Creates file validators with consistent messaging
+ * @param {string} type - Type of validation ('size' or 'type')
+ * @param {number|string[]} constraint - Size in MB or array of allowed MIME types
+ * @param {string} fieldLabel - Human-readable field name
+ * @returns {Function} Validation function
+ */
+export const createFileValidator = (
+  type,
+  constraint,
+  fieldLabel = "El archivo"
+) => {
+  if (type === "size") {
+    const maxSizeMB = constraint;
+    return (file) => {
+      if (!file) return null;
+      const maxBytes = maxSizeMB * 1024 * 1024;
+      return file.size > maxBytes
+        ? `${fieldLabel} no puede ser mayor a ${maxSizeMB}MB`
+        : null;
+    };
+  }
+
+  if (type === "type") {
+    const allowedTypes = constraint;
+    return (file) => {
+      if (!file) return null;
+      return allowedTypes.includes(file.type)
+        ? null
+        : `${fieldLabel} debe ser de tipo: ${allowedTypes
+            .map((t) => t.split("/")[1].toUpperCase())
+            .join(", ")}`;
+    };
+  }
+
+  return () => null;
+};
+
+/**
+ * File size validator (using factory)
  * @param {number} maxSizeMB - Maximum file size in megabytes
+ * @param {string} fieldLabel - Field label or custom message
+ * @returns {Function} Validation function
+ */
+export const fileSize = (maxSizeMB, fieldLabel) => {
+  return createFileValidator("size", maxSizeMB, fieldLabel);
+};
+
+/**
+ * File type validator (using factory)
+ * @param {string[]} allowedTypes - Array of allowed MIME types
+ * @param {string} fieldLabel - Field label or custom message
+ * @returns {Function} Validation function
+ */
+export const fileType = (allowedTypes, fieldLabel) => {
+  return createFileValidator("type", allowedTypes, fieldLabel);
+};
+
+/**
+ * Content name validator (for multimedia uploads)
  * @param {string} customMessage - Custom error message
  * @returns {Function} Validation function
  */
-export const fileSize = (maxSizeMB, customMessage) => {
-  return (file) => {
-    if (!file) return null;
-    const maxBytes = maxSizeMB * 1024 * 1024;
-    return file.size > maxBytes
-      ? customMessage || `El archivo debe pesar menos de ${maxSizeMB}MB`
-      : null;
+export const contentName = (
+  customMessage = "El nombre del archivo es obligatorio"
+) => {
+  return (value) => {
+    if (!value || !value.trim()) {
+      return customMessage;
+    }
+    if (value.length > 50) {
+      return "El nombre del archivo no puede exceder los 50 caracteres";
+    }
+    return null;
   };
 };
 
 /**
- * File type validator
- * @param {string[]} allowedTypes - Array of allowed MIME types
+ * Content description validator (for multimedia uploads)
  * @param {string} customMessage - Custom error message
  * @returns {Function} Validation function
  */
-export const fileType = (allowedTypes, customMessage) => {
-  return (file) => {
-    if (!file) return null;
-    return allowedTypes.includes(file.type)
-      ? null
-      : customMessage ||
-          `Tipo de archivo no permitido. Permitidos: ${allowedTypes.join(
-            ", "
-          )}`;
+export const contentDescription = (customMessage) => {
+  return (value) => {
+    if (!value) return null; // Description is optional
+    if (value.length > 500) {
+      return (
+        customMessage || "La descripción no puede exceder los 500 caracteres"
+      );
+    }
+    return null;
   };
 };
+
+/**
+ * At least one selection validator (for checkboxes/multi-select)
+ * @param {string} customMessage - Custom error message
+ * @returns {Function} Validation function
+ */
+export const atLeastOne = (
+  customMessage = "Debes seleccionar al menos una opción"
+) => {
+  return (value) => {
+    if (!value || (Array.isArray(value) && value.length === 0)) {
+      return customMessage;
+    }
+    return null;
+  };
+};
+
+// ...existing code (validation executor, sanitizers, etc.)...
 
 /**
  * ===================
@@ -393,9 +515,9 @@ export function validate(value, strategies = []) {
  *
  * @example
  * const errors = validateForm(formData, {
- *   nombre: [required(), alphabetic(), maxLength(50)],
+ *   nombre: [required(), alphabetic(), maxLength(50, "El nombre")],
  *   email: [required(), email()],
- *   edad: [required(), numeric(), minValue(18)]
+ *   edad: [required(), numeric(), minValue(18, "La edad")]
  * });
  */
 export function validateForm(formData, validationRules) {
@@ -425,31 +547,72 @@ export function hasErrors(errors) {
  */
 
 /**
+ * FACTORY FUNCTION: Creates sanitizer functions
+ * @param {string} type - Type of sanitization ('numeric', 'alphabetic', 'alphanumeric', etc.)
+ * @param {number} maxLength - Optional maximum length
+ * @returns {Function} Sanitizer function
+ */
+export const createSanitizer = (type, maxLength = null) => {
+  const patterns = {
+    numeric: /[^0-9]/g,
+    alphabetic: /[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g,
+    alphanumeric: /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g,
+    phone: /[^0-9]/g,
+    postal: /[^0-9]/g,
+    curp: /[^A-Z0-9]/g,
+    rfc: /[^A-ZÑ&0-9]/g,
+  };
+
+  const limits = {
+    phone: 13,
+    postal: 5,
+    curp: 18,
+    rfc: 13,
+  };
+
+  return (value) => {
+    let sanitized = value;
+
+    // Apply pattern if exists
+    if (patterns[type]) {
+      sanitized = value.replace(patterns[type], "");
+    }
+
+    // Apply uppercase for CURP and RFC
+    if (type === "curp" || type === "rfc") {
+      sanitized = sanitized.toUpperCase();
+    }
+
+    // Apply length limit
+    const limit = maxLength || limits[type];
+    if (limit && sanitized.length > limit) {
+      sanitized = sanitized.slice(0, limit);
+    }
+
+    return sanitized;
+  };
+};
+
+/**
  * Sanitizes input to only allow numeric characters
  * @param {string} value - Input value
  * @returns {string} Sanitized value
  */
-export const sanitizeNumeric = (value) => {
-  return value.replace(/[^0-9]/g, "");
-};
+export const sanitizeNumeric = createSanitizer("numeric");
 
 /**
  * Sanitizes input to only allow alphabetic characters and spaces
  * @param {string} value - Input value
  * @returns {string} Sanitized value
  */
-export const sanitizeAlphabetic = (value) => {
-  return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
-};
+export const sanitizeAlphabetic = createSanitizer("alphabetic");
 
 /**
  * Sanitizes input to only allow alphanumeric characters and spaces
  * @param {string} value - Input value
  * @returns {string} Sanitized value
  */
-export const sanitizeAlphanumeric = (value) => {
-  return value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
-};
+export const sanitizeAlphanumeric = createSanitizer("alphanumeric");
 
 /**
  * Sanitizes input to enforce maximum length
@@ -462,43 +625,29 @@ export const sanitizeMaxLength = (value, max) => {
 };
 
 /**
- * Sanitizes CURP to uppercase and only valid characters
+ * Sanitizes CURP to uppercase and only valid characters (using factory)
  * @param {string} value - Input value
  * @returns {string} Sanitized value
  */
-export const sanitizeCURP = (value) => {
-  return value
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 18);
-};
+export const sanitizeCURP = createSanitizer("curp");
 
 /**
- * Sanitizes RFC to uppercase and only valid characters
+ * Sanitizes RFC to uppercase and only valid characters (using factory)
  * @param {string} value - Input value
  * @returns {string} Sanitized value
  */
-export const sanitizeRFC = (value) => {
-  return value
-    .toUpperCase()
-    .replace(/[^A-ZÑ&0-9]/g, "")
-    .slice(0, 13);
-};
+export const sanitizeRFC = createSanitizer("rfc");
 
 /**
- * Sanitizes postal code to only digits
+ * Sanitizes postal code to only digits (using factory)
  * @param {string} value - Input value
  * @returns {string} Sanitized value
  */
-export const sanitizePostalCode = (value) => {
-  return value.replace(/[^0-9]/g, "").slice(0, 5);
-};
+export const sanitizePostalCode = createSanitizer("postal");
 
 /**
- * Sanitizes phone to only digits
+ * Sanitizes phone to only digits (using factory)
  * @param {string} value - Input value
  * @returns {string} Sanitized value
  */
-export const sanitizePhone = (value) => {
-  return value.replace(/[^0-9]/g, "").slice(0, 13);
-};
+export const sanitizePhone = createSanitizer("phone");

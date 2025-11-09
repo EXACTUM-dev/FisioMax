@@ -454,24 +454,6 @@ export default function Panel() {
           }
         },
       }),
-    () =>
-      buildMembershipColumns({
-        onView: (row) => {
-          // Prefer explicit id fields from backend raw data, fall back to row.id
-          const id =
-            row?.id ??
-            row?.IDMembresia ??
-            row?.__raw?.IDMembresia ??
-            row?.__raw?.id;
-          if (id) {
-            fetchMembershipDetail(id);
-          } else {
-            // If no id available, open modal with provided row
-            setSelectedMembership(row);
-            setMembershipModalOpen(true);
-          }
-        },
-      }),
     [fetchMembershipDetail]
   );
 

@@ -109,81 +109,78 @@ export const PROFILE_VALIDATION_RULES = {
   nombres: [
     required("El nombre es requerido"),
     alphabetic("Solo se permiten letras y espacios"),
-    minLength(2, "El nombre debe tener al menos 2 caracteres"),
-    maxLength(50, "El nombre no puede exceder 50 caracteres"),
+    minLength(2, "El nombre"),
+    maxLength(50, "El nombre"),
   ],
   apellidoP: [
     required("El apellido paterno es requerido"),
     alphabetic("Solo se permiten letras y espacios"),
-    minLength(2, "El apellido debe tener al menos 2 caracteres"),
-    maxLength(50, "El apellido no puede exceder 50 caracteres"),
+    minLength(2, "El apellido paterno"),
+    maxLength(50, "El apellido paterno"),
   ],
   apellidoM: [
     alphabetic("Solo se permiten letras y espacios"),
-    maxLength(50, "El apellido no puede exceder 50 caracteres"),
+    maxLength(50, "El apellido materno"),
   ],
 
   // Contact Information
   email: [
     required("El correo electrónico es requerido"),
-    email("Formato de correo inválido"),
-    maxLength(100, "El correo no puede exceder 100 caracteres"),
+    email(),
+    maxLength(100, "El correo"),
   ],
-  telefonoCasa: [phone("Teléfono inválido (10-13 dígitos)")],
-  telefonoWhatsApp: [
-    required("El contacto personal es requerido"),
-    phone("Teléfono inválido (10-13 dígitos)"),
-  ],
-  telefono: [phone("Teléfono inválido (10-13 dígitos)")],
+  telefonoCasa: [phone()],
+  telefonoWhatsApp: [required("El contacto personal es requerido"), phone()],
+  telefono: [phone()],
 
   // Birth Information
   fechaNacimiento: [
     required("La fecha de nacimiento es requerida"),
-    dateFormat("Formato de fecha inválido"),
-    minAge(15, "Debes tener al menos 15 años"),
+    dateFormat(),
+    minAge(15),
   ],
 
   // Address Information
-  codigoPostal: [postalCode("Código postal inválido (5 dígitos)")],
+  codigoPostal: [postalCode()],
   calle: [
     alphanumeric("Solo se permiten letras, números y espacios"),
-    maxLength(100, "Máximo 100 caracteres"),
+    maxLength(100, "La calle"),
   ],
   numExterior: [
     alphanumeric("Solo se permiten letras y números"),
-    maxLength(10, "Máximo 10 caracteres"),
+    maxLength(10, "El número exterior"),
   ],
   numInterior: [
     alphanumeric("Solo se permiten letras y números"),
-    maxLength(10, "Máximo 10 caracteres"),
+    maxLength(10, "El número interior"),
   ],
   colonia: [
     alphanumeric("Solo se permiten letras, números y espacios"),
-    maxLength(100, "Máximo 100 caracteres"),
+    maxLength(100, "La colonia"),
   ],
 
   // Professional Information
-  licenciatura: [maxLength(100, "Máximo 100 caracteres")],
+  licenciatura: [maxLength(100, "La licenciatura")],
 
   // Social Media
-  instagram: [maxLength(50, "Máximo 50 caracteres")],
-  linkedin: [maxLength(100, "Máximo 100 caracteres")],
-  facebook: [maxLength(100, "Máximo 100 caracteres")],
-  paginaWeb: [maxLength(200, "Máximo 200 caracteres")],
+  instagram: [maxLength(50, "Instagram")],
+  linkedin: [maxLength(100, "LinkedIn")],
+  facebook: [maxLength(100, "Facebook")],
+  paginaWeb: [maxLength(200, "La página web")],
 
   // Documents
   titulo: [
     required("El título es requerido"),
-    fileType(["application/pdf"], "Solo se aceptan archivos PDF"),
-    fileSize(10, "El archivo no puede ser mayor a 10MB"),
+    fileType(["application/pdf"], "El título"),
+    fileSize(10, "El título"),
   ],
   cedula: [
-    fileType(["application/pdf"], "Solo se aceptan archivos PDF"),
-    fileSize(10, "El archivo no puede ser mayor a 10MB"),
+    fileType(["application/pdf"], "La cédula"),
+    fileSize(10, "La cédula"),
   ],
   constancias: [
-    fileType(["application/pdf"], "Solo se aceptan archivos PDF"),
-    fileSize(10, "El archivo no puede ser mayor a 10MB"),
+    fileType(["application/pdf"], "Las constancias"),
+    fileSize(10, "Las constancias"),
   ],
 };
 
