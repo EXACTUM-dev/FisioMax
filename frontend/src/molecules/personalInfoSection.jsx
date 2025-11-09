@@ -13,14 +13,6 @@ import {
   getMaxBirthDate,
 } from "../utils/profileFormValidation";
 
-/**
- * Personal information section with edit functionality
- * @param {Object} props
- * @param {Object} props.data - Current personal information data
- * @param {Object} props.formData - Form state for editing
- * @returns {JSX.Element} PersonalInfoSection component
- */
-
 export default function PersonalInfoSection({
   data,
   formData,
@@ -47,6 +39,7 @@ export default function PersonalInfoSection({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        {/* Nombre(s) */}
         <div>
           <label className="text-sm text-slate-600">
             Nombre(s)
@@ -75,45 +68,27 @@ export default function PersonalInfoSection({
           )}
         </div>
 
+        {/* Apellido Paterno */}
         <div>
           <label className="text-sm text-slate-600">
-            Apellidos
+            {isEditing ? "Apellido Paterno" : "Apellidos"}
             <span className="text-red-500 ml-1">*</span>
           </label>
           {isEditing ? (
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              <div>
-                <input
-                  name="apellidoP"
-                  value={formData.apellidoP}
-                  onChange={onChange}
-                  placeholder="Paterno"
-                  required
-                  maxLength={50}
-                  className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-                />
-                {errors.apellidoP && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.apellidoP}
-                  </p>
-                )}
-              </div>
-              <div>
-                <input
-                  name="apellidoM"
-                  value={formData.apellidoM}
-                  onChange={onChange}
-                  placeholder="Materno"
-                  maxLength={50}
-                  className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
-                />
-                {errors.apellidoM && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.apellidoM}
-                  </p>
-                )}
-              </div>
-            </div>
+            <>
+              <input
+                name="apellidoP"
+                value={formData.apellidoP}
+                onChange={onChange}
+                placeholder="Apellido Paterno"
+                required
+                maxLength={50}
+                className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+              />
+              {errors.apellidoP && (
+                <p className="mt-1 text-sm text-red-500">{errors.apellidoP}</p>
+              )}
+            </>
           ) : (
             <div className="mt-1 text-slate-900">
               {`${data.apellidoP || ""} ${data.apellidoM || ""}`.trim() || (
@@ -123,6 +98,25 @@ export default function PersonalInfoSection({
           )}
         </div>
 
+        {/* Apellido Materno - Solo visible en modo edición */}
+        {isEditing && (
+          <div>
+            <label className="text-sm text-slate-600">Apellido Materno</label>
+            <input
+              name="apellidoM"
+              value={formData.apellidoM}
+              onChange={onChange}
+              placeholder="Apellido Materno"
+              maxLength={50}
+              className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
+            />
+            {errors.apellidoM && (
+              <p className="mt-1 text-sm text-red-500">{errors.apellidoM}</p>
+            )}
+          </div>
+        )}
+
+        {/* Fecha de nacimiento */}
         <div>
           <label className="text-sm text-slate-600">
             Fecha de nacimiento
@@ -156,8 +150,8 @@ export default function PersonalInfoSection({
           )}
         </div>
 
-        {/* ✅ USAR COMPONENTE COMPARTIDO */}
-        <div>
+        {/* Licenciatura */}
+        <div className={isEditing ? "sm:col-span-2" : ""}>
           <CareerDropdown
             name="licenciatura"
             value={isEditing ? formData.licenciatura : data.licenciatura}
