@@ -28,7 +28,7 @@ export default function Checkbox({
       aria-label={ariaLabel}
       checked={checked}
       onChange={onChange}
-      className={`h-4 w-4 rounded border-slate-300 text-blue-600 cursor-pointer focus:ring-blue-500 focus:ring-2 outline-none ${className}`}
+      className={`checkbox-brand ${className}`}
       {...props}
     />
   );

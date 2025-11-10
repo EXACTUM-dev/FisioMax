@@ -81,7 +81,7 @@ export default function LoginPage() {
             ¿No tienes cuenta?{' '}
             <a
               href="/solicitud-membresia"
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-[#CAD00F] hover:text-[#CAD00F] font-medium"
             >
               Solicita tu membresía
             </a>

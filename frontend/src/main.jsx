@@ -10,6 +10,7 @@ import ReactDOM from 'react-dom/client';
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
+import { UserProvider } from "./contexts/UserContext.jsx";
 import "../index.css";
 import App from "../App.jsx";
 
@@ -30,9 +31,11 @@ if (!PUBLISHABLE_KEY) {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <UserProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </UserProvider>
       </ClerkProvider>
   </StrictMode>
 );

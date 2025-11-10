@@ -6,8 +6,9 @@
  */
 
 import React, { useState, useEffect } from "react";
-import editIcon from "../assets/icons/square-pen.png";
+import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
+import Dropdown from "../molecules/dropdown";
 import SuccessErrorModal from "./successErrorModal";
 import Modal from "../molecules/modal";
 
@@ -19,50 +20,6 @@ const COUNTRIES_STATES_ENDPOINT = import.meta.env.VITE_COUNTRIES_STATES_ENDPOINT
 const COUNTRIES_CITIES_ENDPOINT = import.meta.env.VITE_COUNTRIES_CITIES_ENDPOINT;
 
 /**
- * Select field component for dropdowns with validation support.
- * @param {!Object} props - Component props.
- * @param {string} props.label - Field label text.
- * @param {string} props.name - Field name attribute.
- * @param {string} props.value - Current selected value.
- * @param {Function} props.onChange - Change event handler.
- * @param {Array<Object|string>} props.options - Array of options with value/label or strings.
- * @param {boolean} [props.required=false] - Whether field is required.
- * @param {string} [props.error] - Error message to display.
- * @return {!JSX.Element} Select field component.
- */
-const SelectField = ({
-  label,
-  name,
-  value,
-  onChange,
-  options,
-  required,
-  error,
-}) => (
-  <div>
-    <label className="block text-sm font-medium text-slate-600 mb-1">
-      {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      required={required}
-      className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white text-slate-900"
-    >
-      <option value="">Selecciona una opción</option>
-      {options.map((option) => (
-        <option key={option.value || option} value={option.value || option}>
-          {option.label || option}
-        </option>
-      ))}
-    </select>
-    {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-  </div>
-);
-
-/**
  * Displays user address card with editable fields for country, state, city, and address details.
  * Supports dynamic loading of states and cities based on country selection.
  * @param {!Object} props - Component props.
@@ -71,8 +28,16 @@ const SelectField = ({
  * @param {Function} [props.onSave] - Callback function to save address changes.
  * @return {!JSX.Element} Address card component.
  */
-export default function AddressCard({ data = {}, canEdit = false, onSave }) {
+export default function AddressCard({ data = {}, canEdit = false, onSave, onEditChange }) {
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Notify parent component when editing state changes
+  useEffect(() => {
+    if (onEditChange) {
+      onEditChange(isEditing);
+    }
+  }, [isEditing, onEditChange]);
+  
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
@@ -329,47 +294,44 @@ export default function AddressCard({ data = {}, canEdit = false, onSave }) {
       <div className="flex justify-between items-start">
         <h3 className="text-lg font-semibold">Datos de domicilio</h3>
         {canEdit && (
-          <button
-            type="button"
+          <EditButton 
+            isEditing={isEditing}
             onClick={() => setIsEditing((v) => !v)}
-            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-blue-50"
-            aria-label={isEditing ? "Cancelar edición" : "Editar domicilio"}
-          >
-            <img
-              src={editIcon}
-              alt="Editar"
-              className="w-5 h-5 object-contain opacity-80"
-            />
-          </button>
+            editLabel="Editar"
+            cancelLabel="Cancelar"
+          />
         )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         {isEditing ? (
           <>
-            <SelectField
+            <Dropdown
               label="País"
               name="pais"
               value={form.pais}
               onChange={(e) => handlePaisChange(e.target.value)}
               options={countries}
               required={true}
+              placeholder="Selecciona un país"
             />
-            <SelectField
+            <Dropdown
               label="Estado / Provincia"
               name="estado"
               value={form.estado}
               onChange={(e) => handleEstadoChange(e.target.value)}
               options={states}
               required={true}
+              placeholder="Selecciona un estado"
             />
-            <SelectField
+            <Dropdown
               label="Ciudad"
               name="ciudad"
               value={form.ciudad}
               onChange={handleChange}
               options={cities}
               required={true}
+              placeholder="Selecciona una ciudad"
             />
           </>
         ) : (
