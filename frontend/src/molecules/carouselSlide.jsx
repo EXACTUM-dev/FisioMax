@@ -31,7 +31,6 @@ export default function CarouselSlide({ slide, showSubtitle = true }) {
       <VignetteImage
         src={slide.imageUrl}
         alt={slide.imageAlt || slide.title}
-        variant="hero"
         className="absolute inset-0"
       />
 

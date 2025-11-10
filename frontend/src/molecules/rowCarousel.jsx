@@ -188,8 +188,6 @@ export default function RowCarousel({ slides = [] }) {
                       src={s.imageUrl}
                       alt={s.imageAlt}
                       className="h-full"
-                      variant="transparent"
-                      cover
                     />
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />

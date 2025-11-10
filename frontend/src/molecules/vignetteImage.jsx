@@ -15,7 +15,6 @@ import React from "react";
  * @param {string} props.alt - Alternative text for image
  * @param {string} [props.className] - Additional CSS classes
  * @param {Object} [props.style] - Inline styles
- * @param {string} [props.variant] - Vignette variant ('transparent', 'dark', 'none')
  * @param {React.ReactNode} [props.children] - Child elements to overlay
  * @returns {React.Element} VignetteImage component
  */
@@ -24,7 +23,6 @@ export default function VignetteImage({
   alt,
   className = "",
   style = {},
-  variant = "transparent",
   children,
 }) {
   const handleImageError = (e) => {
@@ -42,17 +40,6 @@ export default function VignetteImage({
         onError={handleImageError}
         loading="lazy"
       />
-
-      {/* Vignette overlay */}
-      {variant !== "none" && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              variant === "transparent" ? "transparent" : "transparent",
-          }}
-        />
-      )}
 
       {/* Content overlay - positioned at bottom with proper padding */}
       {children && (

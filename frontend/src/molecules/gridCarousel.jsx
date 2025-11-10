@@ -144,7 +144,6 @@ export default function GridCarousel({ slides = [] }) {
                     <VignetteImage
                       src={slide.imageUrl}
                       alt={slide.imageAlt || slide.title}
-                      variant="none"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -154,7 +153,6 @@ export default function GridCarousel({ slides = [] }) {
                     <VignetteImage
                       src={slide.imageUrl}
                       alt={slide.imageAlt || slide.title}
-                      variant="none"
                       className="w-full h-full object-cover"
                     />
                   </div>
