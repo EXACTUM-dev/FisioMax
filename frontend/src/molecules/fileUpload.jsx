@@ -8,7 +8,8 @@ import React, { useState } from "react";
 
 export default function FileUpload({ 
   name, 
-  label, 
+  label,
+  limitation="PDF hasta 10Mb", 
   required = false, 
   accept = ".pdf", 
   value, 
@@ -125,7 +126,7 @@ export default function FileUpload({
               </p>
             </div>
             <p className="text-xs text-gray-400 mt-2">
-              PDF hasta 10MB
+              {limitation}
             </p>
           </div>
         )}
