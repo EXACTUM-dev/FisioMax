@@ -1,22 +1,22 @@
 /**
- * @fileoverview Image component with vignette overlay effect
- * @version 0.2.0
+ * @fileoverview Image component with optional overlay effect
+ * @version 0.3.0
  * @author EXACTUM-dev
- * @description Displays an image with an optional vignette gradient overlay and fallback handling
+ * @description Displays an image with fallback handling and optional overlay container for children
  */
 
 import React from "react";
 
 /**
- * VignetteImage component with gradient overlay and fallback support
+ * VignetteImage component with fallback support and content overlay
  * @component
  * @param {Object} props - Component properties
  * @param {string} props.src - Image source URL
  * @param {string} props.alt - Alternative text for image
- * @param {string} [props.className] - Additional CSS classes
- * @param {Object} [props.style] - Inline styles
- * @param {string} [props.variant] - Vignette variant ('transparent', 'dark', 'none')
- * @param {React.ReactNode} [props.children] - Child elements to overlay
+ * @param {string} [props.className] - Additional CSS classes for the container
+ * @param {Object} [props.style] - Inline styles for the container
+ * @param {string} [props.variant] - Reserved for future vignette effects (currently unused)
+ * @param {React.ReactNode} [props.children] - Child elements to overlay on the image
  * @returns {React.Element} VignetteImage component
  */
 export default function VignetteImage({
@@ -24,7 +24,7 @@ export default function VignetteImage({
   alt,
   className = "",
   style = {},
-  variant = "transparent",
+  variant,
   children,
 }) {
   const handleImageError = (e) => {
@@ -33,7 +33,10 @@ export default function VignetteImage({
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={style}>
+    <div
+      className={`relative w-full h-full overflow-hidden ${className}`}
+      style={style}
+    >
       {/* Image with object-cover to fill container */}
       <img
         src={src}
@@ -42,17 +45,6 @@ export default function VignetteImage({
         onError={handleImageError}
         loading="lazy"
       />
-
-      {/* Vignette overlay */}
-      {variant !== "none" && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              variant === "transparent" ? "transparent" : "transparent",
-          }}
-        />
-      )}
 
       {/* Content overlay - positioned at bottom with proper padding */}
       {children && (

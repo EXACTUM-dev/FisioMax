@@ -51,7 +51,6 @@ export default function Panel() {
   const navigate = useNavigate();
   const [current, setCurrent] = useState("bolt");
   const [activeTab, setActiveTab] = useState("solicitudes");
-  const [searchQuery, setSearchQuery] = useState("");
 
   // State for UI data
   const [userRows, setUserRows] = useState([]); // Users from backend
@@ -93,16 +92,6 @@ export default function Panel() {
       (u) => (u?.eliminado === 0 || u?.eliminado == null) && !u?.deletedAt
     );
   }, []);
-  const getSearchPlaceholder = () => {
-    switch (activeTab) {
-      case "solicitudes":
-        return "Buscar solicitud...";
-      case "users":
-        return "Buscar usuario...";
-      default:
-        return "Buscar...";
-    }
-  };
 
   // Fetch memberships list from data base
   const fetchMemberships = useCallback(async () => {
@@ -151,8 +140,6 @@ export default function Panel() {
 
       setMembershipRows(mapped);
     } catch (err) {
-      console.error("Error de carga de solicitudes:", err);
-      setError("Error de carga de solicitudes. Por favor intente más tarde.");
       console.error("Error de carga de solicitudes:", err);
       setError("Error de carga de solicitudes. Por favor intente más tarde.");
     }
@@ -358,7 +345,6 @@ export default function Panel() {
           user.apellidoM || ""
         }`.trim();
 
-        ("Sin rol asignado");
         const roleName =
           user.rol ||
           user.rolNombre ||
@@ -421,9 +407,6 @@ export default function Panel() {
             alert(
               err?.message || "No se pudo preparar la eliminación del usuario."
             );
-            alert(
-              err?.message || "No se pudo preparar la eliminación del usuario."
-            );
           }
         },
         onChangeRole: (row, chosenRole) =>
@@ -446,24 +429,6 @@ export default function Panel() {
   );
   // Define columns for memberships table
   const membershipColumns = useMemo(
-    () =>
-      buildMembershipColumns({
-        onView: (row) => {
-          // Prefer explicit id fields from backend raw data, fall back to row.id
-          const id =
-            row?.id ??
-            row?.IDMembresia ??
-            row?.__raw?.IDMembresia ??
-            row?.__raw?.id;
-          if (id) {
-            fetchMembershipDetail(id);
-          } else {
-            // If no id available, open modal with provided row
-            setSelectedMembership(row);
-            setMembershipModalOpen(true);
-          }
-        },
-      }),
     () =>
       buildMembershipColumns({
         onView: (row) => {
@@ -538,7 +503,6 @@ export default function Panel() {
           <DataSwitchContainer
             activeKey={activeTab}
             onTabChange={setActiveTab}
-            searchQuery={searchQuery}
             loading={loadingRoles || loadingUsers}
             views={[
               {

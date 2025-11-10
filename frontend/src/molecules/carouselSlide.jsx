@@ -10,17 +10,14 @@ import VignetteImage from "./vignetteImage";
 import CaptionCard from "./captionCard";
 
 /**
- * CarouselSlide component with image fallback
- * @component
- * @param {Object} props - Component properties
- * @param {Object} props.slide - Slide data object
- * @param {string} props.slide.imageUrl - Image URL
- * @param {string} props.slide.imageAlt - Image alt text
- * @param {string} props.slide.title - Slide title
- * @param {string} props.slide.subtitle - Slide subtitle
- * @param {string} props.slide.createdAt - Creation date
- * @param {boolean} [props.showSubtitle=true] - Whether to show subtitle
- * @returns {React.Element} CarouselSlide component
+ * @fileoverview Componente SlideCard para mostrar información de un slide.
+ * @param {Object} props
+ * @param {Object} props.slide - Objeto con los datos del slide.
+ * @param {string} props.slide.title - Título del slide.
+ * @param {string} props.slide.createdAt - Fecha de creación del slide.
+ * @param {string} [props.slide.image] - URL de la imagen del slide.
+ * @param {Function} [props.onClick] - Callback al hacer click.
+ * @returns {JSX.Element}
  */
 export default function CarouselSlide({ slide, showSubtitle = true }) {
   if (!slide) return null;
@@ -31,7 +28,7 @@ export default function CarouselSlide({ slide, showSubtitle = true }) {
       <VignetteImage
         src={slide.imageUrl}
         alt={slide.imageAlt || slide.title}
-        variant="hero"
+        variant="transparent"
         className="absolute inset-0"
       />
 
