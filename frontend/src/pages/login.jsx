@@ -1,11 +1,11 @@
 /**
  * @fileoverview Login page component using Clerk authentication.
  * @author EXACTUM-dev
- * @version 1.0.0
+ * @version 1.0.1
  */
-import React from 'react';
-import {SignIn, useUser} from '@clerk/clerk-react';
-import {Navigate} from 'react-router-dom';
+import React from "react";
+import { SignIn, useUser } from "@clerk/clerk-react";
+import { Navigate } from "react-router-dom";
 
 /**
  * Login page component that handles user authentication via Clerk.
@@ -16,14 +16,17 @@ import {Navigate} from 'react-router-dom';
  * @return {React.Element} The rendered login page component.
  */
 export default function LoginPage() {
-  const {isSignedIn, isLoaded} = useUser();
+  const { isSignedIn, isLoaded } = useUser();
 
   // Display loading state while authentication status is being determined
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderBottomColor: '#CAD00F' }}></div>
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto"
+            style={{ borderBottomColor: "#CAD00F" }}
+          ></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -38,10 +41,10 @@ export default function LoginPage() {
 
   // Display login form for unauthenticated users
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="flex flex-col items-center w-full max-w-md">
         {/* Logo/Avatar */}
-        <div className="flex justify-center mb-[-40px] z-10">
+        <div className="flex justify-center mb-[-40px] sm:mb-[-40px] lg:mb-[-30px] z-10">
           <img
             src="/SOMEFIPPlogo.png"
             alt="Logo"
@@ -50,38 +53,42 @@ export default function LoginPage() {
         </div>
 
         {/* Main Card */}
-        <div className="bg-white rounded-xl shadow-lg p-8 pt-16 w-full">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 pt-16 w-full">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-1">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-1">
               Bienvenido a la SOMEFIPP
             </h2>
           </div>
 
           {/* Clerk SignIn Component */}
-          <SignIn
-            path="/login"
-            routing="path"
-            signUpUrl="/register"
-            afterSignInUrl="/"
-            appearance={{
-              elements: {
-                card: 'shadow-none',
-                formButtonPrimary:
-                    'bg-black hover:bg-gray-800 text-white rounded-md py-2',
-                formFieldInput: 'border-gray-300 rounded-md',
-                formFieldLabel: 'text-gray-700 font-medium',
-              },
-            }}
-          />
+          <div className="flex justify-center">
+            <SignIn
+              path="/login"
+              routing="path"
+              signUpUrl="/register"
+              afterSignInUrl="/"
+              appearance={{
+                elements: {
+                  rootBox: "w-full",
+                  card: "shadow-none w-full",
+                  formButtonPrimary:
+                    "bg-black hover:bg-gray-800 text-white rounded-md py-2",
+                  formFieldInput: "border-gray-300 rounded-md",
+                  formFieldLabel: "text-gray-700 font-medium",
+                  footer: "hidden",
+                },
+              }}
+            />
+          </div>
         </div>
 
         {/* Additional Links */}
-        <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
+        <div className="mt-6 text-center text-sm text-gray-600 space-y-2 px-4">
           <p>
-            ¿No tienes cuenta?{' '}
+            ¿No tienes cuenta?{" "}
             <a
               href="/solicitud-membresia"
-              className="text-[#CAD00F] hover:text-[#CAD00F] font-medium"
+              className="text-[#CAD00F] hover:text-[#b8bd0d] font-medium transition-colors"
             >
               Solicita tu membresía
             </a>
