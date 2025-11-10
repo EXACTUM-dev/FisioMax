@@ -112,7 +112,7 @@ export function buildMembershipColumns({ onView } = {}) {
               e.stopPropagation();
               onView?.(row);
             }}
-            className="text-blue-600 hover:text-blue-800 transition-colors p-1"
+            className="text-blue-600 hover:text-blue-800 transition-colors p-1 cursor-pointer"
           >
             <svg
               className="w-5 h-5"
