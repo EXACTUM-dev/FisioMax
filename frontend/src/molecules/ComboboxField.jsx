@@ -48,24 +48,10 @@ export default function ComboboxField({ label, name, value, onChange, options, r
         }
       };
   
-      const handleKeyDown = (event) => {
-        // Detect key "esc"
-        if (event.key === "Escape") {
-          setIsOpen(false);
-  
-          // Keep the focus on the main button
-          if (inputRef.current) {
-            inputRef.current.focus();
-          }
-        }
-      };
-  
       document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
   
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("keydown", handleKeyDown);
       };
     }, []);
 
