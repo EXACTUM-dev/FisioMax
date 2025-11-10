@@ -33,7 +33,7 @@ export function buildUserRolesColumns({
     {
       key: "nombre",
       label: "Nombre",
-      className: "w-[40%]",
+      className: "w-[37%]",
       headAlign: "left",
       align: "left",
       render: (row) => {
@@ -56,7 +56,7 @@ export function buildUserRolesColumns({
     {
       key: "rol",
       label: "Rol",
-      className: "w-[25%]",
+      className: "w-[23%]",
       headAlign: "center",
       align: "center",
       render: (row) => {
@@ -86,7 +86,7 @@ export function buildUserRolesColumns({
     {
       key: "membresia",
       label: "Estado membresía",
-      className: "w-[25%]",
+      className: "w-[22%]",
       headAlign: "center",
       align: "center",
       render: (row) => {
@@ -120,24 +120,28 @@ export function buildUserRolesColumns({
     {
       key: "eliminar",
       label: "Eliminar",
-      className: "w-[10%] text-right",
+      className: "w-[10%]",
+      headAlign: "center",
+      align: "center",
       isAction: true,
       render: (row) => (
-        <button
-          type="button"
-          title="Eliminar"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete?.(row);
-          }}
-          className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-red-50 transition-colors"
-        >
-          <img
-            src={trashIcon}
-            alt="Eliminar"
-            className="w-5 h-5 cursor-pointer object-contain opacity-80 hover:opacity-100 transition-opacity"
-          />
-        </button>
+        <div className="flex items-center justify-center w-full h-full">
+          <button
+            type="button"
+            title="Eliminar"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(row);
+            }}
+            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-red-50 transition-colors"
+          >
+            <img
+              src={trashIcon}
+              alt="Eliminar"
+              className="w-5 h-5 cursor-pointer object-contain opacity-80 hover:opacity-100 transition-opacity"
+            />
+          </button>
+        </div>
       ),
     },
     {

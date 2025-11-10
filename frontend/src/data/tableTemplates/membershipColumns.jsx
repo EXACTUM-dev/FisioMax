@@ -46,24 +46,29 @@ export function buildMembershipColumns({ onView } = {}) {
       headAlign: "center",
       align: "center",
       render: (row) => {
-        const estadoColors = {
-          Pendiente: "text-yellow-700 font-bold",
-          Aprobado: "text-green-700 font-bold",
-          Rechazado: "text-red-700 font-bold",
-          "En Revisión": "text-blue-700 font-bold",
+        const estadoStyles = {
+          Pendiente: "bg-yellow-100 text-yellow-800 border-yellow-300",
+          Aprobado: "bg-green-100 text-green-800 border-green-300",
+          Rechazado: "bg-red-100 text-red-800 border-red-300",
+          "En Revisión": "bg-blue-100 text-blue-800 border-blue-300",
         };
 
         const estado = row?.estado || row?.status || "Pendiente";
 
         return (
-          <span
-            className={`
-          text-xs sm:text-sm font-bold
-          ${estadoColors[estado] || "text-gray-700 font-bold"}
-        `}
-          >
-            {estado}
-          </span>
+          <div className="flex items-center justify-center w-full h-full">
+            <span
+              className={`
+                inline-flex items-center justify-center
+                px-3 py-1.5 rounded-full
+                text-xs sm:text-sm font-semibold
+                border
+                ${estadoStyles[estado] || "bg-gray-100 text-gray-800 border-gray-300"}
+              `}
+            >
+              {estado}
+            </span>
+          </div>
         );
       },
     },
