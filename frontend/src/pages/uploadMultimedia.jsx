@@ -564,6 +564,7 @@ export default function UploadMultimedia() {
                     setSelectedThumbnail(null);
                     setSelectedRoles([]);
                     setErrors({});
+                    navigate("/panel");
                   }}
                   disabled={uploading}
                 >
@@ -580,7 +581,10 @@ export default function UploadMultimedia() {
 
       <SuccessErrorModal
         open={successModalOpen}
-        onClose={() => setSuccessModalOpen(false)}
+        onClose={() => {
+          setSuccessModalOpen(false);
+          navigate("/");
+        }}
         type="success"
         title="¡Contenido subido exitosamente!"
         message={`El contenido "${uploadedContentName}" ha sido subido correctamente y estará disponible para los usuarios.`}
