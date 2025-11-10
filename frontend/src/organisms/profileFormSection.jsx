@@ -16,7 +16,7 @@ import {
   handleValidatedInputChange,
   validateFormSubmission,
   formatDateForInput,
-  PROFILE_VALIDATION_RULES, // ✅ AGREGAR ESTE IMPORT
+  PROFILE_VALIDATION_RULES,
 } from "../utils/profileFormValidation";
 
 // API endpoints

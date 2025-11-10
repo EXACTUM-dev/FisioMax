@@ -71,10 +71,10 @@ export const FIELD_MAX_LENGTHS = {
   // Address Information
   pais: 60, // varchar(60)
   estado: 60, // varchar(60)
-  ciudad: 60, // varchar(60) -
-  colonia: 60, // varchar(60) -
-  codigoPostal: 5, // varchar(5)
-  calle: 25, // varchar(25) -
+  ciudad: 60, // varchar(60)
+  colonia: 60, // varchar(60)
+  codigoPostal: 5, // varchar(60)
+  calle: 25, // varchar(25)
   numExterior: 10, // varchar(10)
   numInterior: 10, // varchar(10)
 
@@ -188,9 +188,11 @@ export const FIELD_LABELS = {
   apellidoP: "Apellido Paterno",
   apellidoM: "Apellido Materno",
   email: "Correo electrónico",
+  correo: "Correo electrónico",
   fechaNacimiento: "Fecha de nacimiento",
   telefonoCasa: "Contacto profesional",
   telefonoWhatsApp: "Contacto personal",
+  telefono: "Teléfono",
   pais: "País",
   estado: "Estado/Provincia",
   ciudad: "Ciudad",
@@ -207,8 +209,16 @@ export const FIELD_LABELS = {
   titulo: "Título/Kardex",
   cedula: "Cédula profesional",
   constancias: "Constancias pélvicas",
-  telefono: "Teléfono",
 };
+
+/**
+ * Gets user-friendly field label
+ * @param {string} fieldName - Field name
+ * @returns {string} User-friendly label
+ */
+export function getFieldLabel(fieldName) {
+  return FIELD_LABELS[fieldName] || fieldName;
+}
 
 /**
  * Sanitizes input value with character limit enforcement
@@ -294,7 +304,7 @@ export function formatDateForDisplay(dateString) {
 
 /**
  * Converts date to YYYY-MM-DD format for input type="date"
- * @param {string} dateString - Date string in any format
+ * @param {string|Date} dateString - Date string in any format or Date object
  * @returns {string} Date in YYYY-MM-DD format
  */
 export function formatDateForInput(dateString) {
@@ -310,12 +320,49 @@ export function formatDateForInput(dateString) {
 
     return `${year}-${month}-${day}`;
   } catch (error) {
+    console.error("Error formatting date for input:", error);
     return "";
   }
 }
 
 /**
+ * Validates form on submission and returns validation results
+ * @param {Object} formData - Form data to validate
+ * @param {Object} rules - Validation rules to apply
+ * @returns {Object} { isValid, errors, missingFields }
+ */
+export function validateFormSubmission(formData, rules) {
+  const errors = validateForm(formData, rules);
+  const missingFields = [];
+
+  // Check for missing required fields
+  Object.keys(rules).forEach((fieldName) => {
+    const fieldRules = rules[fieldName];
+    const hasRequiredRule = fieldRules.some((rule) => rule.name === "required");
+
+    if (hasRequiredRule) {
+      const value = formData[fieldName];
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        // Get field label from FIELD_LABELS or use field name
+        const fieldLabel = getFieldLabel(fieldName);
+        missingFields.push(fieldLabel);
+      }
+    }
+  });
+
+  return {
+    isValid: !hasErrors(errors),
+    errors,
+    missingFields,
+  };
+}
+
+/**
  * Handles input change with real-time validation and sanitization
+ * @param {Event} e - Input change event
+ * @param {Function} setFormData - Form data setter
+ * @param {Function} setErrors - Errors setter
+ * @param {Object} customRules - Custom validation rules (defaults to PROFILE_VALIDATION_RULES)
  */
 export function handleValidatedInputChange(
   e,
@@ -340,6 +387,10 @@ export function handleValidatedInputChange(
 
 /**
  * Handles file input change with validation
+ * @param {Event} e - File input change event
+ * @param {Function} setFormData - Form data setter
+ * @param {Function} setErrors - Errors setter
+ * @param {Object} customRules - Custom validation rules (defaults to PROFILE_VALIDATION_RULES)
  */
 export function handleValidatedFileChange(
   e,
@@ -359,19 +410,24 @@ export function handleValidatedFileChange(
 }
 
 /**
- * Extra documents validation
+ * Extra documents validation rules
  */
 export const EXTRA_DOC_RULES = [
   fileType(["application/pdf"], "Solo se aceptan archivos PDF"),
   fileSize(10, "El archivo no puede ser mayor a 10MB"),
 ];
 
+/**
+ * Validates extra document file
+ * @param {File} file - File to validate
+ * @returns {string|null} Error message or null if valid
+ */
 export function validateExtraDocument(file) {
   return validate(file, EXTRA_DOC_RULES);
 }
 
 /**
- * API field mapping
+ * API field mapping (Spanish to English)
  */
 export const API_FIELD_MAPPING = {
   nombres: "firstName",
@@ -403,12 +459,15 @@ export const API_FIELD_MAPPING = {
 
 /**
  * Prepares form data for API submission
+ * @param {Object} formData - Form data object
+ * @param {Array} extraDocs - Extra documents array
+ * @returns {FormData} Prepared FormData object
  */
 export function prepareFormDataForSubmission(formData, extraDocs = []) {
   const formDataToSend = new FormData();
 
   Object.entries(formData).forEach(([key, value]) => {
-    if (value) {
+    if (value !== null && value !== undefined && value !== "") {
       const englishKey = API_FIELD_MAPPING[key] || key;
       formDataToSend.append(
         englishKey,
@@ -459,6 +518,8 @@ export const INITIAL_FORM_STATE = {
 
 /**
  * Populates form from user data
+ * @param {Object} userData - User data object
+ * @returns {Object} Populated form data
  */
 export function populateFormFromUserData(userData) {
   if (!userData) return { ...INITIAL_FORM_STATE };

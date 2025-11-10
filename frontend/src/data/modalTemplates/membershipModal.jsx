@@ -22,17 +22,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
-/**
- * MembershipModalContent component
- * @param {Object} props - Component properties.
- * @param {boolean} props.open - Determines whether the modal is visible.
- * @param {string} props.title - Title displayed on the modal header.
- * @param {Array} props.tableData - Optional custom data for the documents table.
- * @param {Object} props.solicitud - Contains applicant information and documents.
- * @param {Function} props.onClose - Function to close the modal.
- * @param {Function} props.onStatusChange - Callback when status changes (optional).
- * @returns {JSX.Element} The modal content for viewing a membership request.
- */
 function MembershipModalContent({
   open,
   title = "Solicitud de",
@@ -41,7 +30,6 @@ function MembershipModalContent({
   onClose,
   onStatusChange,
 }) {
-  // State variables for managing modal visibility
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showAcceptedModal, setShowAcceptedModal] = useState(false);
@@ -52,13 +40,11 @@ function MembershipModalContent({
 
   const { getToken } = useAuth();
 
-  // Closes the PDF preview modal and clears the URL.
   const closePdfModal = () => {
     setPdfModalOpen(false);
     setPdfUrl(null);
   };
 
-  // Download a file via fetch and trigger browser download.
   const downloadDocument = async (url, key) => {
     if (!url) return;
     try {
@@ -73,19 +59,15 @@ function MembershipModalContent({
       document.body.appendChild(a);
       a.click();
       a.remove();
-      // release object URL after a short timeout
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000 * 10);
     } catch (err) {
       console.error("Error descargando documento:", err);
-      // open in new tab
       window.open(url, "_blank", "noopener");
     }
   };
 
-  // Reference for focusing on a specific input when modal opens.
   const inputRef = useRef(null);
 
-  // Destructure applicant data for easier access
   const {
     nombre,
     nombreCompleto,
@@ -101,7 +83,6 @@ function MembershipModalContent({
     documentos = [],
   } = solicitud;
 
-  // Get the membership ID from various possible fields
   const getMembershipId = () => {
     return (
       solicitud?.IDMembresia ||
@@ -111,7 +92,6 @@ function MembershipModalContent({
     );
   };
 
-  // Handle confirm acceptance and call backend to approve membership
   const handleConfirmApprove = async () => {
     setShowConfirmModal(false);
     setIsProcessing(true);
@@ -131,12 +111,10 @@ function MembershipModalContent({
       );
 
       if (response?.success) {
-        // Notify parent component of status change
         if (typeof onStatusChange === "function") {
           onStatusChange(id, "Aprobado");
         }
 
-        // Show accepted modal
         setShowAcceptedModal(true);
       } else {
         throw new Error(response?.message || "Error al aprobar solicitud");
@@ -149,7 +127,6 @@ function MembershipModalContent({
     }
   };
 
-  // Handle confirm rejection with reason
   const handleConfirmReject = async (reason) => {
     setShowRejectModal(false);
     setIsProcessing(true);
@@ -162,7 +139,6 @@ function MembershipModalContent({
         throw new Error("ID de solicitud no disponible");
       }
 
-      // Send rejection reason in request body
       const response = await fetchWithClerk(
         `/api/membership-applications/${id}/rechazar`,
         {
@@ -178,12 +154,10 @@ function MembershipModalContent({
       );
 
       if (response?.success) {
-        // Notify parent component of status change
         if (typeof onStatusChange === "function") {
           onStatusChange(id, "Rechazado");
         }
 
-        // Show rejected confirmation modal
         setShowRejectedModal(true);
       } else {
         throw new Error(response?.message || "Error al rechazar solicitud");
@@ -196,10 +170,8 @@ function MembershipModalContent({
     }
   };
 
-  // Determine which data to use for the table
   const tableData = tableDataProp.length > 0 ? tableDataProp : documentos;
 
-  // Display full name
   const displayName = nombreCompleto || nombre || solicitud.nombre || "Usuario";
 
   useEffect(() => {
@@ -210,17 +182,14 @@ function MembershipModalContent({
 
   return (
     <>
-      {/* Main modal container */}
       <Modal open={open} onClose={onClose} size="x2">
         <div className="flex flex-col md:flex-row gap-6 w-full">
-          {/* Left column - Applicant form */}
           <div className="flex-2 flex flex-col gap-2">
             <Title2 className="text-center mb-1">{title}</Title2>
             <p className="text-lg font-semibold text-center mb-4">
               {displayName}
             </p>
 
-            {/* Applicant contact and social info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <FieldBox
                 label="Correo"
@@ -254,7 +223,6 @@ function MembershipModalContent({
               />
             </div>
 
-            {/* Academic and location info */}
             <div className="mt-1 flex flex-col gap-1">
               <FieldBox
                 label="Ubicación de práctica profesional"
@@ -271,10 +239,8 @@ function MembershipModalContent({
             </div>
           </div>
 
-          {/* Vertical divider */}
           <div className="hidden lg:block w-px bg-slate-200 mx-2" />
 
-          {/* Right column - Document list */}
           <div className="flex-2 min-w-0 lg:mt-0 min-h-0">
             <div className="bg-white rounded-lg border border-slate-200 p-2 sm:p-3">
               <DataTable
@@ -309,7 +275,6 @@ function MembershipModalContent({
                     isAction: true,
                     render: (row) => (
                       <div className="flex items-center justify-end gap-2">
-                        {/* View PDF in modal (preview) */}
                         <button
                           type="button"
                           title={row.url ? "Descargar PDF" : "Sin archivo"}
@@ -331,7 +296,6 @@ function MembershipModalContent({
                             className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
                           />
                         </button>
-                        {/* Download / open in new tab — use signed URL if available */}
                         {!row.url && (
                           <span className="text-xs text-slate-400">
                             Sin archivo
@@ -351,7 +315,6 @@ function MembershipModalContent({
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="flex justify-end gap-3">
           <Button
             label="Rechazar"
@@ -368,7 +331,6 @@ function MembershipModalContent({
         </div>
       </Modal>
 
-      {/* PDF preview modal */}
       <Modal open={pdfModalOpen} onClose={closePdfModal} size="2xl">
         <div className="flex flex-col items-center p-4">
           <h3 className="text-lg font-semibold mb-4">Vista previa del PDF</h3>
@@ -386,7 +348,6 @@ function MembershipModalContent({
         </div>
       </Modal>
 
-      {/* Confirmation modal for APPROVAL */}
       <Modal
         open={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -419,7 +380,6 @@ function MembershipModalContent({
         </div>
       </Modal>
 
-      {/* Reject confirmation modal with reason */}
       <RejectModal
         open={showRejectModal}
         onConfirm={handleConfirmReject}
@@ -428,7 +388,6 @@ function MembershipModalContent({
         subtitle={`Está a punto de rechazar la solicitud de ${displayName}. Por favor proporcione el motivo.`}
       />
 
-      {/* Accepted confirmation modal shown after successful approve */}
       <Modal
         open={showAcceptedModal}
         onClose={() => {
@@ -471,7 +430,6 @@ function MembershipModalContent({
         </div>
       </Modal>
 
-      {/* Rejected confirmation modal */}
       <Modal
         open={showRejectedModal}
         onClose={() => {
@@ -517,9 +475,6 @@ function MembershipModalContent({
   );
 }
 
-/**
- * Wrapper component for conditional rendering of the membership modal.
- */
 export default function MembershipModal(props) {
   if (!props.open) return null;
   return <MembershipModalContent {...props} />;
