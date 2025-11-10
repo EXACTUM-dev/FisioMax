@@ -52,6 +52,43 @@ function MembershipModalContent({
 
   const { getToken } = useAuth();
 
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (open && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      // Enfocar el primer elemento
+      first?.focus();
+
+      // Función para atrapar la navegación con tab
+      const handleKeyDown = (e) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            // shift + tab -> ir hacia atrás
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            // tab normal -> ir hacia adelante
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      modalRef.current.addEventListener("keydown", handleKeyDown);
+      return () => modalRef.current?.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [open]);
+
   // Closes the PDF preview modal and clears the URL.
   const closePdfModal = () => {
     setPdfModalOpen(false);
@@ -215,7 +252,7 @@ function MembershipModalContent({
     <>
       {/* Main modal container */}
       <Modal open={open} onClose={onClose} size="x2">
-        <div className="flex flex-col md:flex-row gap-6 w-full">
+        <div ref={modalRef} className="flex flex-col md:flex-row gap-6 w-full">
           
           {/* Left column - Applicant form */}
           <div className="flex-2 flex flex-col gap-2">
