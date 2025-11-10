@@ -1,7 +1,7 @@
 /**
  * @fileoverview Generic data table with responsive mobile cards, sortable columns, and pagination
  * @author EXACTUM-dev
- * @version 0.2.0
+ * @version 0.3.1
  * @description Columns are fully dynamic and can include custom renderers, metadata, sorting, and pagination
  */
 import React, { useMemo, useState } from "react";
@@ -17,6 +17,7 @@ import Pagination from "../molecules/pagination";
  * @param {string[]} [filterOptions] - Array of filter values for the filter chips
  * @param {number} [itemsPerPage=20] - Number of items to display per page
  * @param {boolean} [enablePagination=true] - Enable/disable pagination
+ * @param {Function} [onRowClick] - Optional callback when clicking on a row
  * @returns {JSX.Element} Responsive data table with sorting and pagination
  */
 export default function DataTable({
@@ -26,17 +27,18 @@ export default function DataTable({
   filterOptions = [],
   itemsPerPage = 20,
   enablePagination = true,
+  onRowClick,
 }) {
   const [activeFilter, setActiveFilter] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
     key: null,
-    direction: null, // 'asc' | 'desc' | null
+    direction: null,
   });
 
   /* Helpers for mobile layout (generic, driven by column metadata) */
   const nonActionCols = columns.filter((c) => !c.isAction);
-  const actionCols = columns.filter((c) => c.isAction);
+  const actionCols = columns.filter((c) => !c.isAction);
 
   /**
    * Header alignment helper: prefers headAlign, then align, then right for actions, else left
@@ -54,11 +56,9 @@ export default function DataTable({
    * @param {Object} col - Column configuration
    */
   const handleSort = (col) => {
-    // Don't sort if column is not sortable
     if (col.sortable === false || col.isAction) return;
 
     setSortConfig((prev) => {
-      // If clicking the same column, cycle through: asc -> desc -> null
       if (prev.key === col.key) {
         if (prev.direction === "asc") {
           return { key: col.key, direction: "desc" };
@@ -66,7 +66,6 @@ export default function DataTable({
           return { key: null, direction: null };
         }
       }
-      // New column, start with ascending
       return { key: col.key, direction: "asc" };
     });
   };
@@ -77,11 +76,9 @@ export default function DataTable({
    * @param {Object} col - Column configuration
    */
   const getSortValue = (row, col) => {
-    // Use custom sort accessor if provided
     if (typeof col.sortAccessor === "function") {
       return col.sortAccessor(row);
     }
-    // Otherwise use the column key
     return row[col.key];
   };
 
@@ -93,7 +90,6 @@ export default function DataTable({
     return data.filter((row) => row[filterColumn] === activeFilter);
   }, [activeFilter, filterColumn, data]);
 
-  // Reset to page 1 when filter changes
   React.useEffect(() => {
     setCurrentPage(1);
   }, [activeFilter, data]);
@@ -113,12 +109,10 @@ export default function DataTable({
       const aValue = getSortValue(a, column);
       const bValue = getSortValue(b, column);
 
-      // Handle null/undefined values
       if (aValue == null && bValue == null) return 0;
       if (aValue == null) return 1;
       if (bValue == null) return -1;
 
-      // Compare values
       if (typeof aValue === "string" && typeof bValue === "string") {
         return aValue.localeCompare(bValue, "es", { sensitivity: "base" });
       }
@@ -128,7 +122,6 @@ export default function DataTable({
       return 0;
     });
 
-    // Reverse if descending
     return sortConfig.direction === "desc" ? sorted.reverse() : sorted;
   }, [filteredData, sortConfig, columns]);
 
@@ -206,6 +199,27 @@ export default function DataTable({
     );
   };
 
+  /**
+   * Handles row click and prevents propagation from interactive elements
+   * @param {Event} e - Click event
+   * @param {Object} row - Row data
+   */
+  const handleRowClick = (e, row) => {
+    if (!onRowClick) return;
+
+    const target = e.target;
+    const isInteractive =
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest('[role="button"]');
+
+    if (!isInteractive) {
+      onRowClick(row);
+    }
+  };
+
   return (
     <div className="max-w-[70rem] mx-auto">
       {/* Optional filter chips */}
@@ -236,10 +250,8 @@ export default function DataTable({
         <div className="rounded-[18px] border border-neutral-200 bg-white overflow-hidden">
           <div className="w-full overflow-x-auto">
             <table className="w-full table-fixed">
-              {/* Table header */}
               <thead>
                 <tr className="bg-neutral-50 text-[11px] uppercase tracking-wide text-slate-500">
-                  {/* Dynamic columns */}
                   {columns.map((col) => {
                     const isSortable = col.sortable !== false && !col.isAction;
 
@@ -255,7 +267,6 @@ export default function DataTable({
                         }`}
                         onClick={() => isSortable && handleSort(col)}
                       >
-                        {/* Always use flex container for consistent alignment */}
                         <div
                           className={`flex items-center gap-1 ${getHeaderAlignClass(
                             col
@@ -267,10 +278,13 @@ export default function DataTable({
                       </th>
                     );
                   })}
+
+                  {onRowClick && (
+                    <th className="w-8 py-3 px-2" aria-label="Navegación"></th>
+                  )}
                 </tr>
               </thead>
 
-              {/* Table body */}
               <tbody>
                 {paginatedData.map((row, rowIndex) => {
                   const id =
@@ -280,7 +294,15 @@ export default function DataTable({
                     row.name ??
                     rowIndex;
                   return (
-                    <tr key={id} className="border-t border-neutral-200">
+                    <tr
+                      key={id}
+                      onClick={(e) => handleRowClick(e, row)}
+                      className={`border-t border-neutral-200 ${
+                        onRowClick
+                          ? "cursor-pointer hover:bg-slate-50 transition-colors group"
+                          : ""
+                      }`}
+                    >
                       {columns.map((col) => (
                         <td
                           key={`${id}-${col.key}`}
@@ -295,6 +317,24 @@ export default function DataTable({
                           {col.render ? col.render(row) : row[col.key]}
                         </td>
                       ))}
+
+                      {onRowClick && (
+                        <td className="w-8 py-3 px-2">
+                          <svg
+                            className="w-5 h-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-0.5 transition-all"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -303,7 +343,6 @@ export default function DataTable({
           </div>
         </div>
 
-        {/* Pagination for desktop */}
         {enablePagination && sortedData.length > 0 && (
           <div className="px-4">
             <Pagination
@@ -319,7 +358,6 @@ export default function DataTable({
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
-        {/* Mobile cards (generic) */}
         {paginatedData.map((row, rowIndex) => {
           const id =
             row.id ?? row.IDUsuario ?? row.IDRol ?? row.name ?? rowIndex;
@@ -331,7 +369,12 @@ export default function DataTable({
           return (
             <div
               key={id}
-              className="bg-white rounded-lg border border-neutral-200 hover:border-neutral-300"
+              onClick={(e) => handleRowClick(e, row)}
+              className={`bg-white rounded-lg border border-neutral-200 relative ${
+                onRowClick
+                  ? "cursor-pointer hover:border-neutral-300 active:bg-slate-50"
+                  : "hover:border-neutral-300"
+              }`}
             >
               {/* Card header */}
               <div className="flex items-start gap-3 p-4 pb-3">
@@ -353,8 +396,26 @@ export default function DataTable({
                   )}
                 </div>
 
+                {onRowClick && (
+                  <div className="flex-shrink-0 flex items-center">
+                    <svg
+                      className="w-5 h-5 text-slate-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                )}
+
                 {/* Inline actions (if any) */}
-                {actionCols.length > 0 && (
+                {actionCols.length > 0 && !onRowClick && (
                   <div className="flex items-center gap-1">
                     {actionCols.map((col) => (
                       <div key={col.key} className="ml-1">
@@ -411,7 +472,6 @@ export default function DataTable({
           </div>
         )}
 
-        {/* Pagination for mobile */}
         {enablePagination && sortedData.length > 0 && (
           <Pagination
             currentPage={currentPage}

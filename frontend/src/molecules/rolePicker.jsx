@@ -1,16 +1,16 @@
 /**
  * @fileoverview Role selection component.
- * @version 1.0.0
+ * @version 1.2.0
  * @author EXACTUM-dev
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@clerk/clerk-react';
-import Modal from './modal';
-import Button from '../atoms/button';
-import ConfirmationModal from './confirmationModal';
-import SuccessErrorModal from '../organisms/successErrorModal';
-import { fetchWithClerk } from '../utils/api';
+import React, { useState, useRef, useEffect } from "react";
+import { useAuth } from "@clerk/clerk-react";
+import Modal from "./modal";
+import Button from "../atoms/button";
+import ConfirmationModal from "./confirmationModal";
+import SuccessErrorModal from "../organisms/successErrorModal";
+import { fetchWithClerk } from "../utils/api";
 
 /**
  * RolePicker component for managing user roles.
@@ -19,9 +19,10 @@ import { fetchWithClerk } from '../utils/api';
  * @param {Object} props.row User data associated with the role.
  * @param {Array} props.roles Array of available roles to choose from.
  * @param {Function} props.onSelect Callback when a role is selected.
+ * @param {string} [props.displayName] Optional custom display name for the button.
  * @returns {JSX.Element} Role selection component.
  */
-export default function RolePicker({ row, roles = [], onSelect }) {
+export default function RolePicker({ row, roles = [], onSelect, displayName }) {
   const { getToken } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
@@ -29,11 +30,11 @@ export default function RolePicker({ row, roles = [], onSelect }) {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
-  
+
   // Success/Error modal states
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Handles closing the dropdown when clicking outside
   useEffect(() => {
@@ -43,22 +44,22 @@ export default function RolePicker({ row, roles = [], onSelect }) {
       }
     }
     if (dropdownOpen) {
-      document.addEventListener('click', handleClick);
-      return () => document.removeEventListener('click', handleClick);
+      document.addEventListener("click", handleClick);
+      return () => document.removeEventListener("click", handleClick);
     }
   }, [dropdownOpen]);
 
   // Determines the current user role
   const current =
-    row?.rol || 
-    row?.rolNombre || 
-    row?.role || 
-    (Array.isArray(row?.roles) && row.roles[0]?.name) || 
+    row?.rol ||
+    row?.rolNombre ||
+    row?.role ||
+    (Array.isArray(row?.roles) && row.roles[0]?.name) ||
     row?.roleName ||
-    '';
+    "";
 
   // Get user name
-  const userName = row?.nombre || row?.name || 'Usuario';
+  const userName = row?.nombre || row?.name || "Usuario";
 
   // Handle opening modal
   const handleOpenModal = () => {
@@ -91,22 +92,22 @@ export default function RolePicker({ row, roles = [], onSelect }) {
     setIsLoading(true);
 
     try {
-      const roleObj = roles.find((r) =>
-        (r?.nombre || r?.name || r?.rol) === selectedRole
+      const roleObj = roles.find(
+        (r) => (r?.nombre || r?.name || r?.rol) === selectedRole
       );
 
       const userId = row?.id || row?.IDUsuario;
       const roleId = roleObj?.id || roleObj?.IDRol;
 
       if (!userId) {
-        setErrorMessage('No se pudo identificar el usuario');
+        setErrorMessage("No se pudo identificar el usuario");
         setErrorModalOpen(true);
         setIsLoading(false);
         return;
       }
 
       if (!roleId) {
-        setErrorMessage('No se pudo identificar el rol');
+        setErrorMessage("No se pudo identificar el rol");
         setErrorModalOpen(true);
         setIsLoading(false);
         return;
@@ -114,16 +115,16 @@ export default function RolePicker({ row, roles = [], onSelect }) {
 
       const token = await getToken();
       const response = await fetchWithClerk(
-          `/api/users/${userId}/rol`,
-          {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              roleId: roleId,
-              roleName: selectedRole,
-            }),
-          },
-          token
+        `/api/users/${userId}/rol`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roleId: roleId,
+            roleName: selectedRole,
+          }),
+        },
+        token
       );
 
       if (response?.success) {
@@ -138,13 +139,13 @@ export default function RolePicker({ row, roles = [], onSelect }) {
         setModalOpen(false);
         setSuccessModalOpen(true);
       } else {
-        throw new Error(response?.error || 'Error al actualizar el rol');
+        throw new Error(response?.error || "Error al actualizar el rol");
       }
     } catch (error) {
-      console.error('Error updating user role:', error);
+      console.error("Error updating user role:", error);
       setErrorMessage(
-          error.message ||
-          'Error al actualizar el rol. Por favor, intenta nuevamente.'
+        error.message ||
+          "Error al actualizar el rol. Por favor, intenta nuevamente."
       );
       setErrorModalOpen(true);
       setSelectedRole(current);
@@ -166,37 +167,35 @@ export default function RolePicker({ row, roles = [], onSelect }) {
 
   return (
     <>
-      {/* Button to open modal */}
-      <button
-        type="button"
-        onClick={handleOpenModal}
-        className="
-          px-4 py-2 
-          rounded-lg 
-          font-medium 
-          text-sm
-          transition-all 
-          duration-200
-          bg-slate-100 
-          text-slate-700 
-          hover:bg-slate-200 
-          shadow-sm
-          focus:outline-none 
-          focus:ring-2 
-          focus:ring-brand/50 
-          focus:ring-offset-1
-          active:scale-95
-        "
-      >
-        {current || 'Asignar rol'}
-      </button>
+      {/* Button to open modal - con stopPropagation para evitar activar onRowClick */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={handleOpenModal}
+          className="
+            px-4 py-2 
+            rounded-lg 
+            font-medium 
+            text-sm
+            transition-all 
+            duration-200
+            bg-slate-100 
+            text-slate-700 
+            hover:bg-slate-200 
+            shadow-sm
+            focus:outline-none 
+            focus:ring-2 
+            focus:ring-brand/50 
+            focus:ring-offset-1
+            active:scale-95
+          "
+        >
+          {displayName || current || "Asignar rol"}
+        </button>
+      </div>
 
       {/* Modal for role selection */}
-      <Modal
-        open={modalOpen}
-        onClose={handleCancel}
-        size="md"
-      >
+      <Modal open={modalOpen} onClose={handleCancel} size="md">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-slate-900 mb-6 text-center">
             Cambiar Rol de Usuario
@@ -207,7 +206,7 @@ export default function RolePicker({ row, roles = [], onSelect }) {
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Seleccionar Rol
             </label>
-            
+
             <div className="relative" ref={dropdownRef}>
               {/* Dropdown button */}
               <button
@@ -234,21 +233,31 @@ export default function RolePicker({ row, roles = [], onSelect }) {
                   flex items-center justify-between
                 "
               >
-                <span className="truncate">{selectedRole || 'Selecciona un rol'}</span>
+                <span className="truncate">
+                  {selectedRole || "Selecciona un rol"}
+                </span>
                 {/* Chevron icon */}
-                <svg 
-                  className={`w-5 h-5 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className={`w-5 h-5 transition-transform ${
+                    dropdownOpen ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
 
               {/* Dropdown menu */}
               {dropdownOpen && (
-                <div className="
+                <div
+                  className="
                   absolute 
                   z-50 
                   mt-2 
@@ -266,16 +275,18 @@ export default function RolePicker({ row, roles = [], onSelect }) {
                   [&::-webkit-scrollbar-thumb]:bg-slate-300
                   [&::-webkit-scrollbar-thumb]:rounded-lg
                   [&::-webkit-scrollbar-thumb]:hover:bg-slate-400
-                ">
+                "
+                >
                   {roles.length === 0 ? (
                     <div className="px-4 py-3 text-sm text-slate-500 text-center">
                       No hay roles disponibles
                     </div>
                   ) : (
                     roles.map((role) => {
-                      const roleName = role?.nombre || role?.name || role?.rol || role;
+                      const roleName =
+                        role?.nombre || role?.name || role?.rol || role;
                       const isSelected = roleName === selectedRole;
-                      
+
                       return (
                         <button
                           key={role?.id || role?.IDRol || roleName}
@@ -289,7 +300,11 @@ export default function RolePicker({ row, roles = [], onSelect }) {
                             text-sm
                             transition-colors
                             hover:bg-slate-50
-                            ${isSelected ? 'bg-[#CAD00F]/10 text-slate-900 font-medium' : 'text-slate-700'}
+                            ${
+                              isSelected
+                                ? "bg-[#CAD00F]/10 text-slate-900 font-medium"
+                                : "text-slate-700"
+                            }
                             flex items-center justify-between
                             first:rounded-t-lg
                             last:rounded-b-lg
@@ -297,8 +312,16 @@ export default function RolePicker({ row, roles = [], onSelect }) {
                         >
                           <span>{roleName}</span>
                           {isSelected && (
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            <svg
+                              className="w-4 h-4"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                           )}
                         </button>
@@ -341,7 +364,7 @@ export default function RolePicker({ row, roles = [], onSelect }) {
         onCancel={handleCancelConfirmation}
       />
 
-            {/* Success Modal */}
+      {/* Success Modal */}
       <SuccessErrorModal
         open={successModalOpen}
         onClose={() => setSuccessModalOpen(false)}

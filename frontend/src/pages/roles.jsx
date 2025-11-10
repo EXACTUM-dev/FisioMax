@@ -26,7 +26,7 @@ import ChecklistModal from "../data/modalTemplates/roleModal";
 import SuccessErrorModal from "../organisms/successErrorModal";
 
 // Data & utils
-import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
+import rolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import { useRoles } from "../hooks/useRoles";
 import { useCreateRole } from "../hooks/useRoles";
 import { toUserMessage } from "../services/serviceErrors";
@@ -286,7 +286,7 @@ export default function RolesPage() {
    * Build table columns on every render (safe default).
    * Note: This trades a tiny perf optimization (useMemo) for stability.
    */
-  const roleColumns = buildRolePermissionsColumns({
+  const roleColumns = rolePermissionsColumns({
     onEdit: handleEditRole,
     onDelete: (row) => {
       setRoleToDelete(row);
