@@ -44,12 +44,12 @@ export default function VignetteImage({
       />
 
       {/* Vignette overlay */}
-      {variant !== "none" && (
+      {variant === "dark" && (
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              variant === "transparent" ? "transparent" : "transparent",
+              "radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 85%, rgba(0,0,0,0.55) 100%)",
           }}
         />
       )}
