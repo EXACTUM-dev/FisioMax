@@ -43,17 +43,6 @@ export default function VignetteImage({
         loading="lazy"
       />
 
-      {/* Vignette overlay */}
-      {variant !== "none" && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              variant === "transparent" ? "transparent" : "transparent",
-          }}
-        />
-      )}
-
       {/* Content overlay - positioned at bottom with proper padding */}
       {children && (
         <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6 md:p-8">
