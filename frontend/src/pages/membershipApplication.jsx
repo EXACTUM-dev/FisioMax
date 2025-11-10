@@ -12,7 +12,7 @@ import ConfirmModal from "../molecules/confirmationModal";
 import { MEMBERSHIP_API } from "../config/api";
 import logo from "../assets/icons/SOMEFIPPlogo.png";
 
-import ProfileFormSection from "../organisms/ProfileFormSection";
+import ProfileFormSection from "../organisms/profileFormSection";
 
 import {
   handleValidatedFileChange,
