@@ -62,11 +62,9 @@ export default function ComboboxField({ label, name, value, onChange, options, r
       };
   
       document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
   
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("keydown", handleKeyDown);
       };
     }, []);
 
@@ -133,6 +131,9 @@ export default function ComboboxField({ label, name, value, onChange, options, r
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setIsOpen(false);
+            }
             if (e.key === "Tab" && isOpen && filteredOptions.length > 0) {
                 e.preventDefault();
                 if (optionRefs.current[0]) {
@@ -168,25 +169,25 @@ export default function ComboboxField({ label, name, value, onChange, options, r
                 ref={(el) => (optionRefs.current[index] = el)}
                 onClick={() => handleOptionSelect(option)}
                 onKeyDown={(e) => {
-                    // 🔹 Si presionas TAB dentro de una opción
+                    // If push TAB in an option
                     if (e.key === "Tab") {
                     e.preventDefault();
 
                     if (e.shiftKey) {
-                        // Navegar hacia atrás
+                        // Navegate backward
                         if (index > 0) {
                         optionRefs.current[index - 1].focus();
                         } else {
-                        // Si estás en la primera, vuelve al input
+                        // Return to input
                         e.target.blur();
                         document.querySelector(`input[name="${name}"]`)?.focus();
                         }
                     } else {
-                        // Navegar hacia adelante
+                        // Navegate forward
                         if (index < filteredOptions.length - 1) {
                         optionRefs.current[index + 1].focus();
                         } else {
-                        // Si estás en la última, cerrar menú y volver al input
+                        // If you are in the last option, close options and return to the input
                         setIsOpen(false);
                         e.target.blur();
                         document.querySelector(`input[name="${name}"]`)?.focus();
