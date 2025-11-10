@@ -62,20 +62,18 @@ function MembershipModalContent({
       const first = focusableElements[0];
       const last = focusableElements[focusableElements.length - 1];
 
-      // Enfocar el primer elemento
+      // Focus the first element
       first?.focus();
 
-      // Función para atrapar la navegación con tab
+      // Function to catch the navegacion with Tab
       const handleKeyDown = (e) => {
         if (e.key === "Tab") {
           if (e.shiftKey) {
-            // shift + tab -> ir hacia atrás
             if (document.activeElement === first) {
               e.preventDefault();
               last.focus();
             }
           } else {
-            // tab normal -> ir hacia adelante
             if (document.activeElement === last) {
               e.preventDefault();
               first.focus();

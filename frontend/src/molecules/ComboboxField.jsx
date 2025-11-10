@@ -194,7 +194,7 @@ export default function ComboboxField({ label, name, value, onChange, options, r
                         }
                     }
                     }
-                    // 🔹 Cerrar con ESC
+                    // Close with Esc
                     if (e.key === "Escape") {
                     setIsOpen(false);
                     document.querySelector(`input[name="${name}"]`)?.focus();
