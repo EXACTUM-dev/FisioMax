@@ -47,10 +47,10 @@ export function buildMembershipColumns({ onView } = {}) {
       align: "center",
       render: (row) => {
         const estadoColors = {
-          Pendiente: "bg-yellow-100 text-yellow-800 border-yellow-200",
-          Aprobado: "bg-green-100 text-green-800 border-green-200",
-          Rechazado: "bg-red-100 text-red-800 border-red-200",
-          "En Revisión": "bg-blue-100 text-blue-800 border-blue-200",
+          Pendiente: "text-yellow-700 font-bold",
+          Aprobado: "text-green-700 font-bold",
+          Rechazado: "text-red-700 font-bold",
+          "En Revisión": "text-blue-700 font-bold",
         };
 
         const estado = row?.estado || row?.status || "Pendiente";
@@ -58,12 +58,9 @@ export function buildMembershipColumns({ onView } = {}) {
         return (
           <span
             className={`
-              inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium border
-              ${
-                estadoColors[estado] ||
-                "bg-gray-100 text-gray-800 border-gray-200"
-              }
-            `}
+          text-xs sm:text-sm font-bold
+          ${estadoColors[estado] || "text-gray-700 font-bold"}
+        `}
           >
             {estado}
           </span>
@@ -101,40 +98,43 @@ export function buildMembershipColumns({ onView } = {}) {
     },
     {
       key: "ver",
-      label: "Ver solicitud",
-      className: "w-[20%] text-right",
+      label: "Ver",
+      className: "w-[8%]",
+      headAlign: "center",
+      align: "center",
       isAction: true,
       render: (row) => (
-        <button
-          type="button"
-          title="Ver solicitud"
-          onClick={() => onView?.(row)}
-          className="
-            px-4 py-2 
-            rounded-lg 
-            font-medium 
-            text-sm
-            transition-all 
-            duration-200
-            bg-slate-100 
-            text-slate-700 
-            hover:bg-slate-200 
-            hover:shadow-md
-            hover:scale-105
-            shadow-sm
-            focus:outline-none 
-            focus:ring-2 
-            focus:ring-brand/50 
-            focus:ring-offset-1
-            active:scale-95
-          "
-        >
-          <img
-            src={applicationIcon}
-            alt="Ver"
-            className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
-          />
-        </button>
+        <div className="flex items-center justify-center w-full h-full">
+          <button
+            type="button"
+            title="Ver solicitud"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView?.(row);
+            }}
+            className="text-blue-600 hover:text-blue-800 transition-colors p-1"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+          </button>
+        </div>
       ),
     },
   ];

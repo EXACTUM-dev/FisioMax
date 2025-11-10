@@ -416,6 +416,7 @@ export default function Panel() {
         },
         onChangeRole: (row, chosenRole) =>
           updateUserRole(row.id || row.IDUsuario, chosenRole),
+        onView: handleUserNameClick,
       }),
     [roleRows, updateUserRole, getToken]
   );
@@ -524,7 +525,6 @@ export default function Panel() {
                 type: "table",
                 columns: userColumns,
                 rows: mappedUserRows,
-                onRowClick: handleUserNameClick,
               },
             ]}
           />

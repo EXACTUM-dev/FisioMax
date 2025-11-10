@@ -191,6 +191,7 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
             focus:ring-brand/50 
             focus:ring-offset-1
             active:scale-95
+            cursor-pointer
             max-w-[120px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-full
           "
         >

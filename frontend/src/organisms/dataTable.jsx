@@ -1,7 +1,7 @@
 /**
  * @fileoverview Generic data table with responsive mobile cards, sortable columns, and pagination
  * @author EXACTUM-dev
- * @version 0.3.3
+ * @version 0.4.0
  * @description Columns are fully dynamic and can include custom renderers, metadata, sorting, and pagination
  */
 import React, { useMemo, useState } from "react";
@@ -17,7 +17,6 @@ import Pagination from "../molecules/pagination";
  * @param {string[]} [filterOptions] - Array of filter values for the filter chips
  * @param {number} [itemsPerPage=20] - Number of items to display per page
  * @param {boolean} [enablePagination=true] - Enable/disable pagination
- * @param {Function} [onRowClick] - Optional callback when clicking on a row
  * @returns {JSX.Element} Responsive data table with sorting and pagination
  */
 export default function DataTable({
@@ -27,7 +26,6 @@ export default function DataTable({
   filterOptions = [],
   itemsPerPage = 20,
   enablePagination = true,
-  onRowClick,
 }) {
   const [activeFilter, setActiveFilter] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -200,27 +198,6 @@ export default function DataTable({
   };
 
   /**
-   * Handles row click and prevents propagation from interactive elements
-   * @param {Event} e - Click event
-   * @param {Object} row - Row data
-   */
-  const handleRowClick = (e, row) => {
-    if (!onRowClick) return;
-
-    const target = e.target;
-    const isInteractive =
-      target.closest("button") ||
-      target.closest("a") ||
-      target.closest("input") ||
-      target.closest("select") ||
-      target.closest('[role="button"]');
-
-    if (!isInteractive) {
-      onRowClick(row);
-    }
-  };
-
-  /**
    * Extracts raw text value from a column for mobile display
    * @param {Object} col - Column configuration
    * @param {Object} row - Row data
@@ -265,7 +242,7 @@ export default function DataTable({
         </div>
       )}
 
-      {/* Desktop/   Table View */}
+      {/* Desktop/Tablet Table View */}
       <div className="hidden md:block">
         <div className="rounded-[18px] border border-neutral-200 bg-white overflow-hidden">
           <div className="w-full overflow-x-auto">
@@ -298,10 +275,6 @@ export default function DataTable({
                       </th>
                     );
                   })}
-
-                  {onRowClick && (
-                    <th className="w-8 py-3 px-2" aria-label="Navegación"></th>
-                  )}
                 </tr>
               </thead>
 
@@ -314,15 +287,7 @@ export default function DataTable({
                     row.name ??
                     rowIndex;
                   return (
-                    <tr
-                      key={id}
-                      onClick={(e) => handleRowClick(e, row)}
-                      className={`border-t border-neutral-200 ${
-                        onRowClick
-                          ? "cursor-pointer hover:bg-slate-50 transition-colors group"
-                          : ""
-                      }`}
-                    >
+                    <tr key={id} className="border-t border-neutral-200">
                       {columns.map((col) => (
                         <td
                           key={`${id}-${col.key}`}
@@ -337,24 +302,6 @@ export default function DataTable({
                           {col.render ? col.render(row) : row[col.key]}
                         </td>
                       ))}
-
-                      {onRowClick && (
-                        <td className="w-8 py-3 px-2">
-                          <svg
-                            className="w-5 h-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-0.5 transition-all"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </td>
-                      )}
                     </tr>
                   );
                 })}
@@ -392,12 +339,7 @@ export default function DataTable({
           return (
             <div
               key={id}
-              onClick={(e) => handleRowClick(e, row)}
-              className={`bg-white rounded-lg border border-neutral-200 ${
-                onRowClick
-                  ? "cursor-pointer hover:border-neutral-300 hover:shadow-md active:bg-slate-50 transition-all"
-                  : ""
-              }`}
+              className="bg-white rounded-lg border border-neutral-200 shadow-sm"
             >
               {/* Card header */}
               <div className="flex items-start justify-between gap-3 p-4">
@@ -427,27 +369,8 @@ export default function DataTable({
                   )}
                 </div>
 
-                {/* Navigation arrow or action buttons */}
-                {onRowClick && actionCols.length === 0 && (
-                  <div className="flex-shrink-0 self-center ml-2">
-                    <svg
-                      className="w-5 h-5 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </div>
-                )}
-
-                {/* Action buttons (if any and no onRowClick) */}
-                {actionCols.length > 0 && !onRowClick && (
+                {/* Action buttons on the right */}
+                {actionCols.length > 0 && (
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {actionCols.map((col) => (
                       <div key={col.key}>

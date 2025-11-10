@@ -27,6 +27,7 @@ export function buildUserRolesColumns({
   roles = [],
   onDelete,
   onChangeRole,
+  onView,
 } = {}) {
   return [
     {
@@ -99,20 +100,17 @@ export function buildUserRolesColumns({
           paymentStatus.slice(1).toLowerCase();
 
         const estadoColors = {
-          Pendiente: "bg-yellow-100 text-yellow-800 border-yellow-200",
-          Pagado: "bg-green-100 text-green-800 border-green-200",
-          Vencido: "bg-red-100 text-red-800 border-red-200",
+          Pendiente: "text-yellow-700 font-bold",
+          Pagado: "text-green-700 font-bold",
+          Vencido: "text-red-700 font-bold",
         };
 
         return (
           <span
             className={`
-              inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium border
-              ${
-                estadoColors[normalizedStatus] ||
-                "bg-gray-100 text-gray-800 border-gray-200"
-              }
-            `}
+          text-xs sm:text-sm font-bold
+          ${estadoColors[normalizedStatus] || "text-gray-700 font-bold"}
+        `}
           >
             {normalizedStatus}
           </span>
@@ -137,9 +135,50 @@ export function buildUserRolesColumns({
           <img
             src={trashIcon}
             alt="Eliminar"
-            className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
+            className="w-5 h-5 cursor-pointer object-contain opacity-80 hover:opacity-100 transition-opacity"
           />
         </button>
+      ),
+    },
+    {
+      key: "ver",
+      label: "Ver",
+      className: "w-[8%]",
+      headAlign: "center",
+      align: "center",
+      isAction: true,
+      render: (row) => (
+        <div className="flex items-center justify-center w-full h-full">
+          <button
+            type="button"
+            title="Ver usuario"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView?.(row);
+            }}
+            className="text-blue-600 hover:text-blue-800 transition-colors p-1"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+          </button>
+        </div>
       ),
     },
   ];
