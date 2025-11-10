@@ -3,9 +3,10 @@
  * @author EXACTUM-dev
  * @version 1.0.0
  */
-import React from 'react';
-import {SignIn, useUser} from '@clerk/clerk-react';
+import React, {useEffect} from 'react';
+import {SignIn, useUser, useClerk} from '@clerk/clerk-react';
 import {Navigate} from 'react-router-dom';
+import {sendLoginErrorLog} from '../services/loginLogs.service.js';
 
 /**
  * Login page component that handles user authentication via Clerk.
@@ -17,6 +18,39 @@ import {Navigate} from 'react-router-dom';
  */
 export default function LoginPage() {
   const {isSignedIn, isLoaded} = useUser();
+  const clerk = useClerk();
+
+  useEffect(() => {
+    if (!clerk) return undefined;
+
+    const removeListener = clerk.addListener(({event, payload}) => {
+      if (event === 'signIn:failed') {
+        const identifier =
+          payload?.attempt?.identifier ||
+          payload?.emailAddress ||
+          payload?.identifier ||
+          null;
+
+        sendLoginErrorLog({
+          usuario: identifier,
+          codigoError: payload?.error?.code || 'CLERK_SIGNIN_FAILED',
+          mensajeError:
+              payload?.error?.message || 'Intento fallido de inicio de sesión',
+          detalles: {
+            reason: payload?.reason,
+            errors: payload?.errors,
+            status: payload?.status,
+          },
+        });
+      }
+    });
+
+    return () => {
+      if (typeof removeListener === 'function') {
+        removeListener();
+      }
+    };
+  }, [clerk]);
 
   // Display loading state while authentication status is being determined
   if (!isLoaded) {

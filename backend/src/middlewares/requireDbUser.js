@@ -8,6 +8,43 @@
  */
 
 import {userExistsInDB} from '../services/auth.service.js';
+import {insertLoginErrorLog} from '../models/loginLogs.model.js';
+
+/**
+ * Obtiene la IP a partir de la petición tomando en cuenta proxies.
+ * @param {Object} req - Express request.
+ * @returns {string|null}
+ */
+function getRequestIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip || req.connection?.remoteAddress || null;
+}
+
+/**
+ * Registra un error de login sin interrumpir el flujo principal.
+ * @param {Object} req - Express request.
+ * @param {Object} logData - Datos adicionales del log.
+ */
+async function logLoginError(req, logData) {
+  try {
+    await insertLoginErrorLog({
+      ipOrigen: getRequestIp(req),
+      agenteUsuario: req.headers['user-agent'] || null,
+      ...logData,
+      detalles:
+          logData.detalles ??
+          {
+            path: req.originalUrl || req.url,
+            method: req.method,
+          },
+    });
+  } catch (logError) {
+    console.error('No se pudo registrar el error de login:', logError);
+  }
+}
 
 /**
  * Middleware that verifies the Clerk authenticated user exists in DB.
@@ -27,6 +64,11 @@ export async function requireDbUser(req, res, next) {
     const clerkUserId = req.auth?.userId;
 
     if (!clerkUserId) {
+      await logLoginError(req, {
+        usuario: null,
+        codigoError: 'AUTH_NO_CLERK_USER',
+        mensajeError: 'Usuario no autenticado',
+      });
       return res.status(401).json({
         error: 'Usuario no autenticado',
         message: 'No se encontró información de autenticación de Clerk',
@@ -37,6 +79,11 @@ export async function requireDbUser(req, res, next) {
     const existsInDB = await userExistsInDB(clerkUserId);
 
     if (!existsInDB) {
+      await logLoginError(req, {
+        usuario: clerkUserId,
+        codigoError: 'USER_NOT_IN_DB',
+        mensajeError: 'Usuario no autorizado',
+      });
       return res.status(403).json({
         error: 'Usuario no autorizado',
         message:
@@ -49,6 +96,15 @@ export async function requireDbUser(req, res, next) {
     next();
   } catch (error) {
     console.error('requireDbUser middleware error:', error);
+    await logLoginError(req, {
+      usuario: req.auth?.userId ?? null,
+      codigoError: 'DB_VALIDATION_ERROR',
+      mensajeError: 'Error al validar usuario',
+      detalles: {
+        message: error?.message,
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      },
+    });
     return res.status(500).json({
       error: 'Error al validar usuario',
       detail: error?.message,

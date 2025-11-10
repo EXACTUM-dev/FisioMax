@@ -7,6 +7,7 @@
 import {useState, useEffect} from 'react';
 import {useAuth} from '@clerk/clerk-react';
 import {API_CONFIG, buildApiUrl} from '../config/api';
+import {sendLoginErrorLog} from '../services/loginLogs.service.js';
 
 /**
  * Custom hook that verifies if the Clerk authenticated user
@@ -19,7 +20,7 @@ import {API_CONFIG, buildApiUrl} from '../config/api';
  * @return {string|null} return.error - Error message if any.
  */
 export function useDbUser() {
-  const {getToken, isLoaded, isSignedIn} = useAuth();
+  const {getToken, isLoaded, isSignedIn, userId} = useAuth();
   const [state, setState] = useState({
     isLoading: true,
     existsInDB: false,
@@ -65,6 +66,15 @@ export function useDbUser() {
 
         if (response.status === 403) {
           // User authenticated in Clerk but doesn't exist in DB
+          sendLoginErrorLog({
+            usuario: userId,
+            codigoError: 'DB_USER_NOT_FOUND',
+            mensajeError: 'Usuario autenticado en Clerk pero no registrado en la base de datos',
+            detalles: {
+              endpoint: API_CONFIG.ENDPOINTS.AUTH_PROFILE,
+              status: response.status,
+            },
+          });
           setState({
             isLoading: false,
             existsInDB: false,
@@ -88,6 +98,14 @@ export function useDbUser() {
         });
       } catch (err) {
         console.error('Error verificando usuario en BD:', err);
+        sendLoginErrorLog({
+          usuario: userId,
+          codigoError: 'DB_USER_CHECK_FAILED',
+          mensajeError: 'Error al verificar usuario en la base de datos',
+          detalles: {
+            message: err?.message,
+          },
+        });
         setState({
           isLoading: false,
           existsInDB: false,
