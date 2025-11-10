@@ -24,6 +24,19 @@ const COUNTRIES_CITIES_ENDPOINT = import.meta.env
   .VITE_COUNTRIES_CITIES_ENDPOINT;
 
 /**
+ * Truncates text to a maximum number of characters
+ * @param {string} text - Text to truncate
+ * @param {number} maxChars - Maximum number of characters
+ * @returns {string} Truncated text with ellipsis if needed
+ */
+function truncateText(text = "", maxChars = 25) {
+  if (!text || text.length <= maxChars) return text;
+  const cut = text.slice(0, maxChars);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "…";
+}
+
+/**
  * Displays user address card with editable fields for country, state, city, and address details.
  * Supports dynamic loading of states and cities based on country selection.
  * @param {!Object} props - Component props.
@@ -352,8 +365,8 @@ export default function AddressCard({
                 País
                 <span className="text-red-500 ml-1">*</span>
               </label>
-              <div className="mt-1 text-slate-900">
-                {data.pais || (
+              <div className="mt-1 text-slate-900" title={data.pais || ""}>
+                {truncateText(data.pais, 25) || (
                   <span className="text-slate-400">No disponible</span>
                 )}
               </div>
@@ -363,8 +376,8 @@ export default function AddressCard({
                 Estado/Provincia
                 <span className="text-red-500 ml-1">*</span>
               </label>
-              <div className="mt-1 text-slate-900">
-                {data.estado || (
+              <div className="mt-1 text-slate-900" title={data.estado || ""}>
+                {truncateText(data.estado, 25) || (
                   <span className="text-slate-400">No disponible</span>
                 )}
               </div>
@@ -374,8 +387,8 @@ export default function AddressCard({
                 Ciudad
                 <span className="text-red-500 ml-1">*</span>
               </label>
-              <div className="mt-1 text-slate-900">
-                {data.ciudad || (
+              <div className="mt-1 text-slate-900" title={data.ciudad || ""}>
+                {truncateText(data.ciudad, 25) || (
                   <span className="text-slate-400">No disponible</span>
                 )}
               </div>
@@ -394,8 +407,8 @@ export default function AddressCard({
         ) : (
           <div>
             <label className="text-sm text-slate-600">Colonia</label>
-            <div className="mt-1 text-slate-900">
-              {data.colonia || (
+            <div className="mt-1 text-slate-900" title={data.colonia || ""}>
+              {truncateText(data.colonia, 25) || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
@@ -413,8 +426,11 @@ export default function AddressCard({
         ) : (
           <div>
             <label className="text-sm text-slate-600">Código Postal</label>
-            <div className="mt-1 text-slate-900">
-              {data.codigoPostal || (
+            <div
+              className="mt-1 text-slate-900"
+              title={data.codigoPostal || ""}
+            >
+              {truncateText(data.codigoPostal, 25) || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
@@ -432,8 +448,8 @@ export default function AddressCard({
         ) : (
           <div>
             <label className="text-sm text-slate-600">Calle</label>
-            <div className="mt-1 text-slate-900">
-              {data.calle || (
+            <div className="mt-1 text-slate-900" title={data.calle || ""}>
+              {truncateText(data.calle, 25) || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
@@ -451,8 +467,8 @@ export default function AddressCard({
         ) : (
           <div>
             <label className="text-sm text-slate-600">Número Exterior</label>
-            <div className="mt-1 text-slate-900">
-              {data.numExterior || (
+            <div className="mt-1 text-slate-900" title={data.numExterior || ""}>
+              {truncateText(data.numExterior, 25) || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
@@ -470,15 +486,14 @@ export default function AddressCard({
         ) : (
           <div>
             <label className="text-sm text-slate-600">Número Interior</label>
-            <div className="mt-1 text-slate-900">
-              {data.numInterior || (
+            <div className="mt-1 text-slate-900" title={data.numInterior || ""}>
+              {truncateText(data.numInterior, 25) || (
                 <span className="text-slate-400">No disponible</span>
               )}
             </div>
           </div>
         )}
       </div>
-
       {isEditing && (
         <div className="mt-4 flex justify-end gap-3">
           <Button

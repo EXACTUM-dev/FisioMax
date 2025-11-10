@@ -1,6 +1,6 @@
 /**
- * @fileoverview Contact Information Section Component
- * @version 0.1.0
+ * @fileoverview Contact information section with editable fields
+ * @version 0.2.0
  * @author EXACTUM-dev
  */
 
@@ -10,28 +10,34 @@ import Button from "../atoms/button";
 import FormField from "./form";
 import { FIELD_MAX_LENGTHS } from "../utils/profileFormValidation";
 
+/**
+ * Truncates text to a maximum number of characters
+ * @param {string} text - Text to truncate
+ * @param {number} maxChars - Maximum number of characters
+ * @returns {string} Truncated text with ellipsis if needed
+ */
+function truncateText(text = "", maxChars = 25) {
+  if (!text || text.length <= maxChars) return text;
+  const cut = text.slice(0, maxChars);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "…";
+}
+
 export default function ContactInfoSection({
-  data,
-  formData,
-  errors,
-  isEditing,
-  canEdit,
+  data = {},
+  formData = {},
+  errors = {},
+  isEditing = false,
+  canEdit = false,
   onToggleEdit,
   onChange,
   onSave,
   onCancel,
 }) {
-  const socialFields = [
-    { key: "instagram", label: "Instagram" },
-    { key: "linkedin", label: "LinkedIn" },
-    { key: "facebook", label: "Facebook" },
-    { key: "paginaWeb", label: "Página Web" },
-  ];
-
   return (
     <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
-      <div className="flex justify-between items-start">
-        <h3 className="text-lg font-semibold">Información de contacto</h3>
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-lg font-semibold">Información de Contacto</h3>
         {canEdit && (
           <EditButton
             isEditing={isEditing}
@@ -42,89 +48,126 @@ export default function ContactInfoSection({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-        {/* Correo electrónico */}
-        <div>
-          {!isEditing && (
-            <label className="text-sm text-slate-600 mb-1 block">
-              Correo electrónico
-              <span className="text-red-500 ml-1">*</span>
-            </label>
-          )}
-          {isEditing ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {isEditing ? (
+          <>
             <FormField
-              label="Correo electrónico"
+              label="Correo Electrónico"
               name="email"
               type="email"
-              value={formData.email}
+              value={formData.email || ""}
               onChange={onChange}
-              placeholder="correo@ejemplo.com"
-              maxLength={FIELD_MAX_LENGTHS.email}
-              required
               error={errors.email}
+              required
+              maxLength={FIELD_MAX_LENGTHS.email}
             />
-          ) : (
-            <div className="mt-1 text-slate-900">
-              {data.email || data.correo || (
-                <span className="text-slate-400">No disponible</span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Teléfono */}
-        <div>
-          {!isEditing && (
-            <label className="text-sm text-slate-600 mb-1 block">
-              Teléfono
-            </label>
-          )}
-          {isEditing ? (
             <FormField
               label="Teléfono"
               name="telefono"
-              value={formData.telefono}
+              type="tel"
+              value={formData.telefono || ""}
               onChange={onChange}
-              placeholder="10-13 dígitos"
-              maxLength={FIELD_MAX_LENGTHS.telefono}
               error={errors.telefono}
+              required
+              maxLength={FIELD_MAX_LENGTHS.telefono}
             />
-          ) : (
-            <div className="mt-1 text-slate-900">
-              {data.telefono || data.telefonoCasa || (
-                <span className="text-slate-400">No disponible</span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Redes sociales - SIN ENLACES NI COLORES */}
-        {socialFields.map(({ key, label }) => (
-          <div key={key}>
-            {!isEditing && (
-              <label className="text-sm text-slate-600 mb-1 block">
-                {label}
+            <FormField
+              label="Instagram"
+              name="instagram"
+              value={formData.instagram || ""}
+              onChange={onChange}
+              error={errors.instagram}
+              maxLength={FIELD_MAX_LENGTHS.instagram}
+            />
+            <FormField
+              label="LinkedIn"
+              name="linkedin"
+              value={formData.linkedin || ""}
+              onChange={onChange}
+              error={errors.linkedin}
+              maxLength={FIELD_MAX_LENGTHS.linkedin}
+            />
+            <FormField
+              label="Facebook"
+              name="facebook"
+              value={formData.facebook || ""}
+              onChange={onChange}
+              error={errors.facebook}
+              maxLength={FIELD_MAX_LENGTHS.facebook}
+            />
+            <FormField
+              label="Página Web"
+              name="paginaWeb"
+              value={formData.paginaWeb || ""}
+              onChange={onChange}
+              error={errors.paginaWeb}
+              maxLength={FIELD_MAX_LENGTHS.paginaWeb}
+            />
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="text-sm text-slate-600">
+                Correo Electrónico
+                <span className="text-red-500 ml-1">*</span>
               </label>
-            )}
-            {isEditing ? (
-              <FormField
-                label={label}
-                name={key}
-                value={formData[key]}
-                onChange={onChange}
-                placeholder={`Tu ${label.toLowerCase()}`}
-                maxLength={FIELD_MAX_LENGTHS[key]}
-                error={errors[key]}
-              />
-            ) : (
-              <div className="mt-1 text-slate-900">
-                {data[key] || (
+              <div
+                className="mt-1 text-slate-900"
+                title={data.email || data.correo || ""}
+              >
+                {truncateText(data.email || data.correo, 25) || (
                   <span className="text-slate-400">No disponible</span>
                 )}
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">
+                Teléfono
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div
+                className="mt-1 text-slate-900"
+                title={data.telefono || data.telefonoCasa || ""}
+              >
+                {truncateText(data.telefono || data.telefonoCasa, 25) || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">Instagram</label>
+              <div className="mt-1 text-slate-900" title={data.instagram || ""}>
+                {truncateText(data.instagram, 25) || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">LinkedIn</label>
+              <div className="mt-1 text-slate-900" title={data.linkedin || ""}>
+                {truncateText(data.linkedin, 25) || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">Facebook</label>
+              <div className="mt-1 text-slate-900" title={data.facebook || ""}>
+                {truncateText(data.facebook, 25) || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">Página Web</label>
+              <div className="mt-1 text-slate-900" title={data.paginaWeb || ""}>
+                {truncateText(data.paginaWeb, 25) || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {isEditing && (

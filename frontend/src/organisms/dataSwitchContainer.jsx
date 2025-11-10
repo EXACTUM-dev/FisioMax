@@ -1,8 +1,8 @@
 /**
  * @fileoverview Tabbed container component with search and loading states
- * @version 0.4.0
+ * @version 0.4.1
  * @author EXACTUM-dev
- * @description Supports both table and custom render views with static search bar
+ * @description Supports both table and custom render views with static search bar - Fixed mobile UI
  */
 
 import React, { useMemo, useState } from "react";

@@ -1,6 +1,6 @@
 /**
  * @fileoverview Template for user table columns.
- * @version 1.2.0
+ * @version 1.2.1
  * @author EXACTUM-dev
  */
 
@@ -17,20 +17,16 @@ function truncateText(text = "", maxChars) {
 
 /**
  * Builds the column configuration for the users table.
- * Defines columns for displaying user information including name, role,
- * membership status, and a delete action.
  * @param {Object} options Configuration options for the columns.
  * @param {Array} options.roles List of available roles to assign.
  * @param {Function} options.onDelete Callback to handle user deletion.
  * @param {Function} options.onChangeRole Callback to handle user role changes.
- * @param {Function} options.onClickName Callback to handle clicking on user name (DEPRECATED - use onRowClick on DataTable).
  * @returns {Array} Column configuration for the table.
  */
 export function buildUserRolesColumns({
   roles = [],
   onDelete,
   onChangeRole,
-  onClickName,
 } = {}) {
   return [
     {
@@ -64,7 +60,15 @@ export function buildUserRolesColumns({
       align: "center",
       render: (row) => {
         const roleName = row?.rol || row?.rolNombre || "Sin rol asignado";
-        const roleTruncated = truncateText(roleName, 25);
+
+        // Responsive truncation limits
+        const getTruncateLimit = () => {
+          if (window.innerWidth >= 1024) return 30;
+          if (window.innerWidth >= 768) return 20;
+          return 15;
+        };
+
+        const roleTruncated = truncateText(roleName, getTruncateLimit());
 
         return (
           <div title={roleName}>

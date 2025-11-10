@@ -1,7 +1,7 @@
 /**
  * @fileoverview Generic data table with responsive mobile cards, sortable columns, and pagination
  * @author EXACTUM-dev
- * @version 0.3.1
+ * @version 0.3.3
  * @description Columns are fully dynamic and can include custom renderers, metadata, sorting, and pagination
  */
 import React, { useMemo, useState } from "react";
@@ -38,7 +38,7 @@ export default function DataTable({
 
   /* Helpers for mobile layout (generic, driven by column metadata) */
   const nonActionCols = columns.filter((c) => !c.isAction);
-  const actionCols = columns.filter((c) => !c.isAction);
+  const actionCols = columns.filter((c) => c.isAction);
 
   /**
    * Header alignment helper: prefers headAlign, then align, then right for actions, else left
@@ -220,6 +220,26 @@ export default function DataTable({
     }
   };
 
+  /**
+   * Extracts raw text value from a column for mobile display
+   * @param {Object} col - Column configuration
+   * @param {Object} row - Row data
+   * @returns {string} Plain text value
+   */
+  const getPlainTextValue = (col, row) => {
+    if (!col) return "";
+
+    // If there's a custom render function, try to get the raw value
+    if (col.render) {
+      // For columns with custom renders, try to get the raw data first
+      const rawValue = row[col.key];
+      if (rawValue != null) return String(rawValue);
+    }
+
+    // Otherwise use the key value
+    return String(row[col.key] ?? "");
+  };
+
   return (
     <div className="max-w-[70rem] mx-auto">
       {/* Optional filter chips */}
@@ -245,7 +265,7 @@ export default function DataTable({
         </div>
       )}
 
-      {/* Desktop/Tablet Table View */}
+      {/* Desktop/   Table View */}
       <div className="hidden md:block">
         <div className="rounded-[18px] border border-neutral-200 bg-white overflow-hidden">
           <div className="w-full overflow-x-auto">
@@ -366,29 +386,40 @@ export default function DataTable({
           const secondary = nonActionCols[1];
           const rest = nonActionCols.slice(2).filter((c) => !c.mobileHidden);
 
+          // Get plain text value for primary field to show in title attribute
+          const primaryText = primary ? getPlainTextValue(primary, row) : "";
+
           return (
             <div
               key={id}
               onClick={(e) => handleRowClick(e, row)}
-              className={`bg-white rounded-lg border border-neutral-200 relative ${
+              className={`bg-white rounded-lg border border-neutral-200 ${
                 onRowClick
-                  ? "cursor-pointer hover:border-neutral-300 active:bg-slate-50"
-                  : "hover:border-neutral-300"
+                  ? "cursor-pointer hover:border-neutral-300 hover:shadow-md active:bg-slate-50 transition-all"
+                  : ""
               }`}
             >
               {/* Card header */}
-              <div className="flex items-start gap-3 p-4 pb-3">
+              <div className="flex items-start justify-between gap-3 p-4">
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-900 truncate">
+                  {/* Primary field (nombre/rol) */}
+                  <div
+                    className="font-semibold text-slate-900 text-base mb-1 truncate"
+                    title={primaryText}
+                  >
                     {primary
                       ? primary.render
                         ? primary.render(row)
                         : row[primary.key]
                       : "—"}
                   </div>
+
+                  {/* Secondary field (estado/descripción) */}
                   {secondary && (
-                    <div className="text-sm text-slate-500 mt-1 truncate">
-                      {secondary.label}:{" "}
+                    <div className="text-sm text-slate-600 mt-1.5">
+                      <span className="font-medium text-slate-500">
+                        {secondary.label}:{" "}
+                      </span>
                       {secondary.render
                         ? secondary.render(row)
                         : row[secondary.key] ?? "N/A"}
@@ -396,8 +427,9 @@ export default function DataTable({
                   )}
                 </div>
 
-                {onRowClick && (
-                  <div className="flex-shrink-0 flex items-center">
+                {/* Navigation arrow or action buttons */}
+                {onRowClick && actionCols.length === 0 && (
+                  <div className="flex-shrink-0 self-center ml-2">
                     <svg
                       className="w-5 h-5 text-slate-400"
                       fill="none"
@@ -414,11 +446,11 @@ export default function DataTable({
                   </div>
                 )}
 
-                {/* Inline actions (if any) */}
+                {/* Action buttons (if any and no onRowClick) */}
                 {actionCols.length > 0 && !onRowClick && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {actionCols.map((col) => (
-                      <div key={col.key} className="ml-1">
+                      <div key={col.key}>
                         {col.render ? col.render(row) : row[col.key]}
                       </div>
                     ))}
@@ -428,17 +460,17 @@ export default function DataTable({
 
               {/* Card body with remaining fields */}
               {rest.length > 0 && (
-                <div className="px-4 pb-4 pt-0 border-t border-neutral-100 bg-neutral-50/30">
-                  <div className="grid grid-cols-1 gap-2 mt-3">
+                <div className="border-t border-neutral-100 bg-neutral-50/50 px-4 py-3">
+                  <div className="space-y-2">
                     {rest.map((col) => (
                       <div
                         key={col.key}
                         className="flex justify-between items-center gap-4"
                       >
-                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                           {col.label}
                         </span>
-                        <span className="text-sm text-slate-700 font-medium truncate max-w-[60%] text-right">
+                        <span className="text-sm text-slate-700 font-medium text-right break-words max-w-[65%]">
                           {col.render ? col.render(row) : row[col.key] ?? "N/A"}
                         </span>
                       </div>
@@ -452,10 +484,10 @@ export default function DataTable({
 
         {/* Empty state */}
         {sortedData.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-slate-400 mb-2">
+          <div className="text-center py-12 bg-white rounded-lg border border-neutral-200">
+            <div className="text-slate-400 mb-3">
               <svg
-                className="w-12 h-12 mx-auto"
+                className="w-16 h-16 mx-auto"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -463,12 +495,14 @@ export default function DataTable({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1}
+                  strokeWidth={1.5}
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
             </div>
-            <p className="text-slate-500 text-sm">No hay datos disponibles</p>
+            <p className="text-slate-600 font-medium">
+              No hay datos disponibles
+            </p>
           </div>
         )}
 

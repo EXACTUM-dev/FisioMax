@@ -1,5 +1,5 @@
 /**
- * @fileoverview Membership application form - SIMPLIFIED VERSION
+ * @fileoverview Membership application form
  * @version 0.2.0
  */
 import React, { useState, useEffect, useRef } from "react";
@@ -174,7 +174,6 @@ export default function MembershipApplicationPage() {
               </h2>
             </div>
 
-            {/* USAR COMPONENTE COMPARTIDO CON TODA LA LÓGICA */}
             <ProfileFormSection
               mode="full"
               formData={formData}

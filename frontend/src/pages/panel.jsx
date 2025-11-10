@@ -26,7 +26,6 @@ import Modal from "../molecules/modal";
 import ConfirmationModal from "../molecules/confirmationModal";
 
 // Organisms
-import Carousel from "../organisms/carousel";
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import DataTable from "../organisms/dataTable";
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";

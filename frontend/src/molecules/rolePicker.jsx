@@ -1,6 +1,6 @@
 /**
  * @fileoverview Role selection component.
- * @version 1.2.0
+ * @version 1.2.1
  * @author EXACTUM-dev
  */
 
@@ -77,7 +77,6 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
   // Handle confirm button
   const handleConfirm = () => {
     if (selectedRole && selectedRole !== current) {
-      // Open confirmation modal instead of directly saving
       setConfirmModalOpen(true);
     } else {
       setModalOpen(false);
@@ -165,6 +164,9 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
     setModalOpen(false);
   };
 
+  // Full text for tooltip
+  const buttonText = displayName || current || "Asignar rol";
+
   return (
     <>
       {/* Button to open modal - con stopPropagation para evitar activar onRowClick */}
@@ -172,6 +174,7 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
         <button
           type="button"
           onClick={handleOpenModal}
+          title={buttonText}
           className="
             px-4 py-2 
             rounded-lg 
@@ -188,9 +191,10 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
             focus:ring-brand/50 
             focus:ring-offset-1
             active:scale-95
+            max-w-[120px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-full
           "
         >
-          {displayName || current || "Asignar rol"}
+          <span className="block truncate">{buttonText}</span>
         </button>
       </div>
 
@@ -238,7 +242,7 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
                 </span>
                 {/* Chevron icon */}
                 <svg
-                  className={`w-5 h-5 transition-transform ${
+                  className={`w-5 h-5 transition-transform flex-shrink-0 ml-2 ${
                     dropdownOpen ? "rotate-180" : ""
                   }`}
                   fill="none"
