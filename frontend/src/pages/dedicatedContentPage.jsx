@@ -150,7 +150,7 @@ export default function DedicatedContentPage() {
     if (config) {
       fetchContent(true);
     }
-  }, [searchQuery, sortBy, config?.type, fetchContent]);
+  }, [searchQuery, sortBy, config?.type]);
 
   /**
    * Handles load more button
