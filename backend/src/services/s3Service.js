@@ -2,7 +2,7 @@
  * @fileoverview Upload documents using Amazon S3
  * @author EXACTUM-dev
  * @version 1.0.0
- * @description Inlcudes basic S3 configuration
+ * @description Includes basic S3 configuration
  */
 
 import {

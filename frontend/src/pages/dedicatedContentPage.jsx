@@ -150,6 +150,7 @@ export default function DedicatedContentPage() {
     if (config) {
       fetchContent(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, sortBy, config?.type]);
 
   /**
