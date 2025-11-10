@@ -61,7 +61,7 @@ export default function Button({
     newDoc:
       "bg-tra text-black hover:bg-brand/10 focus-visible:ring-brand/40",
     cancel:
-      "bg-cancel text-white hover:bg-brand/10 focus-visible:ring-brand/40",
+      "bg-cancel text-white hover:bg-brand/10 focus-visible:ring-[#5C5C5A]/60",
     gray:
       "bg-gray-100 text-gray-700 hover:bg-gray-200 focus-visible:ring-gray-400",
   };

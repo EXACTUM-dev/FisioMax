@@ -6,7 +6,7 @@
  */
 
 // components/molecules/modal/index.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import CloseButton from "../atoms/closeButton";
 import ConfirmationModal from "../molecules/confirmationModal";
 
@@ -42,6 +42,56 @@ export default function Modal({
   className = "",
 }) {
   const [showConfirmation, setShowConfirmation] = useState(false);
+  //Reference to focus in the first component of the modal
+  const modalRef = useRef(null);
+  
+  // Automatically focus when opening modal
+  useEffect(() => {
+    if (open && modalRef.current) {
+      const focusableElements = Array.from(
+        modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      );
+
+      // Find the CloseButton and put at the end
+      const closeButton = modalRef.current.querySelector('[data-close-button]');
+      const filtered = focusableElements.filter((el) => el !== closeButton);
+
+      const first = filtered[0];
+      const last = closeButton || filtered[filtered.length - 1];
+
+      const focusTimer = setTimeout(() => {
+        first?.focus();
+      }, 0);
+
+      // Focus the first element
+      first?.focus();
+
+      // Function the catch de Tab navegation
+      const handleKeyDown = (e) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            // shift + tab ->
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            // tab normal ->
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      modalRef.current.addEventListener("keydown", handleKeyDown);
+      return () => modalRef.current?.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [open]);
+
   if (!open) return null;
 
   const sizeClasses = {
@@ -85,6 +135,7 @@ export default function Modal({
   return (
     <>
       <div
+        ref={modalRef}
         className={`fixed inset-0 z-50 flex ${positionClasses[position]} bg-black/30 transition-opacity`}
         onClick={handleOverlayClick}
       >
@@ -95,13 +146,6 @@ export default function Modal({
             ${sizeClasses[size]} 
           `}
         >
-          {showCloseButton && (
-            <CloseButton
-              onClose={handleCloseRequest}
-              size="lg"
-              position={{ top: "top-1", right: "right-1" }}
-            />
-          )}
           {/* Modal container with scroll */}
           <div
             className={`
@@ -113,7 +157,16 @@ export default function Modal({
               ${className}
           `}
           >
-            {children}
+          {children}
+          
+          {showCloseButton && (
+            <CloseButton
+              data-close-button
+              onClose={handleCloseRequest}
+              size="lg"
+              position={{ top: "top-1", right: "right-1" }}
+            />
+          )}
           </div>
         </div>
       </div>

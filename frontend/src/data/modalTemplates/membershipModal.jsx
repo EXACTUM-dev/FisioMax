@@ -119,9 +119,6 @@ function MembershipModalContent({
     }
   };
 
-  // Reference for focusing on a specific input when modal opens.
-  const inputRef = useRef(null);
-
   // Destructure applicant data for easier access
   const {
     nombre,
@@ -237,12 +234,6 @@ function MembershipModalContent({
   // Display full name 
   const displayName = nombreCompleto || nombre || solicitud.nombre || 'Usuario';
 
-  useEffect(() => {
-    if (open && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus?.(), 100);
-    }
-  }, [open]);
-
   // Temporary function for handling field changes.
   const setData = (e) => {
     console.log(`Field ${e.target.name || "unnamed"} changed to:`, e.target.value);
@@ -252,7 +243,7 @@ function MembershipModalContent({
     <>
       {/* Main modal container */}
       <Modal open={open} onClose={onClose} size="x2">
-        <div ref={modalRef} className="flex flex-col md:flex-row gap-6 w-full">
+        <div className="flex flex-col md:flex-row gap-6 w-full">
           
           {/* Left column - Applicant form */}
           <div className="flex-2 flex flex-col gap-2">

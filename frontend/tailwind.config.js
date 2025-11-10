@@ -4,6 +4,7 @@ export default {
   theme: {
     extend: {
       colors: { brand: "#CAD00F" },
+      
     },
   },
   plugins: [],
