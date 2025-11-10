@@ -289,7 +289,7 @@ export default function RolePicker({ row, roles = [], onSelect }) {
                             text-sm
                             transition-colors
                             hover:bg-slate-50
-                            ${isSelected ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700'}
+                            ${isSelected ? 'bg-[#CAD00F]/10 text-slate-900 font-medium' : 'text-slate-700'}
                             flex items-center justify-between
                             first:rounded-t-lg
                             last:rounded-b-lg

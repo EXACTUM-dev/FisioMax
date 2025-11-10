@@ -11,12 +11,7 @@ import db from "../../database/db.js";
  * Valid content types that can be displayed
  * @constant {string[]}
  */
-const DISPLAYABLE_CONTENT_TYPES = [
-  "video",
-  "articulo",
-  "podcast",
-  "libro",
-];
+const DISPLAYABLE_CONTENT_TYPES = ["video", "articulo", "podcast", "libro"];
 
 /**
  * Gets a specific content by ID with its thumbnail
@@ -68,14 +63,22 @@ export async function getContentById(contentId) {
 }
 
 /**
- * Gets all available content for sidebar/carousel with thumbnails and pagination
+ * Gets all available content for sidebar/carousel with thumbnails, pagination, search and sorting
  * @param {number} limit - Number of content items per page (default: 10)
  * @param {number} offset - Number of content items to skip (default: 0)
  * @param {string|null} type - Filter by content type (must be in DISPLAYABLE_CONTENT_TYPES)
+ * @param {string|null} searchTerm - Search term for filtering by name or description
+ * @param {string} sortBy - Sort order ('newest', 'oldest', 'alphabetical')
  * @returns {Promise<Object>} Object with content array and total count
  * @throws {Error} If database error or invalid type
  */
-export async function getAvailableContent(limit = 10, offset = 0, type = null) {
+export async function getAvailableContent(
+  limit = 10,
+  offset = 0,
+  type = null,
+  searchTerm = null,
+  sortBy = "newest"
+) {
   let typeFilter = "AND c.tipo IN (?)";
   let params = [DISPLAYABLE_CONTENT_TYPES];
 
@@ -96,12 +99,29 @@ export async function getAvailableContent(limit = 10, offset = 0, type = null) {
     params = [normalizedType];
   }
 
+  // Add search filter if provided
+  let searchFilter = "";
+  if (searchTerm && searchTerm.trim()) {
+    searchFilter = "AND (c.nombre LIKE ? OR c.descripcion LIKE ?)";
+    const searchPattern = `%${searchTerm.trim()}%`;
+    params.push(searchPattern, searchPattern);
+  }
+
+  // Determine sort order
+  let orderBy = "ORDER BY c.createdAt DESC"; // Default: newest
+  if (sortBy === "oldest") {
+    orderBy = "ORDER BY c.createdAt ASC";
+  } else if (sortBy === "alphabetical") {
+    orderBy = "ORDER BY c.nombre ASC";
+  }
+
   const countQuery = `
     SELECT COUNT(*) as total
     FROM contenido c
     WHERE c.eliminado = 0
       AND c.deletedAt IS NULL
       ${typeFilter}
+      ${searchFilter}
   `;
 
   const contentQuery = `
@@ -123,13 +143,21 @@ export async function getAvailableContent(limit = 10, offset = 0, type = null) {
     WHERE c.eliminado = 0
       AND c.deletedAt IS NULL
       ${typeFilter}
-    ORDER BY c.createdAt DESC
+      ${searchFilter}
+    ${orderBy}
     LIMIT ? OFFSET ?
   `;
 
   try {
-    const [[{ total }]] = await db.query(countQuery, params);
-    const [rows] = await db.query(contentQuery, [...params, limit, offset]);
+    // For count query, we need the same params except limit/offset
+    const countParams = searchFilter ? [...params] : params;
+    const [[{ total }]] = await db.query(countQuery, countParams);
+
+    // For content query, add limit and offset at the end
+    const contentParams = searchFilter
+      ? [...params, limit, offset]
+      : [...params, limit, offset];
+    const [rows] = await db.query(contentQuery, contentParams);
 
     return {
       content: rows,

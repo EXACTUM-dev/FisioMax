@@ -114,20 +114,14 @@ export default function Sidebar({ current = "home", onNavigate }) {
     ];
 
     // Only add "Panel de Control" if the user is admin
-    if (userRole === undefined) {
-    baseLinks.splice(2, 0, { 
-      key: "bolt-loading", 
-      label: "Cargando...", 
-      icon: boltSrc,
-      disabled: true 
-    });
-  } else if (userRole === "Admin") {
-    baseLinks.splice(2, 0, {
-      key: "bolt", 
-      label: "Panel de Control", 
-      icon: boltSrc 
-    });
-  }
+    // Don't show loading state - just hide the button until we know
+    if (userRole === "Admin") {
+      baseLinks.splice(2, 0, {
+        key: "bolt", 
+        label: "Panel de Control", 
+        icon: boltSrc 
+      });
+    }
 
     return baseLinks;
   }, [userRole]);

@@ -1,14 +1,19 @@
 /**
  * @fileoverview Upload documents using Amazon S3
- * @author EXACTUM-dev 
+ * @author EXACTUM-dev
  * @version 1.0.0
  * @description Inlcudes basic S3 configuration
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import path from 'path';
-import crypto from 'crypto';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import path from "path";
+import crypto from "crypto";
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME;
@@ -31,8 +36,8 @@ class S3Service {
       // Return the S3 key instead of the presigned URL
       return key;
     } catch (error) {
-      console.error('Error subiendo archivo a S3:', error);
-      throw new Error('Error al subir archivo a S3');
+      console.error("Error subiendo archivo a S3:", error);
+      throw new Error("Error al subir archivo a S3");
     }
   }
 
@@ -48,7 +53,7 @@ class S3Service {
     try {
       // If the key is already a full URL, extract the key
       let s3Key = key;
-      if (key.includes('amazonaws.com')) {
+      if (key.includes("amazonaws.com")) {
         const url = new URL(key);
         s3Key = url.pathname.substring(1); // Remove leading '/'
       }
@@ -61,7 +66,7 @@ class S3Service {
 
       return url;
     } catch (error) {
-      console.error('Error generando URL presignada:', error);
+      console.error("Error generando URL presignada:", error);
       return null;
     }
   }
@@ -76,10 +81,12 @@ class S3Service {
     if (!keys || !Array.isArray(keys)) return [];
 
     try {
-      const urlPromises = keys.map(key => this.getPresignedUrl(key, expiresIn));
+      const urlPromises = keys.map((key) =>
+        this.getPresignedUrl(key, expiresIn)
+      );
       return await Promise.all(urlPromises);
     } catch (error) {
-      console.error('Error generando URLs presignadas:', error);
+      console.error("Error generando URLs presignadas:", error);
       return [];
     }
   }
@@ -95,7 +102,7 @@ class S3Service {
     try {
       // If the key is already a full URL, extract the key
       let s3Key = key;
-      if (key.includes('amazonaws.com')) {
+      if (key.includes("amazonaws.com")) {
         const url = new URL(key);
         s3Key = url.pathname.substring(1); // Remove leading '/'
       }
@@ -106,10 +113,9 @@ class S3Service {
       };
 
       await s3.send(new DeleteObjectCommand(params));
-      console.log(`Archivo eliminado de S3: ${s3Key}`);
       return true;
     } catch (error) {
-      console.error('Error eliminando archivo de S3:', error);
+      console.error("Error eliminando archivo de S3:", error);
       return false;
     }
   }

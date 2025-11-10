@@ -53,6 +53,11 @@ export const getProfile = async (req, res) => {
                 roleId: userData.roleId,
                 accept: userData.membershipState,
                 userPrivileges,
+                // Membership data
+                membershipType: userData.membershipType,
+                membershipExpiresAt: userData.membershipExpiresAt,
+                membershipRegisteredAt: userData.membershipRegisteredAt,
+                membershipPaymentStatus: userData.membershipPaymentStatus,
             }
         });
     } catch (error) {

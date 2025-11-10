@@ -58,6 +58,11 @@ export async function getUserById(clerkUserId) {
       role: dbUser?.rolNombre || null,
       roleId: dbUser?.IDRol || null,
       membershipState: dbState,
+      // Membership details
+      membershipType: dbUser?.membresiaTipo || null,
+      membershipExpiresAt: dbUser?.membresiaFechaVencimiento || null,
+      membershipRegisteredAt: dbUser?.membresiaCreatedAt || null,
+      membershipPaymentStatus: dbUser?.membresiaEstatusPago || null,
     };
   } catch (err) {
     console.error('auth.service.getUserById error:', err?.message || err);

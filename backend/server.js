@@ -23,6 +23,7 @@ import { autoSyncClerkId } from "./src/middlewares/clerkAuth.js";
 import usuariosRoutes from "./src/routes/users.routes.js";
 import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
+import homePageRoutes from "./src/routes/homePage.route.js";
 import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
 
 // Initialize Express application
@@ -100,6 +101,11 @@ app.use("/api/logs", loginLogsRoutes);
  */
 import contentRoutes from "./src/routes/content.routes.js";
 app.use("/api/content", contentRoutes);
+
+/**
+ * Routes for HomePage content (root path).
+ */
+app.use("/api", homePageRoutes);
 
 //-------------------------
 // ERROR HANDLING MIDDLEWARE

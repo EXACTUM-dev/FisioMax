@@ -11,10 +11,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../atoms/button";
+import BackButton from "../atoms/backButton";
 import FormField from "../molecules/form";
 import FileUpload from "../molecules/fileUpload";
 import Modal from "../molecules/modal";
 import ConfirmModal from "../molecules/confirmationModal";
+import Dropdown from "../molecules/dropdown";
 import { MEMBERSHIP_API } from "../config/api";
 import logo from '../assets/icons/SOMEFIPPlogo.png';
 
@@ -41,42 +43,6 @@ const CAREER_OPTIONS = [
   "Nutrición",
   "Gerontología"
 ];
-
-/**
- * Select field component for dropdowns.
- * @param {Object} props - Component props.
- * @param {string} props.label - Field label.
- * @param {string} props.name - Field name.
- * @param {string} props.value - Current value.
- * @param {Function} props.onChange - Change handler.
- * @param {Array<{value: string, label: string}>} props.options - Options array.
- * @param {boolean} props.required - Whether field is required.
- * @param {string} props.error - Error message.
- * @returns {JSX.Element} Select field component.
- */
-const SelectField = ({ label, name, value, onChange, options, required, error }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      {label}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      required={required}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
-    >
-      <option value="">Selecciona una opción</option>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-    {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-  </div>
-);
 
 /**
  * Combobox field component for dropdown with custom input option.
@@ -167,7 +133,7 @@ const ComboboxField = ({ label, name, value, onChange, options, required, error,
           onBlur={handleInputBlur}
           placeholder={placeholder}
           required={required}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white text-gray-900"
         />
         <button
           type="button"
@@ -251,7 +217,6 @@ export default function MembershipApplicationPage() {
   const [modalMessage, setModalMessage] = useState("");
   
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState(null);
   const isNavigatingRef = useRef(false);
   
   const [showValidationModal, setShowValidationModal] = useState(false);
@@ -285,26 +250,6 @@ export default function MembershipApplicationPage() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [formData, extraDocs]);
-
-  /**
-   * Detects browser back button navigation.
-   * Shows confirmation modal if form has unsaved data.
-   */
-  useEffect(() => {
-    const handlePopState = () => {
-      if (hasFormData() && !isNavigatingRef.current) {
-        setShowConfirmModal(true);
-    
-        window.history.pushState(null, '', window.location.href);
-      }
-    };
-
-    
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
-    
-    return () => window.removeEventListener('popstate', handlePopState);
   }, [formData, extraDocs]);
 
   /**
@@ -565,13 +510,13 @@ export default function MembershipApplicationPage() {
   };
 
   /**
-   * Confirms exit and clears all form data before navigating to login.
+   * Confirms exit and clears all form data before navigating back.
    */
   const handleConfirmExit = () => {
     isNavigatingRef.current = true;
     setShowConfirmModal(false);
     
-  
+    // Clear form data
     setFormData({
       nombres: "",
       apellidoP: "",
@@ -602,8 +547,8 @@ export default function MembershipApplicationPage() {
     setStates([]);
     setCities([]);
     
-  
-    navigate("/login");
+    // Navigate back
+    navigate(-1);
   };
 
   /**
@@ -611,7 +556,6 @@ export default function MembershipApplicationPage() {
    */
   const handleCancelExit = () => {
     setShowConfirmModal(false);
-    setPendingNavigation(null);
   };
 
   /**
@@ -679,7 +623,17 @@ export default function MembershipApplicationPage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* My profile */}
           <div className="bg-white p-6 rounded-lg">
-            <h2 className="text-center text-2xl font-bold text-gray-800 mb-8">Registro de solicitud</h2>
+            <div className="flex items-center gap-4 mb-8">
+              <BackButton onClick={() => {
+                if (hasFormData()) {
+                  setShowConfirmModal(true);
+                } else {
+                  isNavigatingRef.current = true;
+                  navigate(-1);
+                }
+              }} />
+              <h2 className="text-center text-2xl font-bold text-gray-800">Registro de solicitud</h2>
+            </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Mi perfil</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField 
@@ -720,14 +674,35 @@ export default function MembershipApplicationPage() {
             {/* Professional practice location section */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-5">Ubicación de práctica profesional</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <SelectField
-                label="País" name="pais" required value={formData.pais} onChange={(e) => handlePaisChange(e.target.value)} options={countries} error={errors.pais}
+              <Dropdown
+                label="País" 
+                name="pais" 
+                required 
+                value={formData.pais} 
+                onChange={(e) => handlePaisChange(e.target.value)} 
+                options={countries} 
+                error={errors.pais}
+                placeholder="Selecciona un país"
               />
-              <SelectField
-                label="Estado / Provincia" name="estado" required value={formData.estado} onChange={(e) => handleEstadoChange(e.target.value)} options={states} error={errors.estado}
+              <Dropdown
+                label="Estado / Provincia" 
+                name="estado" 
+                required 
+                value={formData.estado} 
+                onChange={(e) => handleEstadoChange(e.target.value)} 
+                options={states} 
+                error={errors.estado}
+                placeholder="Selecciona un estado"
               />
-              <SelectField
-                label="Ciudad" name="ciudad" required value={formData.ciudad} onChange={handleInputChange} options={cities} error={errors.ciudad}
+              <Dropdown
+                label="Ciudad" 
+                name="ciudad" 
+                required 
+                value={formData.ciudad} 
+                onChange={handleInputChange} 
+                options={cities} 
+                error={errors.ciudad}
+                placeholder="Selecciona una ciudad"
               />
               <FormField
                 label="Colonia" name="colonia" value={formData.colonia} onChange={handleInputChange} placeholder="Ingresa tu colonia"
