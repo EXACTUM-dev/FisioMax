@@ -52,6 +52,41 @@ function MembershipModalContent({
 
   const { getToken } = useAuth();
 
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (open && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      // Focus the first element
+      first?.focus();
+
+      // Function to catch the navigation with Tab
+      const handleKeyDown = (e) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      modalRef.current.addEventListener("keydown", handleKeyDown);
+      return () => modalRef.current?.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [open]);
+
   // Closes the PDF preview modal and clears the URL.
   const closePdfModal = () => {
     setPdfModalOpen(false);
@@ -81,9 +116,6 @@ function MembershipModalContent({
       window.open(url, '_blank', 'noopener');
     }
   };
-
-  // Reference for focusing on a specific input when modal opens.
-  const inputRef = useRef(null);
 
   // Destructure applicant data for easier access
   const {
@@ -199,12 +231,6 @@ function MembershipModalContent({
 
   // Display full name 
   const displayName = nombreCompleto || nombre || solicitud.nombre || 'Usuario';
-
-  useEffect(() => {
-    if (open && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus?.(), 100);
-    }
-  }, [open]);
 
   // Temporary function for handling field changes.
   const setData = (e) => {

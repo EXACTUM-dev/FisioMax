@@ -21,8 +21,16 @@ import Button from "../atoms/button";
 function CarouselSlideRow({ slide, onClick }) {
   return (
     <div
+      role="button"
+      tabIndex={0}
       className="w-full flex flex-col cursor-pointer hover:opacity-80 transition-opacity group"
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
     >
       <div className="relative h-32 md:h-40 rounded-[1rem] overflow-hidden">
         <VignetteImage
