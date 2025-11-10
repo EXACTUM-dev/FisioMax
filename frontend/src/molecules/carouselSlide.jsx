@@ -18,7 +18,7 @@ import CaptionCard from "./captionCard";
  * @param {string} props.slide.imageAlt - Image alt text
  * @param {string} props.slide.title - Slide title
  * @param {string} props.slide.subtitle - Slide subtitle
- * @param {string} props.slide.createdAt - Creation date
+ * @param {string} [props.slide.createdAt] - Creation date (optional)
  * @param {boolean} [props.showSubtitle=true] - Whether to show subtitle
  * @returns {React.Element} CarouselSlide component
  */
@@ -31,7 +31,7 @@ export default function CarouselSlide({ slide, showSubtitle = true }) {
       <VignetteImage
         src={slide.imageUrl}
         alt={slide.imageAlt || slide.title}
-        variant="hero"
+        variant="transparent"
         className="absolute inset-0"
       />
 
