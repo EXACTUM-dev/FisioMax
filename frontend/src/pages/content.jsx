@@ -220,7 +220,7 @@ export default function ContentPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      <AppHeader user={user} />
+      <AppHeader user={user} showSearch={false} />
       <Sidebar current={current} onNavigate={setCurrent} />
       {error && (
         <AlertBanner

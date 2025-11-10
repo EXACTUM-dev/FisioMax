@@ -1,84 +1,57 @@
 /**
- * @fileoverview VignetteImage component for displaying images with a vignette effect
- * @version 0.2.0
+ * @fileoverview Image component with optional overlay effect
+ * @version 0.3.0
  * @author EXACTUM-dev
- * @description Image component that applies a vignette overlay for better visual integration
+ * @description Displays an image with fallback handling and optional overlay container for children
  */
+
 import React from "react";
 
+/**
+ * VignetteImage component with fallback support and content overlay
+ * @component
+ * @param {Object} props - Component properties
+ * @param {string} props.src - Image source URL
+ * @param {string} props.alt - Alternative text for image
+ * @param {string} [props.className] - Additional CSS classes for the container
+ * @param {Object} [props.style] - Inline styles for the container
+ * @param {string} [props.variant] - Reserved for future vignette effects (currently unused)
+ * @param {React.ReactNode} [props.children] - Child elements to overlay on the image
+ * @returns {React.Element} VignetteImage component
+ */
 export default function VignetteImage({
   src,
   alt,
-  variant = "full",
   className = "",
-  style,
+  style = {},
+  variant,
   children,
-  cover = false,
-  onError,
 }) {
-  // Gradient configuration based on selected variant
-  const background =
-    variant === "full"
-      ? "radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 85%, rgba(0,0,0,0.55) 100%)"
-      : variant === "left"
-      ? "linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 20%, rgba(0,0,0,0) 50%)"
-      : variant === "right"
-      ? "linear-gradient(270deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 20%, rgba(0,0,0,0) 50%)"
-      : "transparent";
+  const handleImageError = (e) => {
+    e.target.onerror = null;
+    e.target.src = "/SOMEFIPP-Logo.jpeg";
+  };
 
   return (
     <div
-      className={className}
-      style={{
-        position: "relative",
-        borderRadius: 16,
-        overflow: "hidden",
-        ...style,
-      }}
+      className={`relative w-full h-full overflow-hidden ${className}`}
+      style={style}
     >
-      {/* Main image with cover options */}
+      {/* Image with object-cover to fill container */}
       <img
         src={src}
         alt={alt}
-        style={{
-          display: "block",
-          width: "100%",
-          height: cover ? "100%" : "auto",
-          objectFit: cover ? "cover" : "initial",
-        }}
-        onError={onError}
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={handleImageError}
+        loading="lazy"
       />
-      {/* Vignette layer with gradient */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          background,
-          zIndex: 10, // vignette stays below buttons
-        }}
-      />
-      {/* Container for child elements (buttons, etc.) */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 20,
-          pointerEvents: "none",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            position: "relative",
-            pointerEvents: "auto",
-          }}
-        >
+
+      {/* Content overlay - positioned at bottom with proper padding */}
+      {children && (
+        <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6 md:p-8">
           {children}
         </div>
-      </div>
+      )}
     </div>
   );
 }
