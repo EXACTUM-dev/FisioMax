@@ -65,7 +65,7 @@ function MembershipModalContent({
       // Focus the first element
       first?.focus();
 
-      // Function to catch the navegacion with Tab
+      // Function to catch the navigation with Tab
       const handleKeyDown = (e) => {
         if (e.key === "Tab") {
           if (e.shiftKey) {

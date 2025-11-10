@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import Dropdown from "./Dropdown";
 
 /**
  * Combobox field component for dropdown with custom input option.
@@ -62,9 +61,11 @@ export default function ComboboxField({ label, name, value, onChange, options, r
       };
   
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
   
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
       };
     }, []);
 
@@ -183,7 +184,7 @@ export default function ComboboxField({ label, name, value, onChange, options, r
                         document.querySelector(`input[name="${name}"]`)?.focus();
                         }
                     } else {
-                        // Navegate forward
+                        // Navigate forward
                         if (index < filteredOptions.length - 1) {
                         optionRefs.current[index + 1].focus();
                         } else {

@@ -126,7 +126,7 @@ export default function GridCarousel({ slides = [] }) {
                 tabIndex={0}
                 onClick={() => handleCardClick(slide.id)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === "Space") {
+                  if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     handleCardClick(slide.id);
                   }

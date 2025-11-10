@@ -66,14 +66,10 @@ export default function Modal({
       const first = filtered[0];
       const last = closeButton || filtered[filtered.length - 1];
 
-      const focusTimer = setTimeout(() => {
-        first?.focus();
-      }, 0);
-
       // Focus the first element
       first?.focus();
 
-      // Function the catch de Tab navegation
+      // Function to catch Tab navigation
       const handleKeyDown = (e) => {
         if (e.key === "Tab") {
           if (e.shiftKey) {
