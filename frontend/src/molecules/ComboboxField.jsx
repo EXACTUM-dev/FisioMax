@@ -25,6 +25,7 @@ export default function ComboboxField({ label, name, value, onChange, options, r
   const [isOpen, setIsOpen] = useState(false);
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [inputValue, setInputValue] = useState(value);
+  const inputRef = useRef(null);
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
   const optionRefs = useRef([]);
@@ -54,8 +55,8 @@ export default function ComboboxField({ label, name, value, onChange, options, r
           setIsOpen(false);
   
           // Keep the focus on the main button
-          if (buttonRef.current) {
-            buttonRef.current.focus();
+          if (inputRef.current) {
+            inputRef.current.focus();
           }
         }
       };
@@ -124,6 +125,7 @@ export default function ComboboxField({ label, name, value, onChange, options, r
       </label>
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
           name={name}
           value={inputValue}
@@ -143,7 +145,7 @@ export default function ComboboxField({ label, name, value, onChange, options, r
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent bg-white text-gray-900"
         />
         <button
-        ref={buttonRef}
+          ref={buttonRef}
           type="button"
           tabIndex={-1}
           onClick={() => setIsOpen(!isOpen)}

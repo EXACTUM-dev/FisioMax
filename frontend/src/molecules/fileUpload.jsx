@@ -77,7 +77,7 @@ export default function FileUpload({
           accept={accept}
           id={`${name}-file`}
           className="sr-only"
-          tabIndex={0}
+          tabIndex={-1}
         />
         
         {value ? (
