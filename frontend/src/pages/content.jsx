@@ -294,12 +294,15 @@ export default function ContentPage() {
                   </h2>
                   <p
                     className={`
-                      text-gray-600 leading-relaxed whitespace-pre-wrap
-                      ${showDescription ? "" : "hidden"}
-                      md:block
-                    `}
+    text-gray-600 leading-relaxed break-words first-line:indent-8
+    ${showDescription ? "" : "hidden"}
+    md:block
+  `}
                   >
-                    {contentData?.contentData?.descripcion}
+                    {(contentData?.contentData?.descripcion || "").replace(
+                      /(.{120})/g,
+                      "$1\n"
+                    )}
                   </p>
                   <div className="md:hidden text-sm text-gray-400 mt-2 select-none">
                     {!showDescription && <>Ver más...</>}
