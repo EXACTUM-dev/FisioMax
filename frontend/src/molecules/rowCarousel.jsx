@@ -202,7 +202,6 @@ export default function RowCarousel({ slides = [] }) {
                       alt={s.imageAlt}
                       className="h-full w-full object-cover"
                       variant="transparent"
-                      cover
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                   </div>

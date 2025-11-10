@@ -49,7 +49,6 @@ export default function Panel() {
   const navigate = useNavigate();
   const [current, setCurrent] = useState("bolt");
   const [activeTab, setActiveTab] = useState("solicitudes");
-  const [searchQuery, setSearchQuery] = useState("");
 
   // State for UI data
   const [userRows, setUserRows] = useState([]); // Users from backend
@@ -139,8 +138,6 @@ export default function Panel() {
 
       setMembershipRows(mapped);
     } catch (err) {
-      console.error("Error de carga de solicitudes:", err);
-      setError("Error de carga de solicitudes. Por favor intente más tarde.");
       console.error("Error de carga de solicitudes:", err);
       setError("Error de carga de solicitudes. Por favor intente más tarde.");
     }
@@ -346,7 +343,6 @@ export default function Panel() {
           user.apellidoM || ""
         }`.trim();
 
-        ("Sin rol asignado");
         const roleName =
           user.rol ||
           user.rolNombre ||
@@ -406,9 +402,6 @@ export default function Panel() {
             setDeleteConfirmOpen(true);
           } catch (err) {
             console.error("Error al preparar eliminación de usuario:", err);
-            alert(
-              err?.message || "No se pudo preparar la eliminación del usuario."
-            );
             alert(
               err?.message || "No se pudo preparar la eliminación del usuario."
             );
@@ -508,7 +501,6 @@ export default function Panel() {
           <DataSwitchContainer
             activeKey={activeTab}
             onTabChange={setActiveTab}
-            searchQuery={searchQuery}
             loading={loadingRoles || loadingUsers}
             views={[
               {
