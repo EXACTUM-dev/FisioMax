@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 // Atoms
 import Loading from "../atoms/loading";
 import AlertBanner from "../atoms/alertBanner";
-import {Title2} from "../atoms/typography";
+import { Title2 } from "../atoms/typography";
 import BackButton from "../atoms/backButton";
 
 // Molecules
@@ -35,7 +35,6 @@ export default function RolesPage() {
   const { user, isLoaded: isClerkLoaded } = useUser();
   const navigate = useNavigate();
   const [current, setCurrent] = useState("roles");
-
   // Modal state for editing
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
@@ -318,7 +317,7 @@ export default function RolesPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      <AppHeader user={user} />
+      <AppHeader user={user} showSearch={false} />
       <Sidebar current={current} onNavigate={setCurrent} />
 
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
@@ -340,7 +339,6 @@ export default function RolesPage() {
                 type: "table",
                 columns: roleColumns,
                 rows: roles,
-                searchPlaceholder: "Buscar roles...",
                 onRowAction: handleRowAction,
               },
             ]}

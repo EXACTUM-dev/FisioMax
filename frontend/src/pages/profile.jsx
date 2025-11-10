@@ -219,7 +219,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* Header component with user info */}
-      <AppHeader user={user} />
+      <AppHeader user={user} showSearch={false} />
 
       <div className="flex">
         <Sidebar current={current} onNavigate={handleNavigate} />

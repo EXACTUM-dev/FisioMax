@@ -101,7 +101,7 @@ export async function show(req, res) {
 }
 
 /**
- * Lists available content for sidebar with thumbnails and pagination
+ * Lists available content for sidebar with thumbnails, pagination, search and sorting
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -109,12 +109,20 @@ export async function index(req, res) {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const offset = parseInt(req.query.offset) || 0;
-    const type = req.query.type || null; // 'video' or 'article'
+    const type = req.query.tipo || req.query.type || null;
+    const searchTerm = req.query.search || null;
+    const sortBy = req.query.sortBy || "newest";
+
+    // Validate sortBy parameter
+    const validSortOptions = ["newest", "oldest", "alphabetical"];
+    const finalSortBy = validSortOptions.includes(sortBy) ? sortBy : "newest";
 
     const { content, total, hasMore } = await getAvailableContent(
       limit,
       offset,
-      type
+      type,
+      searchTerm,
+      finalSortBy
     );
 
     const contentWithThumbnails = content.map((item) => {
@@ -148,6 +156,13 @@ export async function index(req, res) {
   } catch (error) {
     console.error("Error en el controlador index:", error);
 
+    if (error.message.includes("Invalid content type")) {
+      return res.status(400).json({
+        error: "invalid_type",
+        message: error.message,
+      });
+    }
+
     if (error.message === "Database error") {
       return res.status(500).json({
         error: "database_error",
@@ -168,27 +183,21 @@ export async function index(req, res) {
  * @param {Object} res - Express response object
  */
 export async function upload(req, res) {
-  try {    
+  try {
     const { nombre, descripcion, tipo, roles } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
-    
-    console.log('=== UPLOAD REQUEST ===');
-    console.log('Body:', { nombre, descripcion, tipo, roles });
-    console.log('File:', file ? file.originalname : 'No file');
-    console.log('Thumbnail:', thumbnail ? thumbnail.originalname : 'No thumbnail');
 
     // Parse roles if it's a JSON string
     let roleIds = [];
     if (roles) {
       try {
-        roleIds = typeof roles === 'string' ? JSON.parse(roles) : roles;
+        roleIds = typeof roles === "string" ? JSON.parse(roles) : roles;
         if (!Array.isArray(roleIds)) {
           roleIds = [roleIds];
         }
-        console.log('Parsed roleIds:', roleIds);
       } catch (parseError) {
-        console.error('Error parsing roles:', parseError);
+        console.error("Error parsing roles:", parseError);
         return res.status(400).json({
           success: false,
           message: "Formato de roles inválido",
@@ -198,15 +207,15 @@ export async function upload(req, res) {
 
     // Validate and sanitize input using the generic sanitization utility
     const allowedTypes = ["Video", "Articulo", "Podcast", "Libro"];
-    
+
     let sanitized;
     try {
       sanitized = sanitizeContentInput(
         { nombre, descripcion, tipo, roles: roleIds },
         {
-          stringFields: ['nombre', 'descripcion', 'tipo'],
-          idFields: ['roles'],
-          requiredFields: ['nombre', 'tipo', 'roles'],
+          stringFields: ["nombre", "descripcion", "tipo"],
+          idFields: ["roles"],
+          requiredFields: ["nombre", "tipo", "roles"],
           maxLengths: {
             nombre: 50,
             descripcion: 500,
@@ -224,11 +233,9 @@ export async function upload(req, res) {
     }
 
     const validatedRoleIds = sanitized.roles;
-    
-    console.log('Validated roleIds:', validatedRoleIds);
-    
+
     if (validatedRoleIds.length === 0) {
-      console.error('No valid role IDs found');
+      console.error("No valid role IDs found");
       return res.status(400).json({
         success: false,
         message: "Los roles seleccionados no son válidos",
@@ -245,7 +252,7 @@ export async function upload(req, res) {
     // Validate all roles exist and collect all privilege IDs
     let allPrivilegeIds = [];
     let roleNames = [];
-    
+
     for (const roleId of validatedRoleIds) {
       const roleData = await findRoleById(roleId);
       if (!roleData) {
@@ -254,21 +261,21 @@ export async function upload(req, res) {
           message: `El rol con ID ${roleId} no existe`,
         });
       }
-      
+
       roleNames.push(roleData.nombre);
-      
+
       // Get all privileges for this role
       const privilegeIds = await getPrivilegeIdsByRole(roleId);
-      
+
       if (privilegeIds.length === 0) {
         return res.status(400).json({
           success: false,
           message: `El rol "${roleData.nombre}" no tiene privilegios asignados`,
         });
       }
-      
+
       // Add privileges to the collection (avoid duplicates)
-      privilegeIds.forEach(privId => {
+      privilegeIds.forEach((privId) => {
         if (!allPrivilegeIds.includes(privId)) {
           allPrivilegeIds.push(privId);
         }

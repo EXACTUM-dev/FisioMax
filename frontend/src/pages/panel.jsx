@@ -50,6 +50,7 @@ export default function Panel() {
   const { getToken } = useAuth();
   const navigate = useNavigate();
   const [current, setCurrent] = useState("bolt");
+  const [activeTab, setActiveTab] = useState("solicitudes");
 
   // State for UI data
   const [userRows, setUserRows] = useState([]); // Users from backend
@@ -168,6 +169,11 @@ export default function Panel() {
           err.message || err
         );
       }
+      if (detail) {
+        setSelectedMembership(detail);
+        setMembershipModalOpen(true);
+        return;
+      }
 
       // fallback -> find in membershipRows
       const fallback = membershipRows.find((m) => String(m.id) === String(id));
@@ -197,10 +203,10 @@ export default function Panel() {
       // Extract payload from backend, then filter-out deleted
       const raw = Array.isArray(usersResponse)
         ? usersResponse
-        : usersResponse?.data || [];    
-      
+        : usersResponse?.data || [];
+
       const activeUsers = normalizeActiveUsers(raw);
-      
+
       setUserRows(activeUsers);
     } catch (err) {
       setError("Error de carga de usuarios. Por favor intente más tarde.");
@@ -452,7 +458,7 @@ export default function Panel() {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* Header component with user info */}
-      <AppHeader user={user} />
+      <AppHeader user={user} showSearch={false} />
 
       {/* Sidebar navigation */}
       <Sidebar current={current} onNavigate={setCurrent} />
@@ -495,7 +501,8 @@ export default function Panel() {
 
           {/* Data switcher for toggling between views */}
           <DataSwitchContainer
-            initialKey="solicitudes"
+            activeKey={activeTab}
+            onTabChange={setActiveTab}
             loading={loadingRoles || loadingUsers}
             views={[
               {
@@ -512,7 +519,6 @@ export default function Panel() {
                 type: "table",
                 columns: userColumns,
                 rows: mappedUserRows,
-                searchPlaceholder: "Buscar Usuarios...",
               },
             ]}
           />
