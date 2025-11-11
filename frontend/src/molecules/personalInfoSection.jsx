@@ -8,7 +8,11 @@ import React from "react";
 import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
 import FormField from "./form";
-import { FIELD_MAX_LENGTHS } from "../utils/profileFormValidation";
+import {
+  FIELD_MAX_LENGTHS,
+  getMaxBirthDate,
+} from "../utils/profileFormValidation";
+import CareerDropdown from "./careerDropdown";
 
 /**
  * Truncates text to a maximum number of characters
@@ -85,14 +89,14 @@ export default function PersonalInfoSection({
               onChange={onChange}
               error={errors.fechaNacimiento}
               required
+              max={getMaxBirthDate()}
             />
-            <FormField
+            <CareerDropdown
               label="Licenciatura"
               name="licenciatura"
               value={formData.licenciatura || ""}
               onChange={onChange}
               error={errors.licenciatura}
-              maxLength={FIELD_MAX_LENGTHS.licenciatura}
             />
           </>
         ) : (
