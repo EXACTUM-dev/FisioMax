@@ -8,9 +8,9 @@ import React, { useState, useEffect } from "react";
 import Button from "../atoms/button";
 import Modal from "../molecules/modal";
 import SuccessErrorModal from "./successErrorModal";
-import PersonalInfoSection from "../molecules/PersonalInfoSection";
-import ContactInfoSection from "../molecules/ContactInfoSection";
-import FullProfileForm from "../molecules/FullProfileForm";
+import PersonalInfoSection from "../molecules/personalInfoSection";
+import ContactInfoSection from "../molecules/contactInfoSection";
+import FullProfileForm from "../molecules/fullProfileForm";
 
 import {
   handleValidatedInputChange,

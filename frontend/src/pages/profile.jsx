@@ -19,7 +19,7 @@ import { Title2 } from "../atoms/typography";
 import BackButton from "../atoms/backButton";
 
 // Organisms
-import ProfileFormSection from "../organisms/ProfileFormSection";
+import ProfileFormSection from "../organisms/profileFormSection";
 import AddressCard from "../organisms/addressCard";
 import MembershipCard from "../organisms/membershipCard";
 import TicketsCard from "../organisms/ticketsCard";

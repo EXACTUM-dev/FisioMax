@@ -7,7 +7,7 @@
 import React from "react";
 import FormField from "./form";
 import Dropdown from "./dropdown";
-import CareerDropdown from "./CareerDropdown";
+import CareerDropdown from "./careerDropdown";
 import {
   getMaxBirthDate,
   FIELD_MAX_LENGTHS,
