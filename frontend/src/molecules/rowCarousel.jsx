@@ -194,7 +194,14 @@ export default function RowCarousel({ slides = [] }) {
                 <li
                   key={s.id ?? i}
                   className={itemClass}
+                  tabIndex={0}
                   onClick={() => handleSlideClick(s)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSlideClick(s);
+                    }
+                  }}
                 >
                   <div className="relative h-40 sm:h-48 md:h-60 rounded-[1rem] overflow-hidden group flex-shrink-0">
                     <VignetteImage

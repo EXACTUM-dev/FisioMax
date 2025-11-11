@@ -31,6 +31,8 @@ export default function Dropdown({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -39,9 +41,25 @@ export default function Dropdown({
       }
     };
 
+    const handleKeyDown = (event) => {
+      // Detect key "esc"
+      if (event.key === "Escape") {
+
+        // Keep the focus on the main button
+        const active = document.activeElement;
+        if (!containerRef.current?.contains(active)) return;
+
+        setIsOpen(false);
+        buttonRef.current?.focus();
+          }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -53,7 +71,7 @@ export default function Dropdown({
   const selectedOption = options.find(option => option.value === value);
 
   return (
-    <div className="w-full">
+    <div className="w-full" ref={containerRef}>
       <label className="text-sm font-semibold text-gray-700 mb-1 block">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
@@ -61,6 +79,7 @@ export default function Dropdown({
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
+          ref={buttonRef}
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full px-3 py-2 text-left border rounded focus:outline-none focus:ring-2 focus:ring-[#CAD00F] transition-colors ${
             error 
@@ -90,6 +109,13 @@ export default function Dropdown({
                 key={option.value}
                 type="button"
                 onClick={() => handleSelect(option.value)}
+                onKeyDown={(e) => {
+                  if (e.key === " " || e.key === "Spacebar") {
+                    e.preventDefault();
+                    handleSelect(option.value);
+                    buttonRef.current?.focus();
+                  }
+                }}
                 className={`w-full px-3 py-2 text-left hover:bg-gray-100 transition-colors ${
                   option.value === value ? "bg-[#CAD00F]/10 text-gray-900 font-medium" : "text-gray-900"
                 }`}

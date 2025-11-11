@@ -6,7 +6,7 @@
  */
 
 // components/molecules/modal/index.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import CloseButton from "../atoms/closeButton";
 import ConfirmationModal from "../molecules/confirmationModal";
 
@@ -42,6 +42,63 @@ export default function Modal({
   className = "",
 }) {
   const [showConfirmation, setShowConfirmation] = useState(false);
+  //Reference to focus in the first component of the modal
+  const modalRef = useRef(null);
+  // Reference to the element that was in focus before opening the modal
+  const previouslyFocusedElementRef = useRef(null);
+  
+  // Automatically focus when opening modal
+  useEffect(() => {
+    if (open && modalRef.current) {
+      //Save the previous focus element
+      previouslyFocusedElementRef.current = document.activeElement;
+
+      const focusableElements = Array.from(
+        modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      );
+
+      // Find the CloseButton and put at the end
+      const closeButton = modalRef.current.querySelector('[data-close-button]');
+      const filtered = focusableElements.filter((el) => el !== closeButton);
+
+      const first = filtered[0];
+      const last = closeButton || filtered[filtered.length - 1];
+
+      // Focus the first element
+      first?.focus();
+
+      // Function to catch Tab navigation
+      const handleKeyDown = (e) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            // shift + tab ->
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            // tab normal ->
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      modalRef.current.addEventListener("keydown", handleKeyDown);
+      return () => {
+        modalRef.current?.removeEventListener("keydown", handleKeyDown);
+
+        // Restore the previous focus
+        const el = previouslyFocusedElementRef.current;
+        if (el && el.focus) el.focus();
+      };
+    }
+  }, [open]);
+
   if (!open) return null;
 
   const sizeClasses = {
@@ -91,35 +148,38 @@ export default function Modal({
   return (
     <>
       <div
+        ref={modalRef}
         className={`fixed inset-0 z-50 flex ${positionClasses[position]} bg-black/30 transition-opacity`}
         onClick={handleBackdropClick}
       >
-        {/* Relative container for the CloseButton position*/}
         <div
           className={`
             relative w-full mx-2 sm:mx-4 
             ${sizeClasses[size]} 
           `}
         >
-          {showCloseButton && (
-            <CloseButton
-              onClose={handleCloseRequest}
-              size="lg"
-              position={{ top: "top-1", right: "right-1" }}
-            />
-          )}
           {/* Modal container with scroll */}
           <div
             className={`
               bg-white rounded-2xl shadow-xl border border-slate-200 
-              p-4 sm:p-6 lg:p-5
+              p-6 sm:p-8 lg:p-5
               overflow-y-auto max-h-[90vh]
               transition-all duration-200
               animate-in fade-in-0 zoom-in-95
               ${className}
           `}
           >
-            {children}
+          {children}
+
+          {/* Relative container for the CloseButton position*/}
+          {showCloseButton && (
+            <CloseButton
+              data-close-button
+              onClose={handleCloseRequest}
+              size="lg"
+              position={{ top: "top-1", right: "right-1" }}
+            />
+          )}
           </div>
         </div>
       </div>

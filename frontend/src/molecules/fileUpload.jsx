@@ -8,7 +8,8 @@ import React, { useState } from "react";
 
 export default function FileUpload({ 
   name, 
-  label, 
+  label,
+  limitation="PDF hasta 10Mb", 
   required = false, 
   accept = ".pdf", 
   value, 
@@ -74,8 +75,9 @@ export default function FileUpload({
           name={name}
           onChange={handleFileChange}
           accept={accept}
-          className="hidden"
           id={`${name}-file`}
+          className="sr-only"
+          tabIndex={-1}
         />
         
         {value ? (
@@ -109,7 +111,13 @@ export default function FileUpload({
             <div className="mt-2">
               <label
                 htmlFor={`${name}-file`}
-                className="cursor-pointer text-sm font-medium text-[#CAD00F] hover:text-[#b8bc0d]"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    document.getElementById(`${name}-file`).click();
+                  }
+                }}
+                className="cursor-pointer text-sm font-medium text-[#CAD00F] hover:text-[#b8bc0d] focus:outline-none focus:ring-2 focus:ring-[#CAD00F] rounded px-2 py-1 inline-block"
               >
                 Haz clic para seleccionar archivo
               </label>
@@ -118,7 +126,7 @@ export default function FileUpload({
               </p>
             </div>
             <p className="text-xs text-gray-400 mt-2">
-              PDF hasta 10MB
+              {limitation}
             </p>
           </div>
         )}

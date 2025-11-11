@@ -40,6 +40,76 @@ function MembershipModalContent({
 
   const { getToken } = useAuth();
 
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (open && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      // Focus the first element
+      first?.focus();
+
+      // Function to catch the navigation with Tab
+      const handleKeyDown = (e) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      modalRef.current.addEventListener("keydown", handleKeyDown);
+      return () =>
+        modalRef.current?.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      // Focus the first element
+      first?.focus();
+
+      // Function to catch the navigation with Tab
+      const handleKeyDown = (e) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      modalRef.current.addEventListener("keydown", handleKeyDown);
+      return () =>
+        modalRef.current?.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [open]);
+
   const closePdfModal = () => {
     setPdfModalOpen(false);
     setPdfUrl(null);
