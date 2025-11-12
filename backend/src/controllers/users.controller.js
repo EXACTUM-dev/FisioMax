@@ -85,8 +85,8 @@ export async function getCurrentUserProfile(req, res) {
       apellidoP: user.apellidoP || "",
       apellidoM: user.apellidoM || "",
       email: user.correo || "",
-      telefono: user.telefonoCasa || "",
-      telefonoCasa: user.telefonoCasa || "",
+      telefono: user.telefonoProfesional || "",
+      telefonoProfesional: user.telefonoProfesional || "",
       telefonoWhatsapp: user.telefonoWhatsapp || "",
       fechaNacimiento: user.fechaNacimiento || "",
       foto: user.foto || null,
@@ -180,8 +180,8 @@ export async function getUserProfileById(req, res) {
       apellidoP: user.apellidoP || "",
       apellidoM: user.apellidoM || "",
       email: user.correo || "",
-      telefono: user.telefonoCasa || "",
-      telefonoCasa: user.telefonoCasa || "",
+      telefono: user.telefonoProfesional || "",
+      telefonoProfesional: user.telefonoProfesional || "",
       telefonoWhatsapp: user.telefonoWhatsapp || "",
       fechaNacimiento: user.fechaNacimiento || "",
       foto: user.foto || null,
@@ -328,22 +328,13 @@ export async function updateUser(req, res) {
         .json({ success: false, error: "ID de usuario requerido" });
     }
 
-    // Map 'telefono' from frontend to 'telefonoCasa' for database
-    if (
-      updateData.telefono !== undefined &&
-      updateData.telefonoCasa === undefined
-    ) {
-      updateData.telefonoCasa = updateData.telefono;
-      delete updateData.telefono;
-    }
-
     // Sanitize user input
     const sanitized = sanitizeContentInput(updateData, {
       stringFields: [
         "nombres",
         "apellidoP",
         "apellidoM",
-        "telefonoCasa",
+        "telefonoProfesional",
         "telefonoWhatsapp",
         "licenciatura",
         "pais",
@@ -365,7 +356,7 @@ export async function updateUser(req, res) {
         nombres: 60,
         apellidoP: 60,
         apellidoM: 60,
-        telefonoCasa: 13,
+        telefonoProfesional: 13,
         telefonoWhatsapp: 13,
         licenciatura: 100,
         pais: 60,
@@ -390,12 +381,10 @@ export async function updateUser(req, res) {
       sanitized.email = sanitizeEmail(updateData.email);
     }
 
-    // Pass through membershipExpiresAt as date (already validated by database)
+    // Pass through dates
     if (updateData.membershipExpiresAt) {
       sanitized.membershipExpiresAt = updateData.membershipExpiresAt;
     }
-
-    // Pass through membershipRegisteredAt as date (already validated by database)
     if (updateData.membershipRegisteredAt) {
       sanitized.membershipRegisteredAt = updateData.membershipRegisteredAt;
     }
@@ -414,14 +403,12 @@ export async function updateUser(req, res) {
       S3Service.getPresignedUrl(updated.constancias),
     ]);
 
-    // Transform minimal fields for frontend consistency
     const transformedUser = {
       nombres: updated.nombres || "",
       apellidoP: updated.apellidoP || "",
       apellidoM: updated.apellidoM || "",
       email: updated.correo || "",
-      telefono: updated.telefonoCasa || "",
-      telefonoCasa: updated.telefonoCasa || "",
+      telefonoProfesional: updated.telefonoProfesional || "",
       telefonoWhatsapp: updated.telefonoWhatsapp || "",
       fechaNacimiento: updated.fechaNacimiento || "",
       licenciatura: updated.licenciatura || "",
@@ -500,7 +487,6 @@ export async function updateUserDocuments(req, res) {
     if (isS3Configured) {
       // Upload files to S3 if provided, and delete old ones
       if (req.files?.titulo?.[0]) {
-        // Delete old file if exists
         if (currentUser.titulo) {
           await S3Service.deleteFile(currentUser.titulo);
         }
@@ -510,7 +496,6 @@ export async function updateUserDocuments(req, res) {
         );
       }
       if (req.files?.cedula?.[0]) {
-        // Delete old file if exists
         if (currentUser.cedula) {
           await S3Service.deleteFile(currentUser.cedula);
         }
@@ -520,7 +505,6 @@ export async function updateUserDocuments(req, res) {
         );
       }
       if (req.files?.constancias?.[0]) {
-        // Delete old file if exists
         if (currentUser.constancias) {
           await S3Service.deleteFile(currentUser.constancias);
         }
@@ -531,7 +515,6 @@ export async function updateUserDocuments(req, res) {
       }
     } else {
       console.warn("AWS S3 not configured. Files will not be uploaded.");
-      // Store file names instead of URLs for development
       if (req.files?.titulo?.[0]) {
         updateData.titulo = req.files.titulo[0].originalname;
       }
@@ -543,7 +526,6 @@ export async function updateUserDocuments(req, res) {
       }
     }
 
-    // If no files were uploaded, return error
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         success: false,
@@ -551,7 +533,6 @@ export async function updateUserDocuments(req, res) {
       });
     }
 
-    // Update user in database
     const updated = await updateUserById(userId, updateData);
 
     if (!updated) {
@@ -567,14 +548,12 @@ export async function updateUserDocuments(req, res) {
       S3Service.getPresignedUrl(updated.constancias),
     ]);
 
-    // Transform user data for frontend
     const transformedUser = {
       nombres: updated.nombres || "",
       apellidoP: updated.apellidoP || "",
       apellidoM: updated.apellidoM || "",
       email: updated.correo || "",
-      telefono: updated.telefonoCasa || "",
-      telefonoCasa: updated.telefonoCasa || "",
+      telefonoProfesional: updated.telefonoProfesional || "",
       telefonoWhatsapp: updated.telefonoWhatsapp || "",
       fechaNacimiento: updated.fechaNacimiento || "",
       licenciatura: updated.licenciatura || "",

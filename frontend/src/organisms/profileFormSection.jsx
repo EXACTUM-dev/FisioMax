@@ -93,7 +93,8 @@ export default function ProfileFormSection({
       });
       setContactForm({
         email: data.email || data.correo || "",
-        telefono: data.telefono || data.telefonoCasa || "",
+        telefonoProfesional: data.telefonoProfesional || "",
+        telefonoWhatsapp: data.telefonoWhatsapp || "",
         instagram: data.instagram || "",
         linkedin: data.linkedin || "",
         facebook: data.facebook || "",
@@ -220,7 +221,8 @@ export default function ProfileFormSection({
 
     const contactValidationRules = {
       email: PROFILE_VALIDATION_RULES.email,
-      telefono: PROFILE_VALIDATION_RULES.telefono,
+      telefonoProfesional: PROFILE_VALIDATION_RULES.telefonoProfesional,
+      telefonoWhatsapp: PROFILE_VALIDATION_RULES.telefonoWhatsapp,
       instagram: PROFILE_VALIDATION_RULES.instagram,
       linkedin: PROFILE_VALIDATION_RULES.linkedin,
       facebook: PROFILE_VALIDATION_RULES.facebook,
@@ -249,7 +251,8 @@ export default function ProfileFormSection({
     try {
       await onSave({
         correo: contactForm.email,
-        telefono: contactForm.telefono,
+        telefonoProfesional: contactForm.telefonoProfesional,
+        telefonoWhatsapp: contactForm.telefonoWhatsapp,
         instagram: contactForm.instagram,
         linkedin: contactForm.linkedin,
         facebook: contactForm.facebook,
@@ -297,13 +300,15 @@ export default function ProfileFormSection({
         onChange={handleInputChange}
         onSave={handleSavePersonal}
         onCancel={() => {
-          setIsEditingPersonal(false);
-          setPersonalForm({
-            nombres: data.nombres || "",
-            apellidoP: data.apellidoP || "",
-            apellidoM: data.apellidoM || "",
-            fechaNacimiento: formatDateForInput(data.fechaNacimiento) || "",
-            licenciatura: data.licenciatura || "",
+          setIsEditingContact(false);
+          setContactForm({
+            email: data.email || data.correo || "",
+            telefonoProfesional: data.telefonoProfesional || "",
+            telefonoWhatsapp: data.telefonoWhatsapp || "",
+            instagram: data.instagram || "",
+            linkedin: data.linkedin || "",
+            facebook: data.facebook || "",
+            paginaWeb: data.paginaWeb || "",
           });
           setErrors({});
         }}
@@ -322,7 +327,8 @@ export default function ProfileFormSection({
           setIsEditingContact(false);
           setContactForm({
             email: data.email || data.correo || "",
-            telefono: data.telefono || data.telefonoCasa || "",
+            telefonoProfesional: data.telefonoProfesional || "",
+            telefonoWhatsapp: data.telefonoWhatsapp || "",
             instagram: data.instagram || "",
             linkedin: data.linkedin || "",
             facebook: data.facebook || "",

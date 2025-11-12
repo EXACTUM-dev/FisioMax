@@ -79,23 +79,23 @@ export default function FullProfileForm({
           error={errors.fechaNacimiento}
         />
         <FormField
-          label="Contacto profesional (Teléfono de oficina)"
-          name="telefonoCasa"
-          value={formData.telefonoCasa}
+          label="Contacto profesional"
+          name="telefonoProfesional"
+          value={formData.telefonoProfesional}
           onChange={onChange}
           placeholder="10-13 dígitos"
-          maxLength={FIELD_MAX_LENGTHS.telefonoCasa}
-          error={errors.telefonoCasa}
+          maxLength={FIELD_MAX_LENGTHS.telefonoProfesional}
+          error={errors.telefonoProfesional}
         />
         <FormField
           label="Contacto personal (WhatsApp)"
-          name="telefonoWhatsApp"
+          name="telefonoWhatsapp"
           required
-          value={formData.telefonoWhatsApp}
+          value={formData.telefonoWhatsapp}
           onChange={onChange}
           placeholder="10-13 dígitos"
-          maxLength={FIELD_MAX_LENGTHS.telefonoWhatsApp}
-          error={errors.telefonoWhatsApp}
+          maxLength={FIELD_MAX_LENGTHS.telefonoWhatsapp}
+          error={errors.telefonoWhatsapp}
         />
         <FormField
           label="Facebook"

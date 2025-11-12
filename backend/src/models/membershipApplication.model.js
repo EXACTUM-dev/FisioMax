@@ -6,9 +6,9 @@
  * Bring the membership applications from de DB
  */
 
-import crypto from 'crypto';
-import S3Service from '../services/s3Service.js';
-import db from '../../database/db.js';
+import crypto from "crypto";
+import S3Service from "../services/s3Service.js";
+import db from "../../database/db.js";
 
 /**
  * Save the new membership application in database and documents in S3.
@@ -17,23 +17,44 @@ import db from '../../database/db.js';
  */
 class MembershipApplication {
   constructor(data) {
-    if (!((data.nombres && String(data.nombres).trim() !== '') || (data.firstName && String(data.firstName).trim() !== ''))) {
-      throw new Error('El nombre es obligatorio');
+    if (
+      !(
+        (data.nombres && String(data.nombres).trim() !== "") ||
+        (data.firstName && String(data.firstName).trim() !== "")
+      )
+    ) {
+      throw new Error("El nombre es obligatorio");
     }
-    if (!((data.apellidoP && String(data.apellidoP).trim() !== '') || (data.lastName && String(data.lastName).trim() !== ''))) {
-      throw new Error('El apellido paterno es obligatorio');
+    if (
+      !(
+        (data.apellidoP && String(data.apellidoP).trim() !== "") ||
+        (data.lastName && String(data.lastName).trim() !== "")
+      )
+    ) {
+      throw new Error("El apellido paterno es obligatorio");
     }
-    if (!((data.telefonoWhatsApp && String(data.telefonoWhatsApp).trim() !== '') || (data.whatsappPhone && String(data.whatsappPhone).trim() !== '') || (data.telefonoWhatsApp && String(data.telefonoWhatsApp).trim() !== ''))) {
-      throw new Error('El teléfono (WhatsApp) es obligatorio');
+    if (
+      !(
+        (data.telefonoWhatsapp &&
+          String(data.telefonoWhatsapp).trim() !== "") ||
+        (data.whatsappPhone && String(data.whatsappPhone).trim() !== "")
+      )
+    ) {
+      throw new Error("El teléfono (WhatsApp) es obligatorio");
     }
-    if (!((data.correo && String(data.correo).trim() !== '') || (data.email && String(data.email).trim() !== ''))) {
-      throw new Error('El email es obligatorio');
+    if (
+      !(
+        (data.correo && String(data.correo).trim() !== "") ||
+        (data.email && String(data.email).trim() !== "")
+      )
+    ) {
+      throw new Error("El email es obligatorio");
     }
 
     this.firstName = data.firstName.trim();
     this.lastName = data.lastName.trim();
     this.middleName = data.middleName?.trim() || null;
-    this.homePhone = data.homePhone?.trim() || null;
+    this.professionalPhone = data.professionalPhone?.trim() || null;
     this.whatsappPhone = data.whatsappPhone.trim();
     this.email = data.email.trim();
     this.birthDate = data.birthDate?.trim() || null;
@@ -54,48 +75,49 @@ class MembershipApplication {
     this.id = null;
   }
 
-  /**
-   * Save new application to the database and upload documents in S3
-   * @returns {Promise<object>} - Message of success or fail
-   */
   async save() {
     const conn = await db.getConnection();
     try {
       await conn.beginTransaction();
 
-
-      const professionalIdUrl = this.documents.identificacionProfesional || this.documents.cedula || this.documents.professionalId || null;
-      const degreeDocumentUrl = this.documents.titulo || this.documents.degreeDocument || null;
-      const certificatesUrl = this.documents.constancias || this.documents.certificates || null;
+      const professionalIdUrl =
+        this.documents.identificacionProfesional ||
+        this.documents.cedula ||
+        this.documents.professionalId ||
+        null;
+      const degreeDocumentUrl =
+        this.documents.titulo || this.documents.degreeDocument || null;
+      const certificatesUrl =
+        this.documents.constancias || this.documents.certificates || null;
 
       const [userResult] = await conn.query(
         `INSERT INTO usuario 
-        (nombres, apellidoP, apellidoM, correo, telefonoCasa, telefonoWhatsapp, fechaNacimiento, pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, numInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
+        (nombres, apellidoP, apellidoM, correo, telefonoProfesional, telefonoWhatsapp, fechaNacimiento, pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, numInterior, licenciatura, instagram, linkedin, facebook, paginaWeb, cedula, titulo, constancias, createdAt, eliminado)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)`,
-        [ 
-          this.firstName, 
-          this.lastName, 
-          this.middleName, 
-          this.email, 
-          this.homePhone,
+        [
+          this.firstName,
+          this.lastName,
+          this.middleName,
+          this.email,
+          this.professionalPhone,
           this.whatsappPhone,
           this.birthDate,
-          this.country, 
-          this.state, 
-          this.city, 
-          this.neighborhood, 
-          this.postalCode, 
-          this.street, 
-          this.exteriorNumber, 
-          this.interiorNumber, 
-          this.degree, 
-          this.instagram, 
-          this.linkedin, 
-          this.facebook, 
-          this.website, 
-          professionalIdUrl, 
-          degreeDocumentUrl, 
-          certificatesUrl
+          this.country,
+          this.state,
+          this.city,
+          this.neighborhood,
+          this.postalCode,
+          this.street,
+          this.exteriorNumber,
+          this.interiorNumber,
+          this.degree,
+          this.instagram,
+          this.linkedin,
+          this.facebook,
+          this.website,
+          professionalIdUrl,
+          degreeDocumentUrl,
+          certificatesUrl,
         ]
       );
 
@@ -103,7 +125,9 @@ class MembershipApplication {
       this.id = userId;
 
       if (!this.id) {
-        throw new Error('No se pudo determinar IDUsuario tras insertar Usuario');
+        throw new Error(
+          "No se pudo determinar IDUsuario tras insertar Usuario"
+        );
       }
 
       if (this.documents.extra && this.documents.extra.length > 0) {
@@ -112,7 +136,7 @@ class MembershipApplication {
             `INSERT INTO documentosadicionales 
             (IDUsuario, nombreArchivo, urlArchivo, createdAt) 
             VALUES (?, ?, ?, NOW())`,
-            [userId, 'Documento adicional', extraDocUrl]
+            [userId, "Documento adicional", extraDocUrl]
           );
         }
       }
@@ -120,7 +144,7 @@ class MembershipApplication {
       const [mres] = await conn.query(
         `INSERT INTO membresia (IDUsuario, tipo, fechaVencimiento, constanciaPago, certificado, horasFormacion, aceptado, estatusPago, createdAt)
          VALUES (?, ?, CURDATE(), ?, ?, ?, ?, ?, NOW())`,
-        [userId, 'pendiente', '', '', 0, null, 'pendiente']
+        [userId, "pendiente", "", "", 0, null, "pendiente"]
       );
       this.IDMembresia = mres?.insertId || null;
       await conn.commit();
@@ -159,7 +183,6 @@ export const getMembershipApplications = async () => {
   }
 };
 
-
 /**
  * Get full membership application detail by IDMembresia
  * @param {string|number} id
@@ -191,43 +214,67 @@ export const getMembershipApplicationById = async (id) => {
     const documentos = [];
 
     // Only attempt to generate signed URLs for real S3 keys.
-    const isPlaceholder = (k) => !k || String(k).startsWith('__missing_');
+    const isPlaceholder = (k) => !k || String(k).startsWith("__missing_");
 
     if (row.cedula && !isPlaceholder(row.cedula)) {
       const cedulaUrl = await S3Service.getPresignedUrl(row.cedula);
-      documentos.push({ id: 'cedula', label: 'Cédula profesional', url: cedulaUrl, key: row.cedula });
+      documentos.push({
+        id: "cedula",
+        label: "Cédula profesional",
+        url: cedulaUrl,
+        key: row.cedula,
+      });
     }
     if (row.titulo && !isPlaceholder(row.titulo)) {
       const tituloUrl = await S3Service.getPresignedUrl(row.titulo);
-      documentos.push({ id: 'titulo', label: 'Título', url: tituloUrl, key: row.titulo });
+      documentos.push({
+        id: "titulo",
+        label: "Título",
+        url: tituloUrl,
+        key: row.titulo,
+      });
     }
     if (row.constancias && !isPlaceholder(row.constancias)) {
       const constanciasUrl = await S3Service.getPresignedUrl(row.constancias);
-      documentos.push({ id: 'constancias', label: 'Constancias', url: constanciasUrl, key: row.constancias, hours: row.constanciaHoras});
+      documentos.push({
+        id: "constancias",
+        label: "Constancias",
+        url: constanciasUrl,
+        key: row.constancias,
+        hours: row.constanciaHoras,
+      });
     }
 
     // Append additional documents
     for (const d of additionalDocs || []) {
-      const docId = d.IDDocumentoAdicional || d.IDDocumento || d.id || d.ID || null;
-      const label = d.nombreArchivo || d.nombre || d.nombre_archivo || 'Documento adicional';
+      const docId =
+        d.IDDocumentoAdicional || d.IDDocumento || d.id || d.ID || null;
+      const label =
+        d.nombreArchivo ||
+        d.nombre ||
+        d.nombre_archivo ||
+        "Documento adicional";
       const hours = d.documentoHoras || null;
       const fileKey = d.urlArchivo || d.url || d.url_archivo || null; // stored as S3 key
-      const url = fileKey && !isPlaceholder(fileKey) ? await S3Service.getPresignedUrl(fileKey) : null;
-      documentos.push({ id: docId, label, url, key: fileKey, hours});
+      const url =
+        fileKey && !isPlaceholder(fileKey)
+          ? await S3Service.getPresignedUrl(fileKey)
+          : null;
+      documentos.push({ id: docId, label, url, key: fileKey, hours });
     }
 
     // Map address / contact fields into a friendly shape
     const ubicacionParts = [];
     if (row.calle) ubicacionParts.push(row.calle);
-    if (row.numExterior) ubicacionParts.push('No. ' + (row.numExterior));
-    if (row.numInterior) ubicacionParts.push('Int. ' + (row.numInterior));
+    if (row.numExterior) ubicacionParts.push("No. " + row.numExterior);
+    if (row.numInterior) ubicacionParts.push("Int. " + row.numInterior);
     if (row.colonia) ubicacionParts.push(row.colonia);
     if (row.codigoPostal) ubicacionParts.push(row.codigoPostal);
     if (row.ciudad) ubicacionParts.push(row.ciudad);
     if (row.estado) ubicacionParts.push(row.estado);
     if (row.pais) ubicacionParts.push(row.pais);
 
-    const ubicacionStr = ubicacionParts.filter(Boolean).join(', ');
+    const ubicacionStr = ubicacionParts.filter(Boolean).join(", ");
 
     const mapped = {
       IDMembresia: row.IDMembresia,
@@ -238,11 +285,13 @@ export const getMembershipApplicationById = async (id) => {
       nombres: row.nombres,
       apellidoP: row.apellidoP,
       apellidoM: row.apellidoM || null,
-      nombreCompleto: `${row.nombres} ${row.apellidoP} ${row.apellidoM || ''}`.trim(),
-      nombre: `${row.nombres} ${row.apellidoP} ${row.apellidoM || ''}`.trim(),
+      nombreCompleto: `${row.nombres} ${row.apellidoP} ${
+        row.apellidoM || ""
+      }`.trim(),
+      nombre: `${row.nombres} ${row.apellidoP} ${row.apellidoM || ""}`.trim(),
       ubicacion: ubicacionStr || null,
       correo: row.correo,
-      telefonoCasa: row.telefonoCasa || null,
+      telefonoProfesional: row.telefonoProfesional || null,
       telefonoWhatsapp: row.telefonoWhatsapp || null,
       calle: row.calle || null,
       numExterior: row.numExterior || null,
@@ -263,7 +312,7 @@ export const getMembershipApplicationById = async (id) => {
 
     return mapped;
   } catch (error) {
-    console.error('Error en getMembershipApplicationById:', error);
+    console.error("Error en getMembershipApplicationById:", error);
     throw error;
   } finally {
     conn.release();
@@ -291,7 +340,7 @@ export const approveMembershipApplicationById = async (id) => {
     return detail;
   } catch (error) {
     await conn.rollback();
-    console.error('Error approving membership application:', error);
+    console.error("Error approving membership application:", error);
     throw error;
   } finally {
     conn.release();
@@ -308,7 +357,7 @@ export async function denyMembershipApplication(razonRechazo, id) {
 
   try {
     await conn.beginTransaction();
-    
+
     const query = `
        UPDATE membresia 
       SET aceptado = 0, 
@@ -316,30 +365,23 @@ export async function denyMembershipApplication(razonRechazo, id) {
       WHERE IDMembresia = ? 
         AND deletedAt IS NULL
     `;
-    
+
     const [result] = await conn.execute(query, [razonRechazo, id]);
-    
+
     if (!result || result.affectedRows === 0) {
       await conn.rollback();
       return null;
     }
-    
+
     await conn.commit();
     return result;
-    
   } catch (error) {
     await conn.rollback();
-    console.error('Error en denyMembershipApplication:', error);
+    console.error("Error en denyMembershipApplication:", error);
     throw error;
   } finally {
     conn.release();
   }
 }
-
-
-
-
-
-
 
 export default MembershipApplication;

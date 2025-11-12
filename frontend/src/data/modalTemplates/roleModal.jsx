@@ -224,7 +224,6 @@ function RoleModalContent({
             maxLength={ROLE_FIELD_MAX_LENGTHS.descripcion}
             multiline
             rows={4}
-            required
             error={errors.descripcion}
             disabled={isProcessing}
           />

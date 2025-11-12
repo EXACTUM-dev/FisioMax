@@ -23,7 +23,7 @@ export async function getUsuarios() {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefonoCasa,
+        u.telefonoProfesional,
         u.telefonoWhatsapp,
         u.fechaNacimiento,
         r.IDRol,
@@ -87,7 +87,7 @@ export async function getUserByClerkId(clerkId) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefonoCasa,
+        u.telefonoProfesional,
         u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
@@ -186,7 +186,7 @@ export async function getUserById(userId) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefonoCasa,
+        u.telefonoProfesional,
         u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
@@ -253,7 +253,7 @@ export async function getUserByEmail(email) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefonoCasa,
+        u.telefonoProfesional,
         u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
@@ -339,7 +339,7 @@ export async function updateUserById(userId, updateData) {
       "apellidoP",
       "apellidoM",
       "correo",
-      "telefonoCasa",
+      "telefonoProfesional",
       "telefonoWhatsapp",
       "fechaNacimiento",
       "licenciatura",
@@ -444,7 +444,7 @@ export async function createUserWithClerkId(userData) {
       apellidoP,
       apellidoM = null,
       correo,
-      telefonoCasa = "",
+      telefonoProfesional = "",
       telefonoWhatsapp = "",
       fechaNacimiento = "",
       foto = null,
@@ -457,7 +457,7 @@ export async function createUserWithClerkId(userData) {
 
     const [result] = await dbPool.query(
       `INSERT INTO usuario 
-        (IDUsuario, clerkID, nombres, apellidoP, apellidoM, correo, telefonoCasa, telefonoWhatsapp, fechaNacimiento, foto, pais, estado, ciudad, colonia, codigoPostal)
+        (IDUsuario, clerkID, nombres, apellidoP, apellidoM, correo, telefonoProfesional, telefonoWhatsapp, fechaNacimiento, foto, pais, estado, ciudad, colonia, codigoPostal)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         IDUsuario,
@@ -466,7 +466,7 @@ export async function createUserWithClerkId(userData) {
         apellidoP,
         apellidoM,
         correo,
-        telefonoCasa,
+        telefonoProfesional,
         telefonoWhatsapp,
         fechaNacimiento,
         foto,

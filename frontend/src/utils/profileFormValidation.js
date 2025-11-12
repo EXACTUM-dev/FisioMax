@@ -64,8 +64,8 @@ export const FIELD_MAX_LENGTHS = {
   // Contact Information
   email: 60, // varchar(60)
   correo: 60, // varchar(60)
-  telefonoCasa: 13, // varchar(13)
-  telefonoWhatsApp: 13, // varchar(13)
+  telefonoProfesional: 13, // varchar(13)
+  telefonoWhatsapp: 13, // varchar(13)
   telefono: 13, // varchar(13)
 
   // Address Information
@@ -122,8 +122,8 @@ export const PROFILE_VALIDATION_RULES = {
     email(),
     maxLength(60, "El correo"),
   ],
-  telefonoCasa: [phone()],
-  telefonoWhatsApp: [required("El contacto personal es requerido"), phone()],
+  telefonoProfesional: [phone()],
+  telefonoWhatsapp: [required("El contacto personal es requerido"), phone()],
   telefono: [phone()],
 
   // Birth Information
@@ -190,8 +190,8 @@ export const FIELD_LABELS = {
   email: "Correo electrónico",
   correo: "Correo electrónico",
   fechaNacimiento: "Fecha de nacimiento",
-  telefonoCasa: "Contacto profesional",
-  telefonoWhatsApp: "Contacto personal",
+  telefonoProfesional: "Contacto profesional",
+  telefonoWhatsapp: "Contacto personal",
   telefono: "Teléfono",
   pais: "País",
   estado: "Estado/Provincia",
@@ -237,8 +237,8 @@ export function sanitizeFieldValue(fieldName, value) {
       sanitized = sanitizeAlphabetic(value);
       break;
 
-    case "telefonoCasa":
-    case "telefonoWhatsApp":
+    case "telefonoProfesional":
+    case "telefonoWhatsapp":
     case "telefono":
       sanitized = sanitizePhone(value);
       break;
@@ -433,9 +433,8 @@ export const API_FIELD_MAPPING = {
   nombres: "firstName",
   apellidoP: "lastName",
   apellidoM: "middleName",
-  telefonoCasa: "homePhone",
-  telefonoWhatsApp: "whatsappPhone",
-  telefono: "homePhone",
+  telefonoProfesional: "professionalPhone",
+  telefonoWhatsapp: "whatsappPhone",
   email: "email",
   correo: "email",
   fechaNacimiento: "birthDate",
@@ -492,8 +491,8 @@ export const INITIAL_FORM_STATE = {
   nombres: "",
   apellidoP: "",
   apellidoM: "",
-  telefonoCasa: "",
-  telefonoWhatsApp: "",
+  telefonoProfesional: "",
+  telefonoWhatsapp: "",
   telefono: "",
   email: "",
   correo: "",
@@ -528,8 +527,8 @@ export function populateFormFromUserData(userData) {
     nombres: userData.nombres || "",
     apellidoP: userData.apellidoP || "",
     apellidoM: userData.apellidoM || "",
-    telefonoCasa: userData.telefonoCasa || "",
-    telefonoWhatsApp: userData.telefonoWhatsApp || "",
+    telefonoProfesional: userData.telefonoProfesional || "",
+    telefonoWhatsapp: userData.telefonoWhatsapp || "",
     telefono: userData.telefono || "",
     email: userData.email || userData.correo || "",
     correo: userData.correo || userData.email || "",

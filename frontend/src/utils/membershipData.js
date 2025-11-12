@@ -12,7 +12,9 @@
  */
 export function getMembershipData() {
   try {
-    const raw = localStorage.getItem('membershipForm') || localStorage.getItem('membershipApplication');
+    const raw =
+      localStorage.getItem("membershipForm") ||
+      localStorage.getItem("membershipApplication");
     if (raw) {
       const parsed = JSON.parse(raw);
       return { ...defaultData(), ...parsed };
@@ -28,8 +30,8 @@ function defaultData() {
     nombres: "",
     apellidoP: "",
     apellidoM: "",
-    telefonoCasa: "",
-    telefonoWhatsApp: "",
+    telefonoProfesional: "",
+    telefonoWhatsapp: "",
     email: "",
     pais: "",
     estado: "",

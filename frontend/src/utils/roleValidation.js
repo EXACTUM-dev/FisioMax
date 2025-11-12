@@ -29,20 +29,12 @@ export const ROLE_FIELD_MAX_LENGTHS = {
 export const ROLE_VALIDATION_RULES = {
   nombre: [
     required("El nombre del rol es obligatorio"),
-    minLength(3, "El nombre del rol"),
     maxLength(50, "El nombre del rol"),
     alphanumeric(
       "El nombre del rol solo puede contener letras, números y espacios"
     ),
   ],
-  descripcion: [
-    required("La descripción del rol es obligatoria"),
-    minLength(10, "La descripción"),
-    maxLength(200, "La descripción"),
-  ],
-  privilegios: [
-    atLeastOne("Debes seleccionar al menos un privilegio para el rol"),
-  ],
+  descripcion: [maxLength(200, "La descripción")],
 };
 
 /**

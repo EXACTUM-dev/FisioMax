@@ -20,6 +20,7 @@ import {
   validateExtraDocument,
   prepareFormDataForSubmission,
   INITIAL_FORM_STATE,
+  PROFILE_VALIDATION_RULES,
 } from "../utils/profileFormValidation";
 
 export default function MembershipApplicationPage() {
@@ -68,7 +69,10 @@ export default function MembershipApplicationPage() {
     handleValidatedFileChange(e, setFormData, setErrors);
 
   const validateForm = () => {
-    const validation = validateFormSubmission(formData);
+    const validation = validateFormSubmission(
+      formData,
+      PROFILE_VALIDATION_RULES
+    );
     setErrors(validation.errors);
     if (validation.missingFields.length > 0) {
       setValidationErrors(validation.missingFields);

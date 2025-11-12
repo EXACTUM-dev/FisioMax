@@ -62,14 +62,23 @@ export default function ContactInfoSection({
               maxLength={FIELD_MAX_LENGTHS.email}
             />
             <FormField
-              label="Teléfono"
-              name="telefono"
+              label="Contacto profesional"
+              name="telefonoProfesional"
               type="tel"
-              value={formData.telefono || ""}
+              value={formData.telefonoProfesional || ""}
               onChange={onChange}
-              error={errors.telefono}
+              error={errors.telefonoProfesional}
+              maxLength={FIELD_MAX_LENGTHS.telefonoProfesional}
+            />
+            <FormField
+              label="Contacto personal (WhatsApp)"
+              name="telefonoWhatsapp"
+              type="tel"
+              value={formData.telefonoWhatsapp || ""}
+              onChange={onChange}
+              error={errors.telefonoWhatsapp}
               required
-              maxLength={FIELD_MAX_LENGTHS.telefono}
+              maxLength={FIELD_MAX_LENGTHS.telefonoWhatsapp}
             />
             <FormField
               label="Instagram"
@@ -122,14 +131,27 @@ export default function ContactInfoSection({
             </div>
             <div>
               <label className="text-sm text-slate-600">
-                Teléfono
+                Contacto profesional (Teléfono de oficina)
+              </label>
+              <div
+                className="mt-1 text-slate-900"
+                title={data.telefonoProfesional || ""}
+              >
+                {truncateText(data.telefonoProfesional, 25) || (
+                  <span className="text-slate-400">No disponible</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-slate-600">
+                Contacto personal (WhatsApp)
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <div
                 className="mt-1 text-slate-900"
-                title={data.telefono || data.telefonoCasa || ""}
+                title={data.telefonoWhatsapp || ""}
               >
-                {truncateText(data.telefono || data.telefonoCasa, 25) || (
+                {truncateText(data.telefonoWhatsapp, 25) || (
                   <span className="text-slate-400">No disponible</span>
                 )}
               </div>
@@ -172,10 +194,22 @@ export default function ContactInfoSection({
 
       {isEditing && (
         <div className="mt-4 flex justify-end gap-3">
-          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onCancel}
+            className="cursor-pointer"
+          >
             Cancelar
           </Button>
-          <Button type="button" variant="brand" size="sm" onClick={onSave}>
+          <Button
+            type="button"
+            variant="brand"
+            size="sm"
+            onClick={onSave}
+            className="cursor-pointer"
+          >
             Guardar
           </Button>
         </div>
