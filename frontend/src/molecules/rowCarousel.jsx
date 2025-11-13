@@ -48,6 +48,7 @@ export default function RowCarousel({ slides = [] }) {
   const containerRef = useRef(null);
   const trackRef = useRef(null);
 
+  /** Effect to update screen size state based on media queries */
   useEffect(() => {
     const smMql = window.matchMedia("(min-width: 640px)");
     const mdMql = window.matchMedia("(min-width: 768px)");

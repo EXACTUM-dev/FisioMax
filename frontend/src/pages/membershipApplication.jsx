@@ -23,6 +23,9 @@ import {
   PROFILE_VALIDATION_RULES,
 } from "../utils/profileFormValidation";
 
+/** MembershipApplicationPage component
+ * @returns {JSX.Element} Membership application page
+ */
 export default function MembershipApplicationPage() {
   const navigate = useNavigate();
   const isNavigatingRef = useRef(false);
@@ -54,6 +57,7 @@ export default function MembershipApplicationPage() {
     );
   };
 
+  /* Effect to warn user about unsaved changes before leaving the page */
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasFormData() && !isNavigatingRef.current) {
@@ -64,10 +68,10 @@ export default function MembershipApplicationPage() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [formData, extraDocs]);
-
+  /* Handler for file input changes */
   const handleFileChange = (e) =>
     handleValidatedFileChange(e, setFormData, setErrors);
-
+  /* Function to validate the form before submission */
   const validateForm = () => {
     const validation = validateFormSubmission(
       formData,
@@ -82,6 +86,7 @@ export default function MembershipApplicationPage() {
     return validation.isValid;
   };
 
+  /* Handler for form submission */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -124,12 +129,14 @@ export default function MembershipApplicationPage() {
   };
   const MAX_EXTRA_DOCS = 10;
 
+  /* Handler to add extra document inputs */
   const handleAddDocuments = () => {
     if (extraDocs.length < MAX_EXTRA_DOCS) {
       setExtraDocs((prev) => [...prev, { id: Date.now(), file: null }]);
     }
   };
 
+  /* Handler for extra document file input changes */
   const handleExtraFileChange = (id, e) => {
     const file = e.target.files[0] || null;
     const index = extraDocs.findIndex((doc) => doc.id === id);

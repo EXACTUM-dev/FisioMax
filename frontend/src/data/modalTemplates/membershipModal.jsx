@@ -22,6 +22,17 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
+/** MembershipModalContent component
+ * @param {Object} props - Component properties
+ * @param {boolean} props.open - Whether the modal is open
+ * @param {string} props.title - Title of the modal
+ * @param {Array} props.tableData - Data for the documents table
+ * @param {Object} props.solicitud - Membership application data
+ * @param {function} props.onClose - Handler to close the modal
+ * @param {function} props.onStatusChange - Handler for status change of the application
+ * @returns {JSX.Element} MembershipModalContent component
+ */
+
 function MembershipModalContent({
   open,
   title = "Solicitud de",
@@ -30,6 +41,7 @@ function MembershipModalContent({
   onClose,
   onStatusChange,
 }) {
+  /* State variables for modals and processing */
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showAcceptedModal, setShowAcceptedModal] = useState(false);
@@ -75,7 +87,7 @@ function MembershipModalContent({
         modalRef.current?.removeEventListener("keydown", handleKeyDown);
     }
   }, [open]);
-
+  /* Focus trapping within the modal */
   useEffect(() => {
     if (open && modalRef.current) {
       const focusableElements = modalRef.current.querySelectorAll(
@@ -110,11 +122,12 @@ function MembershipModalContent({
     }
   }, [open]);
 
+  /* Function to close the PDF preview modal */
   const closePdfModal = () => {
     setPdfModalOpen(false);
     setPdfUrl(null);
   };
-
+  /* Function to download a document given its URL */
   const downloadDocument = async (url, key) => {
     if (!url) return;
     try {
@@ -135,9 +148,9 @@ function MembershipModalContent({
       window.open(url, "_blank", "noopener");
     }
   };
-
+  /* Ref for the input element */
   const inputRef = useRef(null);
-
+  /* Destructure membership application data */
   const {
     nombre,
     nombreCompleto,
@@ -152,7 +165,7 @@ function MembershipModalContent({
     licenciatura,
     documentos = [],
   } = solicitud;
-
+  /* Function to get the membership application ID */
   const getMembershipId = () => {
     return (
       solicitud?.IDMembresia ||
@@ -161,7 +174,7 @@ function MembershipModalContent({
       solicitud?.__raw?.IDMembresia
     );
   };
-
+  /* Handler to confirm approval of the membership application */
   const handleConfirmApprove = async () => {
     setShowConfirmModal(false);
     setIsProcessing(true);
@@ -173,7 +186,7 @@ function MembershipModalContent({
       if (!id) {
         throw new Error("ID de solicitud no disponible");
       }
-
+      /* API call to approve the membership application */
       const response = await fetchWithClerk(
         `/api/membership-applications/${id}/aprobar`,
         { method: "POST" },
@@ -181,6 +194,7 @@ function MembershipModalContent({
       );
 
       if (response?.success) {
+        /* Notify parent component of status change */
         if (typeof onStatusChange === "function") {
           onStatusChange(id, "Aprobado");
         }
@@ -196,7 +210,7 @@ function MembershipModalContent({
       setIsProcessing(false);
     }
   };
-
+  /* Handler to confirm rejection of the membership application */
   const handleConfirmReject = async (reason) => {
     setShowRejectModal(false);
     setIsProcessing(true);
@@ -227,7 +241,7 @@ function MembershipModalContent({
         if (typeof onStatusChange === "function") {
           onStatusChange(id, "Rechazado");
         }
-
+        /* Show the rejected modal */
         setShowRejectedModal(true);
       } else {
         throw new Error(response?.message || "Error al rechazar solicitud");
@@ -239,11 +253,11 @@ function MembershipModalContent({
       setIsProcessing(false);
     }
   };
-
+  /* Determine the data to display in the table */
   const tableData = tableDataProp.length > 0 ? tableDataProp : documentos;
-
+  /* Determine the display name of the applicant */
   const displayName = nombreCompleto || nombre || solicitud.nombre || "Usuario";
-
+  /* Effect to focus the input when modal opens */
   useEffect(() => {
     if (open && inputRef.current) {
       setTimeout(() => inputRef.current?.focus?.(), 100);
@@ -544,7 +558,10 @@ function MembershipModalContent({
     </>
   );
 }
-
+/** MembershipModal component
+ * @param {Object} props - Component properties
+ * @param {boolean} props.open - Whether the modal is open
+ */
 export default function MembershipModal(props) {
   if (!props.open) return null;
   return <MembershipModalContent {...props} />;

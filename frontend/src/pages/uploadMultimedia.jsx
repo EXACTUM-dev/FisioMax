@@ -67,6 +67,7 @@ export default function UploadMultimedia() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const isNavigatingRef = useRef(false);
 
+  /* Effect to warn user about unsaved changes before leaving the page */
   const hasFormData = () => {
     const hasTextData =
       formData.nombre.trim() !== "" ||
@@ -77,7 +78,9 @@ export default function UploadMultimedia() {
     return hasTextData || hasFiles || hasRoles;
   };
 
+  /* Effect to warn user about unsaved changes before leaving the page */
   useEffect(() => {
+    /* Handler for beforeunload event to warn about unsaved changes */
     const handleBeforeUnload = (e) => {
       if (hasFormData() && !isNavigatingRef.current) {
         e.preventDefault();
@@ -91,6 +94,7 @@ export default function UploadMultimedia() {
   }, [formData, selectedFile, selectedThumbnail, selectedRoles]);
 
   useEffect(() => {
+    /* Function to fetch roles from the API */
     async function fetchRoles() {
       try {
         const token = await getToken();
@@ -110,10 +114,12 @@ export default function UploadMultimedia() {
     }
   }, [isLoaded, getToken]);
 
+  /* Handler for input changes */
   const handleInputChange = (e) => {
     handleContentInputChange(e, setFormData, setErrors);
   };
 
+  /* Handler for file input changes */
   const handleFileChange = (e, type = "content") => {
     const error = handleContentFileChange(
       e,
@@ -128,14 +134,16 @@ export default function UploadMultimedia() {
     }
   };
 
+  /* Handler for role toggle */
   const handleRoleToggle = (roleId) => {
     handleContentRoleToggle(roleId, selectedRoles, setSelectedRoles, setErrors);
   };
 
+  /* Handler for form submission */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar todos los campos
+    /* Validate all fields */
     const formErrors = validateContentForm({
       nombre: formData.nombre,
       descripcion: formData.descripcion,
@@ -171,6 +179,7 @@ export default function UploadMultimedia() {
         uploadData.append("thumbnail", selectedThumbnail);
       }
 
+      /* Handler for form submission */
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/content/upload`,
         {
@@ -180,6 +189,7 @@ export default function UploadMultimedia() {
         }
       );
 
+      /* Handler for form submission */
       const result = await response.json();
 
       if (result.success) {
@@ -211,7 +221,7 @@ export default function UploadMultimedia() {
       setUploading(false);
     }
   };
-
+  /* Handler for confirming exit with unsaved changes */
   const handleConfirmExit = () => {
     isNavigatingRef.current = true;
     setShowConfirmModal(false);
@@ -221,7 +231,7 @@ export default function UploadMultimedia() {
     setSelectedRoles([]);
     navigate(-1);
   };
-
+  /* Handler for cancelling exit */
   const handleCancelExit = () => {
     setShowConfirmModal(false);
   };
