@@ -27,8 +27,6 @@ import SuccessErrorModal from "../organisms/successErrorModal";
 import {
   CONTENT_FIELD_MAX_LENGTHS,
   CONTENT_TYPE_OPTIONS,
-  ACCEPTED_CONTENT_TYPES,
-  ACCEPTED_THUMBNAIL_TYPES,
   handleContentInputChange,
   handleContentFileChange,
   handleContentRoleToggle,

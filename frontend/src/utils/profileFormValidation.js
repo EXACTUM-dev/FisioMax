@@ -14,8 +14,6 @@ import {
   maxLength,
   alphabetic,
   alphanumeric,
-  numeric,
-  postalCode,
   dateFormat,
   minAge,
   fileSize,
@@ -227,7 +225,7 @@ export function getFieldLabel(fieldName) {
  * @returns {string} Sanitized and truncated value
  */
 export function sanitizeFieldValue(fieldName, value) {
-  let sanitized = value;
+  let sanitized;
 
   // Apply type-specific sanitization
   switch (fieldName) {

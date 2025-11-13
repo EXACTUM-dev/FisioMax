@@ -6,7 +6,6 @@
  * Bring the membership applications from de DB
  */
 
-import crypto from "crypto";
 import S3Service from "../services/s3Service.js";
 import db from "../../database/db.js";
 

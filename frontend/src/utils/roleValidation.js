@@ -7,9 +7,7 @@
 import {
   required,
   maxLength,
-  minLength,
   alphanumeric,
-  atLeastOne,
   validateForm,
   hasErrors,
   sanitizeMaxLength,
