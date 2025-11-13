@@ -381,20 +381,21 @@ export async function updateUser(req, res) {
       sanitized.email = sanitizeEmail(updateData.email);
     }
 
-    // Pass through dates
-    if (updateData.membershipExpiresAt) {
-      sanitized.membershipExpiresAt = updateData.membershipExpiresAt;
-    }
-    if (updateData.membershipRegisteredAt) {
-      sanitized.membershipRegisteredAt = updateData.membershipRegisteredAt;
-    }
+        const formatDateForMySQL = (isoDate) => {
+            if (!isoDate) return null;
+            // Transform '2025-11-07T00:00:00.000Z' -> '2025-11-07 00:00:00'
+            return isoDate.replace('T', ' ').replace('.000Z', '');
+        };
 
-    const updated = await updateUserById(userId, sanitized);
-    if (!updated) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Usuario no encontrado" });
-    }
+        // Pass through membershipExpiresAt as date (already validated by database)
+        if (updateData.membershipExpiresAt) {
+            sanitized.membershipExpiresAt = formatDateForMySQL(updateData.membershipExpiresAt);
+        }
+
+        // Pass through membershipRegisteredAt as date (already validated by database)
+        if (updateData.membershipRegisteredAt) {
+            sanitized.membershipRegisteredAt = formatDateForMySQL(updateData.membershipRegisteredAt);
+        }
 
     // Generate presigned URLs for documents
     const [cedulaUrl, tituloUrl, constanciasUrl] = await Promise.all([
