@@ -360,14 +360,20 @@ export async function updateUser(req, res) {
             sanitized.email = sanitizeEmail(updateData.email);
         }
 
+        const formatDateForMySQL = (isoDate) => {
+            if (!isoDate) return null;
+            // Transform '2025-11-07T00:00:00.000Z' -> '2025-11-07 00:00:00'
+            return isoDate.replace('T', ' ').replace('.000Z', '');
+        };
+
         // Pass through membershipExpiresAt as date (already validated by database)
         if (updateData.membershipExpiresAt) {
-            sanitized.membershipExpiresAt = updateData.membershipExpiresAt;
+            sanitized.membershipExpiresAt = formatDateForMySQL(updateData.membershipExpiresAt);
         }
 
         // Pass through membershipRegisteredAt as date (already validated by database)
         if (updateData.membershipRegisteredAt) {
-            sanitized.membershipRegisteredAt = updateData.membershipRegisteredAt;
+            sanitized.membershipRegisteredAt = formatDateForMySQL(updateData.membershipRegisteredAt);
         }
 
         const updated = await updateUserById(userId, sanitized);        if (!updated) {
