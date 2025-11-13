@@ -359,10 +359,10 @@ export async function updateUser(req, res) {
         if (updateData.email) {
             sanitized.email = sanitizeEmail(updateData.email);
         }
-        
+
         const formatDateForMySQL = (isoDate) => {
             if (!isoDate) return null;
-            // Convierte '2025-11-07T00:00:00.000Z' -> '2025-11-07 00:00:00'
+            // Transform '2025-11-07T00:00:00.000Z' -> '2025-11-07 00:00:00'
             return isoDate.replace('T', ' ').replace('.000Z', '');
         };
 
