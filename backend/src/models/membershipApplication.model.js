@@ -73,7 +73,10 @@ class MembershipApplication {
     this.documents = data.documents || {};
     this.id = null;
   }
-
+  /**
+   * Save new application to the database and upload documents in S3
+   * @returns {Promise<object>} - Message of success or fail
+   */
   async save() {
     const conn = await db.getConnection();
     try {

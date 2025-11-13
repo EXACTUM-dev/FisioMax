@@ -6,6 +6,13 @@
  */
 import React from "react";
 
+/** FormLabel component for rendering the label of the form field
+ * @param {Object} props - Component props
+ * @param {string} props.htmlFor - The id of the input element this label is for
+ * @param {React.ReactNode} props.children - The label text or elements
+ * @param {boolean} props.required - Whether the field is required
+ */
+
 function FormLabel({ htmlFor, children, required }) {
   return (
     <label
@@ -17,6 +24,14 @@ function FormLabel({ htmlFor, children, required }) {
     </label>
   );
 }
+
+/** FormInput component for rendering the input or textarea element
+ * @param {Object} props - Component props
+ * @param {string} [props.type="text"] - The type of the input element
+ * @param {string} props.id - The id of the input element
+ * @param {string} props.name - The name of the input element
+ * @param {string} props.value - The value of the input element
+ */
 
 function FormInput({
   type = "text",

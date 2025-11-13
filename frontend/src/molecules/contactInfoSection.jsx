@@ -23,6 +23,20 @@ function truncateText(text = "", maxChars = 25) {
   return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "…";
 }
 
+/** ContactInfoSection component
+ * @param {Object} props - Component properties
+ * @param {Object} props.data - Contact information data
+ * @param {Object} props.formData - Form data for editing
+ * @param {Object} props.errors - Validation errors
+ * @param {boolean} props.isEditing - Whether the section is in editing mode
+ * @param {boolean} props.canEdit - Whether the user can edit the section
+ * @param {function} props.onToggleEdit - Handler to toggle editing mode
+ * @param {function} props.onChange - Handler for form field changes
+ * @param {function} props.onSave - Handler to save changes
+ * @param {function} props.onCancel - Handler to cancel editing
+ * @returns {JSX.Element} ContactInfoSection component
+ */
+
 export default function ContactInfoSection({
   data = {},
   formData = {},

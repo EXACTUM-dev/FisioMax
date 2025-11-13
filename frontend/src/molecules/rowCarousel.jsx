@@ -11,20 +11,32 @@ import { Title3, Paragraph2 } from "../atoms/typography";
 import { IconButton, RightArrowIcon, LeftArrowIcon } from "../atoms/arrowIcons";
 import { useVisibleCount } from "../organisms/carousel";
 
+/** Formats a date string into a human-readable format
+ * @param {string} dateString - The date string in ISO format
+ * @returns {string} Formatted date string
+ */
 const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
   const options = { year: "numeric", month: "short", day: "numeric" };
   return date.toLocaleDateString("es-ES", options);
 };
-
+/** Truncates text to a maximum number of characters
+ * @param {string} text - Text to truncate
+ * @param {number} maxChars - Maximum number of characters
+ * @returns {string} Truncated text with ellipsis if needed
+ */
 function truncateText(text = "", maxChars) {
   if (!text || text.length <= maxChars) return text;
   const cut = text.slice(0, maxChars);
   const lastSpace = cut.lastIndexOf(" ");
   return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "…";
 }
-
+/** RowCarousel component
+ * @param {Object} props - Component properties
+ * @param {Array} props.slides - Array of slide objects to display
+ * @returns {JSX.Element} RowCarousel component
+ */
 export default function RowCarousel({ slides = [] }) {
   const navigate = useNavigate();
   const visibleCount = useVisibleCount();

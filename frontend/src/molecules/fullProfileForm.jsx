@@ -13,6 +13,18 @@ import {
   FIELD_MAX_LENGTHS,
 } from "../utils/profileFormValidation";
 
+/** FullProfileForm component
+ * @param {Object} props - Component properties
+ * @param {Object} props.formData - Form data for the profile
+ * @param {Object} props.errors - Validation errors for the form
+ * @param {function} props.onChange - Handler for form field changes
+ * @param {Array} props.countries - List of country options for the dropdown
+ * @param {Array} props.states - List of state options for the dropdown
+ * @param {Array} props.cities - List of city options for the dropdown
+ * @param {function} props.onCountryChange - Handler for country selection changes
+ * @param {function} props.onStateChange - Handler for state selection changes
+ */
+
 export default function FullProfileForm({
   formData,
   errors,

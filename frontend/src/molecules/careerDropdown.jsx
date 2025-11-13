@@ -8,6 +8,17 @@ import React, { useState, useEffect } from "react";
 import Dropdown from "./dropdown";
 import { CAREER_OPTIONS } from "../utils/profileFormValidation";
 
+/** CareerDropdown component
+ * @param {string} label - Label for the dropdown
+ * @param {string} name - Name attribute for the input
+ * @param {string} value - Current value of the input
+ * @param {function} onChange - Change handler function
+ * @param {string} error - Error message to display
+ * @param {boolean} disabled - Whether the input is disabled (read-only mode)
+ * @param {boolean} required - Whether the input is required
+ * @returns {JSX.Element} CareerDropdown component
+ */
+
 export default function CareerDropdown({
   label = "Licenciatura",
   name = "licenciatura",
@@ -23,7 +34,6 @@ export default function CareerDropdown({
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Solo ejecutar si no está inicializado o si el valor cambió externamente
     if (!isInitialized || (!showCustomCareer && value !== selectedCareer)) {
       if (CAREER_OPTIONS.slice(0, -1).includes(value)) {
         setSelectedCareer(value);

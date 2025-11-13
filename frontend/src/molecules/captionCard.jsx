@@ -7,6 +7,13 @@
 import React, { useEffect, useState } from "react";
 import { Title2, Paragraph2 } from "../atoms/typography";
 
+/**
+ * Truncates text to a specified character limit without cutting words in half.
+ * @param {string} text - The text to truncate.
+ * @param {number} limit - The maximum number of characters allowed.
+ * @returns {string} - The truncated text with an ellipsis if it exceeds the limit.
+ */
+
 function truncateByChars(text = "", limit) {
   if (!limit || !text || text.length <= limit) return text;
   const cut = text.slice(0, limit);
@@ -20,6 +27,16 @@ const formatDate = (dateString) => {
   const options = { year: "numeric", month: "short", day: "numeric" };
   return date.toLocaleDateString("es-ES", options);
 };
+
+/**
+ * CaptionCard component displaying a title, optional subtitle, and creation date with responsive truncation.
+ * @param {Object} props - Component properties.
+ * @param {string} props.title - The title text.
+ * @param {string} props.subtitle - The subtitle text.
+ * @param {string} props.createdAt - The creation date in ISO format.
+ * @param {boolean} [props.showSubtitle=true] - Flag to show or hide the subtitle.
+ * @returns {JSX.Element} The rendered CaptionCard component.
+ */
 
 export default function CaptionCard({
   title,

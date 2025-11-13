@@ -8,6 +8,13 @@ import React from "react";
 import RolePicker from "../../molecules/rolePicker";
 import trashIcon from "../../assets/icons/trash-2.png";
 
+/**
+ * Truncates text to a specified maximum number of characters, adding an ellipsis if truncated.
+ * @param {string} text The text to truncate.
+ * @param {number} maxChars The maximum number of characters allowed.
+ * @returns {string} The truncated text with ellipsis if applicable.
+ * /
+
 function truncateText(text = "", maxChars) {
   if (!text || text.length <= maxChars) return text;
   const cut = text.slice(0, maxChars);
