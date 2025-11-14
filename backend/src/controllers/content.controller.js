@@ -400,7 +400,7 @@ export async function presignUploadUrl(req, res) {
 
     const s3Folder = folderMap[folder] || "contenido";
 
-    // Usa tu servicio S3 actual para generar la URL
+    /// Use your current S3 service to generate the URL
     const fileExt = path.extname(fileName);
     const s3Key = `${s3Folder}/${crypto.randomUUID()}${fileExt}`;
     //const s3Key = `${folder || "contenido"}/${Date.now()}-${fileName}`;
