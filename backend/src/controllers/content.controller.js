@@ -15,6 +15,8 @@ import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import S3Service from "../services/s3Service.js";
 import { sanitizeContentInput } from "../utils/sanitization.js";
+import path from "path";
+import crypto from "crypto";
 
 /**
  * Determines S3 path based on content type
@@ -389,9 +391,20 @@ export async function presignUploadUrl(req, res) {
         message: "Nombre y tipo de archivo son requeridos",
       });
     }
+    // Map content type to folder
+    const folderMap = {
+      Video: "videos",
+      Articulo: "articulos",
+      Podcast: "podcasts",
+      Libro: "libros",
+    };
+
+    const s3Folder = folderMap[folder] || "contenido";
 
     // Usa tu servicio S3 actual para generar la URL
-    const s3Key = `${folder || "contenido"}/${Date.now()}-${fileName}`;
+    const fileExt = path.extname(fileName);
+    const s3Key = `${s3Folder}/${crypto.randomUUID()}${fileExt}`;
+    //const s3Key = `${folder || "contenido"}/${Date.now()}-${fileName}`;
     const url = await S3Service.getPresignedUploadUrl(s3Key, fileType);
 
     return res.status(200).json({

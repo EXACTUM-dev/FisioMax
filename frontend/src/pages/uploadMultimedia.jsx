@@ -253,7 +253,7 @@ export default function UploadMultimedia() {
           body: JSON.stringify({
             fileName: selectedFile.name,
             fileType: selectedFile.type,
-            folder: formData.tipo.toLowerCase()
+            folder: formData.tipo
           }),
         }
       );
