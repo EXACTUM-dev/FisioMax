@@ -12,9 +12,16 @@ import {insertLoginErrorLog} from '../models/loginLogs.model.js';
 import {getRequestIp} from '../utils/request.js';
 
 /**
- * Registra un error de login sin interrumpir el flujo principal.
- * @param {Object} req - Express request.
- * @param {Object} logData - Datos adicionales del log.
+ * Logs a login error without interrupting the main flow.
+ *
+ * @async
+ * @param {import("express").Request} req - Express request object.
+ * @param {Object} logData - Additional log data.
+ * @param {string|null} [logData.usuario] - User identifier.
+ * @param {string} [logData.codigoError] - Error code.
+ * @param {string} [logData.mensajeError] - Error message.
+ * @param {Object} [logData.detalles] - Additional error details.
+ * @returns {Promise<void>}
  */
 async function logLoginError(req, logData) {
   try {
@@ -39,12 +46,12 @@ async function logLoginError(req, logData) {
  * Must be used after the requireAuth middleware from Clerk.
  *
  * @async
- * @param {Object} req - Express request object.
+ * @param {import("express").Request} req - Express request object.
  * @param {Object} req.auth - Clerk authentication object.
  * @param {string} req.auth.userId - The Clerk user ID.
- * @param {Object} res - Express response object.
- * @param {Function} next - Express next function.
- * @return {Promise<void>}
+ * @param {import("express").Response} res - Express response object.
+ * @param {import("express").NextFunction} next - Express next function.
+ * @returns {Promise<void>}
  */
 export async function requireDbUser(req, res, next) {
   try {
@@ -80,7 +87,7 @@ export async function requireDbUser(req, res, next) {
       });
     }
 
-    // User exists in DB, continue
+    // User exists in DB, continue to next middleware
     next();
   } catch (error) {
 
@@ -105,12 +112,12 @@ export async function requireDbUser(req, res, next) {
  * but allows request to continue (useful for sync endpoints).
  *
  * @async
- * @param {Object} req - Express request object.
+ * @param {import("express").Request} req - Express request object.
  * @param {Object} req.auth - Clerk authentication object.
  * @param {string} req.auth.userId - The Clerk user ID.
- * @param {Object} res - Express response object.
- * @param {Function} next - Express next function.
- * @return {Promise<void>}
+ * @param {import("express").Response} res - Express response object.
+ * @param {import("express").NextFunction} next - Express next function.
+ * @returns {Promise<void>}
  */
 export async function checkDbUser(req, res, next) {
   try {
@@ -122,14 +129,14 @@ export async function checkDbUser(req, res, next) {
 
       if (!existsInDB) {
         console.warn(
-            `Usuario ${clerkUserId} autenticado en Clerk pero no existe en BD`
+            `User ${clerkUserId} authenticated in Clerk but does not exist in database`
         );
       }
     }
 
     next();
   } catch (error) {
-    // Don't block the request, just log
+    // Don't block the request, just continue
     next();
   }
 }
