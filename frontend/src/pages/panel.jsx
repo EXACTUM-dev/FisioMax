@@ -55,6 +55,7 @@ export default function Panel() {
   const [roleRows, setRoleRows] = useState([]); // Roles from backend
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingRoles, setLoadingRoles] = useState(true);
+  const [loadingMemberships, setLoadingMemberships] = useState(true);
 
   const [membershipRows, setMembershipRows] = useState([]);
   const [selectedMembership, setSelectedMembership] = useState(null);
@@ -94,6 +95,7 @@ export default function Panel() {
   // Fetch memberships list from data base
   const fetchMemberships = useCallback(async () => {
     try {
+      setLoadingMemberships(true);
       const token = await getToken();
       const resp = await fetchWithClerk(
         "/api/membership-applications",
@@ -140,6 +142,8 @@ export default function Panel() {
     } catch (err) {
       console.error("Error de carga de solicitudes:", err);
       setError("Error de carga de solicitudes. Por favor intente más tarde.");
+    } finally {
+      setLoadingMemberships(false);
     }
   }, [getToken]);
 
@@ -501,7 +505,7 @@ export default function Panel() {
           <DataSwitchContainer
             activeKey={activeTab}
             onTabChange={setActiveTab}
-            loading={loadingRoles || loadingUsers}
+            loading={loadingRoles || loadingUsers || loadingMemberships}
             views={[
               {
                 key: "solicitudes",
@@ -510,6 +514,7 @@ export default function Panel() {
                 columns: membershipColumns,
                 rows: membershipRows,
                 searchPlaceholder: "Buscar Solicitudes...",
+                emptyMessage: "No hay solicitudes pendientes",
               },
               {
                 key: "users",

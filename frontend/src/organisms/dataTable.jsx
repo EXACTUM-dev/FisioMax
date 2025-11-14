@@ -1,7 +1,7 @@
 /**
  * @fileoverview Generic data table with responsive mobile cards, sortable columns, and pagination
  * @author EXACTUM-dev
- * @version 0.4.0
+ * @version 0.4.1
  * @description Columns are fully dynamic and can include custom renderers, metadata, sorting, and pagination
  */
 import React, { useMemo, useState } from "react";
@@ -17,6 +17,7 @@ import Pagination from "../molecules/pagination";
  * @param {string[]} [filterOptions] - Array of filter values for the filter chips
  * @param {number} [itemsPerPage=20] - Number of items to display per page
  * @param {boolean} [enablePagination=true] - Enable/disable pagination
+ * @param {string} [emptyMessage="No hay datos disponibles"] - Custom message when no data
  * @returns {JSX.Element} Responsive data table with sorting and pagination
  */
 export default function DataTable({
@@ -26,6 +27,7 @@ export default function DataTable({
   filterOptions = [],
   itemsPerPage = 20,
   enablePagination = true,
+  emptyMessage = "No hay datos disponibles",
 }) {
   const [activeFilter, setActiveFilter] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -308,6 +310,15 @@ export default function DataTable({
               </tbody>
             </table>
           </div>
+
+          {/* Empty state for desktop */}
+          {sortedData.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-slate-600 font-medium text-base">
+                {emptyMessage || "No hay datos disponibles"}
+              </p>
+            </div>
+          )}
         </div>
 
         {enablePagination && sortedData.length > 0 && (
@@ -405,26 +416,11 @@ export default function DataTable({
           );
         })}
 
-        {/* Empty state */}
+        {/* Empty state for mobile */}
         {sortedData.length === 0 && (
           <div className="text-center py-12 bg-white rounded-lg border border-neutral-200">
-            <div className="text-slate-400 mb-3">
-              <svg
-                className="w-16 h-16 mx-auto"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <p className="text-slate-600 font-medium">
-              No hay datos disponibles
+            <p className="text-slate-600 font-medium text-base">
+              {emptyMessage || "No hay datos disponibles"}
             </p>
           </div>
         )}
