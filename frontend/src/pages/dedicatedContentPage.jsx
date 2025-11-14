@@ -16,6 +16,7 @@ import GridCarousel from "../molecules/gridCarousel";
 import Loading from "../atoms/loading";
 import AlertBanner from "../atoms/alertBanner";
 import Button from "../atoms/button";
+import BackButton from "../atoms/backButton";
 import { Title2 } from "../atoms/typography";
 
 // Services
@@ -185,12 +186,15 @@ export default function DedicatedContentPage() {
 
       <main className="p-4 space-y-8 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-[70rem] mx-auto">
-          {/* Header with title and filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <Title2>{config.title}</Title2>
+          {/* Header with back button, title and filters */}
+          <div className="flex flex-col gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <BackButton onClick={() => navigate(-1)} />
+              <Title2 className="mb-0">{config.title}</Title2>
+            </div>
 
             {/* Sort dropdown */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 sm:ml-auto">
               <label
                 htmlFor="sort-select"
                 className="text-sm font-medium text-gray-700"

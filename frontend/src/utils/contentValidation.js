@@ -1,6 +1,6 @@
 /**
  * @fileoverview Validation rules for multimedia content uploads
- * @version 0.1.0
+ * @version 0.2.0
  * @author EXACTUM-dev
  */
 
@@ -24,6 +24,43 @@ export const CONTENT_FIELD_MAX_LENGTHS = {
 };
 
 /**
+ * File type restrictions per content type
+ */
+export const CONTENT_FILE_RESTRICTIONS = {
+  Articulo: {
+    accept: ".pdf",
+    types: ["application/pdf"],
+    label: "PDF",
+    maxSize: 50 * 1024 * 1024, // 50MB
+  },
+  Libro: {
+    accept: ".pdf",
+    types: ["application/pdf"],
+    label: "PDF",
+    maxSize: 100 * 1024 * 1024, // 100MB
+  },
+  Podcast: {
+    accept:
+      ".mp3,.mp4,.mov,.webm,audio/mpeg,audio/mp4,video/mp4,video/quicktime,video/webm",
+    types: [
+      "audio/mpeg",
+      "audio/mp4",
+      "video/mp4",
+      "video/quicktime",
+      "video/webm",
+    ],
+    label: "MP3, MP4, MOV, WEBM",
+    maxSize: 500 * 1024 * 1024, // 500MB
+  },
+  Video: {
+    accept: ".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm",
+    types: ["video/mp4", "video/quicktime", "video/webm"],
+    label: "MP4, MOV, WEBM",
+    maxSize: 5 * 1024 * 1024 * 1024, // 5GB
+  },
+};
+
+/**
  * Validation rules for content upload form
  */
 export const CONTENT_VALIDATION_RULES = {
@@ -38,10 +75,7 @@ export const CONTENT_VALIDATION_RULES = {
       "Debes seleccionar al menos un rol al que va dirigido el contenido"
     ),
   ],
-  file: [
-    required("Debes seleccionar un archivo de contenido"),
-    fileSize(5120, "El archivo de contenido"), // 5GB in MB
-  ],
+  file: [required("Debes seleccionar un archivo de contenido")],
   thumbnail: [
     fileSize(20, "La miniatura"),
     fileType(
@@ -60,11 +94,6 @@ export const CONTENT_TYPE_OPTIONS = [
   { value: "Podcast", label: "Podcast" },
   { value: "Libro", label: "Libro" },
 ];
-
-/**
- * Accepted file types for content
- */
-export const ACCEPTED_CONTENT_TYPES = "video/*,audio/*,image/*,.pdf,.doc,.docx";
 
 /**
  * Accepted file types for thumbnails
@@ -86,12 +115,59 @@ export function sanitizeContentField(fieldName, value) {
 }
 
 /**
+ * Validates file type based on content type
+ * @param {File} file - File to validate
+ * @param {string} contentType - Type of content (Articulo, Libro, Podcast, Video)
+ * @returns {string|null} Error message or null if valid
+ */
+export function validateFileType(file, contentType) {
+  if (!file) return null;
+
+  const restrictions = CONTENT_FILE_RESTRICTIONS[contentType];
+  if (!restrictions) return "Tipo de contenido no válido";
+
+  // Check file type
+  const isValidType = restrictions.types.some((type) => {
+    if (type.endsWith("/*")) {
+      return file.type.startsWith(type.replace("/*", ""));
+    }
+    return file.type === type;
+  });
+
+  if (!isValidType) {
+    return `Solo se permiten archivos ${restrictions.label} para ${contentType}`;
+  }
+
+  // Check file size
+  if (file.size > restrictions.maxSize) {
+    const maxSizeMB = (restrictions.maxSize / 1024 / 1024).toFixed(0);
+    const maxSizeGB =
+      restrictions.maxSize >= 1024 * 1024 * 1024
+        ? `${(restrictions.maxSize / 1024 / 1024 / 1024).toFixed(1)}GB`
+        : `${maxSizeMB}MB`;
+    return `El archivo excede el tamaño máximo de ${maxSizeGB}`;
+  }
+
+  return null;
+}
+
+/**
  * Validates content form
  * @param {Object} formData - Form data to validate
  * @returns {Object} Validation errors
  */
 export function validateContentForm(formData) {
-  return validateForm(formData, CONTENT_VALIDATION_RULES);
+  const errors = validateForm(formData, CONTENT_VALIDATION_RULES);
+
+  // Additional validation for file type based on content type
+  if (formData.file && formData.tipo) {
+    const fileError = validateFileType(formData.file, formData.tipo);
+    if (fileError) {
+      errors.file = fileError;
+    }
+  }
+
+  return errors;
 }
 
 /**
@@ -135,39 +211,66 @@ export function handleContentInputChange(e, setFormData, setErrors) {
 }
 
 /**
- * Handles file change with validation
- * @param {Event} e - File input change event
- * @param {string} type - Type of file ('content' or 'thumbnail')
- * @param {Function} setFile - File setter
- * @param {Function} setErrors - Errors setter
- * @returns {string|null} Error message or null
+ * Handles content file input changes with type validation
+ * @param {Event} e - Input change event
+ * @param {string} type - File type (content or thumbnail)
+ * @param {string} contentType - Content type for validation
+ * @param {Function} setFile - State setter for file
+ * @param {Function} setErrors - State setter for errors
+ * @returns {string|null} Error message if validation fails
  */
-export function handleContentFileChange(e, type, setFile, setErrors) {
-  const file = e.target.files[0];
-  if (!file) return null;
+export function handleContentFileChange(
+  e,
+  type,
+  contentType,
+  setFile,
+  setErrors
+) {
+  const file = e.target.files?.[0];
 
-  const rules =
-    type === "thumbnail"
-      ? CONTENT_VALIDATION_RULES.thumbnail
-      : CONTENT_VALIDATION_RULES.file;
-
-  const fieldErrors = validateForm({ file }, { file: rules });
-
-  if (fieldErrors.file) {
+  if (!file) {
+    setFile(null);
     setErrors((prev) => ({
       ...prev,
-      [type === "thumbnail" ? "thumbnail" : "file"]: fieldErrors.file,
+      [type === "thumbnail" ? "thumbnail" : "file"]: null,
     }));
-    e.target.value = "";
-    return fieldErrors.file;
+    return null;
+  }
+
+  // Thumbnail validation
+  if (type === "thumbnail") {
+    const validImageTypes = ["image/png", "image/jpeg", "image/jpg"];
+    if (!validImageTypes.includes(file.type)) {
+      setFile(null);
+      const error = "Solo se permiten archivos PNG o JPG para la miniatura";
+      setErrors((prev) => ({ ...prev, thumbnail: error }));
+      return error;
+    }
+
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    if (file.size > maxSize) {
+      setFile(null);
+      const error = "La miniatura no debe superar los 20MB";
+      setErrors((prev) => ({ ...prev, thumbnail: error }));
+      return error;
+    }
+
+    setFile(file);
+    setErrors((prev) => ({ ...prev, thumbnail: null }));
+    return null;
+  }
+
+  // Content file validation with content type restrictions
+  const validationError = validateFileType(file, contentType);
+
+  if (validationError) {
+    setFile(null);
+    setErrors((prev) => ({ ...prev, file: validationError }));
+    return validationError;
   }
 
   setFile(file);
-  setErrors((prev) => ({
-    ...prev,
-    [type === "thumbnail" ? "thumbnail" : "file"]: null,
-  }));
-
+  setErrors((prev) => ({ ...prev, file: null }));
   return null;
 }
 
