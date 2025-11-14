@@ -123,7 +123,14 @@ export default function GridCarousel({ slides = [] }) {
               <div
                 key={slide.id ?? `${rowIdx}-${itemIdx}`}
                 className={`${colSpanClass} cursor-pointer group`}
+                tabIndex={0}
                 onClick={() => handleCardClick(slide.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleCardClick(slide.id);
+                  }
+                }}
               >
                 {/* Image container with fixed aspect ratio */}
                 <div

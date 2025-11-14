@@ -26,11 +26,9 @@ import Modal from "../molecules/modal";
 import ConfirmationModal from "../molecules/confirmationModal";
 
 // Organisms
-import Carousel from "../organisms/carousel";
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import DataTable from "../organisms/dataTable";
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
-import buildRolePermissionsColumns from "../data/tableTemplates/rolePermissionsColumns";
 import buildMembershipColumns from "../data/tableTemplates/membershipColumns";
 import { fetchWithClerk } from "../utils/api";
 import MembershipModal from "../data/modalTemplates/membershipModal";
@@ -411,15 +409,15 @@ export default function Panel() {
         },
         onChangeRole: (row, chosenRole) =>
           updateUserRole(row.id || row.IDUsuario, chosenRole),
-        onClickName: handleUserNameClick,
+        onView: handleUserNameClick,
       }),
-    [roleRows, updateUserRole, handleUserNameClick, getToken]
+    [roleRows, updateUserRole, getToken]
   );
 
   // Define columns for the role table with view action
   const roleColumns = useMemo(
     () =>
-      buildRolePermissionsColumns({
+      buildUserRolesColumns({
         onEdit: handleViewRole,
         editLabel: "Ver Permisos",
         editTooltip: "Ver detalles",

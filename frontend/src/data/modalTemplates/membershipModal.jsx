@@ -1,4 +1,4 @@
-/** 
+/**
  * @fileoverview Modal for viewing membership application requests with attached documents.
  * @author EXACTUM-dev
  * @version 1.3.1
@@ -14,25 +14,14 @@ import DataTable from "../../organisms/dataTable";
 import Modal from "../../molecules/modal";
 import RejectModal from "../../data/modalTemplates/rejectMembershipModal";
 import pdfIcon from "../../assets/icons/pdf.png";
-import { useAuth } from '@clerk/clerk-react';
-import { fetchWithClerk } from '../../utils/api';
+import { useAuth } from "@clerk/clerk-react";
+import { fetchWithClerk } from "../../utils/api";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url
 ).toString();
 
-/**
- * MembershipModalContent component
- * @param {Object} props - Component properties.
- * @param {boolean} props.open - Determines whether the modal is visible.
- * @param {string} props.title - Title displayed on the modal header.
- * @param {Array} props.tableData - Optional custom data for the documents table.
- * @param {Object} props.solicitud - Contains applicant information and documents.
- * @param {Function} props.onClose - Function to close the modal.
- * @param {Function} props.onStatusChange - Callback when status changes (optional).
- * @returns {JSX.Element} The modal content for viewing a membership request.
- */
 function MembershipModalContent({
   open,
   title = "Solicitud de",
@@ -41,7 +30,6 @@ function MembershipModalContent({
   onClose,
   onStatusChange,
 }) {
-  // State variables for managing modal visibility
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showAcceptedModal, setShowAcceptedModal] = useState(false);
@@ -52,40 +40,104 @@ function MembershipModalContent({
 
   const { getToken } = useAuth();
 
-  // Closes the PDF preview modal and clears the URL.
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (open && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      // Focus the first element
+      first?.focus();
+
+      // Function to catch the navigation with Tab
+      const handleKeyDown = (e) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      modalRef.current.addEventListener("keydown", handleKeyDown);
+      return () =>
+        modalRef.current?.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      // Focus the first element
+      first?.focus();
+
+      // Function to catch the navigation with Tab
+      const handleKeyDown = (e) => {
+        if (e.key === "Tab") {
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      modalRef.current.addEventListener("keydown", handleKeyDown);
+      return () =>
+        modalRef.current?.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [open]);
+
   const closePdfModal = () => {
     setPdfModalOpen(false);
     setPdfUrl(null);
   };
 
-  // Download a file via fetch and trigger browser download.
   const downloadDocument = async (url, key) => {
     if (!url) return;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
-      const filename = key ? key.split('/').pop() : 'document.pdf';
+      const filename = key ? key.split("/").pop() : "document.pdf";
       const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = blobUrl;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      // release object URL after a short timeout
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000 * 10);
     } catch (err) {
-      console.error('Error descargando documento:', err);
-      // open in new tab
-      window.open(url, '_blank', 'noopener');
+      console.error("Error descargando documento:", err);
+      window.open(url, "_blank", "noopener");
     }
   };
 
-  // Reference for focusing on a specific input when modal opens.
   const inputRef = useRef(null);
 
-  // Destructure applicant data for easier access
   const {
     nombre,
     nombreCompleto,
@@ -101,104 +153,96 @@ function MembershipModalContent({
     documentos = [],
   } = solicitud;
 
-  // Get the membership ID from various possible fields
   const getMembershipId = () => {
-    return solicitud?.IDMembresia || 
-           solicitud?.id || 
-           solicitud?.ID || 
-           solicitud?.__raw?.IDMembresia;
+    return (
+      solicitud?.IDMembresia ||
+      solicitud?.id ||
+      solicitud?.ID ||
+      solicitud?.__raw?.IDMembresia
+    );
   };
 
-  // Handle confirm acceptance and call backend to approve membership
   const handleConfirmApprove = async () => {
     setShowConfirmModal(false);
     setIsProcessing(true);
-    
+
     try {
       const token = await getToken();
       const id = getMembershipId();
-      
+
       if (!id) {
-        throw new Error('ID de solicitud no disponible');
+        throw new Error("ID de solicitud no disponible");
       }
 
       const response = await fetchWithClerk(
-        `/api/membership-applications/${id}/aprobar`, 
-        { method: 'POST' }, 
+        `/api/membership-applications/${id}/aprobar`,
+        { method: "POST" },
         token
       );
 
       if (response?.success) {
-        // Notify parent component of status change
-        if (typeof onStatusChange === 'function') {
-          onStatusChange(id, 'Aprobado');
+        if (typeof onStatusChange === "function") {
+          onStatusChange(id, "Aprobado");
         }
-        
-        // Show accepted modal
+
         setShowAcceptedModal(true);
       } else {
-        throw new Error(response?.message || 'Error al aprobar solicitud');
+        throw new Error(response?.message || "Error al aprobar solicitud");
       }
     } catch (err) {
-      console.error('Error aprobando solicitud:', err);
+      console.error("Error aprobando solicitud:", err);
       window.alert(`No se pudo aprobar la solicitud: ${err.message}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Handle confirm rejection with reason
   const handleConfirmReject = async (reason) => {
     setShowRejectModal(false);
     setIsProcessing(true);
-    
+
     try {
       const token = await getToken();
       const id = getMembershipId();
-      
+
       if (!id) {
-        throw new Error('ID de solicitud no disponible');
+        throw new Error("ID de solicitud no disponible");
       }
 
-      // Send rejection reason in request body
       const response = await fetchWithClerk(
-        `/api/membership-applications/${id}/rechazar`, 
-        { 
-          method: 'POST',
+        `/api/membership-applications/${id}/rechazar`,
+        {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
-            razonRechazo: reason || 'Sin razón especificada' 
-          })
-        }, 
+          body: JSON.stringify({
+            razonRechazo: reason || "Sin razón especificada",
+          }),
+        },
         token
       );
 
       if (response?.success) {
-        // Notify parent component of status change
-        if (typeof onStatusChange === 'function') {
-          onStatusChange(id, 'Rechazado');
+        if (typeof onStatusChange === "function") {
+          onStatusChange(id, "Rechazado");
         }
-        
-        // Show rejected confirmation modal
+
         setShowRejectedModal(true);
       } else {
-        throw new Error(response?.message || 'Error al rechazar solicitud');
+        throw new Error(response?.message || "Error al rechazar solicitud");
       }
     } catch (err) {
-      console.error('Error rechazando solicitud:', err);
+      console.error("Error rechazando solicitud:", err);
       window.alert(`No se pudo rechazar la solicitud: ${err.message}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Determine which data to use for the table
   const tableData = tableDataProp.length > 0 ? tableDataProp : documentos;
 
-  // Display full name 
-  const displayName = nombreCompleto || nombre || solicitud.nombre || 'Usuario';
+  const displayName = nombreCompleto || nombre || solicitud.nombre || "Usuario";
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -206,63 +250,49 @@ function MembershipModalContent({
     }
   }, [open]);
 
-  // Temporary function for handling field changes.
-  const setData = (e) => {
-    console.log(`Field ${e.target.name || "unnamed"} changed to:`, e.target.value);
-  };
-
   return (
     <>
-      {/* Main modal container */}
       <Modal open={open} onClose={onClose} size="x2">
         <div className="flex flex-col md:flex-row gap-6 w-full">
-          
-          {/* Left column - Applicant form */}
           <div className="flex-2 flex flex-col gap-2">
             <Title2 className="text-center mb-1">{title}</Title2>
-            <p className="text-lg font-semibold text-center mb-4">{displayName}</p>
+            <p className="text-lg font-semibold text-center mb-4">
+              {displayName}
+            </p>
 
-            {/* Applicant contact and social info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <FieldBox 
-                label="Correo" 
-                value={correo || "No se envió"} 
-                readOnly 
-                onChange={setData} 
+              <FieldBox
+                label="Correo"
+                value={correo || "No se envió"}
+                readOnly
               />
-              <FieldBox 
-                label="Teléfono" 
-                value={telefonoWhatsapp || telefono || "No se envió"} 
-                readOnly 
-                onChange={setData} 
+              <FieldBox
+                label="Teléfono"
+                value={telefonoWhatsapp || telefono || "No se envió"}
+                readOnly
               />
-              <FieldBox 
-                label="Facebook" 
-                value={facebook || "No se envió"} 
-                readOnly 
-                onChange={setData} 
+              <FieldBox
+                label="Facebook"
+                value={facebook || "No se envió"}
+                readOnly
               />
-              <FieldBox 
-                label="Instagram" 
-                value={instagram || "No se envió"} 
-                readOnly 
-                onChange={setData} 
+              <FieldBox
+                label="Instagram"
+                value={instagram || "No se envió"}
+                readOnly
               />
-              <FieldBox 
-                label="LinkedIn" 
-                value={linkedin || "No se envió"} 
-                readOnly 
-                onChange={setData} 
+              <FieldBox
+                label="LinkedIn"
+                value={linkedin || "No se envió"}
+                readOnly
               />
-              <FieldBox 
-                label="Página web" 
-                value={paginaWeb || "No se envió"} 
-                readOnly 
-                onChange={setData} 
+              <FieldBox
+                label="Página web"
+                value={paginaWeb || "No se envió"}
+                readOnly
               />
             </div>
 
-            {/* Academic and location info */}
             <div className="mt-1 flex flex-col gap-1">
               <FieldBox
                 label="Ubicación de práctica profesional"
@@ -270,21 +300,17 @@ function MembershipModalContent({
                 multiline
                 rows={2}
                 readOnly
-                onChange={setData}
               />
-              <FieldBox 
-                label="Licenciatura" 
-                value={licenciatura || "No se envió"} 
-                readOnly 
-                onChange={setData} 
+              <FieldBox
+                label="Licenciatura"
+                value={licenciatura || "No se envió"}
+                readOnly
               />
             </div>
           </div>
 
-          {/* Vertical divider */}
           <div className="hidden lg:block w-px bg-slate-200 mx-2" />
 
-          {/* Right column - Document list */}
           <div className="flex-2 min-w-0 lg:mt-0 min-h-0">
             <div className="bg-white rounded-lg border border-slate-200 p-2 sm:p-3">
               <DataTable
@@ -319,11 +345,12 @@ function MembershipModalContent({
                     isAction: true,
                     render: (row) => (
                       <div className="flex items-center justify-end gap-2">
-                        {/* View PDF in modal (preview) */}
                         <button
                           type="button"
                           title={row.url ? "Descargar PDF" : "Sin archivo"}
-                          onClick={() => row.url && downloadDocument(row.url, row.key)}
+                          onClick={() =>
+                            row.url && downloadDocument(row.url, row.key)
+                          }
                           disabled={!row.url}
                           className={
                             "px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 " +
@@ -339,9 +366,10 @@ function MembershipModalContent({
                             className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
                           />
                         </button>
-                        {/* Download / open in new tab — use signed URL if available */}
                         {!row.url && (
-                          <span className="text-xs text-slate-400">Sin archivo</span>
+                          <span className="text-xs text-slate-400">
+                            Sin archivo
+                          </span>
                         )}
                       </div>
                     ),
@@ -357,24 +385,22 @@ function MembershipModalContent({
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="flex justify-end gap-3">
-          <Button 
-            label="Rechazar" 
-            variant="cancel" 
+          <Button
+            label="Rechazar"
+            variant="cancel"
             onClick={() => setShowRejectModal(true)}
             disabled={isProcessing}
           />
-          <Button 
-            label="Aceptar" 
-            variant="brand" 
+          <Button
+            label="Aceptar"
+            variant="brand"
             onClick={() => setShowConfirmModal(true)}
             disabled={isProcessing}
           />
         </div>
       </Modal>
 
-      {/* PDF preview modal */}
       <Modal open={pdfModalOpen} onClose={closePdfModal} size="2xl">
         <div className="flex flex-col items-center p-4">
           <h3 className="text-lg font-semibold mb-4">Vista previa del PDF</h3>
@@ -383,19 +409,18 @@ function MembershipModalContent({
               <Page pageNumber={1} width={600} />
             </Document>
           )}
-          <Button 
-            label="Cerrar" 
-            variant="cancel" 
-            onClick={closePdfModal} 
-            className="mt-4" 
+          <Button
+            label="Cerrar"
+            variant="cancel"
+            onClick={closePdfModal}
+            className="mt-4"
           />
         </div>
       </Modal>
 
-      {/* Confirmation modal for APPROVAL */}
-      <Modal 
-        open={showConfirmModal} 
-        onClose={() => setShowConfirmModal(false)} 
+      <Modal
+        open={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
         size="sm"
       >
         <div className="p-6 text-center">
@@ -403,7 +428,8 @@ function MembershipModalContent({
             ¿Aceptar solicitud?
           </h2>
           <p className="text-slate-600 mb-6">
-            ¿Estás seguro de que deseas aceptar a <strong>{displayName}</strong>? Esta acción no se puede deshacer.
+            ¿Estás seguro de que deseas aceptar a <strong>{displayName}</strong>
+            ? Esta acción no se puede deshacer.
           </p>
           <div className="flex justify-center gap-3">
             <Button
@@ -424,7 +450,6 @@ function MembershipModalContent({
         </div>
       </Modal>
 
-      {/* Reject confirmation modal with reason */}
       <RejectModal
         open={showRejectModal}
         onConfirm={handleConfirmReject}
@@ -433,13 +458,12 @@ function MembershipModalContent({
         subtitle={`Está a punto de rechazar la solicitud de ${displayName}. Por favor proporcione el motivo.`}
       />
 
-      {/* Accepted confirmation modal shown after successful approve */}
-      <Modal 
-        open={showAcceptedModal} 
-        onClose={() => { 
-          setShowAcceptedModal(false); 
-          if (typeof onClose === 'function') onClose(); 
-        }} 
+      <Modal
+        open={showAcceptedModal}
+        onClose={() => {
+          setShowAcceptedModal(false);
+          if (typeof onClose === "function") onClose();
+        }}
         size="md"
         className="p-6"
       >
@@ -464,25 +488,24 @@ function MembershipModalContent({
           <p className="text-lg">
             {displayName} ha sido aceptado en la sociedad.
           </p>
-          <Button 
-            label="Entendido" 
+          <Button
+            label="Entendido"
             variant="brand"
-            onClick={() => { 
-              setShowAcceptedModal(false); 
-              if (typeof onClose === 'function') onClose(); 
-            }} 
+            onClick={() => {
+              setShowAcceptedModal(false);
+              if (typeof onClose === "function") onClose();
+            }}
             className="mt-6"
           />
         </div>
       </Modal>
 
-      {/* Rejected confirmation modal */}
-      <Modal 
-        open={showRejectedModal} 
-        onClose={() => { 
-          setShowRejectedModal(false); 
-          if (typeof onClose === 'function') onClose(); 
-        }} 
+      <Modal
+        open={showRejectedModal}
+        onClose={() => {
+          setShowRejectedModal(false);
+          if (typeof onClose === "function") onClose();
+        }}
         size="md"
         className="p-6"
       >
@@ -507,13 +530,13 @@ function MembershipModalContent({
           <p className="text-lg">
             La solicitud de {displayName} ha sido rechazada.
           </p>
-          <Button 
-            label="Entendido" 
+          <Button
+            label="Entendido"
             variant="brand"
-            onClick={() => { 
-              setShowRejectedModal(false); 
-              if (typeof onClose === 'function') onClose(); 
-            }} 
+            onClick={() => {
+              setShowRejectedModal(false);
+              if (typeof onClose === "function") onClose();
+            }}
             className="mt-6"
           />
         </div>
@@ -522,9 +545,6 @@ function MembershipModalContent({
   );
 }
 
-/**
- * Wrapper component for conditional rendering of the membership modal.
- */
 export default function MembershipModal(props) {
   if (!props.open) return null;
   return <MembershipModalContent {...props} />;
