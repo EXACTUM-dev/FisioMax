@@ -202,15 +202,6 @@ export default function MembershipCard({
               </span>
             </div>
           </div>
-
-          <div className="mt-4">
-            <Button
-              size="sm"
-              label="Pagar membresía"
-              onClick={() => {}}
-              className="cursor-pointer"
-            />
-          </div>
         </>
       ) : (
         <>
