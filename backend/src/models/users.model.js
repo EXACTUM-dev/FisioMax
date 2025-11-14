@@ -8,7 +8,12 @@
 
 import { dbPool } from "../../config.js";
 import { findRoleByName } from "./roles.model.js";
-import { encrypt, encryptFields, decryptFields } from "../utils/encryption.js";
+import {
+  encrypt,
+  decrypt,
+  encryptFields,
+  decryptFields,
+} from "../services/encryptionService.js";
 
 /**
  * Sensitive fields that must be encrypted/decrypted.
@@ -308,8 +313,11 @@ export async function getUserById(userId) {
  */
 export async function getUserByEmail(email) {
   try {
-    // Encrypt email for search
-    const encryptedEmail = encrypt(email);
+    // Normalize email before encrypting (lowercase, trim)
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Encrypt normalized email for search
+    const encryptedEmail = encrypt(normalizedEmail);
 
     const [rows] = await dbPool.query(
       `SELECT 
@@ -468,21 +476,29 @@ export async function updateUserById(userId, updateData) {
       "membershipPaymentStatus",
     ];
 
+    // Normalize email if present
+    const normalizedUpdateData = {
+      ...updateData,
+      ...(updateData.correo && {
+        correo: updateData.correo.toLowerCase().trim(),
+      }),
+    };
+
     // Encrypt sensitive fields before update
-    const encryptedData = encryptFields(updateData, SENSITIVE_FIELDS);
+    const encryptedData = encryptFields(normalizedUpdateData, SENSITIVE_FIELDS);
 
     const userSetClauses = [];
     const userValues = [];
 
     // Build SET clauses for usuario table
     for (const field of userAllowedFields) {
-      if (Object.prototype.hasOwnProperty.call(updateData, field)) {
+      if (Object.prototype.hasOwnProperty.call(normalizedUpdateData, field)) {
         userSetClauses.push(`${field} = ?`);
         // Use encrypted value if field is sensitive, otherwise use original
         const valueToUse =
           SENSITIVE_FIELDS.includes(field) && encryptedData[field]
             ? encryptedData[field]
-            : updateData[field];
+            : normalizedUpdateData[field];
         userValues.push(valueToUse);
       }
     }
@@ -587,8 +603,14 @@ export async function createUserWithClerkId(userData) {
       codigoPostal = null,
     } = userData;
 
+    // Normalize email before encryption
+    const normalizedUserData = {
+      ...userData,
+      correo: correo ? correo.toLowerCase().trim() : correo,
+    };
+
     // Encrypt sensitive data before insertion
-    const encryptedData = encryptFields(userData, SENSITIVE_FIELDS);
+    const encryptedData = encryptFields(normalizedUserData, SENSITIVE_FIELDS);
 
     const [result] = await connection.query(
       `INSERT INTO usuario 
@@ -597,19 +619,19 @@ export async function createUserWithClerkId(userData) {
       [
         IDUsuario,
         clerkID,
-        encryptedData.nombres || nombres,
-        encryptedData.apellidoP || apellidoP,
-        encryptedData.apellidoM || apellidoM,
-        encryptedData.correo || correo,
-        encryptedData.telefonoProfesional || telefonoProfesional,
-        encryptedData.telefonoWhatsapp || telefonoWhatsapp,
+        encryptedData.nombres,
+        encryptedData.apellidoP,
+        encryptedData.apellidoM,
+        encryptedData.correo,
+        encryptedData.telefonoProfesional,
+        encryptedData.telefonoWhatsapp,
         fechaNacimiento,
         foto,
         pais,
         estado,
         ciudad,
-        encryptedData.colonia || colonia,
-        encryptedData.codigoPostal || codigoPostal,
+        encryptedData.colonia,
+        encryptedData.codigoPostal,
       ]
     );
 
