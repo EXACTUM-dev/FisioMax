@@ -184,10 +184,18 @@ export async function index(req, res) {
  */
 export async function upload(req, res) {
   try {
-    const { nombre, descripcion, tipo, roles } = req.body;
+    const { nombre, descripcion, tipo, filekey, roles } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
+    console.log("Primer chequeo");
+    console.log(req.body);
 
+    if (!file && !filekey) {
+      return res.status(400).json({
+        success: false,
+        message: "Debes proporcionar un archivo o un s3Key previamente firmado."
+      });
+    }
     // Parse roles if it's a JSON string
     let roleIds = [];
     if (roles) {
@@ -242,13 +250,6 @@ export async function upload(req, res) {
       });
     }
 
-    if (!file) {
-      return res.status(400).json({
-        success: false,
-        message: "Debes seleccionar un archivo de contenido",
-      });
-    }
-
     // Validate all roles exist and collect all privilege IDs
     let allPrivilegeIds = [];
     let roleNames = [];
@@ -282,26 +283,32 @@ export async function upload(req, res) {
       });
     }
 
-    // Map content type to folder
-    const folderMap = {
-      Video: "videos",
-      Articulo: "articulos",
-      Podcast: "podcasts",
-      Libro: "libros",
-    };
+    let finalS3Key;
 
-    const folder = folderMap[sanitized.tipo] || "contenido";
+    if (filekey) {
+      // Already uploaded from client
+      finalS3Key = filekey;
+    } else {
+      try {
+        // Map content type to folder
+        const folderMap = {
+          Video: "videos",
+          Articulo: "articulos",
+          Podcast: "podcasts",
+          Libro: "libros",
+        };
 
-    // Upload main file to S3
-    let s3Key;
-    try {
-      s3Key = await S3Service.uploadFile(file, folder);
-    } catch (uploadError) {
-      console.error("Error uploading file to S3:", uploadError);
-      return res.status(500).json({
-        success: false,
-        message: "Error al subir el archivo a S3",
-      });
+        const folder = folderMap[sanitized.tipo] || "contenido";
+
+        // Upload main file to S3
+        finalS3Key = await S3Service.uploadFile(file, folder);
+      } catch (uploadError) {
+        console.error("Error uploading file to S3:", uploadError);
+        return res.status(500).json({
+          success: false,
+          message: "Error al subir el archivo a S3",
+        });
+      }
     }
 
     // Create main content
@@ -311,7 +318,7 @@ export async function upload(req, res) {
         nombre: sanitized.nombre,
         descripcion: sanitized.descripcion || "",
         tipo: sanitized.tipo.toLowerCase(),
-        IDMultimedia: s3Key,
+        IDMultimedia: finalS3Key,
         tipoMembresia: roleNames.join(", "), // Store all role names
       });
 
@@ -372,7 +379,7 @@ export async function upload(req, res) {
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-export async function getPresignedUploadUrl(req, res) {
+export async function presignUploadUrl(req, res) {
   try {
     const { fileName, fileType, folder } = req.body;
 

@@ -127,7 +127,7 @@ class S3Service {
    */
   static async getPresignedUploadUrl(key, contentType) {
     const command = new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET,
+      Bucket: BUCKET_NAME,
       Key: key,
       ContentType: contentType,
     });

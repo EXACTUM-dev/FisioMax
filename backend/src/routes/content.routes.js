@@ -75,7 +75,6 @@ const upload = multer({
 // Middleware to handle multiple fields with individual size validation
 const uploadFields = (req, res, next) => {
   const uploader = upload.fields([
-    { name: "file", maxCount: 1 },
     { name: "thumbnail", maxCount: 1 },
   ]);
 
@@ -145,6 +144,7 @@ const uploadFields = (req, res, next) => {
       }
     }
 
+    console.log("Paso el multer");
     next();
   });
 };
@@ -154,5 +154,6 @@ router.get("/", requireAuth, contentController.index);
 router.get("/available", requireAuth, contentController.index);
 router.get("/:contentId", requireAuth, contentController.show);
 router.post("/upload", requireAuth, uploadFields, contentController.upload);
+router.post("/presign", requireAuth, contentController.presignUploadUrl);
 
 export default router;
