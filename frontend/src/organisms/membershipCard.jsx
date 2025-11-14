@@ -9,7 +9,6 @@ import React, { useState, useEffect } from "react";
 import Button from "../atoms/button";
 import EditButton from "../atoms/editButton";
 import Dropdown from "../molecules/dropdown";
-import Modal from "../molecules/modal";
 import SuccessErrorModal from "./successErrorModal"; // Import success/error feedback modal
 
 /**
@@ -123,7 +122,7 @@ export default function MembershipCard({
         // Show success feedback modal (same UX pattern as AddressCard)
         setModalType("success");
         setModalMessage(
-          "Membership information has been updated successfully."
+          "La información de la membresía se ha actualizado correctamente."
         );
         setShowModal(true);
       } catch (error) {
@@ -134,7 +133,7 @@ export default function MembershipCard({
         setModalType("error");
         setModalMessage(
           error?.message ||
-            "There was an error while saving membership information. Please try again."
+            "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
         );
         setShowModal(true);
       }
@@ -308,8 +307,8 @@ export default function MembershipCard({
         message={modalMessage}
         title={
           modalType === "success"
-            ? "Operation completed successfully"
-            : "An error occurred"
+            ? "¡Operación exitosa!"
+            : "Error en la operación"
         }
       />
     </aside>
