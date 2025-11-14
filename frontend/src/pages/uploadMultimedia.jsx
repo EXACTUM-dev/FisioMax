@@ -1,7 +1,7 @@
 /**
  * @fileoverview Upload multimedia content page for administrators
  * @author EXACTUM-dev
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 import React, { useEffect, useState, useRef } from "react";
@@ -20,6 +20,7 @@ import Dropdown from "../molecules/dropdown";
 import ConfirmModal from "../molecules/confirmationModal";
 import FormField from "../molecules/form";
 import FileUpload from "../molecules/fileUpload";
+
 // Organisms
 import SuccessErrorModal from "../organisms/successErrorModal";
 
@@ -27,10 +28,12 @@ import SuccessErrorModal from "../organisms/successErrorModal";
 import {
   CONTENT_FIELD_MAX_LENGTHS,
   CONTENT_TYPE_OPTIONS,
+  CONTENT_FILE_RESTRICTIONS,
   handleContentInputChange,
   handleContentFileChange,
   handleContentRoleToggle,
   validateContentForm,
+  validateFileType,
   hasContentErrors,
 } from "../utils/contentValidation";
 
@@ -67,6 +70,10 @@ export default function UploadMultimedia() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const isNavigatingRef = useRef(false);
 
+  /**
+   * Checks if there's any form data entered
+   * @returns {boolean} True if form has data
+   */
   const hasFormData = () => {
     const hasTextData =
       formData.nombre.trim() !== "" ||
@@ -77,6 +84,9 @@ export default function UploadMultimedia() {
     return hasTextData || hasFiles || hasRoles;
   };
 
+  /**
+   * Warns user before leaving page with unsaved changes
+   */
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasFormData() && !isNavigatingRef.current) {
@@ -90,6 +100,9 @@ export default function UploadMultimedia() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [formData, selectedFile, selectedThumbnail, selectedRoles]);
 
+  /**
+   * Fetches available roles from API
+   */
   useEffect(() => {
     async function fetchRoles() {
       try {
@@ -110,14 +123,39 @@ export default function UploadMultimedia() {
     }
   }, [isLoaded, getToken]);
 
+  /**
+   * Handles text input changes with validation
+   * @param {Event} e - Input change event
+   */
   const handleInputChange = (e) => {
     handleContentInputChange(e, setFormData, setErrors);
+
+    // If changing content type, validate existing file
+    if (e.target.name === "tipo" && selectedFile) {
+      const validationError = validateFileType(selectedFile, e.target.value);
+      if (validationError) {
+        setErrors((prev) => ({ ...prev, file: validationError }));
+        setErrorMessage(
+          `El archivo seleccionado no es compatible con ${e.target.value}. ${validationError}`
+        );
+        setErrorModalOpen(true);
+        setSelectedFile(null);
+      } else {
+        setErrors((prev) => ({ ...prev, file: null }));
+      }
+    }
   };
 
+  /**
+   * Handles file input changes with validation
+   * @param {Event} e - File input event
+   * @param {string} type - Type of file (content or thumbnail)
+   */
   const handleFileChange = (e, type = "content") => {
     const error = handleContentFileChange(
       e,
       type,
+      formData.tipo,
       type === "thumbnail" ? setSelectedThumbnail : setSelectedFile,
       setErrors
     );
@@ -128,10 +166,18 @@ export default function UploadMultimedia() {
     }
   };
 
+  /**
+   * Handles role selection toggle
+   * @param {number|string} roleId - Role ID to toggle
+   */
   const handleRoleToggle = (roleId) => {
     handleContentRoleToggle(roleId, selectedRoles, setSelectedRoles, setErrors);
   };
 
+  /**
+   * Handles form submission
+   * @param {Event} e - Submit event
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -212,6 +258,9 @@ export default function UploadMultimedia() {
     }
   };
 
+  /**
+   * Handles confirmation to exit with unsaved changes
+   */
   const handleConfirmExit = () => {
     isNavigatingRef.current = true;
     setShowConfirmModal(false);
@@ -222,9 +271,23 @@ export default function UploadMultimedia() {
     navigate(-1);
   };
 
+  /**
+   * Handles cancellation of exit confirmation
+   */
   const handleCancelExit = () => {
     setShowConfirmModal(false);
   };
+
+  // Get current file restrictions based on selected content type
+  const currentFileRestrictions =
+    CONTENT_FILE_RESTRICTIONS[formData.tipo] ||
+    CONTENT_FILE_RESTRICTIONS.Articulo;
+
+  // Calculate display size
+  const maxSizeDisplay =
+    currentFileRestrictions.maxSize >= 1024 * 1024 * 1024
+      ? `${(currentFileRestrictions.maxSize / 1024 / 1024 / 1024).toFixed(1)}GB`
+      : `${(currentFileRestrictions.maxSize / 1024 / 1024).toFixed(0)}MB`;
 
   if (!isLoaded) {
     return (
@@ -345,16 +408,18 @@ export default function UploadMultimedia() {
                   )}
                 </div>
               </div>
-              {/* Main content file upload area */}
+
+              {/* Main content file upload area with dynamic restrictions */}
               <div className="mb-8">
                 <FileUpload
                   name="file"
                   label="Archivo del contenido"
-                  limitation="MP4, MOV, WEBP, PDF hasta 5GB"
+                  limitation={`${currentFileRestrictions.label} hasta ${maxSizeDisplay}`}
                   required={true}
-                  accept="video/*,audio/*,image/*,.pdf,.doc,.docx"
+                  accept={currentFileRestrictions.accept}
                   value={selectedFile}
                   onChange={(e) => handleFileChange(e, "content")}
+                  error={errors.file}
                 />
               </div>
 
@@ -366,6 +431,7 @@ export default function UploadMultimedia() {
                   accept="image/png,image/jpeg,image/jpg"
                   value={selectedThumbnail}
                   onChange={(e) => handleFileChange(e, "thumbnail")}
+                  error={errors.thumbnail}
                 />
               </div>
 
