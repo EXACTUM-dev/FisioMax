@@ -26,10 +26,6 @@ export async function insertLoginErrorLog({
   mensajeError,
   detalles = null,
 }) {
-  if (!mensajeError) {
-    throw new Error("mensajeError es obligatorio para registrar un log de login");
-  }
-
   const detallesJson =
     detalles === null || detalles === undefined
       ? null
@@ -38,7 +34,7 @@ export async function insertLoginErrorLog({
       : JSON.stringify(detalles);
 
   const [result] = await dbPool.query(
-    `INSERT INTO login_error_logs 
+    `INSERT INTO logsdeerroresdelogin 
       (usuario, ipOrigen, agenteUsuario, codigoError, mensajeError, detalles)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [usuario, ipOrigen, agenteUsuario, codigoError, mensajeError, detallesJson]
