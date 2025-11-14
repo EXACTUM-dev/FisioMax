@@ -5,10 +5,11 @@
  * @author EXACTUM-dev
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import Button from "../atoms/button";
 import EditButton from "../atoms/editButton";
 import Dropdown from "../molecules/dropdown";
+import SuccessErrorModal from "./successErrorModal"; // Import success/error feedback modal
 
 /**
  * Displays user's membership information and payment button.
@@ -19,23 +20,37 @@ import Dropdown from "../molecules/dropdown";
  * @param {Function} props.onEditChange - Callback to notify parent of edit state changes.
  * @return {!JSX.Element} Membership card component.
  */
-export default function MembershipCard({data = {}, canEdit = false, onSave, onEditChange}) {
+export default function MembershipCard({
+  data = {},
+  canEdit = false,
+  onSave,
+  onEditChange,
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    membershipType: '',
-    membershipRegisteredAt: '',
-    membershipExpiresAt: '',
-    membershipPaymentStatus: ''
+    membershipType: "",
+    membershipRegisteredAt: "",
+    membershipExpiresAt: "",
+    membershipPaymentStatus: "",
   });
+
+  // Local state for success/error feedback modal
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("success"); // "success" | "error"
+  const [modalMessage, setModalMessage] = useState("");
 
   // Initialize form data when data changes or entering edit mode
   useEffect(() => {
     if (data && isEditing) {
       setFormData({
-        membershipType: data.membershipType || '',
-        membershipRegisteredAt: data.membershipRegisteredAt ? data.membershipRegisteredAt.split('T')[0] : '',
-        membershipExpiresAt: data.membershipExpiresAt ? data.membershipExpiresAt.split('T')[0] : '',
-        membershipPaymentStatus: data.membershipPaymentStatus || 'Pendiente'
+        membershipType: data.membershipType || "",
+        membershipRegisteredAt: data.membershipRegisteredAt
+          ? data.membershipRegisteredAt.split("T")[0]
+          : "",
+        membershipExpiresAt: data.membershipExpiresAt
+          ? data.membershipExpiresAt.split("T")[0]
+          : "",
+        membershipPaymentStatus: data.membershipPaymentStatus || "Pendiente",
       });
     }
   }, [data, isEditing]);
@@ -48,24 +63,24 @@ export default function MembershipCard({data = {}, canEdit = false, onSave, onEd
   }, [isEditing, onEditChange]);
 
   const registeredAt = data.membershipRegisteredAt
-    ? new Date(data.membershipRegisteredAt).toLocaleDateString('es-MX', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+    ? new Date(data.membershipRegisteredAt).toLocaleDateString("es-MX", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       })
-    : '—';
-  
+    : "—";
+
   const expiresAt = data.membershipExpiresAt
-    ? new Date(data.membershipExpiresAt).toLocaleDateString('es-MX', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+    ? new Date(data.membershipExpiresAt).toLocaleDateString("es-MX", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       })
-    : '—';
-  
-  const plan = data.membershipType || 'No asignado';
+    : "—";
+
+  const plan = data.membershipType || "No asignado";
   const hoursFormation = data.membershipHoursFormation || 0;
-  const paymentStatus = data.membershipPaymentStatus || 'Pendiente';
+  const paymentStatus = data.membershipPaymentStatus || "Pendiente";
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -75,10 +90,14 @@ export default function MembershipCard({data = {}, canEdit = false, onSave, onEd
     setIsEditing(false);
     // Reset form data to original values
     setFormData({
-      membershipType: data.membershipType || '',
-      membershipRegisteredAt: data.membershipRegisteredAt ? data.membershipRegisteredAt.split('T')[0] : '',
-      membershipExpiresAt: data.membershipExpiresAt ? data.membershipExpiresAt.split('T')[0] : '',
-      membershipPaymentStatus: data.membershipPaymentStatus || 'Pendiente'
+      membershipType: data.membershipType || "",
+      membershipRegisteredAt: data.membershipRegisteredAt
+        ? data.membershipRegisteredAt.split("T")[0]
+        : "",
+      membershipExpiresAt: data.membershipExpiresAt
+        ? data.membershipExpiresAt.split("T")[0]
+        : "",
+      membershipPaymentStatus: data.membershipPaymentStatus || "Pendiente",
     });
   };
 
@@ -88,40 +107,59 @@ export default function MembershipCard({data = {}, canEdit = false, onSave, onEd
         // Format the date to ISO string if it exists
         const dataToSave = {
           membershipType: formData.membershipType,
-          membershipRegisteredAt: formData.membershipRegisteredAt ? new Date(formData.membershipRegisteredAt).toISOString() : null,
-          membershipExpiresAt: formData.membershipExpiresAt ? new Date(formData.membershipExpiresAt).toISOString() : null,
-          membershipPaymentStatus: formData.membershipPaymentStatus
+          membershipRegisteredAt: formData.membershipRegisteredAt
+            ? new Date(formData.membershipRegisteredAt).toISOString()
+            : null,
+          membershipExpiresAt: formData.membershipExpiresAt
+            ? new Date(formData.membershipExpiresAt).toISOString()
+            : null,
+          membershipPaymentStatus: formData.membershipPaymentStatus,
         };
-        
+
         await onSave(dataToSave);
         setIsEditing(false);
+
+        // Show success feedback modal (same UX pattern as AddressCard)
+        setModalType("success");
+        setModalMessage(
+          "La información de la membresía se ha actualizado correctamente."
+        );
+        setShowModal(true);
       } catch (error) {
-        console.error('Error al guardar cambios de membresía:', error);
+        console.error("Error al guardar cambios de membresía:", error);
         // Keep in edit mode on error
+
+        // Show error feedback modal
+        setModalType("error");
+        setModalMessage(
+          error?.message ||
+            "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
+        );
+        setShowModal(true);
       }
     }
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   // Options for membership type dropdown
   const membershipTypeOptions = [
-    { value: '', label: 'Seleccionar plan' },
-    { value: 'básica', label: 'Básica' },
-    { value: 'premium', label: 'Premium' },
-    { value: 'empresarial', label: 'Empresarial' }
+    { value: "", label: "Seleccionar plan" },
+    { value: "básica", label: "Básica" },
+    { value: "premium", label: "Premium" },
+    { value: "empresarial", label: "Empresarial" },
   ];
 
   // Options for payment status dropdown
   const paymentStatusOptions = [
-    { value: 'Pendiente', label: 'Pendiente' },
-    { value: 'Pagado', label: 'Pagado' },
-    { value: 'Vencido', label: 'Vencido' }
+    { value: "Pendiente", label: "Pendiente" },
+    { value: "Pagado", label: "Pagado" },
+    { value: "Vencido", label: "Vencido" },
   ];
 
   return (
@@ -151,45 +189,64 @@ export default function MembershipCard({data = {}, canEdit = false, onSave, onEd
 
             <div className="flex justify-between">
               <span className="text-slate-500">Estatus de pago</span>
-              <span className={`font-medium capitalize ${
-                paymentStatus === 'Pagado' ? 'text-green-600' : 
-                paymentStatus === 'Pendiente' ? 'text-yellow-600' : 
-                'text-red-600'
-              }`}>
+              <span
+                className={`font-medium capitalize ${
+                  paymentStatus === "Pagado"
+                    ? "text-green-600"
+                    : paymentStatus === "Pendiente"
+                    ? "text-yellow-600"
+                    : "text-red-600"
+                }`}
+              >
                 {paymentStatus}
               </span>
             </div>
           </div>
 
           <div className="mt-4">
-            <Button size="sm" label="Pagar membresía" onClick={() => { /* placeholder */ }} />
+            <Button
+              size="sm"
+              label="Pagar membresía"
+              onClick={() => {}}
+              className="cursor-pointer"
+            />
           </div>
         </>
       ) : (
         <>
           <div className="text-sm text-slate-700 space-y-4">
             <div>
-              <label htmlFor="membershipRegisteredAt" className="block text-slate-500 mb-1">
+              <label
+                htmlFor="membershipRegisteredAt"
+                className="block text-slate-500 mb-1"
+              >
                 Fecha de registro
               </label>
               <input
                 id="membershipRegisteredAt"
                 type="date"
                 value={formData.membershipRegisteredAt}
-                onChange={(e) => handleChange('membershipRegisteredAt', e.target.value)}
+                onChange={(e) =>
+                  handleChange("membershipRegisteredAt", e.target.value)
+                }
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
               />
             </div>
 
             <div>
-              <label htmlFor="membershipExpiresAt" className="block text-slate-500 mb-1">
+              <label
+                htmlFor="membershipExpiresAt"
+                className="block text-slate-500 mb-1"
+              >
                 Fecha de vencimiento
               </label>
               <input
                 id="membershipExpiresAt"
                 type="date"
                 value={formData.membershipExpiresAt}
-                onChange={(e) => handleChange('membershipExpiresAt', e.target.value)}
+                onChange={(e) =>
+                  handleChange("membershipExpiresAt", e.target.value)
+                }
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#CAD00F] focus:border-transparent"
               />
             </div>
@@ -199,7 +256,7 @@ export default function MembershipCard({data = {}, canEdit = false, onSave, onEd
                 name="membershipType"
                 label="Plan de membresía"
                 value={formData.membershipType}
-                onChange={(e) => handleChange('membershipType', e.target.value)}
+                onChange={(e) => handleChange("membershipType", e.target.value)}
                 options={membershipTypeOptions}
                 placeholder="Seleccionar plan"
               />
@@ -210,31 +267,50 @@ export default function MembershipCard({data = {}, canEdit = false, onSave, onEd
                 name="membershipPaymentStatus"
                 label="Estatus de pago"
                 value={formData.membershipPaymentStatus}
-                onChange={(e) => handleChange('membershipPaymentStatus', e.target.value)}
+                onChange={(e) =>
+                  handleChange("membershipPaymentStatus", e.target.value)
+                }
                 options={paymentStatusOptions}
                 placeholder="Seleccionar estatus"
               />
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2">
-            <Button 
-              size="sm" 
-              variant="brand"
-              label="Guardar" 
-              onClick={handleSave}
-              className="flex-1"
-            />
-            <Button 
-              size="sm" 
-              variant="gray"
-              label="Cancelar" 
+          <div className="mt-4 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={handleCancel}
-              className="flex-1"
-            />
+              className="cursor-pointer"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="brand"
+              size="sm"
+              onClick={handleSave}
+              className="cursor-pointer"
+            >
+              Guardar
+            </Button>
           </div>
         </>
       )}
+
+      {/* Success/Error modal to confirm whether save was successful or failed */}
+      <SuccessErrorModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        type={modalType}
+        message={modalMessage}
+        title={
+          modalType === "success"
+            ? "¡Operación exitosa!"
+            : "Error en la operación"
+        }
+      />
     </aside>
   );
 }

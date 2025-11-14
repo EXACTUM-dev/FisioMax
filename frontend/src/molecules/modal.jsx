@@ -132,6 +132,12 @@ export default function Modal({
   const handleCancelClose = () => {
     setShowConfirmation(false);
   };
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      e.stopPropagation();
+      onClose?.();
+    }
+  };
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget && closeOnOverlayClick) {
@@ -144,7 +150,7 @@ export default function Modal({
       <div
         ref={modalRef}
         className={`fixed inset-0 z-50 flex ${positionClasses[position]} bg-black/30 transition-opacity`}
-        onClick={handleOverlayClick}
+        onClick={handleBackdropClick}
       >
         <div
           className={`

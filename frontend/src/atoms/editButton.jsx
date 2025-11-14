@@ -17,18 +17,18 @@ import editIcon from "../assets/icons/square-pen.png";
  * @param {string} [props.cancelLabel="Cancelar edición"] - Aria label for cancel mode
  * @returns {JSX.Element} Edit button component
  */
-export default function EditButton({ 
-  isEditing = false, 
-  onClick, 
+export default function EditButton({
+  isEditing = false,
+  onClick,
   className = "",
   editLabel = "Editar",
-  cancelLabel = "Cancelar edición"
+  cancelLabel = "Cancelar edición",
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center justify-center w-8 h-8 rounded hover:bg-[#CAD00F]/10 transition-colors ${className}`}
+      className={`inline-flex items-center justify-center w-8 h-8 rounded hover:bg-[#CAD00F]/10 transition-colors cursor-pointer ${className}`}
       aria-label={isEditing ? cancelLabel : editLabel}
       title={isEditing ? cancelLabel : editLabel}
     >
