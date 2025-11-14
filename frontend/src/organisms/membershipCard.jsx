@@ -9,6 +9,8 @@ import React, { useState, useEffect } from "react";
 import Button from "../atoms/button";
 import EditButton from "../atoms/editButton";
 import Dropdown from "../molecules/dropdown";
+import Modal from "../molecules/modal";
+import SuccessErrorModal from "./successErrorModal"; // Import success/error feedback modal
 
 /**
  * Displays user's membership information and payment button.
@@ -32,6 +34,11 @@ export default function MembershipCard({
     membershipExpiresAt: "",
     membershipPaymentStatus: "",
   });
+
+  // Local state for success/error feedback modal
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("success"); // "success" | "error"
+  const [modalMessage, setModalMessage] = useState("");
 
   // Initialize form data when data changes or entering edit mode
   useEffect(() => {
@@ -112,9 +119,24 @@ export default function MembershipCard({
 
         await onSave(dataToSave);
         setIsEditing(false);
+
+        // Show success feedback modal (same UX pattern as AddressCard)
+        setModalType("success");
+        setModalMessage(
+          "Membership information has been updated successfully."
+        );
+        setShowModal(true);
       } catch (error) {
         console.error("Error al guardar cambios de membresía:", error);
         // Keep in edit mode on error
+
+        // Show error feedback modal
+        setModalType("error");
+        setModalMessage(
+          error?.message ||
+            "There was an error while saving membership information. Please try again."
+        );
+        setShowModal(true);
       }
     }
   };
@@ -255,24 +277,41 @@ export default function MembershipCard({
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2">
-            <button
+          <div className="mt-4 flex justify-end gap-3">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={handleCancel}
-              className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              className="cursor-pointer"
             >
               Cancelar
-            </button>
+            </Button>
             <Button
-              size="sm"
+              type="button"
               variant="brand"
-              label="Guardar"
+              size="sm"
               onClick={handleSave}
-              className="flex-1 cursor-pointer"
-            />
+              className="cursor-pointer"
+            >
+              Guardar
+            </Button>
           </div>
         </>
       )}
+
+      {/* Success/Error modal to confirm whether save was successful or failed */}
+      <SuccessErrorModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        type={modalType}
+        message={modalMessage}
+        title={
+          modalType === "success"
+            ? "Operation completed successfully"
+            : "An error occurred"
+        }
+      />
     </aside>
   );
 }
