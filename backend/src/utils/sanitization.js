@@ -1,24 +1,37 @@
-
 /**
  * @fileoverview Sanitization utilities for input validation and XSS prevention
- * @version 1.0.0
+ * @version 1.1.0
  * @author EXACTUM-dev
- * @description Provides generic sanitization functions to prevent XSS attacks
+ * @description Provides generic sanitization functions to prevent XSS attacks.
+ * Special handling for URL and social media fields to preserve formatting.
  */
+
+/**
+ * Fields that should NOT be HTML-escaped (URLs and social media handles)
+ * These fields need to preserve special characters like :, /, @, etc.
+ */
+const NO_ESCAPE_FIELDS = ["instagram", "linkedin", "facebook", "paginaWeb"];
 
 /**
  * Sanitizes a string by escaping HTML special characters
  * Prevents XSS attacks by converting potentially dangerous characters
  * @param {string} str - String to sanitize
+ * @param {boolean} allowSpecialChars - If true, skip HTML escaping for URLs/social media
  * @returns {string} Sanitized string with escaped HTML characters
  */
-export function sanitizeString(str) {
+export function sanitizeString(str, allowSpecialChars = false) {
   if (!str) return "";
-  
-  if (typeof str !== 'string') {
+
+  if (typeof str !== "string") {
     str = String(str);
   }
 
+  // For URLs and social media, only trim - don't escape HTML
+  if (allowSpecialChars) {
+    return str.trim();
+  }
+
+  // For regular fields, escape HTML to prevent XSS
   return str
     .trim()
     .replace(/&/g, "&amp;")
@@ -31,20 +44,23 @@ export function sanitizeString(str) {
 
 /**
  * Sanitizes multiple string fields in an object
+ * Automatically detects URL/social media fields to preserve formatting
  * @param {Object} obj - Object containing fields to sanitize
  * @param {Array<string>} fields - Array of field names to sanitize
  * @returns {Object} New object with sanitized fields
  */
 export function sanitizeObject(obj, fields) {
-  if (!obj || typeof obj !== 'object') {
+  if (!obj || typeof obj !== "object") {
     return {};
   }
 
   const sanitized = { ...obj };
-  
-  fields.forEach(field => {
+
+  fields.forEach((field) => {
     if (sanitized[field] !== undefined && sanitized[field] !== null) {
-      sanitized[field] = sanitizeString(sanitized[field]);
+      // Check if this field should preserve special characters
+      const allowSpecialChars = NO_ESCAPE_FIELDS.includes(field);
+      sanitized[field] = sanitizeString(sanitized[field], allowSpecialChars);
     }
   });
 
@@ -54,14 +70,15 @@ export function sanitizeObject(obj, fields) {
 /**
  * Sanitizes an array of strings
  * @param {Array<string>} arr - Array of strings to sanitize
+ * @param {boolean} allowSpecialChars - If true, skip HTML escaping
  * @returns {Array<string>} Array with sanitized strings
  */
-export function sanitizeArray(arr) {
+export function sanitizeArray(arr, allowSpecialChars = false) {
   if (!Array.isArray(arr)) {
     return [];
   }
 
-  return arr.map(item => sanitizeString(item));
+  return arr.map((item) => sanitizeString(item, allowSpecialChars));
 }
 
 /**
@@ -71,7 +88,7 @@ export function sanitizeArray(arr) {
  */
 export function sanitizeId(id) {
   const numId = parseInt(id);
-  
+
   if (isNaN(numId) || numId <= 0) {
     return null;
   }
@@ -89,18 +106,17 @@ export function sanitizeIdArray(ids) {
     return [];
   }
 
-  return ids
-    .map(id => sanitizeId(id))
-    .filter(id => id !== null);
+  return ids.map((id) => sanitizeId(id)).filter((id) => id !== null);
 }
 
 /**
  * Sanitizes email addresses
+ * Only trims and converts to lowercase - no HTML escaping
  * @param {string} email - Email to sanitize
  * @returns {string} Sanitized email in lowercase
  */
 export function sanitizeEmail(email) {
-  if (!email || typeof email !== 'string') {
+  if (!email || typeof email !== "string") {
     return "";
   }
 
@@ -114,9 +130,11 @@ export function sanitizeEmail(email) {
  * @param {string} fieldName - Field name for error message
  * @throws {Error} If string exceeds max length
  */
-export function validateStringLength(str, maxLength, fieldName = 'Campo') {
+export function validateStringLength(str, maxLength, fieldName = "Campo") {
   if (str && str.length > maxLength) {
-    throw new Error(`${fieldName} no puede exceder los ${maxLength} caracteres`);
+    throw new Error(
+      `${fieldName} no puede exceder los ${maxLength} caracteres`
+    );
   }
 }
 
@@ -127,9 +145,17 @@ export function validateStringLength(str, maxLength, fieldName = 'Campo') {
  * @param {string} fieldName - Field name for error message
  * @throws {Error} If value is not in allowed list
  */
-export function validateAllowedValue(value, allowedValues, fieldName = 'Valor') {
+export function validateAllowedValue(
+  value,
+  allowedValues,
+  fieldName = "Valor"
+) {
   if (!allowedValues.includes(value)) {
-    throw new Error(`${fieldName} no es válido. Valores permitidos: ${allowedValues.join(', ')}`);
+    throw new Error(
+      `${fieldName} no es válido. Valores permitidos: ${allowedValues.join(
+        ", "
+      )}`
+    );
   }
 }
 
@@ -140,20 +166,30 @@ export function validateAllowedValue(value, allowedValues, fieldName = 'Valor') 
  * @throws {Error} If any required field is missing or empty
  */
 export function validateRequiredFields(obj, requiredFields) {
-  const missing = requiredFields.filter(field => {
+  const missing = requiredFields.filter((field) => {
     const value = obj[field];
-    return value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
+    return (
+      value === undefined ||
+      value === null ||
+      (typeof value === "string" && value.trim() === "")
+    );
   });
 
   if (missing.length > 0) {
-    throw new Error(`Campos requeridos faltantes: ${missing.join(', ')}`);
+    throw new Error(`Campos requeridos faltantes: ${missing.join(", ")}`);
   }
 }
 
 /**
  * Comprehensive input sanitization for content creation/update
+ * Automatically preserves special characters for URL and social media fields
  * @param {Object} data - Data object to sanitize
  * @param {Object} config - Configuration object with validation rules
+ * @param {Array<string>} config.stringFields - Fields to sanitize as strings
+ * @param {Array<string>} config.idFields - Fields to sanitize as IDs
+ * @param {Array<string>} config.requiredFields - Fields that are required
+ * @param {Object} config.maxLengths - Maximum lengths for each field
+ * @param {Object} config.allowedValues - Allowed values for specific fields
  * @returns {Object} Sanitized and validated data
  */
 export function sanitizeContentInput(data, config = {}) {
@@ -170,22 +206,22 @@ export function sanitizeContentInput(data, config = {}) {
     validateRequiredFields(data, requiredFields);
   }
 
-  // Sanitize string fields
+  // Sanitize string fields (with automatic detection of URL/social media fields)
   const sanitized = sanitizeObject(data, stringFields);
 
   // Validate string lengths
-  Object.keys(maxLengths).forEach(field => {
+  Object.keys(maxLengths).forEach((field) => {
     if (sanitized[field]) {
       validateStringLength(sanitized[field], maxLengths[field], field);
     }
   });
 
   // Sanitize ID fields
-  idFields.forEach(field => {
+  idFields.forEach((field) => {
     if (data[field] !== undefined) {
       const ids = Array.isArray(data[field]) ? data[field] : [data[field]];
       sanitized[field] = sanitizeIdArray(ids);
-      
+
       if (!Array.isArray(data[field])) {
         sanitized[field] = sanitized[field][0] || null;
       }
@@ -193,7 +229,7 @@ export function sanitizeContentInput(data, config = {}) {
   });
 
   // Validate allowed values
-  Object.keys(allowedValues).forEach(field => {
+  Object.keys(allowedValues).forEach((field) => {
     if (sanitized[field] !== undefined) {
       validateAllowedValue(sanitized[field], allowedValues[field], field);
     }

@@ -250,6 +250,13 @@ export function sanitizeFieldValue(fieldName, value) {
       sanitized = sanitizeNumeric(value);
       break;
 
+    case "instagram":
+    case "linkedin":
+    case "facebook":
+    case "paginaWeb":
+      sanitized = value;
+      break;
+
     default:
       sanitized = value;
       break;
