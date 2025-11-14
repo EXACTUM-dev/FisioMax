@@ -17,6 +17,7 @@ import PDFViewer from "../molecules/pdfViewer";
 import SideContainer from "../organisms/sideContainer";
 import Loading from "../atoms/loading";
 import AlertBanner from "../atoms/alertBanner";
+import BackButton from "../atoms/backButton";
 import {
   getContentById,
   getAvailableContent,
@@ -232,6 +233,9 @@ export default function ContentPage() {
       )}
       <main className="p-4 md:ml-[var(--sb-w,80px)] transition-[margin] duration-300 ease-in-out pb-20 md:pb-6">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-6">
+            <BackButton onClick={() => navigate(-1)} />
+          </div>
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] 2xl:grid-cols-[1fr_450px] gap-6">
             <div className="w-full">
               <div className="mb-6">
