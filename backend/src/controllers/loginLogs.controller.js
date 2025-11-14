@@ -1,27 +1,30 @@
 /**
- * @fileoverview Controlador para registrar logs de errores de login.
- * @version 1.0.0
+ * @fileoverview Controller for registering login error logs.
+ * @version 1.0.1
+ * @author EXACTUM-dev
+ *
+ * @description Input data has been validated and sanitized by the
+ * validateLoginErrorLog middleware before reaching this controller.
+ * Only business logic is performed here.
  */
 
 import { insertLoginErrorLog } from "../models/loginLogs.model.js";
-
-function getRequestIp(req) {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
-  return req.ip || req.connection?.remoteAddress || null;
-}
+import { getRequestIp } from "../utils/request.js";
 
 /**
- * Crea un nuevo registro de error de login.
+ * Creates a new login error log entry.
  *
- * @param {import("express").Request} req
- * @param {import("express").Response} res
+ * Input data has already been validated and sanitized by the
+ * validateLoginErrorLog middleware. Only business logic is performed here.
+ *
+ * @param {import("express").Request} req - Express request object with sanitized body
+ * @param {import("express").Response} res - Express response object
  * @returns {Promise<void>}
+ * @throws {Error} If database insertion fails
  */
 export async function createLoginErrorLog(req, res) {
   try {
+    // Data is already validated and sanitized by middleware
     const {
       usuario = null,
       ipOrigen = null,
@@ -29,18 +32,17 @@ export async function createLoginErrorLog(req, res) {
       codigoError = null,
       mensajeError,
       detalles = null,
-    } = req.body || {};
+    } = req.body;
 
-    if (!mensajeError) {
-      return res
-        .status(400)
-        .json({ success: false, message: "mensajeError es obligatorio" });
-    }
+    // Use request IP if not provided in body
+    const finalIpOrigen = ipOrigen || getRequestIp(req);
+    // Use User-Agent from header if not provided in body
+    const finalAgenteUsuario = agenteUsuario || req.headers["user-agent"] || null;
 
     const insertId = await insertLoginErrorLog({
       usuario,
-      ipOrigen: ipOrigen || getRequestIp(req),
-      agenteUsuario: agenteUsuario || req.headers["user-agent"] || null,
+      ipOrigen: finalIpOrigen,
+      agenteUsuario: finalAgenteUsuario,
       codigoError,
       mensajeError,
       detalles,
@@ -48,10 +50,9 @@ export async function createLoginErrorLog(req, res) {
 
     return res.status(201).json({ success: true, id: insertId });
   } catch (error) {
-    console.error("createLoginErrorLog error:", error);
     return res.status(500).json({
       success: false,
-      message: "No se pudo registrar el log de login",
+      message: "Failed to register login log",
       detail: error?.message,
     });
   }

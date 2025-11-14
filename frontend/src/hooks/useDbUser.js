@@ -23,7 +23,6 @@ import {sendLoginErrorLog} from '../services/loginLogs.service.js';
  * @return {string|null} return.error - Error message if any.
  */
 export function useDbUser() {
-  return useUserContext();
   const {getToken, isLoaded, isSignedIn, userId} = useAuth();
   const [state, setState] = useState({
     isLoading: true,
@@ -101,7 +100,7 @@ export function useDbUser() {
           error: null,
         });
       } catch (err) {
-        console.error('Error verificando usuario en BD:', err);
+
         sendLoginErrorLog({
           usuario: userId,
           codigoError: 'DB_USER_CHECK_FAILED',
@@ -120,7 +119,7 @@ export function useDbUser() {
     }
 
     checkUserInDB();
-  }, [isLoaded, isSignedIn, getToken]);
+  }, [isLoaded, isSignedIn, getToken, userId]);
 
   return state;
 }

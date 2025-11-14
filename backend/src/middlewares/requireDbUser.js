@@ -9,19 +9,7 @@
 
 import {userExistsInDB} from '../services/auth.service.js';
 import {insertLoginErrorLog} from '../models/loginLogs.model.js';
-
-/**
- * Obtiene la IP a partir de la petición tomando en cuenta proxies.
- * @param {Object} req - Express request.
- * @returns {string|null}
- */
-function getRequestIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.ip || req.connection?.remoteAddress || null;
-}
+import {getRequestIp} from '../utils/request.js';
 
 /**
  * Registra un error de login sin interrumpir el flujo principal.
@@ -42,7 +30,7 @@ async function logLoginError(req, logData) {
           },
     });
   } catch (logError) {
-    console.error('No se pudo registrar el error de login:', logError);
+
   }
 }
 
@@ -95,7 +83,7 @@ export async function requireDbUser(req, res, next) {
     // User exists in DB, continue
     next();
   } catch (error) {
-    console.error('requireDbUser middleware error:', error);
+
     await logLoginError(req, {
       usuario: req.auth?.userId ?? null,
       codigoError: 'DB_VALIDATION_ERROR',
@@ -141,7 +129,6 @@ export async function checkDbUser(req, res, next) {
 
     next();
   } catch (error) {
-    console.error('checkDbUser middleware error:', error);
     // Don't block the request, just log
     next();
   }
