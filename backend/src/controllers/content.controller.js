@@ -15,6 +15,8 @@ import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import S3Service from "../services/s3Service.js";
 import { sanitizeContentInput } from "../utils/sanitization.js";
+import path from "path";
+import crypto from "crypto";
 
 /**
  * Determines S3 path based on content type
@@ -184,10 +186,16 @@ export async function index(req, res) {
  */
 export async function upload(req, res) {
   try {
-    const { nombre, descripcion, tipo, roles } = req.body;
+    const { nombre, descripcion, tipo, filekey, roles } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
 
+    if (!file && !filekey) {
+      return res.status(400).json({
+        success: false,
+        message: "Debes proporcionar un archivo o un s3Key previamente firmado."
+      });
+    }
     // Parse roles if it's a JSON string
     let roleIds = [];
     if (roles) {
@@ -242,13 +250,6 @@ export async function upload(req, res) {
       });
     }
 
-    if (!file) {
-      return res.status(400).json({
-        success: false,
-        message: "Debes seleccionar un archivo de contenido",
-      });
-    }
-
     // Validate all roles exist and collect all privilege IDs
     let allPrivilegeIds = [];
     let roleNames = [];
@@ -282,6 +283,8 @@ export async function upload(req, res) {
       });
     }
 
+    let finalS3Key;
+
     // Map content type to folder
     const folderMap = {
       Video: "videos",
@@ -292,16 +295,20 @@ export async function upload(req, res) {
 
     const folder = folderMap[sanitized.tipo] || "contenido";
 
-    // Upload main file to S3
-    let s3Key;
-    try {
-      s3Key = await S3Service.uploadFile(file, folder);
-    } catch (uploadError) {
-      console.error("Error uploading file to S3:", uploadError);
-      return res.status(500).json({
-        success: false,
-        message: "Error al subir el archivo a S3",
-      });
+    if (filekey) {
+      // Already uploaded from client
+      finalS3Key = filekey;
+    } else {
+      try {
+        // Upload main file to S3
+        finalS3Key = await S3Service.uploadFile(file, folder);
+      } catch (uploadError) {
+        console.error("Error uploading file to S3:", uploadError);
+        return res.status(500).json({
+          success: false,
+          message: "Error al subir el archivo a S3",
+        });
+      }
     }
 
     // Create main content
@@ -311,7 +318,7 @@ export async function upload(req, res) {
         nombre: sanitized.nombre,
         descripcion: sanitized.descripcion || "",
         tipo: sanitized.tipo.toLowerCase(),
-        IDMultimedia: s3Key,
+        IDMultimedia: finalS3Key,
         tipoMembresia: roleNames.join(", "), // Store all role names
       });
 
@@ -327,6 +334,7 @@ export async function upload(req, res) {
 
     // Upload thumbnail if provided
     let thumbnailId = null;
+    console.log(thumbnail);
     if (thumbnail && thumbnail.buffer) {
       try {
         const thumbnailKey = await S3Service.uploadFile(
@@ -367,3 +375,48 @@ export async function upload(req, res) {
     });
   }
 }
+/**
+ * Generates a presigned URL for direct S3 upload
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function presignUploadUrl(req, res) {
+  try {
+    const { fileName, fileType, folder } = req.body;
+
+    if (!fileName || !fileType) {
+      return res.status(400).json({
+        success: false,
+        message: "Nombre y tipo de archivo son requeridos",
+      });
+    }
+    // Map content type to folder
+    const folderMap = {
+      Video: "videos",
+      Articulo: "articulos",
+      Podcast: "podcasts",
+      Libro: "libros",
+    };
+
+    const s3Folder = folderMap[folder] || "contenido";
+
+    /// Use your current S3 service to generate the URL
+    const fileExt = path.extname(fileName);
+    const s3Key = `${s3Folder}/${crypto.randomUUID()}${fileExt}`;
+    //const s3Key = `${folder || "contenido"}/${Date.now()}-${fileName}`;
+    const url = await S3Service.getPresignedUploadUrl(s3Key, fileType);
+
+    return res.status(200).json({
+      success: true,
+      uploadUrl: url,
+      key: s3Key,
+    });
+  } catch (error) {
+    console.error("Error generating presigned URL:", error);
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo generar la URL de subida",
+    });
+  }
+}
+

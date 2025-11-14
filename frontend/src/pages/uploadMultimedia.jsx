@@ -207,16 +207,56 @@ export default function UploadMultimedia() {
       const token = await getToken();
 
       const uploadData = new FormData();
-      uploadData.append("file", selectedFile);
+      //uploadData.append("file", selectedFile);
       uploadData.append("nombre", formData.nombre.trim());
       uploadData.append("descripcion", formData.descripcion.trim());
       uploadData.append("tipo", formData.tipo);
       uploadData.append("roles", JSON.stringify(selectedRoles));
 
+      const presignRes = await fetch(
+        `${import.meta.env.VITE_API_URL}/content/presign`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fileName: selectedFile.name,
+            fileType: selectedFile.type,
+            folder: formData.tipo
+          }),
+        }
+      );
+
+      const presignData = await presignRes.json();
+
+      if (!presignData.success) {
+        throw new Error("No se pudo generar la URL para subir el archivo");
+      }
+
+      const { uploadUrl, key: mainFileKey } = presignData;
+
+      //Upload file directly to S3 from the client
+      const uploadMainFile = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": selectedFile.type,
+        },
+        body: selectedFile,
+      });
+
+      if (!uploadMainFile.ok) {
+        throw new Error("Falló la subida del archivo principal a S3");
+      } else {
+        uploadData.append("filekey", mainFileKey);
+      }
+
+      // Add thumbnail if selected
       if (selectedThumbnail) {
         uploadData.append("thumbnail", selectedThumbnail);
       }
-
+      
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/content/upload`,
         {
