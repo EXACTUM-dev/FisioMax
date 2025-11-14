@@ -144,7 +144,6 @@ const uploadFields = (req, res, next) => {
       }
     }
 
-    console.log("Paso el multer");
     next();
   });
 };

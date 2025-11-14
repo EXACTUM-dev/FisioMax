@@ -189,8 +189,6 @@ export async function upload(req, res) {
     const { nombre, descripcion, tipo, filekey, roles } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
-    console.log("Primer chequeo");
-    console.log(req.body);
 
     if (!file && !filekey) {
       return res.status(400).json({
@@ -287,21 +285,21 @@ export async function upload(req, res) {
 
     let finalS3Key;
 
+    // Map content type to folder
+    const folderMap = {
+      Video: "videos",
+      Articulo: "articulos",
+      Podcast: "podcasts",
+      Libro: "libros",
+    };
+
+    const folder = folderMap[sanitized.tipo] || "contenido";
+
     if (filekey) {
       // Already uploaded from client
       finalS3Key = filekey;
     } else {
       try {
-        // Map content type to folder
-        const folderMap = {
-          Video: "videos",
-          Articulo: "articulos",
-          Podcast: "podcasts",
-          Libro: "libros",
-        };
-
-        const folder = folderMap[sanitized.tipo] || "contenido";
-
         // Upload main file to S3
         finalS3Key = await S3Service.uploadFile(file, folder);
       } catch (uploadError) {
@@ -336,6 +334,7 @@ export async function upload(req, res) {
 
     // Upload thumbnail if provided
     let thumbnailId = null;
+    console.log(thumbnail);
     if (thumbnail && thumbnail.buffer) {
       try {
         const thumbnailKey = await S3Service.uploadFile(
