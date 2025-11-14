@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import {Navigate, Link} from 'react-router-dom';
+import {Navigate} from 'react-router-dom';
 import {SignedIn, SignedOut, useUser, useClerk} from '@clerk/clerk-react';
 import {useDbUser} from '../hooks/useDbUser';
 import Button from '../atoms/button';
@@ -139,21 +139,12 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
               {error && (
                 <p className="text-sm text-red-500 mb-4">Error: {error}</p>
               )}
-              <div className="space-y-3">
-                <Link to="/solicitud-membresia" className="block w-full">
-                  <Button
-                    label="Solicitar Membresía"
-                    variant="brand"
-                    fullWidth
-                  />
-                </Link>
-                <Button
-                  label="Regresar"
-                  variant="gray"
-                  fullWidth
-                  onClick={handleSignOut}
-                />
-              </div>
+              <Button
+                label="Regresar"
+                variant="brand"
+                fullWidth
+                onClick={handleSignOut}
+              />
             </div>
           </Modal>
         )}

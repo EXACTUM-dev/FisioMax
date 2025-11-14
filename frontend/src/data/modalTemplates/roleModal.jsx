@@ -1,42 +1,36 @@
 /**
- * @fileoverview Modal component for editing roles with name, description, and privileges checklist.
+ * @fileoverview Modal component for role modification with privilege checklist and validation
  * @author EXACTUM-dev
- * @version 1.1.1
- * @description Keeps modal size stable and scrolls the privileges list instead of growing the modal.
+ * @version 0.2.1
  */
 
-// Import application dependencies
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import Button from "../../atoms/button";
 import { Title2 } from "../../atoms/typography";
-import FieldBox from "../../molecules/form";
+import FormField from "../../molecules/form";
 import DataTable from "../../organisms/dataTable";
 import Modal from "../../molecules/modal";
 import CheckBox from "../../atoms/checkBox";
-import {
-  validateRoleName,
-  areArraysSameSet,
-} from "../../utils/validationUtils";
+import { areArraysSameSet } from "../../utils/validationUtils";
 import { usePrivileges } from "../../hooks/usePrivileges";
+import {
+  ROLE_FIELD_MAX_LENGTHS,
+  ROLE_VALIDATION_RULES,
+  validateRoleForm,
+  validateUniqueRoleName,
+  hasRoleErrors,
+  sanitizeRoleField,
+} from "../../utils/roleValidation";
 
 /**
- * Modal to edit/create role with name, description, and privileges checklist.
- * This inner component always mounts when open, keeping a stable Hooks order.
- * @component
- * @param {Object} props - Component properties
- * @param {boolean} props.open - Modal open state
- * @param {string} props.title - Modal title
- * @param {string} props.dataName - Initial role name
- * @param {string} props.dataDescription - Initial role description
- * @param {Array} props.tableData - Array of privilege objects [{ id, label, checked }]
- * @param {Array} props.existingData - Array of existing roles for duplicate validation
- * @param {string|number|null} props.currentDataId - Current role ID for edit mode (null in create mode)
- * @param {string} props.confirmLabel - Confirm button label
- * @param {Function} props.onConfirm - Callback on confirm (dataName, dataDescription, selectedPrivilegesIds)
- * @param {Function} props.onClose - Callback on close
- * @returns {React.Element} Checklist modal component
+ * RoleModalContent component for creating or editing roles with privilege selection.
+ * @param {Object} props - Component props
+ * @param {boolean} props.open - Whether the modal is open
+ * @param {string} [props.title] - Title of the modal
+ * @returns {JSX.Element} The RoleModalContent component
  */
-function ChecklistModalContent({
+
+function RoleModalContent({
   open,
   title = "Titulo del Modal",
   dataName: initialDataName = "",
@@ -48,12 +42,12 @@ function ChecklistModalContent({
   onConfirm,
   onClose,
 }) {
-  // State management for form fields and validation
-  const [dataName, setDataName] = useState(initialDataName);
-  const [dataDescription, setDataDescription] = useState(
-    initialDataDescription
-  );
-  const [nameError, setNameError] = useState("");
+  const [formData, setFormData] = useState({
+    nombre: initialDataName,
+    descripcion: initialDataDescription,
+  });
+  const [errors, setErrors] = useState({});
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const {
     checkedPrivileges,
@@ -66,6 +60,17 @@ function ChecklistModalContent({
   const inputRef = useRef(null);
 
   useEffect(() => {
+    if (open) {
+      setFormData({
+        nombre: initialDataName,
+        descripcion: initialDataDescription,
+      });
+      setErrors({});
+      setIsProcessing(false);
+    }
+  }, [open, initialDataName, initialDataDescription]);
+
+  useEffect(() => {
     if (open && inputRef.current) {
       setTimeout(() => {
         inputRef.current?.focus?.();
@@ -73,18 +78,78 @@ function ChecklistModalContent({
     }
   }, [open]);
 
-  const handleConfirm = () => {
-    const { isValid, errorMessage } = validateRoleName(
-      dataName,
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    const sanitizedValue = sanitizeRoleField(name, value);
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: sanitizedValue,
+    }));
+
+    if (ROLE_VALIDATION_RULES[name]) {
+      const fieldErrors = validateRoleForm({
+        [name]: sanitizedValue,
+      });
+      setErrors((prev) => ({
+        ...prev,
+        [name]: fieldErrors[name],
+      }));
+    }
+
+    if (name === "nombre" && sanitizedValue.trim()) {
+      const duplicateError = validateUniqueRoleName(
+        sanitizedValue,
+        existingData,
+        currentDataId
+      );
+      if (duplicateError) {
+        setErrors((prev) => ({
+          ...prev,
+          nombre: duplicateError,
+        }));
+      }
+    }
+  };
+
+  const handleConfirm = async () => {
+    const selectedPrivileges = currentSelectedIds;
+
+    const formErrors = validateRoleForm({
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      privilegios: selectedPrivileges,
+    });
+
+    const duplicateError = validateUniqueRoleName(
+      formData.nombre,
       existingData,
       currentDataId
     );
-    if (!isValid) {
-      setNameError(errorMessage);
+
+    if (duplicateError) {
+      formErrors.nombre = duplicateError;
+    }
+
+    setErrors(formErrors);
+
+    if (hasRoleErrors(formErrors) || duplicateError) {
       return;
     }
-    const selectedPrivileges = currentSelectedIds;
-    onConfirm?.(dataName, dataDescription, selectedPrivileges);
+
+    setIsProcessing(true);
+
+    try {
+      await onConfirm?.(
+        formData.nombre.trim(),
+        formData.descripcion.trim(),
+        selectedPrivileges
+      );
+    } catch (error) {
+      console.error("Error in onConfirm:", error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const initialSelectedIds = useMemo(
@@ -94,9 +159,10 @@ function ChecklistModalContent({
 
   const isDirty = useMemo(() => {
     const nameChanged =
-      (dataName || "").trim() !== (initialDataName || "").trim();
+      (formData.nombre || "").trim() !== (initialDataName || "").trim();
     const descChanged =
-      (dataDescription || "").trim() !== (initialDataDescription || "").trim();
+      (formData.descripcion || "").trim() !==
+      (initialDataDescription || "").trim();
     const privsChanged = !areArraysSameSet(
       currentSelectedIds,
       initialSelectedIds
@@ -104,22 +170,24 @@ function ChecklistModalContent({
 
     if (currentDataId == null) {
       const hasAnyInput =
-        (dataName || "").trim() !== "" ||
-        (dataDescription || "").trim() !== "" ||
+        (formData.nombre || "").trim() !== "" ||
+        (formData.descripcion || "").trim() !== "" ||
         currentSelectedIds.length > 0;
       return hasAnyInput;
     }
 
     return nameChanged || descChanged || privsChanged;
   }, [
-    dataName,
-    dataDescription,
+    formData.nombre,
+    formData.descripcion,
     initialDataName,
     initialDataDescription,
     currentSelectedIds,
     initialSelectedIds,
     currentDataId,
   ]);
+
+  const isConfirmDisabled = hasRoleErrors(errors) || isProcessing;
 
   return (
     <Modal
@@ -129,55 +197,57 @@ function ChecklistModalContent({
       requireConfirmation={isDirty}
     >
       <div className="flex flex-col md:flex-row gap-6 w-full">
-        {/* Left column - form */}
         <div className="flex-1 min-w-0 flex flex-col">
           <Title2 className="mb-4 sm:mb-6 lg:mb-8 text-lg sm:text-xl lg:text-2xl text-center">
             {title}
           </Title2>
 
-          <FieldBox
+          <FormField
             ref={inputRef}
             label="Nombre del Rol"
-            value={dataName}
-            onChange={(e) => setDataName(e.target.value)}
-            placeholder="Ingrese el nombre del rol"
-            className="w-full"
+            name="nombre"
+            value={formData.nombre}
+            onChange={handleInputChange}
+            placeholder="Ej: Moderador, Editor, etc."
+            maxLength={ROLE_FIELD_MAX_LENGTHS.nombre}
+            required
+            error={errors.nombre}
+            disabled={isProcessing}
           />
 
-          {nameError && (
-            <div className="text-red-500 text-xs sm:text-sm mt-1 mb-2 ml-0 font-medium text-left w-full">
-              {nameError}
-            </div>
+          <FormField
+            label="Descripción del Rol"
+            name="descripcion"
+            value={formData.descripcion}
+            onChange={handleInputChange}
+            placeholder="Describe las responsabilidades de este rol"
+            maxLength={ROLE_FIELD_MAX_LENGTHS.descripcion}
+            multiline
+            rows={4}
+            error={errors.descripcion}
+            disabled={isProcessing}
+          />
+
+          {errors.privilegios && (
+            <p className="text-sm text-red-500 mt-2 mb-4">
+              {errors.privilegios}
+            </p>
           )}
 
-          <FieldBox
-            label="Descripción del Rol"
-            value={dataDescription}
-            onChange={(e) => setDataDescription(e.target.value)}
-            placeholder="Ingrese la descripción del rol"
-            className="w-full mt-3 sm:mt-4"
-          />
-
           <Button
-            label={confirmLabel}
+            label={isProcessing ? "Procesando..." : confirmLabel}
             variant="brand"
             onClick={handleConfirm}
             radius="lg"
             className="w-full py-2 sm:py-3 text-sm sm:text-base mt-4 sm:mt-6"
+            disabled={isConfirmDisabled}
           />
         </div>
 
-        {/* Vertical divider */}
         <div className="hidden lg:block w-px bg-slate-200 mx-2" />
 
-        {/* Right column - scrollable privileges list */}
         <div className="flex-1 min-w-0 mt-4 lg:mt-0 min-h-0">
-          {/* Fixed-height scroll area so the modal does not grow */}
-          <div
-            className="
-              bg-white rounded-lg border border-slate-200 p-2 sm:p-3
-            "
-          >
+          <div className="bg-white rounded-lg border border-slate-200 p-2 sm:p-3">
             <DataTable
               columns={[
                 {
@@ -188,6 +258,7 @@ function ChecklistModalContent({
                         ariaLabel="Seleccionar todos"
                         checked={allSelected}
                         onChange={handleSelectAll}
+                        disabled={isProcessing}
                       />
                       <span className="text-sm sm:text-base">ID</span>
                     </div>
@@ -201,6 +272,7 @@ function ChecklistModalContent({
                         ariaLabel={`Toggle ${row.label}`}
                         checked={!!checkedPrivileges[row.id]}
                         onChange={() => handleToggle(row.id)}
+                        disabled={isProcessing}
                       />
                       <span className="text-sm text-slate-600 min-w-[2rem]">
                         {row.sequenceNumber}
@@ -227,7 +299,7 @@ function ChecklistModalContent({
               className="text-xs sm:text-sm"
             />
           </div>
-          {/* Mobile select all button */}
+
           {tableData.length > 0 && (
             <div className="lg:hidden mt-3 flex justify-center">
               <Button
@@ -238,8 +310,18 @@ function ChecklistModalContent({
                 onClick={handleSelectAll}
                 size="sm"
                 className="text-xs"
+                disabled={isProcessing}
               />
             </div>
+          )}
+
+          {currentSelectedIds.length > 0 && !errors.privilegios && (
+            <p className="text-xs text-slate-500 mt-2 text-center lg:text-left">
+              {currentSelectedIds.length}{" "}
+              {currentSelectedIds.length === 1
+                ? "privilegio seleccionado"
+                : "privilegios seleccionados"}
+            </p>
           )}
         </div>
       </div>
@@ -247,11 +329,7 @@ function ChecklistModalContent({
   );
 }
 
-/**
- * Wrapper component that controls visibility.
- * It prevents conditional hooks by mounting/unmounting the content.
- */
-export default function ChecklistModal(props) {
+export default function RoleModal(props) {
   if (!props.open) return null;
-  return <ChecklistModalContent {...props} />;
+  return <RoleModalContent {...props} />;
 }

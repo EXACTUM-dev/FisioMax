@@ -1,8 +1,8 @@
 /**
  * @fileoverview Tabbed container component with search and loading states
- * @version 0.3.0
+ * @version 0.4.1
  * @author EXACTUM-dev
- * @description Supports both table and custom render views with static search bar
+ * @description Supports both table and custom render views with static search bar - Fixed mobile UI
  */
 
 import React, { useMemo, useState } from "react";
@@ -116,7 +116,7 @@ export default function DataSwitchContainer({
           <DataTable
             columns={activeView.columns ?? []}
             data={filteredRows}
-            onRowAction={activeView.onRowAction}
+            onRowClick={activeView.onRowClick}
             filterColumn={activeView.filterColumn}
             filterOptions={activeView.filterOptions}
           />

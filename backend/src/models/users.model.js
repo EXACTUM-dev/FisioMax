@@ -1,16 +1,58 @@
 /**
- * @fileoverview User model - Database interaction for users.
- * @version 1.0.0
+ * @fileoverview User model - Database interaction for users with encryption support.
+ * @version 0.2.0
  * @author EXACTUM-dev
+ * @description Handles all user-related database operations including encryption/decryption
+ * of sensitive fields (nombres, apellidoP, apellidoM, correo, telefonos, colonia, calle, codigoPostal).
  */
 
 import { dbPool } from "../../config.js";
 import { findRoleByName } from "./roles.model.js";
+import { encrypt, encryptFields, decryptFields } from "../utils/encryption.js";
+
+/**
+ * Sensitive fields that must be encrypted/decrypted.
+ * These fields are encrypted when saving to DB and decrypted when reading.
+ * @constant {Array<string>}
+ */
+const SENSITIVE_FIELDS = [
+  "nombres",
+  "apellidoP",
+  "apellidoM",
+  "correo",
+  "telefonoProfesional",
+  "telefonoWhatsapp",
+  "colonia",
+  "calle",
+  "codigoPostal",
+];
+
+/**
+ * Decrypts sensitive fields in a single user object.
+ * @param {Object|null} user - User object from database
+ * @returns {Object|null} User object with decrypted fields or null if input is null
+ */
+function decryptUserData(user) {
+  if (!user) return null;
+  return decryptFields(user, SENSITIVE_FIELDS);
+}
+
+/**
+ * Decrypts sensitive fields in an array of user objects.
+ * @param {Array<Object>} users - Array of user objects from database
+ * @returns {Array<Object>} Array of user objects with decrypted fields
+ */
+function decryptUsersData(users) {
+  return users.map(decryptUserData);
+}
 
 /**
  * Get all users with their assigned roles from the database.
  * Performs a LEFT JOIN with usuariorol and rol tables to include role information.
- * @returns {Promise<Array>} Array of user objects with role information.
+ * Only returns users with accepted memberships.
+ * @async
+ * @returns {Promise<Array<Object>>} Array of user objects with role information and decrypted sensitive data
+ * @throws {Error} When database query fails
  */
 export async function getUsuarios() {
   try {
@@ -23,7 +65,7 @@ export async function getUsuarios() {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefonoCasa,
+        u.telefonoProfesional,
         u.telefonoWhatsapp,
         u.fechaNacimiento,
         r.IDRol,
@@ -33,7 +75,7 @@ export async function getUsuarios() {
         m.aceptado as membresiaAceptado
       FROM usuario u
       INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario
-      AND m.aceptado = 1
+        AND m.aceptado = 1
         AND m.deletedAt IS NULL
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
@@ -44,19 +86,21 @@ export async function getUsuarios() {
       WHERE u.deletedAt IS NULL 
         AND u.eliminado = 0`
     );
-    return rows;
+    return decryptUsersData(rows);
   } catch (error) {
     console.error("Error al consultar la base de datos:", error);
-    throw error; // Throw error to be handled by controller
+    throw error;
   }
 }
 
 /**
  * Retrieves the membership status ("aceptado") of a specific user.
  * @async
- * @param {number|string} userId - The unique identifier of the user.
- * @returns {Promise<number|null>} - Returns `1` if the membership is accepted, `0` if the membership is denied, and `NULL` if the membership is pending.
- * @throws {Error} Throws an error if the database query fails.
+ * @param {number|string} userId - The unique identifier of the user
+ * @returns {Promise<Object|null>} Object with aceptado status and motivoRechazo, or null if not found
+ * @returns {number} return.aceptado - 1 if accepted, 0 if denied, null if pending
+ * @returns {string|null} return.motivoRechazo - Rejection reason if denied
+ * @throws {Error} When database query fails
  */
 export async function getMembershipUserStateById(userId) {
   try {
@@ -67,14 +111,26 @@ export async function getMembershipUserStateById(userId) {
     return rows[0] ?? null;
   } catch (error) {
     console.error("Error al consultar la base de datos:", error);
-    throw error; // Throw error to be handled by controller
+    throw error;
   }
 }
 
 /**
- * Get a single user by Clerk ID with all their information including documents
+ * Get a single user by Clerk ID with all their information including documents.
+ * Decrypts all sensitive fields before returning.
+ * @async
  * @param {string} clerkId - Clerk user ID
- * @returns {Promise<Object|null>} User object with all data or null if not found
+ * @returns {Promise<Object|null>} User object with all data (decrypted) or null if not found
+ * @returns {number} return.IDUsuario - Database user ID
+ * @returns {string} return.clerkID - Clerk user ID
+ * @returns {string} return.nombres - First name (decrypted)
+ * @returns {string} return.apellidoP - Paternal surname (decrypted)
+ * @returns {string|null} return.apellidoM - Maternal surname (decrypted)
+ * @returns {string} return.correo - Email (decrypted)
+ * @returns {string|null} return.telefonoProfesional - Professional phone (decrypted)
+ * @returns {string|null} return.telefonoWhatsapp - WhatsApp phone (decrypted)
+ * @returns {Array<Object>} return.documentosadicionales - Additional documents array
+ * @throws {Error} When database query fails
  */
 export async function getUserByClerkId(clerkId) {
   try {
@@ -87,7 +143,7 @@ export async function getUserByClerkId(clerkId) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefonoCasa,
+        u.telefonoProfesional,
         u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
@@ -136,7 +192,7 @@ export async function getUserByClerkId(clerkId) {
       return null;
     }
 
-    const user = rows[0];
+    const user = decryptUserData(rows[0]);
 
     // Try to get additional documents if the table exists
     try {
@@ -152,12 +208,11 @@ export async function getUserByClerkId(clerkId) {
       );
       user.documentosadicionales = docRows;
     } catch (docError) {
-      // If documentosadicionales table doesn't exist, just set empty array
       console.warn(
         "documentosadicionales table not found or error:",
         docError.message
       );
-      user.documentosAdicionales = [];
+      user.documentosadicionales = [];
     }
 
     return user;
@@ -167,13 +222,19 @@ export async function getUserByClerkId(clerkId) {
   }
 }
 
-// Alias for backward compatibility
+/**
+ * Alias for getUserByClerkId for backward compatibility.
+ * @see getUserByClerkId
+ */
 export const getUsuarioByClerkId = getUserByClerkId;
 
 /**
- * Get a user by their database ID (IDUsuario)
- * @param {string} userId - The database user ID
- * @returns {Promise<Object|null>} User object with role information or null if not found
+ * Get a user by their database ID (IDUsuario).
+ * Returns decrypted sensitive fields.
+ * @async
+ * @param {string|number} userId - The database user ID
+ * @returns {Promise<Object|null>} User object with role and membership information (decrypted) or null if not found
+ * @throws {Error} When database query fails
  */
 export async function getUserById(userId) {
   try {
@@ -186,7 +247,7 @@ export async function getUserById(userId) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefonoCasa,
+        u.telefonoProfesional,
         u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
@@ -230,7 +291,7 @@ export async function getUserById(userId) {
       LIMIT 1`,
       [userId]
     );
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0 ? decryptUserData(rows[0]) : null;
   } catch (error) {
     console.error("Error al consultar usuario por ID:", error);
     throw error;
@@ -238,12 +299,18 @@ export async function getUserById(userId) {
 }
 
 /**
- * Get a user by their email address
- * @param {string} email - The user's email address
- * @returns {Promise<Object|null>} User object with role information or null if not found
+ * Get a user by their email address.
+ * Email is encrypted for search, then decrypted in results.
+ * @async
+ * @param {string} email - The user's email address (plain text)
+ * @returns {Promise<Object|null>} User object with role information (decrypted) or null if not found
+ * @throws {Error} When database query fails
  */
 export async function getUserByEmail(email) {
   try {
+    // Encrypt email for search
+    const encryptedEmail = encrypt(email);
+
     const [rows] = await dbPool.query(
       `SELECT 
         u.IDUsuario,
@@ -253,7 +320,7 @@ export async function getUserByEmail(email) {
         u.apellidoM,
         u.foto,
         u.correo,
-        u.telefonoCasa,
+        u.telefonoProfesional,
         u.telefonoWhatsapp,
         u.fechaNacimiento,
         u.cedula,
@@ -286,9 +353,9 @@ export async function getUserByEmail(email) {
         AND u.deletedAt IS NULL 
         AND u.eliminado = 0
       LIMIT 1`,
-      [email]
+      [encryptedEmail]
     );
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0 ? decryptUserData(rows[0]) : null;
   } catch (error) {
     console.error("Error al consultar usuario por email:", error);
     throw error;
@@ -296,10 +363,12 @@ export async function getUserByEmail(email) {
 }
 
 /**
- * Update a user's Clerk ID
- * @param {string} userId - The database user ID
+ * Update a user's Clerk ID.
+ * @async
+ * @param {string|number} userId - The database user ID
  * @param {string} clerkID - The Clerk user ID to associate
  * @returns {Promise<boolean>} True if updated successfully
+ * @throws {Error} When database query fails
  */
 export async function updateUserClerkId(userId, clerkID) {
   try {
@@ -319,11 +388,41 @@ export async function updateUserClerkId(userId, clerkID) {
 }
 
 /**
- * Update fields of a user by ID
- * Only updates the fields provided in updateData
- * @param {string|number} userId
- * @param {Object} updateData - allowed keys: nombres, apellidoP, apellidoM, correo, telefono, fechaNacimiento, licenciatura, pais, estado, ciudad, calle, numExterior, numInterior, colonia, codigoPostal, instagram, linkedin, facebook, paginaWeb, membershipType, membershipExpiresAt, membershipPaymentStatus
- * @returns {Promise<Object|null>} Updated user object or null if not found
+ * Update fields of a user by ID.
+ * Only updates the fields provided in updateData.
+ * Automatically encrypts sensitive fields before saving.
+ * @async
+ * @param {string|number} userId - User ID to update
+ * @param {Object} updateData - Object with fields to update (plain text values)
+ * @param {string} [updateData.nombres] - First name
+ * @param {string} [updateData.apellidoP] - Paternal surname
+ * @param {string} [updateData.apellidoM] - Maternal surname
+ * @param {string} [updateData.correo] - Email
+ * @param {string} [updateData.telefonoProfesional] - Professional phone
+ * @param {string} [updateData.telefonoWhatsapp] - WhatsApp phone
+ * @param {string} [updateData.fechaNacimiento] - Birth date
+ * @param {string} [updateData.licenciatura] - Degree
+ * @param {string} [updateData.pais] - Country
+ * @param {string} [updateData.estado] - State
+ * @param {string} [updateData.ciudad] - City
+ * @param {string} [updateData.calle] - Street
+ * @param {string} [updateData.numExterior] - Exterior number
+ * @param {string} [updateData.numInterior] - Interior number
+ * @param {string} [updateData.colonia] - Neighborhood
+ * @param {string} [updateData.codigoPostal] - Postal code
+ * @param {string} [updateData.instagram] - Instagram handle
+ * @param {string} [updateData.linkedin] - LinkedIn handle
+ * @param {string} [updateData.facebook] - Facebook handle
+ * @param {string} [updateData.paginaWeb] - Website URL
+ * @param {string} [updateData.titulo] - Degree document S3 key
+ * @param {string} [updateData.cedula] - Professional ID S3 key
+ * @param {string} [updateData.constancias] - Certificates S3 key
+ * @param {string} [updateData.membershipType] - Membership type
+ * @param {string} [updateData.membershipRegisteredAt] - Membership registration date
+ * @param {string} [updateData.membershipExpiresAt] - Membership expiration date
+ * @param {string} [updateData.membershipPaymentStatus] - Payment status
+ * @returns {Promise<Object|null>} Updated user object (with decrypted fields) or null if not found
+ * @throws {Error} When userId is missing or database operation fails
  */
 export async function updateUserById(userId, updateData) {
   const connection = await dbPool.getConnection();
@@ -334,12 +433,13 @@ export async function updateUserById(userId, updateData) {
 
     await connection.beginTransaction();
 
+    // Allowed fields for usuario table
     const userAllowedFields = [
       "nombres",
       "apellidoP",
       "apellidoM",
       "correo",
-      "telefonoCasa",
+      "telefonoProfesional",
       "telefonoWhatsapp",
       "fechaNacimiento",
       "licenciatura",
@@ -360,6 +460,7 @@ export async function updateUserById(userId, updateData) {
       "constancias",
     ];
 
+    // Allowed fields for membresia table
     const membershipAllowedFields = [
       "membershipType",
       "membershipRegisteredAt",
@@ -367,17 +468,26 @@ export async function updateUserById(userId, updateData) {
       "membershipPaymentStatus",
     ];
 
+    // Encrypt sensitive fields before update
+    const encryptedData = encryptFields(updateData, SENSITIVE_FIELDS);
+
     const userSetClauses = [];
     const userValues = [];
 
+    // Build SET clauses for usuario table
     for (const field of userAllowedFields) {
       if (Object.prototype.hasOwnProperty.call(updateData, field)) {
         userSetClauses.push(`${field} = ?`);
-        userValues.push(updateData[field]);
+        // Use encrypted value if field is sensitive, otherwise use original
+        const valueToUse =
+          SENSITIVE_FIELDS.includes(field) && encryptedData[field]
+            ? encryptedData[field]
+            : updateData[field];
+        userValues.push(valueToUse);
       }
     }
 
-    // Update usuario table if there are user fields to update
+    // Update usuario table if there are fields to update
     if (userSetClauses.length > 0) {
       const userSql = `UPDATE usuario SET ${userSetClauses.join(
         ", "
@@ -386,7 +496,7 @@ export async function updateUserById(userId, updateData) {
       await connection.query(userSql, userValues);
     }
 
-    // Update membresia table if there are membership fields to update
+    // Build SET clauses for membresia table
     const membershipSetClauses = [];
     const membershipValues = [];
 
@@ -403,6 +513,7 @@ export async function updateUserById(userId, updateData) {
       }
     }
 
+    // Update membresia table if there are fields to update
     if (membershipSetClauses.length > 0) {
       const membershipSql = `UPDATE membresia SET ${membershipSetClauses.join(
         ", "
@@ -418,7 +529,7 @@ export async function updateUserById(userId, updateData) {
 
     await connection.commit();
 
-    // Return updated user data
+    // Return updated user data (decrypted)
     const updatedUser = await getUserById(userId);
     return updatedUser;
   } catch (error) {
@@ -431,12 +542,33 @@ export async function updateUserById(userId, updateData) {
 }
 
 /**
- * Create a new user with Clerk ID (for automatic sync from Clerk webhook)
- * @param {Object} userData - User data from Clerk
- * @returns {Promise<Object>} Created user object
+ * Create a new user with Clerk ID (for automatic sync from Clerk webhook).
+ * Automatically encrypts sensitive fields before insertion.
+ * @async
+ * @param {Object} userData - User data from Clerk (plain text)
+ * @param {string} userData.clerkID - Clerk user ID
+ * @param {number} userData.IDUsuario - Database user ID
+ * @param {string} userData.nombres - First name
+ * @param {string} userData.apellidoP - Paternal surname
+ * @param {string} [userData.apellidoM] - Maternal surname
+ * @param {string} userData.correo - Email address
+ * @param {string} [userData.telefonoProfesional] - Professional phone
+ * @param {string} [userData.telefonoWhatsapp] - WhatsApp phone
+ * @param {string} [userData.fechaNacimiento] - Birth date
+ * @param {string} [userData.foto] - Profile photo URL
+ * @param {string} [userData.pais] - Country
+ * @param {string} [userData.estado] - State
+ * @param {string} [userData.ciudad] - City
+ * @param {string} [userData.colonia] - Neighborhood
+ * @param {string} [userData.codigoPostal] - Postal code
+ * @returns {Promise<Object>} Created user object (with decrypted fields)
+ * @throws {Error} When user creation fails or rollback occurs
  */
 export async function createUserWithClerkId(userData) {
+  const connection = await dbPool.getConnection();
   try {
+    await connection.beginTransaction();
+
     const {
       clerkID,
       IDUsuario,
@@ -444,7 +576,7 @@ export async function createUserWithClerkId(userData) {
       apellidoP,
       apellidoM = null,
       correo,
-      telefonoCasa = "",
+      telefonoProfesional = "",
       telefonoWhatsapp = "",
       fechaNacimiento = "",
       foto = null,
@@ -455,26 +587,29 @@ export async function createUserWithClerkId(userData) {
       codigoPostal = null,
     } = userData;
 
-    const [result] = await dbPool.query(
+    // Encrypt sensitive data before insertion
+    const encryptedData = encryptFields(userData, SENSITIVE_FIELDS);
+
+    const [result] = await connection.query(
       `INSERT INTO usuario 
-        (IDUsuario, clerkID, nombres, apellidoP, apellidoM, correo, telefonoCasa, telefonoWhatsapp, fechaNacimiento, foto, pais, estado, ciudad, colonia, codigoPostal)
+        (IDUsuario, clerkID, nombres, apellidoP, apellidoM, correo, telefonoProfesional, telefonoWhatsapp, fechaNacimiento, foto, pais, estado, ciudad, colonia, codigoPostal)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         IDUsuario,
         clerkID,
-        nombres,
-        apellidoP,
-        apellidoM,
-        correo,
-        telefonoCasa,
-        telefonoWhatsapp,
+        encryptedData.nombres || nombres,
+        encryptedData.apellidoP || apellidoP,
+        encryptedData.apellidoM || apellidoM,
+        encryptedData.correo || correo,
+        encryptedData.telefonoProfesional || telefonoProfesional,
+        encryptedData.telefonoWhatsapp || telefonoWhatsapp,
         fechaNacimiento,
         foto,
         pais,
         estado,
         ciudad,
-        colonia,
-        codigoPostal,
+        encryptedData.colonia || colonia,
+        encryptedData.codigoPostal || codigoPostal,
       ]
     );
 
@@ -482,6 +617,7 @@ export async function createUserWithClerkId(userData) {
       throw new Error("No se pudo crear el usuario");
     }
 
+    // Assign "SinRol" role if it exists
     const sinRol = await findRoleByName("SinRol");
 
     if (sinRol) {
@@ -496,6 +632,7 @@ export async function createUserWithClerkId(userData) {
 
     await connection.commit();
 
+    // Return created user (with decrypted fields)
     return await getUserById(IDUsuario);
   } catch (error) {
     await connection.rollback();
@@ -509,8 +646,10 @@ export async function createUserWithClerkId(userData) {
 /**
  * Soft-deletes a user (logical deletion).
  * Marks the user as deleted by setting `eliminado` to 1 and `deletedAt` to the current timestamp.
- * @param {number|string} userId - The ID of the user to delete.
- * @returns {Promise<number>} Number of affected rows.
+ * @async
+ * @param {number|string} userId - The ID of the user to delete
+ * @returns {Promise<number>} Number of affected rows (1 if successful, 0 if user not found)
+ * @throws {Error} When database query fails
  */
 export async function markUserDeleted(userId) {
   const [r] = await dbPool.query(
@@ -527,8 +666,10 @@ export async function markUserDeleted(userId) {
 /**
  * Reassign a user's role to "SinRol" if it exists.
  * If "SinRol" doesn't exist, just marks the user role as deleted.
+ * @async
  * @param {string|number} userId - User ID to reassign
  * @returns {Promise<boolean>} True if reassigned successfully or role marked as deleted
+ * @throws {Error} When database operation fails or rollback occurs
  */
 export async function reassignUserToSinRol(userId) {
   const connection = await dbPool.getConnection();

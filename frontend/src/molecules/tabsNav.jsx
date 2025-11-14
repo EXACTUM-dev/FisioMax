@@ -56,7 +56,7 @@ export default function TabsNav({
             id={`tab-${it.key}`}
             type="button"
             onClick={() => onChange?.(it.key)}
-            className={`text-lg md:text-xl leading-none pb-1 border-b-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm ${
+            className={`text-lg md:text-xl leading-none pb-1 border-b-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm cursor-pointer ${
               isActive
                 ? "font-semibold text-slate-900 border-slate-300"
                 : "font-medium text-slate-500 border-transparent hover:text-slate-700"
