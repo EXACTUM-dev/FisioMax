@@ -119,6 +119,21 @@ class S3Service {
       return false;
     }
   }
+  /**
+   * Presign file for direct upload from the client
+   * @param {string} key - S3 object key to delete
+   * @param {string} contentType - File type of the content to be uploaded
+   * @returns {Promise<json>} True if deleted successfully
+   */
+  static async getPresignedUploadUrl(key, contentType) {
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    return await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1h
+  }
 }
 
 export default S3Service;

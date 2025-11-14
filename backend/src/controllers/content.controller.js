@@ -367,3 +367,37 @@ export async function upload(req, res) {
     });
   }
 }
+/**
+ * Generates a presigned URL for direct S3 upload
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function getPresignedUploadUrl(req, res) {
+  try {
+    const { fileName, fileType, folder } = req.body;
+
+    if (!fileName || !fileType) {
+      return res.status(400).json({
+        success: false,
+        message: "Nombre y tipo de archivo son requeridos",
+      });
+    }
+
+    // Usa tu servicio S3 actual para generar la URL
+    const s3Key = `${folder || "contenido"}/${Date.now()}-${fileName}`;
+    const url = await S3Service.getPresignedUploadUrl(s3Key, fileType);
+
+    return res.status(200).json({
+      success: true,
+      uploadUrl: url,
+      key: s3Key,
+    });
+  } catch (error) {
+    console.error("Error generating presigned URL:", error);
+    return res.status(500).json({
+      success: false,
+      message: "No se pudo generar la URL de subida",
+    });
+  }
+}
+
