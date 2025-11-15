@@ -63,7 +63,7 @@ export function decrypt(encryptedText) {
 
     return decrypted;
   } catch (error) {
-    console.error("Error decrypting:", error);
+    // Return original text if decryption fails (might be unencrypted data)
     return encryptedText;
   }
 }
