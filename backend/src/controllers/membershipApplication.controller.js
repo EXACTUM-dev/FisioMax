@@ -219,6 +219,15 @@ export const createMembershipApplication = async (req, res) => {
       });
     }
 
+    // Check if it's a validation error from sanitization
+    if (error.message && error.message.includes("requerido")) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+        error: "VALIDATION_ERROR",
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Error al crear la solicitud",
