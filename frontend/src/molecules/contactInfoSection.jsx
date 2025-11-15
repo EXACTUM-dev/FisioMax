@@ -58,6 +58,7 @@ export default function ContactInfoSection({
               value={formData.email || ""}
               onChange={onChange}
               error={errors.email}
+              disabled={canEdit}
               required
               maxLength={FIELD_MAX_LENGTHS.email}
             />
