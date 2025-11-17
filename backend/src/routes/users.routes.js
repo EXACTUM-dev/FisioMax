@@ -7,7 +7,7 @@
 
 import express from "express";
 import multer from "multer";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser } from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser} from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
@@ -70,7 +70,7 @@ router.get("/profile", requireAuth, getCurrentUserProfile);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/:userId", requireAuth, authorize(["Gestión de Usuarios"]), getUserProfileById);
+router.get("/:userId", requireAuth, getUserProfileById);
 
 /**
  * Route to update a user's information
@@ -116,7 +116,6 @@ router.patch("/:userId/rol", requireAuth, authorize(["Gestión de Usuarios"]), a
 router.patch(
   "/:userId/documents",
   requireAuth,
-  authorize(["Gestión de Usuarios"]),
   autoSyncClerkId,
   requireDbUser,
   uploadDocuments,
@@ -140,6 +139,24 @@ router.delete(
   autoSyncClerkId,
   requireDbUser,
   deleteUser
+);
+
+/**
+ * Route to update a user own information
+ * @name PATCH /:userId
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication and authorization.
+ * @param {function} handler - Request handler.
+ */
+router.patch(
+  "/own/:userId",
+  requireAuth,
+  autoSyncClerkId,
+  requireDbUser,
+  updateUser
 );
 
 export default router;

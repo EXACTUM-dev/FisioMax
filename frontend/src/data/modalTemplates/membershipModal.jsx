@@ -388,7 +388,7 @@ function MembershipModalContent({
         <div className="flex justify-end gap-3">
           <Button
             label="Rechazar"
-            variant="cancel"
+            variant="outline"
             onClick={() => setShowRejectModal(true)}
             disabled={isProcessing}
           />

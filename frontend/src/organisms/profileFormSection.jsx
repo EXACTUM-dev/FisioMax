@@ -37,6 +37,7 @@ export default function ProfileFormSection({
   setErrors: setExternalErrors,
   onSave,
   onEditChange,
+  isOwn = false,
   canEdit = false,
 }) {
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
@@ -320,6 +321,7 @@ export default function ProfileFormSection({
         errors={errors}
         isEditing={isEditingContact}
         canEdit={canEdit}
+        isOwn= {isOwn}
         onToggleEdit={() => setIsEditingContact((v) => !v)}
         onChange={handleInputChange}
         onSave={handleSaveContact}

@@ -202,3 +202,36 @@ export async function updateUserDocuments(userId, formData, clerkToken) {
     throw error;
   }
 }
+
+/**
+ * Update a user's own data by ID
+ * @param {string} userId - database IDUsuario
+ * @param {Object} payload - fields to update
+ * @param {string} clerkToken
+ * @returns {Promise<Object>} Updated user data
+ */
+export async function updateUserOwnById(userId, payload, clerkToken) {
+  try {
+    const url = buildApiUrl(`/api/users/own/${userId}`);
+    const response = await fetchWithClerk(
+      url,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      },
+      clerkToken
+    );
+
+    if (response.success) {
+      return response.data;
+    } else {
+      throw new Error(response.error || "No se pudo actualizar el usuario");
+    }
+  } catch (error) {
+    console.error("Error updating user:", error);
+    throw error;
+  }
+}
