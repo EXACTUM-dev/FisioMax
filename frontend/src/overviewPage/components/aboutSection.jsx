@@ -7,6 +7,11 @@
 import React from "react";
 import { Users } from "lucide-react";
 
+/**
+ * @component
+ * @return {JSX.Element} The AboutSection component
+ */
+
 export default function AboutSection() {
   return (
     <section id="about" className="py-20 px-4 bg-gray-50">

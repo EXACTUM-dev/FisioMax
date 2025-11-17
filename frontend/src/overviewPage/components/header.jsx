@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Header() {
@@ -34,7 +34,11 @@ export default function Header() {
             </a>
           </div>
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => {
+              navigate("/solicitud-membresia", {
+                state: { showInfoModal: true, fromOverview: true },
+              });
+            }}
             className="bg-[#CAD00F] hover:bg-[#b8bd0d] text-gray-900 font-medium px-6 py-2 rounded-md transition-colors"
           >
             Unirse

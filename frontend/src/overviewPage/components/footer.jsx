@@ -1,5 +1,5 @@
 /**
- * @fileoverview Footer component compacto y distribuido
+ * @fileoverview Footer component compact and well-distributed
  * @author EXACTUM-dev
  * @version 1.2.0
  */
@@ -13,11 +13,16 @@ import {
   FaEnvelope,
 } from "react-icons/fa";
 
+/**
+ * Footer component compact and well-distributed
+ * @component
+ * @return {JSX.Element} The Footer component
+ */
+
 export default function Footer() {
   return (
     <footer className="bg-white text-black py-4 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 py-1">
-        {/* Logo y nombre */}
         <div className="flex items-center gap-2">
           <img
             src="/SOMEFIPPlogo.png"
@@ -27,7 +32,6 @@ export default function Footer() {
           <span className="text-black font-semibold text-base">SOMEFIPP</span>
         </div>
 
-        {/* Derechos y autoría */}
         <div className="flex flex-col items-center justify-center flex-1 md:flex-row md:gap-2">
           <span className="text-xs text-gray-400">
             © 2024 SOMEFIPP. Todos los derechos reservados.
@@ -43,7 +47,6 @@ export default function Footer() {
           </a>
         </div>
 
-        {/* Redes sociales y contacto */}
         <div className="flex items-center gap-3">
           <a
             href="mailto:contacto@somefipp.com"

@@ -4,8 +4,9 @@
  * @version 1.0.0
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import MembershipInfoModal from "../membershipInfoModal";
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -23,7 +24,11 @@ export default function HeroSection() {
         </p>
         <div className="flex flex-col gap-2 justify-center items-center">
           <button
-            onClick={() => navigate("/solicitud-membresia")}
+            onClick={() => {
+              navigate("/solicitud-membresia", {
+                state: { showInfoModal: true, fromOverview: true },
+              });
+            }}
             className="bg-[#CAD00F] hover:bg-[#b8bd0d] text-gray-900 font-semibold px-8 py-3 rounded-md text-lg transition-colors"
           >
             Únete a la SOMEFIPP

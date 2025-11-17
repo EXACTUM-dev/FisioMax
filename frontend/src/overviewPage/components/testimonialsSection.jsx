@@ -26,6 +26,11 @@ const testimonials = [
     title: "Fisioterapeuta, Monterrey",
   },
 ];
+/**
+ * Testimonials section showcasing user feedback
+ * @component
+ * @return {JSX.Element} The Testimonials section
+ */
 
 export default function TestimonialsSection() {
   return (

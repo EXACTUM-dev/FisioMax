@@ -4,12 +4,13 @@
  * @version 1.0.0
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 
 export default function PricingSection() {
   const navigate = useNavigate();
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   const plans = [
     {
@@ -90,7 +91,15 @@ export default function PricingSection() {
                   {plan.description}
                 </p>
                 <button
-                  onClick={() => navigate("/solicitud-membresia")}
+                  onClick={() => {
+                    navigate("/solicitud-membresia", {
+                      state: {
+                        selectedPlan: plan.name,
+                        showInfoModal: true,
+                        fromOverview: true,
+                      },
+                    });
+                  }}
                   className="w-full py-3 rounded-md font-semibold transition-colors bg-gray-900 hover:bg-gray-800 text-white mt-auto"
                 >
                   Elegir plan

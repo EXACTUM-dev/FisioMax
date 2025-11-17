@@ -1,9 +1,12 @@
 /**
  * @fileoverview Membership application form
+ * @description Page for users to apply for membership
  * @version 0.2.0
+ * @author EXACTUM-dev
  */
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { AiOutlineInfoCircle } from "react-icons/ai";
+import { useNavigate, useLocation } from "react-router-dom";
 import Button from "../atoms/button";
 import BackButton from "../atoms/backButton";
 import FileUpload from "../molecules/fileUpload";
@@ -23,15 +26,33 @@ import {
   PROFILE_VALIDATION_RULES,
 } from "../utils/profileFormValidation";
 
+import MembershipInfoModal from "../overviewPage/membershipInfoModal";
+
 export default function MembershipApplicationPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const isNavigatingRef = useRef(false);
 
-  const [formData, setFormData] = useState({ ...INITIAL_FORM_STATE });
+  const initialMembershipType = location.state?.selectedPlan || "";
+  const [showInfoFormation, setShowInfoFormation] = useState(false);
+
+  const [formData, setFormData] = useState({
+    ...INITIAL_FORM_STATE,
+    membershipType: initialMembershipType,
+    membershipHoursFormation: "",
+  });
+  const handleMembershipChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
   const [extraDocs, setExtraDocs] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [showInfoModal, setShowInfoModal] = useState(
+    (location.state?.showInfoModal && location.state?.fromOverview === true) ||
+      false
+  );
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
@@ -53,6 +74,9 @@ export default function MembershipApplicationPage() {
       extraDocs.length > 0
     );
   };
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -88,7 +112,15 @@ export default function MembershipApplicationPage() {
 
     setIsSubmitting(true);
     try {
-      const formDataToSend = prepareFormDataForSubmission(formData, extraDocs);
+      const formDataToSend = prepareFormDataForSubmission(
+        {
+          ...formData,
+          membershipType: formData.membershipType,
+          membershipHoursFormation: formData.membershipHoursFormation,
+          membershipHoursSocial: formData.membershipHoursSocial,
+        },
+        extraDocs
+      );
       const res = await fetch(MEMBERSHIP_API.CREATE, {
         method: "POST",
         body: formDataToSend,
@@ -144,6 +176,11 @@ export default function MembershipApplicationPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <MembershipInfoModal
+        open={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+        selectedPlan={formData.membershipType}
+      />
       <div className="border-gray-200 py-4">
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex items-center justify-center">
@@ -185,6 +222,65 @@ export default function MembershipApplicationPage() {
               errors={errors}
               setErrors={setErrors}
             />
+
+            <div className="pt-10 mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm font-semibold text-gray-800 mb-2 block">
+                  Tipo de membresía
+                </label>
+                <select
+                  name="membershipType"
+                  value={formData.membershipType}
+                  onChange={handleMembershipChange}
+                  className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#CAD00F] transition"
+                  required
+                >
+                  <option value="">Selecciona el tipo de membresía</option>
+                  <option value="Estudiante/Pasante">Estudiante/Pasante</option>
+                  <option value="Licenciados en Formación">
+                    Licenciados en Formación
+                  </option>
+                  <option value="Especializados">Especializados</option>
+                </select>
+              </div>
+              <div className="relative">
+                <label className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                  Horas de formación
+                  <button
+                    type="button"
+                    className="ml-2 text-[#CAD00F] hover:text-[#b8bd0d] focus:outline-none"
+                    onClick={() => setShowInfoFormation((v) => !v)}
+                    aria-label="Información sobre horas de formación"
+                  >
+                    <AiOutlineInfoCircle size={20} />
+                  </button>
+                </label>
+                <input
+                  type="number"
+                  name="membershipHoursFormation"
+                  value={formData.membershipHoursFormation}
+                  onChange={handleMembershipChange}
+                  className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#CAD00F] transition"
+                  min="0"
+                  placeholder="Ejemplo: 120"
+                  required
+                />
+                {showInfoFormation && (
+                  <div className="absolute z-10 left-0 mt-2 w-72 bg-white border border-[#CAD00F] rounded shadow-lg p-4 text-sm text-gray-700">
+                    Justifica tus horas de formación en piso pélvico con
+                    certificados. Para especialistas, es necesario mínimo tener
+                    120 horas.
+                  </div>
+                )}
+                {formData.membershipType === "Especializados" &&
+                  Number(formData.membershipHoursFormation) < 120 && (
+                    <p className="text-xs text-red-500 mt-2">
+                      Para especialistas, debes tener al menos 120 horas de
+                      formación.
+                    </p>
+                  )}
+              </div>
+            </div>
 
             {/* Documentation section */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-6">

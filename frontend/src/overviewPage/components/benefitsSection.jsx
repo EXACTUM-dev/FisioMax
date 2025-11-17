@@ -59,6 +59,10 @@ const benefitData = [
     ),
   },
 ];
+/**
+ * @component
+ * @return {JSX.Element} The BenefitsSection component
+ */
 
 export default function BenefitsSection() {
   const [selected, setSelected] = useState(0);
@@ -66,7 +70,6 @@ export default function BenefitsSection() {
   return (
     <section id="benefits" className="py-20 px-4 bg-gray-50">
       <div className="max-w-6xl mx-auto">
-        {/* Título / subtítulo (fuera del marco blanco) */}
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3">
             Todo lo que necesitas para crecer
@@ -77,10 +80,8 @@ export default function BenefitsSection() {
           </p>
         </div>
 
-        {/* Marco blanco que contiene botones + imagen */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="grid md:grid-cols-2 gap-8 items-center p-6 md:p-10">
-            {/* Botones de beneficios */}
             <div className="space-y-4">
               {benefitData.map((benefit, idx) => (
                 <button
@@ -105,7 +106,6 @@ export default function BenefitsSection() {
               ))}
             </div>
 
-            {/* Imagen dinámica con tamaño fijo y responsive */}
             <div className="flex items-center justify-center">
               <div
                 className="w-full h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden flex items-center justify-center p-6"
@@ -119,15 +119,12 @@ export default function BenefitsSection() {
                       "linear-gradient(180deg, rgba(202,208,15,0.12), rgba(249,250,251,0.8))",
                   }}
                 >
-                  {/* Mantener tamaño fijo del área: si no hay image, mostrar placeholder.
-                      benefitData[selected].image debe ser un elemento que ocupe el 100% del contenedor */}
                   {benefitData[selected] && benefitData[selected].image ? (
                     <div className="w-full h-full flex items-center justify-center">
                       {benefitData[selected].image}
                     </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      {/* Placeholder si no hay imagen */}
                       <div className="w-11/12 h-5/6 bg-gray-100 rounded-lg flex flex-col items-center justify-center gap-3 p-6">
                         <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                         <div className="h-4 bg-gray-200 rounded w-1/2"></div>
