@@ -17,6 +17,7 @@ import EmailPage from "./src/pages/email";
 import MembershipApplicationPage from "./src/pages/membershipApplication";
 import ContentPage from "./src/pages/content";
 import DedicatedContentPage from "./src/pages/dedicatedContentPage";
+import OverviewPage from "./src/overviewPage/overviewPage";
 
 // Protected routes with Clerk (only login use Clerk)
 import ProfilePage from "./src/pages/profile";
@@ -27,6 +28,7 @@ import RolesPage from "./src/pages/roles";
 export default function App() {
   return (
     <Routes>
+      <Route path="/overview" element={<OverviewPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route
