@@ -70,7 +70,7 @@ router.get("/profile", requireAuth, getCurrentUserProfile);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/:userId", requireAuth, authorize(["Gestión de Usuarios"]), getUserProfileById);
+router.get("/:userId", requireAuth, getUserProfileById);
 
 /**
  * Route to update a user's information
