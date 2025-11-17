@@ -252,6 +252,7 @@ export default function ProfilePage() {
                   mode="sections"
                   data={profileData}
                   canEdit={canEdit}
+                  isOwn={isOwnProfile}
                   onSave={handleSaveEdits}
                   onEditChange={setIsEditing}
                 />
