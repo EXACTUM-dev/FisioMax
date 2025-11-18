@@ -135,6 +135,10 @@ export default function MembershipApplicationPage() {
         );
         setShowModal(true);
         isNavigatingRef.current = true;
+        if (location.state?.fromOverview === true) {
+          navigate("/login?mode=signup&fromMembership=1");
+          return;
+        }
       } else if (res.status === 409) {
         setModalType("error");
         setModalMessage("Este correo o teléfono ya está registrado");

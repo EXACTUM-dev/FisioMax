@@ -11,6 +11,7 @@ import SuccessErrorModal from "./successErrorModal";
 import PersonalInfoSection from "../molecules/personalInfoSection";
 import ContactInfoSection from "../molecules/contactInfoSection";
 import FullProfileForm from "../molecules/fullProfileForm";
+import { Country, State, City } from "country-state-city";
 
 import {
   handleValidatedInputChange,
@@ -18,15 +19,6 @@ import {
   formatDateForInput,
   PROFILE_VALIDATION_RULES,
 } from "../utils/profileFormValidation";
-
-// API endpoints
-const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
-const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_POSITIONS_ENDPOINT;
-const COUNTRIES_STATES_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_STATES_ENDPOINT;
-const COUNTRIES_CITIES_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_CITIES_ENDPOINT;
 
 export default function ProfileFormSection({
   mode = "full",
@@ -58,21 +50,12 @@ export default function ProfileFormSection({
 
   // Fetch countries
   useEffect(() => {
-    async function fetchCountries() {
-      try {
-        const res = await fetch(
-          `${COUNTRIES_API_BASE_URL}${COUNTRIES_POSITIONS_ENDPOINT}`
-        );
-        const dataRes = await res.json();
-        const formatted = dataRes.data
-          .map((c) => ({ value: c.name, label: c.name }))
-          .sort((a, b) => a.label.localeCompare(b.label));
-        setCountries(formatted);
-      } catch (err) {
-        console.error("Error fetching countries:", err);
-      }
-    }
-    fetchCountries();
+    setCountries(
+      Country.getAllCountries().map((c) => ({
+        value: c.isoCode,
+        label: c.name,
+      }))
+    );
   }, []);
 
   // Notify parent when editing
@@ -105,53 +88,35 @@ export default function ProfileFormSection({
     }
   }, [data, mode]);
 
-  const handleCountryChange = async (value) => {
+  const handleCountryChange = (isoCode) => {
     if (mode === "full") {
-      setFormData((prev) => ({ ...prev, pais: value, estado: "", ciudad: "" }));
+      setFormData((prev) => ({
+        ...prev,
+        pais: isoCode,
+        estado: "",
+        ciudad: "",
+      }));
     }
-    setStates([]);
+    setStates(
+      State.getStatesOfCountry(isoCode).map((s) => ({
+        value: s.isoCode,
+        label: s.name,
+      }))
+    );
     setCities([]);
-
-    try {
-      const res = await fetch(
-        `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country: value }),
-        }
-      );
-      const dataRes = await res.json();
-      setStates(
-        dataRes.data?.states?.map((s) => ({ value: s.name, label: s.name })) ||
-          []
-      );
-    } catch (err) {
-      console.error("Error fetching states:", err);
-    }
   };
 
-  const handleStateChange = async (value) => {
-    const currentCountry = mode === "full" ? formData.pais : data.pais;
+  const handleStateChange = (stateIso) => {
+    const countryIso = mode === "full" ? formData.pais : data.pais;
     if (mode === "full") {
-      setFormData((prev) => ({ ...prev, estado: value, ciudad: "" }));
+      setFormData((prev) => ({ ...prev, estado: stateIso, ciudad: "" }));
     }
-    setCities([]);
-
-    try {
-      const res = await fetch(
-        `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country: currentCountry, state: value }),
-        }
-      );
-      const dataRes = await res.json();
-      setCities(dataRes.data?.map((c) => ({ value: c, label: c })) || []);
-    } catch (err) {
-      console.error("Error fetching cities:", err);
-    }
+    setCities(
+      City.getCitiesOfState(countryIso, stateIso).map((c) => ({
+        value: c.name,
+        label: c.name,
+      }))
+    );
   };
 
   const handleInputChange = (e) => {
@@ -321,7 +286,7 @@ export default function ProfileFormSection({
         errors={errors}
         isEditing={isEditingContact}
         canEdit={canEdit}
-        isOwn= {isOwn}
+        isOwn={isOwn}
         onToggleEdit={() => setIsEditingContact((v) => !v)}
         onChange={handleInputChange}
         onSave={handleSaveContact}

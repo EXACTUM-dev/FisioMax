@@ -17,6 +17,7 @@
     "@clerk/clerk-sdk-node": "^4.13.23",
     "@clerk/react-router": "^1.10.2",
     "@tailwindcss/vite": "^4.1.13",
+    "country-state-city": "^3.2.1",
     "lucide-react": "^0.552.0",
     "pdfjs-dist": "^5.4.394",
     "react": "^19.1.1",
