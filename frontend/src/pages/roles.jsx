@@ -128,24 +128,45 @@ export default function RolesPage() {
       setShowModal(true);
     } catch (err) {
       console.error("Error creating role:", err);
+      console.error("Error details:", {
+        code: err.code,
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+
+      // Check for duplicate name error (multiple ways)
+      const isDuplicate = 
+        err.response?.status === 409 ||
+        err.response?.data?.error?.includes("existe un rol") ||
+        err.message?.includes("existe un rol") ||
+        err.code === "ER_DUP_ENTRY";
 
       if (err.code === "NETWORK_ERROR") {
         // Show network error without closing the modal
         setModalType("error");
         setModalMessage("No hay conexión con el servidor. Intenta más tarde.");
         setShowModal(true);
-      } else if (err.response?.status === 409) {
-        // Duplicate name error - handled by modal validation
+      } else if (isDuplicate) {
+        // Duplicate name error - show error but keep modal open
+        setModalType("error");
+        setModalMessage("Ya existe un rol con ese nombre. Por favor, elige otro nombre.");
+        setShowModal(true);
       } else {
         // General error
         setModalType("error");
         setModalMessage(
+          err.response?.data?.error || 
+          err.message || 
           "No se pudo crear el rol. Por favor, intente nuevamente."
         );
         setShowModal(true);
       }
     }
   };
+
+
+
   /**
    * Handle delete confirmation
    */
@@ -245,16 +266,36 @@ export default function RolesPage() {
       setShowModal(true);
     } catch (err) {
       console.error("Error updating role:", err);
+      console.error("Error details:", {
+        code: err.code,
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+
+      // Check for duplicate name error (multiple ways)
+      const isDuplicate = 
+        err.response?.status === 409 ||
+        err.response?.data?.error?.includes("existe un rol") ||
+        err.message?.includes("existe un rol") ||
+        err.code === "ER_DUP_ENTRY";
 
       if (err.code === "NETWORK_ERROR") {
         // Show network error without closing the modal
         setModalType("error");
         setModalMessage("No hay conexión con el servidor. Intenta más tarde.");
         setShowModal(true);
+      } else if (isDuplicate) {
+        // Duplicate name error - show error but keep modal open
+        setModalType("error");
+        setModalMessage("Ya existe un rol con ese nombre. Por favor, elige otro nombre.");
+        setShowModal(true);
       } else {
         // General error
         setModalType("error");
         setModalMessage(
+          err.response?.data?.error || 
+          err.message || 
           "No se pudo actualizar el rol. Por favor, intente nuevamente."
         );
         setShowModal(true);

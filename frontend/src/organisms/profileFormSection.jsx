@@ -37,6 +37,7 @@ export default function ProfileFormSection({
   setErrors: setExternalErrors,
   onSave,
   onEditChange,
+  isOwn = false,
   canEdit = false,
 }) {
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
@@ -300,15 +301,13 @@ export default function ProfileFormSection({
         onChange={handleInputChange}
         onSave={handleSavePersonal}
         onCancel={() => {
-          setIsEditingContact(false);
-          setContactForm({
-            email: data.email || data.correo || "",
-            telefonoProfesional: data.telefonoProfesional || "",
-            telefonoWhatsapp: data.telefonoWhatsapp || "",
-            instagram: data.instagram || "",
-            linkedin: data.linkedin || "",
-            facebook: data.facebook || "",
-            paginaWeb: data.paginaWeb || "",
+          setIsEditingPersonal(false);
+          setPersonalForm({
+            nombres: data.nombres || "",
+            apellidoP: data.apellidoP || "",
+            apellidoM: data.apellidoM || "",
+            fechaNacimiento: formatDateForInput(data.fechaNacimiento) || "",
+            licenciatura: data.licenciatura || "",
           });
           setErrors({});
         }}
@@ -320,6 +319,7 @@ export default function ProfileFormSection({
         errors={errors}
         isEditing={isEditingContact}
         canEdit={canEdit}
+        isOwn= {isOwn}
         onToggleEdit={() => setIsEditingContact((v) => !v)}
         onChange={handleInputChange}
         onSave={handleSaveContact}

@@ -1,30 +1,31 @@
 /**
  * @fileoverview Login page component using Clerk authentication.
  * @author EXACTUM-dev
- * @version 1.0.1
+ * @version 1.0.3
  */
-import React, {useEffect} from 'react';
-import {SignIn, useUser, useClerk} from '@clerk/clerk-react';
-import {Navigate} from 'react-router-dom';
-import {sendLoginErrorLog} from '../services/loginLogs.service.js';
+import React, { useEffect } from "react";
+import { SignIn, SignUp, useUser, useClerk } from "@clerk/clerk-react";
+import { Navigate, useSearchParams } from "react-router-dom";
+import { sendLoginErrorLog } from "../services/loginLogs.service.js";
 
 /**
  * Login page component that handles user authentication via Clerk.
- * Displays a loading state while checking authentication status,
- * redirects authenticated users to the home page, and shows the
- * Clerk SignIn component for unauthenticated users.
+ * Supports both sign-in and sign-up modes for OAuth providers.
+ * Uses URL parameter ?mode=signup to switch between modes.
  *
  * @return {React.Element} The rendered login page component.
  */
 export default function LoginPage() {
-  const {isSignedIn, isLoaded} = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const clerk = useClerk();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mode = searchParams.get("mode") || "signin";
 
   useEffect(() => {
     if (!clerk) return undefined;
 
-    const removeListener = clerk.addListener(({event, payload}) => {
-      if (event === 'signIn:failed') {
+    const removeListener = clerk.addListener(({ event, payload }) => {
+      if (event === "signIn:failed") {
         const identifier =
           payload?.attempt?.identifier ||
           payload?.emailAddress ||
@@ -33,9 +34,9 @@ export default function LoginPage() {
 
         sendLoginErrorLog({
           usuario: identifier,
-          codigoError: payload?.error?.code || 'CLERK_SIGNIN_FAILED',
+          codigoError: payload?.error?.code || "CLERK_SIGNIN_FAILED",
           mensajeError:
-              payload?.error?.message || 'Intento fallido de inicio de sesión',
+            payload?.error?.message || "Intento fallido de inicio de sesión",
           detalles: {
             reason: payload?.reason,
             errors: payload?.errors,
@@ -46,7 +47,7 @@ export default function LoginPage() {
     });
 
     return () => {
-      if (typeof removeListener === 'function') {
+      if (typeof removeListener === "function") {
         removeListener();
       }
     };
@@ -94,25 +95,49 @@ export default function LoginPage() {
             </h2>
           </div>
 
-          {/* Clerk SignIn Component */}
+          {/* Clerk SignIn/SignUp Component - Dynamic based on mode */}
           <div className="flex justify-center">
-            <SignIn
-              path="/login"
-              routing="path"
-              signUpUrl="/register"
-              afterSignInUrl="/"
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "shadow-none w-full",
-                  formButtonPrimary:
-                    "bg-black hover:bg-gray-800 text-white rounded-md py-2",
-                  formFieldInput: "border-gray-300 rounded-md",
-                  formFieldLabel: "text-gray-700 font-medium",
-                  footer: "hidden",
-                },
-              }}
-            />
+            {mode === "signup" ? (
+              <SignUp
+                path="/login"
+                routing="path"
+                signInUrl="/login?mode=signin"
+                afterSignUpUrl="/"
+                appearance={{
+                  elements: {
+                    rootBox: "w-full",
+                    card: "shadow-none w-full",
+                    formButtonPrimary:
+                      "bg-black hover:bg-gray-800 text-white rounded-md py-2",
+                    socialButtonsBlockButton:
+                      "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300",
+                    formFieldInput: "border-gray-300 rounded-md",
+                    formFieldLabel: "text-gray-700 font-medium",
+                    footer: "hidden",
+                  },
+                }}
+              />
+            ) : (
+              <SignIn
+                path="/login"
+                routing="path"
+                signUpUrl="/login?mode=signup"
+                afterSignInUrl="/"
+                appearance={{
+                  elements: {
+                    rootBox: "w-full",
+                    card: "shadow-none w-full",
+                    formButtonPrimary:
+                      "bg-black hover:bg-gray-800 text-white rounded-md py-2",
+                    socialButtonsBlockButton:
+                      "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300",
+                    formFieldInput: "border-gray-300 rounded-md",
+                    formFieldLabel: "text-gray-700 font-medium",
+                    footer: "hidden",
+                  },
+                }}
+              />
+            )}
           </div>
         </div>
 
