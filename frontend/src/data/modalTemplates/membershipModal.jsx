@@ -347,12 +347,41 @@ function MembershipModalContent({
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
+                          title={row.url ? "Ver documento" : "Sin archivo"}
+                          onClick={() =>
+                            row.url && window.open(row.url, "_blank", "noopener,noreferrer")
+                          }
+                          disabled={!row.url}
+                          className="text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
                           title={row.url ? "Descargar PDF" : "Sin archivo"}
                           onClick={() =>
                             row.url && downloadDocument(row.url, row.key)
                           }
                           disabled={!row.url}
-                          className={"text-slate-600 hover:text-slate-800 text-sm font-medium transition-colors"}
+                          className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <svg
                             className="w-5 h-5"
