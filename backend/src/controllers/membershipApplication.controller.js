@@ -60,7 +60,6 @@ export const createMembershipApplication = async (req, res) => {
         "birthDate",
         "country",
         "state",
-        "city",
       ],
       maxLengths: {
         firstName: 100,
