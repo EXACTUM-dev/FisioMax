@@ -280,7 +280,7 @@ export default function DocumentsCard({
             <span className="text-xs text-green-600 font-medium">Cargado</span>
             <button
               onClick={() => handleViewDocument(fileUrl)}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+              className="text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
               title="Ver documento"
             >
               <svg
@@ -305,7 +305,7 @@ export default function DocumentsCard({
             </button>
             <button
               onClick={() => handleDownloadDocument(fileUrl, filename)}
-              className="text-slate-600 hover:text-slate-800 text-sm font-medium transition-colors"
+              className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
               title="Descargar documento"
             >
               <svg
@@ -383,7 +383,7 @@ export default function DocumentsCard({
                     </span>
                     <button
                       onClick={() => handleViewDocument(doc)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                      className="text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
                       title="Ver documento"
                     >
                       <svg
@@ -413,7 +413,7 @@ export default function DocumentsCard({
                           `documento_adicional_${index + 1}.pdf`
                         )
                       }
-                      className="text-slate-600 hover:text-slate-800 text-sm font-medium transition-colors"
+                      className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
                       title="Descargar documento"
                     >
                       <svg
