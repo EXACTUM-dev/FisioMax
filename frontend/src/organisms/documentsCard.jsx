@@ -13,6 +13,7 @@ import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
 import SuccessErrorModal from './successErrorModal';
 import Modal from '../molecules/modal';
+import pdfIcon from "../assets/icons/pdf.png";
 
 /**
  * Displays user documents with preview and download options.
@@ -262,10 +263,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
               className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
               title="Ver documento"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
+              <img src={pdfIcon} alt="Ver PDF" className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity" />
             </button>
             <button
               onClick={() => handleDownloadDocument(fileUrl, filename)}
