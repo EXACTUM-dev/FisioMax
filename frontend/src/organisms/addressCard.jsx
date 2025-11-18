@@ -259,9 +259,6 @@ export default function AddressCard({
     if (!form.estado || form.estado.trim() === "") {
       missingFields.push("Estado / Provincia");
     }
-    if (!form.ciudad || form.ciudad.trim() === "") {
-      missingFields.push("Ciudad");
-    }
 
     if (missingFields.length > 0) {
       setValidationErrors(missingFields);
