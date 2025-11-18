@@ -6,7 +6,6 @@
 
 import rateLimit from "express-rate-limit";
 import config from "../../config.js";
-import { getRequestIp } from "../utils/request.js";
 
 /**
  * Rate limiter specifically for the login-errors endpoint.
@@ -29,10 +28,6 @@ export const loginErrorsRateLimiter = rateLimit({
   },
   standardHeaders: true, // Returns rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disables `X-RateLimit-*` headers
-  // Use custom IP to account for proxies
-  keyGenerator: (req) => {
-    return getRequestIp(req) || req.ip || "unknown";
-  },
   // Custom handler for consistent responses
   handler: (req, res) => {
     res.status(429).json({
@@ -62,7 +57,4 @@ export const apiRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return getRequestIp(req) || req.ip || "unknown";
-  },
 });

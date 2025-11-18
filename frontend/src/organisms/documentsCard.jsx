@@ -1,7 +1,7 @@
 /**
  * @fileoverview Documents card component for displaying user documents.
  * Provides preview and download functionality for PDFs.
- * @version 1.0.0
+ * @version 1.1.0
  * @author EXACTUM-dev
  */
 
@@ -13,6 +13,7 @@ import EditButton from "../atoms/editButton";
 import Button from "../atoms/button";
 import SuccessErrorModal from './successErrorModal';
 import Modal from '../molecules/modal';
+import pdfIcon from "../assets/icons/pdf.png";
 
 /**
  * Displays user documents with preview and download options.
@@ -25,6 +26,7 @@ import Modal from '../molecules/modal';
  */
 export default function DocumentsCard({data = {}, canEdit = false, onSave, userId, onEditChange}) {
   const [isEditing, setIsEditing] = useState(false);
+  const MAX_EXTRA_DOCS = 10;
   
   // Notify parent component when editing state changes
   useEffect(() => {
@@ -38,6 +40,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
     cedula: null,
     constancias: null
   });
+  const [extraDocs, setExtraDocs] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('success');
@@ -48,6 +51,12 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
 
   const hasFile = (v) => !!v;
 
+  // Debug: Log data to see what we're receiving
+  useEffect(() => {
+    console.log('DocumentsCard data:', data);
+    console.log('documentosadicionales:', data.documentosadicionales);
+  }, [data]);
+
   // Reset form when data changes
   useEffect(() => {
     setFormFiles({
@@ -55,6 +64,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
       cedula: null,
       constancias: null
     });
+    setExtraDocs([]);
   }, [data]);
 
   /**
@@ -108,6 +118,19 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
     setFormFiles((prev) => ({ ...prev, [name]: file }));
   }
 
+  const handleAddDocuments = () => {
+    if (extraDocs.length < MAX_EXTRA_DOCS) {
+      setExtraDocs((prev) => [...prev, { id: Date.now(), file: null }]);
+    }
+  };
+
+  const handleExtraFileChange = (id, e) => {
+    const file = e.target.files[0] || null;
+    setExtraDocs((prev) =>
+      prev.map((doc) => (doc.id === id ? { ...doc, file } : doc))
+    );
+  };
+
   /**
    * Validates that required documents are present
    * @returns {boolean} True if valid, false otherwise
@@ -141,7 +164,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
     }
 
     // Check if there are any files to upload
-    const hasFiles = formFiles.titulo || formFiles.cedula || formFiles.constancias;
+    const hasFiles = formFiles.titulo || formFiles.cedula || formFiles.constancias || extraDocs.some(doc => doc.file);
     if (!hasFiles) {
       setIsEditing(false);
       return;
@@ -163,6 +186,13 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
         formData.append('constancias', formFiles.constancias);
       }
 
+      // Add extra documents
+      extraDocs.forEach((doc, index) => {
+        if (doc.file) {
+          formData.append(`extraDoc${index + 1}`, doc.file);
+        }
+      });
+
       // Upload documents
       const updatedData = await updateUserDocuments(userId, formData, token);
       
@@ -179,6 +209,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
         cedula: null,
         constancias: null
       });
+      setExtraDocs([]);
       
       // Show success modal
       setModalType('success');
@@ -232,10 +263,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
               className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
               title="Ver documento"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
+              <img src={pdfIcon} alt="Ver PDF" className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity" />
             </button>
             <button
               onClick={() => handleDownloadDocument(fileUrl, filename)}
@@ -289,19 +317,75 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
           fieldName="constancias"
         />
         
-        {/* Additional documents - only show in view mode for now */}
-        {!isEditing && data.documentosAdicionales && data.documentosAdicionales.length > 0 && (
+        {/* Additional documents - show in both view and edit modes */}
+        {!isEditing && data.documentosadicionales && data.documentosadicionales.length > 0 && (
           <>
-            {data.documentosAdicionales.map((doc, index) => (
-              <DocumentRow 
-                key={index}
-                label={`Documento adicional ${index + 1}`} 
-                fileUrl={doc} 
-                filename={`documento_adicional_${index + 1}.pdf`}
-                fieldName={`extraDoc${index}`}
-              />
+            {data.documentosadicionales.map((doc, index) => (
+              <div key={index} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+                <span className="text-slate-600">{`Documento adicional ${index + 1}`}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-green-600 font-medium">Cargado</span>
+                  <button
+                    onClick={() => handleViewDocument(doc)}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                    title="Ver documento"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDownloadDocument(doc, `documento_adicional_${index + 1}.pdf`)}
+                    className="text-slate-600 hover:text-slate-800 text-sm font-medium transition-colors"
+                    title="Descargar documento"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             ))}
           </>
+        )}
+        
+        {/* Extra documents in edit mode */}
+        {isEditing && extraDocs.map((doc, i) => (
+          <div key={doc.id} className="relative py-2 border-b border-slate-100">
+            <FileUpload
+              name={`extra-${doc.id}`}
+              label={`Documento adicional ${i + 1}`}
+              value={doc.file}
+              onChange={(e) => handleExtraFileChange(doc.id, e)}
+              accept=".pdf"
+            />
+            <button
+              type="button"
+              onClick={() => setExtraDocs((prev) => prev.filter((d) => d.id !== doc.id))}
+              className="absolute top-2 right-0 text-red-500 hover:text-red-700 text-sm"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        
+        {isEditing && (
+          <Button
+            variant="newDoc"
+            size="sm"
+            onClick={handleAddDocuments}
+            className="bg-gray-200 text-gray-700 hover:bg-gray-300 mt-2"
+            type="button"
+            disabled={extraDocs.length >= MAX_EXTRA_DOCS}
+          >
+            Agregar documentos adicionales
+          </Button>
+        )}
+        {isEditing && extraDocs.length >= MAX_EXTRA_DOCS && (
+          <p className="text-xs text-red-500 mt-2">
+            Solo puedes agregar hasta 10 documentos adicionales.
+          </p>
         )}
       </div>
 
@@ -319,6 +403,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
                 cedula: null,
                 constancias: null
               });
+              setExtraDocs([]);
             }}
           >
             Cancelar

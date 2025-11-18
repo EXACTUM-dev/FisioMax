@@ -199,7 +199,7 @@ export async function getUserByClerkId(clerkId) {
 
     const user = decryptUserData(rows[0]);
 
-    // Try to get additional documents if the table exists
+    // Get additional documents from separate table
     try {
       const [docRows] = await dbPool.query(
         `SELECT 
@@ -296,7 +296,32 @@ export async function getUserById(userId) {
       LIMIT 1`,
       [userId]
     );
-    return rows.length > 0 ? decryptUserData(rows[0]) : null;
+    if (rows.length === 0) return null;
+    
+    const user = decryptUserData(rows[0]);
+    
+    // Get additional documents from separate table
+    try {
+      const [docRows] = await dbPool.query(
+        `SELECT 
+          IDDocumento,
+          nombreArchivo,
+          urlArchivo,
+          createdAt
+        FROM documentosadicionales
+        WHERE IDUsuario = ?`,
+        [user.IDUsuario]
+      );
+      user.documentosadicionales = docRows;
+    } catch (docError) {
+      console.warn(
+        "documentosadicionales table not found or error:",
+        docError.message
+      );
+      user.documentosadicionales = [];
+    }
+    
+    return user;
   } catch (error) {
     console.error("Error al consultar usuario por ID:", error);
     throw error;
@@ -360,9 +385,71 @@ export async function getUserByEmail(email) {
       WHERE u.correo = ? 
         AND u.deletedAt IS NULL 
         AND u.eliminado = 0
+      ORDER BY u.IDUsuario DESC
       LIMIT 1`,
       [encryptedEmail]
     );
+
+    // If not found with encrypted search, try decrypting all and searching
+    if (rows.length === 0) {
+      const [allRows] = await dbPool.query(
+        `SELECT 
+          u.IDUsuario,
+          u.clerkID,
+          u.nombres, 
+          u.apellidoP, 
+          u.apellidoM,
+          u.foto,
+          u.correo,
+          u.telefonoProfesional,
+          u.telefonoWhatsapp,
+          u.fechaNacimiento,
+          u.cedula,
+          u.titulo,
+          u.constancias,
+          u.licenciatura,
+          u.pais,
+          u.estado,
+          u.ciudad,
+          u.calle,
+          u.numExterior,
+          u.numInterior,
+          u.colonia,
+          u.codigoPostal,
+          u.instagram,
+          u.linkedin,
+          u.facebook,
+          u.paginaWeb,
+          r.IDRol,
+          r.nombre as rolNombre,
+          r.descripcion as rolDescripcion
+        FROM usuario u
+        LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
+          AND ur.deletedAt IS NULL 
+          AND ur.eliminado = 0
+        LEFT JOIN rol r ON ur.IDRol = r.IDRol 
+          AND r.deletedAt IS NULL 
+          AND r.eliminado = 0
+        WHERE u.deletedAt IS NULL 
+          AND u.eliminado = 0
+        ORDER BY u.IDUsuario DESC`
+      );
+
+      // Decrypt and search
+      for (const row of allRows) {
+        const decryptedUser = decryptUserData(row);
+        if (
+          decryptedUser &&
+          decryptedUser.correo &&
+          decryptedUser.correo.toLowerCase().trim() === normalizedEmail
+        ) {
+          return decryptedUser;
+        }
+      }
+
+      return null;
+    }
+
     return rows.length > 0 ? decryptUserData(rows[0]) : null;
   } catch (error) {
     console.error("Error al consultar usuario por email:", error);

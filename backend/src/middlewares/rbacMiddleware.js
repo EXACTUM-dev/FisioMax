@@ -1,8 +1,8 @@
 /**
  * @fileoverview Middleware to handle role-based access control (RBAC).
- * @version 0.1.0
+ * @version 0.1.1
  * @author EXACTUM-dev
- * @description Validates whether the authenticated user has the required privileges 
+ * @description Validates whether the authenticated user has the required privileges
  *              to access specific routes or perform certain actions.
  */
 
@@ -15,12 +15,28 @@ import { getUserRolesAndPermissions } from "../models/rbac.model.js";
  */
 export const authorize = (requiredPrivileges = []) => {
   return async (req, res, next) => {
-    const userId = req.auth?.userId;
-    if (!userId) return res.status(401).json({ message: "No autenticado" });
+    const clerkUserId = req.auth?.userId;
+    if (!clerkUserId)
+      return res.status(401).json({ message: "No autenticado" });
+
+    // Allow users to update their own profile without specific privileges
+    const paramUserId = req.params?.userId;
+    if (req.method === "PATCH" && paramUserId) {
+      try {
+        const userDb = await import("../models/users.model.js").then((m) =>
+          m.getUserByClerkId(clerkUserId)
+        );
+        if (userDb && String(userDb.IDUsuario) === String(paramUserId)) {
+          return next();
+        }
+      } catch (err) {
+        console.error("Error verificando usuario propio en RBAC:", err);
+      }
+    }
 
     try {
-      const { privilegios } = await getUserRolesAndPermissions(userId);
-      const hasPermission = requiredPrivileges.every(p =>
+      const { privilegios } = await getUserRolesAndPermissions(clerkUserId);
+      const hasPermission = requiredPrivileges.every((p) =>
         privilegios.includes(p)
       );
 

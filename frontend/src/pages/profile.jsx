@@ -31,6 +31,7 @@ import {
   getCurrentUserProfile,
   getUserProfileById,
   updateUserById,
+  updateUserOwnById,
 } from "../controllers/profile.controller";
 
 // Hooks
@@ -152,7 +153,7 @@ export default function ProfilePage() {
           setCurrentUserProfile(fields); // Also update current user profile
         } else {
           // Otherwise, it's a partial update, call the API with current user's ID
-          const updated = await updateUserById(
+          const updated = await updateUserOwnById(
             currentUserProfile.IDUsuario,
             fields,
             token
@@ -251,6 +252,7 @@ export default function ProfilePage() {
                   mode="sections"
                   data={profileData}
                   canEdit={canEdit}
+                  isOwn={isOwnProfile}
                   onSave={handleSaveEdits}
                   onEditChange={setIsEditing}
                 />

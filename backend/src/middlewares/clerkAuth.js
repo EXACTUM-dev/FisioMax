@@ -57,7 +57,6 @@ export const autoSyncClerkId = async (req, res, next) => {
     )?.emailAddress;
 
     if (!email) {
-      console.warn(`Clerk user ${clerkUserId} has no primary email`);
       return next();
     }
 
@@ -69,23 +68,17 @@ export const autoSyncClerkId = async (req, res, next) => {
 
     if (!dbUser) {
       // User doesn't exist in DB, do nothing (requireDbUser will block it)
-      console.log(`User with email ${normalizedEmail} not found in DB`);
       return next();
     }
 
     // User exists in DB but has no clerkID, link automatically
     if (!dbUser.clerkID) {
       await updateUserClerkId(dbUser.IDUsuario, clerkUserId);
-      console.log(
-        ` Auto-linked: ${normalizedEmail} -> clerkID: ${clerkUserId}`
-      );
-    } else {
-      console.log(`User ${normalizedEmail} already has a different clerkID`);
     }
 
     next();
   } catch (error) {
-    console.error(" Error in autoSyncClerkId:", error);
+    console.error("Error in autoSyncClerkId:", error);
     // Don't block the request due to a sync error
     next();
   }
