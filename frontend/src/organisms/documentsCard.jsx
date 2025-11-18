@@ -62,10 +62,7 @@ export default function DocumentsCard({
   const hasFile = (v) => !!v;
 
   // Debug: Log data to see what we're receiving
-  useEffect(() => {
-    console.log("DocumentsCard data:", data);
-    console.log("documentosadicionales:", data.documentosadicionales);
-  }, [data]);
+  useEffect(() => {}, [data]);
 
   // Reset form when data changes
   useEffect(() => {
