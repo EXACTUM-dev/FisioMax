@@ -8,7 +8,7 @@
 
 import S3Service from "../services/s3Service.js";
 import db from "../../database/db.js";
-import { encryptFields, decryptFields } from "../utils/encryption.js";
+import { encryptFields, decryptFields } from "../services/encryptionService.js";
 
 /**
  * Sensitive fields that must be encrypted/decrypted.
@@ -156,12 +156,12 @@ class MembershipApplication {
     try {
       await conn.beginTransaction();
 
-      // Prepare data for encryption
+      // Prepare data for encryption with normalized email
       const dataToEncrypt = {
         nombres: this.firstName,
         apellidoP: this.lastName,
         apellidoM: this.middleName,
-        correo: this.email,
+        correo: this.email ? this.email.toLowerCase().trim() : this.email,
         telefonoProfesional: this.professionalPhone,
         telefonoWhatsapp: this.whatsappPhone,
         colonia: this.neighborhood,

@@ -83,11 +83,23 @@ const config = {
       max: parseInt(process.env.API_RATE_LIMIT_MAX || "100", 10),
     },
   },
+
+  // Encryption configuration
+  encryption: {
+    key: process.env.ENCRYPTION_KEY,
+  },
 };
 
 // Validate critical environment variables
-if (!process.env.DB_HOST || !process.env.JWT_SECRET || !process.env.CLERK_SECRET_KEY) {
-  throw new Error("Faltan variables de entorno críticas. Verifica el archivo .env");
+if (
+  !process.env.DB_HOST ||
+  !process.env.JWT_SECRET ||
+  !process.env.CLERK_SECRET_KEY ||
+  !process.env.ENCRYPTION_KEY
+) {
+  throw new Error(
+    "Faltan variables de entorno críticas. Verifica el archivo .env"
+  );
 }
 
 // toJSON method to avoid exposing secrets when serialized
