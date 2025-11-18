@@ -226,7 +226,7 @@ export default function MembershipApplicationPage() {
             <div className="pt-10 mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm font-semibold text-gray-800 mb-2 block">
-                  Tipo de membresía
+                  Tipo de membresía <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="membershipType"
@@ -254,6 +254,9 @@ export default function MembershipApplicationPage() {
                   >
                     <AiOutlineInfoCircle size={20} />
                   </button>
+                  {formData.membershipType === "Especializados" && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
                 </label>
                 <input
                   type="number"
@@ -263,7 +266,7 @@ export default function MembershipApplicationPage() {
                   className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#CAD00F] transition"
                   min="0"
                   placeholder="Ejemplo: 120"
-                  required
+                  required={formData.membershipType === "Especializados"}
                 />
                 {showInfoFormation && (
                   <div className="absolute z-10 left-0 mt-2 w-72 bg-white border border-[#CAD00F] rounded shadow-lg p-4 text-sm text-gray-700">

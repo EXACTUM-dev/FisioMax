@@ -20,38 +20,75 @@ import {
  * @param {boolean} props.open - Whether the modal is open
  * @param {Function} props.onClose - Closes the modal
  */
-export default function MembershipInfoModal({ open, onClose, selectedPlan }) {
+export default function MembershipInfoModal({
+  open,
+  onClose,
+  selectedPlan,
+  highlightStep = 1,
+}) {
   return (
     <Modal open={open} onClose={onClose} size="md" position="center">
       <div className="text-left">
         <h3 className="text-2xl font-bold text-gray-900 mb-6">
           Proceso de membresía
         </h3>
-        {/* Indicador de pasos */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex flex-col items-center flex-1">
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#CAD00F] text-gray-900 font-bold border-2 border-[#CAD00F]">
+            <div
+              className={`w-8 h-8 flex items-center justify-center rounded-full font-bold border-2
+              ${
+                highlightStep === 1
+                  ? "bg-[#CAD00F] text-gray-900 border-[#CAD00F]"
+                  : "bg-gray-200 text-gray-400 border-gray-200"
+              }`}
+            >
               1
             </div>
-            <span className="text-xs mt-2 font-semibold text-gray-800">
+            <span
+              className={`text-xs mt-2 font-semibold ${
+                highlightStep === 1 ? "text-gray-800" : "text-gray-400"
+              }`}
+            >
               Solicitud
             </span>
           </div>
           <div className="flex-1 h-1 bg-[#CAD00F]/40 mx-2" />
           <div className="flex flex-col items-center flex-1">
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-400 font-bold border-2 border-gray-200">
+            <div
+              className={`w-8 h-8 flex items-center justify-center rounded-full font-bold border-2
+              ${
+                highlightStep === 2
+                  ? "bg-[#CAD00F] text-gray-900 border-[#CAD00F]"
+                  : "bg-gray-200 text-gray-400 border-gray-200"
+              }`}
+            >
               2
             </div>
-            <span className="text-xs mt-2 font-semibold text-gray-400">
+            <span
+              className={`text-xs mt-2 font-semibold ${
+                highlightStep === 2 ? "text-gray-800" : "text-gray-400"
+              }`}
+            >
               Validación
             </span>
           </div>
           <div className="flex-1 h-1 bg-[#CAD00F]/40 mx-2" />
           <div className="flex flex-col items-center flex-1">
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-gray-400 font-bold border-2 border-gray-200">
+            <div
+              className={`w-8 h-8 flex items-center justify-center rounded-full font-bold border-2
+              ${
+                highlightStep === 3
+                  ? "bg-[#CAD00F] text-gray-900 border-[#CAD00F]"
+                  : "bg-gray-200 text-gray-400 border-gray-200"
+              }`}
+            >
               3
             </div>
-            <span className="text-xs mt-2 font-semibold text-gray-400">
+            <span
+              className={`text-xs mt-2 font-semibold ${
+                highlightStep === 3 ? "text-gray-800" : "text-gray-400"
+              }`}
+            >
               Pago
             </span>
           </div>

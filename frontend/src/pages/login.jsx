@@ -3,10 +3,11 @@
  * @author EXACTUM-dev
  * @version 1.0.3
  */
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { SignIn, SignUp, useUser, useClerk } from "@clerk/clerk-react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { sendLoginErrorLog } from "../services/loginLogs.service.js";
+import MembershipInfoModal from "../overviewPage/membershipInfoModal";
 
 /**
  * Login page component that handles user authentication via Clerk.
@@ -18,11 +19,15 @@ import { sendLoginErrorLog } from "../services/loginLogs.service.js";
 export default function LoginPage() {
   const { isSignedIn, isLoaded } = useUser();
   const clerk = useClerk();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode") || "signin";
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
 
   useEffect(() => {
-    if (!clerk) return undefined;
+    if (!clerk) return;
+    if (mode === "signup" && searchParams.get("fromMembership") === "1") {
+      setShowMembershipModal(true);
+    }
 
     const removeListener = clerk.addListener(({ event, payload }) => {
       if (event === "signIn:failed") {
@@ -51,7 +56,7 @@ export default function LoginPage() {
         removeListener();
       }
     };
-  }, [clerk]);
+  }, [clerk, mode, searchParams]);
 
   // Display loading state while authentication status is being determined
   if (!isLoaded) {
@@ -69,7 +74,6 @@ export default function LoginPage() {
   }
 
   // Redirect authenticated users to home page
-  // (ProtectedRoute will handle DB validation)
   if (isSignedIn) {
     return <Navigate to="/" replace />;
   }
@@ -77,6 +81,11 @@ export default function LoginPage() {
   // Display login form for unauthenticated users
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <MembershipInfoModal
+        open={showMembershipModal}
+        onClose={() => setShowMembershipModal(false)}
+        highlightStep={2}
+      />
       <div className="flex flex-col items-center w-full max-w-md">
         {/* Logo/Avatar */}
         <div className="flex justify-center mb-[-40px] sm:mb-[-40px] lg:mb-[-30px] z-10">
