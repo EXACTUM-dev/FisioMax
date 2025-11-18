@@ -457,7 +457,7 @@ export async function updateUser(req, res) {
 }
 
 /**
- * Update user documents (titulo, cedula, constancias).
+ * Update user documents (titulo, cedula, constancias, and extra documents).
  * Handles file uploads to S3 and updates database.
  * @async
  * @function updateUserDocuments
@@ -518,6 +518,32 @@ export async function updateUserDocuments(req, res) {
           "constancias"
         );
       }
+
+      // Handle extra documents
+      const extraDocs = [];
+      Object.keys(req.files || {}).forEach((key) => {
+        if (key.startsWith("extraDoc")) {
+          extraDocs.push(req.files[key][0]);
+        }
+      });
+
+      if (extraDocs.length > 0) {
+        // Delete old extra documents if they exist
+        if (currentUser.documentosadicionales && currentUser.documentosadicionales.length > 0) {
+          await Promise.all(
+            currentUser.documentosadicionales.map(docKey => 
+              S3Service.deleteFile(docKey)
+            )
+          );
+        }
+
+        // Upload new extra documents
+        const extraDocsUrls = await Promise.all(
+          extraDocs.map((file) => S3Service.uploadFile(file, "documentos-extra"))
+        );
+        
+        updateData.documentosadicionales = extraDocsUrls;
+      }
     } else {
       console.warn("AWS S3 not configured. Files will not be uploaded.");
       if (req.files?.titulo?.[0]) {
@@ -553,6 +579,12 @@ export async function updateUserDocuments(req, res) {
       S3Service.getPresignedUrl(updated.constancias),
     ]);
 
+    // Generate presigned URLs for additional documents
+    const documentosadicionalesUrls =
+      updated.documentosadicionales && updated.documentosadicionales.length > 0
+        ? await S3Service.getPresignedUrls(updated.documentosadicionales)
+        : [];
+
     const transformedUser = {
       nombres: updated.nombres || "",
       apellidoP: updated.apellidoP || "",
@@ -577,6 +609,7 @@ export async function updateUserDocuments(req, res) {
       cedula: cedulaUrl,
       titulo: tituloUrl,
       constancias: constanciasUrl,
+      documentosadicionales: documentosadicionalesUrls,
       IDUsuario: updated.IDUsuario,
       IDRol: updated.IDRol || null,
       rol: updated.rolNombre || null,

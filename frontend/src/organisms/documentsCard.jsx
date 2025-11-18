@@ -1,7 +1,7 @@
 /**
  * @fileoverview Documents card component for displaying user documents.
  * Provides preview and download functionality for PDFs.
- * @version 1.0.0
+ * @version 1.1.0
  * @author EXACTUM-dev
  */
 
@@ -25,6 +25,7 @@ import Modal from '../molecules/modal';
  */
 export default function DocumentsCard({data = {}, canEdit = false, onSave, userId, onEditChange}) {
   const [isEditing, setIsEditing] = useState(false);
+  const MAX_EXTRA_DOCS = 10;
   
   // Notify parent component when editing state changes
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
     cedula: null,
     constancias: null
   });
+  const [extraDocs, setExtraDocs] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('success');
@@ -55,6 +57,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
       cedula: null,
       constancias: null
     });
+    setExtraDocs([]);
   }, [data]);
 
   /**
@@ -108,6 +111,19 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
     setFormFiles((prev) => ({ ...prev, [name]: file }));
   }
 
+  const handleAddDocuments = () => {
+    if (extraDocs.length < MAX_EXTRA_DOCS) {
+      setExtraDocs((prev) => [...prev, { id: Date.now(), file: null }]);
+    }
+  };
+
+  const handleExtraFileChange = (id, e) => {
+    const file = e.target.files[0] || null;
+    setExtraDocs((prev) =>
+      prev.map((doc) => (doc.id === id ? { ...doc, file } : doc))
+    );
+  };
+
   /**
    * Validates that required documents are present
    * @returns {boolean} True if valid, false otherwise
@@ -141,7 +157,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
     }
 
     // Check if there are any files to upload
-    const hasFiles = formFiles.titulo || formFiles.cedula || formFiles.constancias;
+    const hasFiles = formFiles.titulo || formFiles.cedula || formFiles.constancias || extraDocs.some(doc => doc.file);
     if (!hasFiles) {
       setIsEditing(false);
       return;
@@ -163,6 +179,13 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
         formData.append('constancias', formFiles.constancias);
       }
 
+      // Add extra documents
+      extraDocs.forEach((doc, index) => {
+        if (doc.file) {
+          formData.append(`extraDoc${index + 1}`, doc.file);
+        }
+      });
+
       // Upload documents
       const updatedData = await updateUserDocuments(userId, formData, token);
       
@@ -179,6 +202,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
         cedula: null,
         constancias: null
       });
+      setExtraDocs([]);
       
       // Show success modal
       setModalType('success');
@@ -289,10 +313,10 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
           fieldName="constancias"
         />
         
-        {/* Additional documents - only show in view mode for now */}
-        {!isEditing && data.documentosAdicionales && data.documentosAdicionales.length > 0 && (
+        {/* Additional documents - show in both view and edit modes */}
+        {!isEditing && data.documentosadicionales && data.documentosadicionales.length > 0 && (
           <>
-            {data.documentosAdicionales.map((doc, index) => (
+            {data.documentosadicionales.map((doc, index) => (
               <DocumentRow 
                 key={index}
                 label={`Documento adicional ${index + 1}`} 
@@ -302,6 +326,44 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
               />
             ))}
           </>
+        )}
+        
+        {/* Extra documents in edit mode */}
+        {isEditing && extraDocs.map((doc, i) => (
+          <div key={doc.id} className="relative py-2 border-b border-slate-100">
+            <FileUpload
+              name={`extra-${doc.id}`}
+              label={`Documento adicional ${i + 1}`}
+              value={doc.file}
+              onChange={(e) => handleExtraFileChange(doc.id, e)}
+              accept=".pdf"
+            />
+            <button
+              type="button"
+              onClick={() => setExtraDocs((prev) => prev.filter((d) => d.id !== doc.id))}
+              className="absolute top-2 right-0 text-red-500 hover:text-red-700 text-sm"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        
+        {isEditing && (
+          <Button
+            variant="newDoc"
+            size="sm"
+            onClick={handleAddDocuments}
+            className="bg-gray-200 text-gray-700 hover:bg-gray-300 mt-2"
+            type="button"
+            disabled={extraDocs.length >= MAX_EXTRA_DOCS}
+          >
+            Agregar documentos adicionales
+          </Button>
+        )}
+        {isEditing && extraDocs.length >= MAX_EXTRA_DOCS && (
+          <p className="text-xs text-red-500 mt-2">
+            Solo puedes agregar hasta 10 documentos adicionales.
+          </p>
         )}
       </div>
 
@@ -319,6 +381,7 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
                 cedula: null,
                 constancias: null
               });
+              setExtraDocs([]);
             }}
           >
             Cancelar
