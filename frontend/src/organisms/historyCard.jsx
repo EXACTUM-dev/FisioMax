@@ -62,13 +62,13 @@ export default function HistoryCard({ data = {}, canEdit = false, onSave, onEdit
       
       // Show success modal
       setModalType('success');
-      setModalMessage('Las horas de servicio se han actualizado exitosamente.');
+      setModalMessage('Las horas de formación se han actualizado exitosamente.');
       setShowModal(true);
     } catch (error) {
       console.error('Error saving history:', error);
       // Show error modal
       setModalType('error');
-      setModalMessage(error.message || 'Error al guardar las horas de servicio. Por favor, intente nuevamente.');
+      setModalMessage(error.message || 'Error al guardar las horas de formación. Por favor, intente nuevamente.');
       setShowModal(true);
     }
   }
@@ -89,7 +89,7 @@ export default function HistoryCard({ data = {}, canEdit = false, onSave, onEdit
 
       <div className="text-center text-sm text-slate-700">
         <div>
-          <div className="text-xs text-slate-500">Horas de servicio</div>
+          <div className="text-xs text-slate-500">Horas de formación</div>
           {isEditing ? (
             <input
               type="text"
