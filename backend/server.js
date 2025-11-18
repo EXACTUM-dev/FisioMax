@@ -20,6 +20,7 @@ import membershipApplicationRoutes from "./src/routes/membershipApplication.rout
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { requireDbUser } from "./src/middlewares/requireDbUser.js";
 import { autoSyncClerkId } from "./src/middlewares/clerkAuth.js";
+import { sessionTimeoutMiddleware } from "./src/middlewares/sessionTimeout.js";
 import usuariosRoutes from "./src/routes/users.routes.js";
 import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
@@ -76,6 +77,16 @@ app.use(express.json());
  * Built-in Express middleware to process URL-encoded form data.
  */
 app.use(express.urlencoded({ extended: true }));
+
+//-------------------------
+// SESSION TIMEOUT MIDDLEWARE
+//-------------------------
+/**
+ * Middleware to track user activity and enforce 30-minute inactivity timeout.
+ * Must be placed after authentication middleware (requireAuth) in protected routes.
+ * Applies globally to track all authenticated requests.
+ */
+app.use(sessionTimeoutMiddleware);
 
 /**
  * SES service configuration.

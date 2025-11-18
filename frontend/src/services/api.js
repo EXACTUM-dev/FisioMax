@@ -31,8 +31,14 @@ async function handleResponse(response) {
     // Also attach status directly for backward compatibility
     error.status = response.status;
     
-    // Add code specific status codes
-    if (response.status === 409) {
+    // Check for session expiration
+    if (response.status === 401 && data.code === 'SESSION_EXPIRED') {
+      error.code = 'SESSION_EXPIRED';
+      error.message = 'Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.';
+      
+      // Trigger a custom event for session expiration
+      window.dispatchEvent(new CustomEvent('session-expired', { detail: data }));
+    } else if (response.status === 409) {
       error.code = "CONFLICT";
     } else if (response.status >= 500) {
       error.code = "SERVER_ERROR";
