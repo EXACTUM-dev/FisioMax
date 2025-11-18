@@ -11,7 +11,6 @@ import SuccessErrorModal from "./successErrorModal";
 import PersonalInfoSection from "../molecules/personalInfoSection";
 import ContactInfoSection from "../molecules/contactInfoSection";
 import FullProfileForm from "../molecules/fullProfileForm";
-import { Country, State, City } from "country-state-city";
 
 import {
   handleValidatedInputChange,
@@ -19,6 +18,15 @@ import {
   formatDateForInput,
   PROFILE_VALIDATION_RULES,
 } from "../utils/profileFormValidation";
+
+// API endpoints
+const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
+const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
+  .VITE_COUNTRIES_POSITIONS_ENDPOINT;
+const COUNTRIES_STATES_ENDPOINT = import.meta.env
+  .VITE_COUNTRIES_STATES_ENDPOINT;
+const COUNTRIES_CITIES_ENDPOINT = import.meta.env
+  .VITE_COUNTRIES_CITIES_ENDPOINT;
 
 export default function ProfileFormSection({
   mode = "full",
@@ -50,12 +58,21 @@ export default function ProfileFormSection({
 
   // Fetch countries
   useEffect(() => {
-    setCountries(
-      Country.getAllCountries().map((c) => ({
-        value: c.isoCode,
-        label: c.name,
-      }))
-    );
+    async function fetchCountries() {
+      try {
+        const res = await fetch(
+          `${COUNTRIES_API_BASE_URL}${COUNTRIES_POSITIONS_ENDPOINT}`
+        );
+        const dataRes = await res.json();
+        const formatted = dataRes.data
+          .map((c) => ({ value: c.name, label: c.name }))
+          .sort((a, b) => a.label.localeCompare(b.label));
+        setCountries(formatted);
+      } catch (err) {
+        console.error("Error fetching countries:", err);
+      }
+    }
+    fetchCountries();
   }, []);
 
   // Notify parent when editing
@@ -88,35 +105,53 @@ export default function ProfileFormSection({
     }
   }, [data, mode]);
 
-  const handleCountryChange = (isoCode) => {
+  const handleCountryChange = async (value) => {
     if (mode === "full") {
-      setFormData((prev) => ({
-        ...prev,
-        pais: isoCode,
-        estado: "",
-        ciudad: "",
-      }));
+      setFormData((prev) => ({ ...prev, pais: value, estado: "", ciudad: "" }));
     }
-    setStates(
-      State.getStatesOfCountry(isoCode).map((s) => ({
-        value: s.isoCode,
-        label: s.name,
-      }))
-    );
+    setStates([]);
     setCities([]);
+
+    try {
+      const res = await fetch(
+        `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country: value }),
+        }
+      );
+      const dataRes = await res.json();
+      setStates(
+        dataRes.data?.states?.map((s) => ({ value: s.name, label: s.name })) ||
+          []
+      );
+    } catch (err) {
+      console.error("Error fetching states:", err);
+    }
   };
 
-  const handleStateChange = (stateIso) => {
-    const countryIso = mode === "full" ? formData.pais : data.pais;
+  const handleStateChange = async (value) => {
+    const currentCountry = mode === "full" ? formData.pais : data.pais;
     if (mode === "full") {
-      setFormData((prev) => ({ ...prev, estado: stateIso, ciudad: "" }));
+      setFormData((prev) => ({ ...prev, estado: value, ciudad: "" }));
     }
-    setCities(
-      City.getCitiesOfState(countryIso, stateIso).map((c) => ({
-        value: c.name,
-        label: c.name,
-      }))
-    );
+    setCities([]);
+
+    try {
+      const res = await fetch(
+        `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country: currentCountry, state: value }),
+        }
+      );
+      const dataRes = await res.json();
+      setCities(dataRes.data?.map((c) => ({ value: c, label: c })) || []);
+    } catch (err) {
+      console.error("Error fetching cities:", err);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -266,13 +301,15 @@ export default function ProfileFormSection({
         onChange={handleInputChange}
         onSave={handleSavePersonal}
         onCancel={() => {
-          setIsEditingPersonal(false);
-          setPersonalForm({
-            nombres: data.nombres || "",
-            apellidoP: data.apellidoP || "",
-            apellidoM: data.apellidoM || "",
-            fechaNacimiento: formatDateForInput(data.fechaNacimiento) || "",
-            licenciatura: data.licenciatura || "",
+          setIsEditingContact(false);
+          setContactForm({
+            email: data.email || data.correo || "",
+            telefonoProfesional: data.telefonoProfesional || "",
+            telefonoWhatsapp: data.telefonoWhatsapp || "",
+            instagram: data.instagram || "",
+            linkedin: data.linkedin || "",
+            facebook: data.facebook || "",
+            paginaWeb: data.paginaWeb || "",
           });
           setErrors({});
         }}

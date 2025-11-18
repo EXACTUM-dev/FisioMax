@@ -13,7 +13,15 @@ import FormField from "../molecules/form";
 import SuccessErrorModal from "./successErrorModal";
 import Modal from "../molecules/modal";
 import { FIELD_MAX_LENGTHS } from "../utils/profileFormValidation";
-import { Country, State, City } from "country-state-city";
+
+// Variables for country, state and city APIs
+const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
+const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
+  .VITE_COUNTRIES_POSITIONS_ENDPOINT;
+const COUNTRIES_STATES_ENDPOINT = import.meta.env
+  .VITE_COUNTRIES_STATES_ENDPOINT;
+const COUNTRIES_CITIES_ENDPOINT = import.meta.env
+  .VITE_COUNTRIES_CITIES_ENDPOINT;
 
 /**
  * Truncates text to a maximum number of characters
@@ -29,8 +37,13 @@ function truncateText(text = "", maxChars = 25) {
 }
 
 /**
- * AddressCard component for displaying and editing user address information.
- * Uses country-state-city library for dynamic dropdowns.
+ * Displays user address card with editable fields for country, state, city, and address details.
+ * Supports dynamic loading of states and cities based on country selection.
+ * @param {!Object} props - Component props.
+ * @param {!Object} props.data - User address data containing pais, estado, ciudad, colonia, codigoPostal, calle, numExterior, and numInterior.
+ * @param {boolean} [props.canEdit=false] - Whether editing is allowed.
+ * @param {Function} [props.onSave] - Callback function to save address changes.
+ * @return {!JSX.Element} Address card component.
  */
 export default function AddressCard({
   data = {},
@@ -40,21 +53,18 @@ export default function AddressCard({
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
-  // Notify parent when editing state changes
+  // Notify parent component when editing state changes
   useEffect(() => {
     if (onEditChange) {
       onEditChange(isEditing);
     }
   }, [isEditing, onEditChange]);
 
-  // Modal states
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
-
-  // Editable form state
   const [form, setForm] = useState({
     pais: data.pais || "",
     estado: data.estado || "",
@@ -66,7 +76,6 @@ export default function AddressCard({
     numInterior: data.numInterior || "",
   });
 
-  // Dropdown options
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
@@ -85,113 +94,173 @@ export default function AddressCard({
     });
   }, [data]);
 
-  // Load countries on mount
+  // Fetch countries on component mount
   useEffect(() => {
-    setCountries(
-      Country.getAllCountries().map((c) => ({
-        value: c.isoCode,
-        label: c.name,
-      }))
-    );
+    const fetchCountries = async () => {
+      try {
+        const res = await fetch(
+          `${COUNTRIES_API_BASE_URL}${COUNTRIES_POSITIONS_ENDPOINT}`
+        );
+        const data = await res.json();
+        const formatted = data.data
+          .map((c) => ({ value: c.name, label: c.name }))
+          .sort((a, b) => a.label.localeCompare(b.label));
+        setCountries(formatted);
+      } catch (err) {
+        console.error("Error fetching countries:", err);
+      }
+    };
+    fetchCountries();
   }, []);
 
-  // When editing starts, convert country/state names to isoCode if needed
   useEffect(() => {
-    if (isEditing) {
-      let countryIso = form.pais;
-      let stateIso = form.estado;
-      let cityName = form.ciudad;
+    async function fetchStatesAndCities() {
+      if (isEditing && form.pais) {
+        try {
+          // Fetch states
+          const statesRes = await fetch(
+            `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ country: form.pais }),
+            }
+          );
+          const statesData = await statesRes.json();
+          const formattedStates =
+            statesData.data?.states?.map((s) => ({
+              value: s.name,
+              label: s.name,
+            })) || [];
+          setStates(formattedStates);
 
-      // Convert country name to isoCode if necessary
-      if (countryIso && countryIso.length !== 2) {
-        const foundCountry = Country.getAllCountries().find(
-          (c) => c.name === countryIso
-        );
-        countryIso = foundCountry ? foundCountry.isoCode : "";
+          // Fetch cities if state exists
+          if (form.estado) {
+            const citiesRes = await fetch(
+              `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  country: form.pais,
+                  state: form.estado,
+                }),
+              }
+            );
+            const citiesData = await citiesRes.json();
+            const formattedCities =
+              citiesData.data?.map((c) => ({ value: c, label: c })) || [];
+            setCities(formattedCities);
+          }
+        } catch (err) {
+          console.error("Error fetching location data:", err);
+        }
       }
-      // Convert state name to isoCode if necessary
-      if (stateIso && stateIso.length !== 2 && countryIso) {
-        const foundState = State.getStatesOfCountry(countryIso).find(
-          (s) => s.name === stateIso
-        );
-        stateIso = foundState ? foundState.isoCode : "";
+
+      // Reset dropdowns when exiting edit mode
+      if (!isEditing) {
+        setStates([]);
+        setCities([]);
       }
-
-      setForm((prev) => ({
-        ...prev,
-        pais: countryIso || "",
-        estado: stateIso || "",
-        ciudad: cityName || "",
-      }));
-
-      // Load states and cities for selected country/state
-      setStates(
-        State.getStatesOfCountry(countryIso).map((s) => ({
-          value: s.isoCode,
-          label: s.name,
-        }))
-      );
-      setCities(
-        City.getCitiesOfState(countryIso, stateIso).map((c) => ({
-          value: c.name,
-          label: c.name,
-        }))
-      );
     }
-  }, [isEditing]);
 
-  // Load states when country changes in edit mode
-  useEffect(() => {
-    if (isEditing && form.pais) {
-      setStates(
-        State.getStatesOfCountry(form.pais).map((s) => ({
-          value: s.isoCode,
-          label: s.name,
-        }))
-      );
-      setCities([]);
-    }
-  }, [isEditing, form.pais]);
-
-  // Load cities when state changes in edit mode
-  useEffect(() => {
-    if (isEditing && form.pais && form.estado) {
-      setCities(
-        City.getCitiesOfState(form.pais, form.estado).map((c) => ({
-          value: c.name,
-          label: c.name,
-        }))
-      );
-    }
+    fetchStatesAndCities();
   }, [isEditing, form.pais, form.estado]);
 
-  // Handle input changes
+  /**
+   * Handles input field changes and updates form state.
+   * @param {!Event} e - Input change event.
+   */
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  // Handle country change in dropdown
-  const handlePaisChange = (value) => {
+  /**
+   * Handles country selection and fetches states for that country.
+   * Resets state and city fields when country changes.
+   * @param {string} value - Selected country name.
+   * @return {!Promise<void>}
+   */
+  const handlePaisChange = async (value) => {
     setForm((prev) => ({ ...prev, pais: value, estado: "", ciudad: "" }));
     setStates([]);
     setCities([]);
+
+    if (!value) return;
+
+    try {
+      const res = await fetch(
+        `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country: value }),
+        }
+      );
+      const data = await res.json();
+      const formattedStates =
+        data.data?.states?.map((s) => ({ value: s.name, label: s.name })) || [];
+      setStates(formattedStates);
+
+      // If we have a state value, load cities
+      if (form.estado) {
+        handleEstadoChange(form.estado, value);
+      }
+    } catch (err) {
+      console.error("Error fetching states:", err);
+      setStates([]);
+    }
   };
 
-  // Handle state change in dropdown
-  const handleEstadoChange = (value) => {
+  /**
+   * Handles state selection and fetches cities for that state.
+   * Resets city field when state changes.
+   * @param {string} value - Selected state name.
+   * @param {string} [country=form.pais] - Country name for API request.
+   * @return {!Promise<void>}
+   */
+  const handleEstadoChange = async (value, country = form.pais) => {
     setForm((prev) => ({ ...prev, estado: value, ciudad: "" }));
     setCities([]);
+
+    if (!value || !country) return;
+
+    try {
+      const res = await fetch(
+        `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country, state: value }),
+        }
+      );
+      const data = await res.json();
+      const formattedCities =
+        data.data?.map((c) => ({ value: c, label: c })) || [];
+      setCities(formattedCities);
+    } catch (err) {
+      console.error("Error fetching cities:", err);
+      setCities([]);
+    }
   };
 
-  // Validate required address fields
+  /**
+   * Validates required fields for address (pais, estado, ciudad).
+   * Shows validation modal with missing fields if validation fails.
+   * @return {boolean} True if valid, false otherwise.
+   */
   const validateAddress = () => {
     const missingFields = [];
+
     if (!form.pais || form.pais.trim() === "") {
       missingFields.push("País");
     }
     if (!form.estado || form.estado.trim() === "") {
       missingFields.push("Estado / Provincia");
+    }
+    if (!form.ciudad || form.ciudad.trim() === "") {
+      missingFields.push("Ciudad");
     }
 
     if (missingFields.length > 0) {
@@ -199,15 +268,23 @@ export default function AddressCard({
       setShowValidationModal(true);
       return false;
     }
+
     return true;
   };
 
-  // Save address changes after validation
+  /**
+   * Handles saving address changes after validation.
+   * Calls onSave callback with form data and shows success/error modal.
+   * @return {!Promise<void>}
+   */
   async function handleSave() {
     if (!onSave) return;
+
+    // Validate required fields
     if (!validateAddress()) {
       return;
     }
+
     try {
       await onSave({
         pais: form.pais,
@@ -220,11 +297,14 @@ export default function AddressCard({
         numInterior: form.numInterior,
       });
       setIsEditing(false);
+
+      // Show success modal
       setModalType("success");
       setModalMessage("La dirección se ha actualizado exitosamente.");
       setShowModal(true);
     } catch (error) {
       console.error("Error saving address:", error);
+      // Show error modal
       setModalType("error");
       setModalMessage(
         error.message ||
@@ -233,21 +313,6 @@ export default function AddressCard({
       setShowModal(true);
     }
   }
-
-  // Get country name from isoCode for display
-  const getCountryName = (isoCode) => {
-    const found = Country.getAllCountries().find((c) => c.isoCode === isoCode);
-    return found ? found.name : isoCode || "No disponible";
-  };
-
-  // Get state name from isoCode for display
-  const getStateName = (countryIso, stateIso) => {
-    const found = State.getStatesOfCountry(countryIso).find(
-      (s) => s.isoCode === stateIso
-    );
-    return found ? found.name : stateIso || "No disponible";
-  };
-
   return (
     <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
       <div className="flex justify-between items-start">
@@ -265,7 +330,6 @@ export default function AddressCard({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         {isEditing ? (
           <>
-            {/* Country dropdown */}
             <Dropdown
               label="País"
               name="pais"
@@ -275,7 +339,6 @@ export default function AddressCard({
               required={true}
               placeholder="Selecciona un país"
             />
-            {/* State dropdown */}
             <Dropdown
               label="Estado / Provincia"
               name="estado"
@@ -285,7 +348,6 @@ export default function AddressCard({
               required={true}
               placeholder="Selecciona un estado"
             />
-            {/* City dropdown */}
             <Dropdown
               label="Ciudad"
               name="ciudad"
@@ -297,31 +359,28 @@ export default function AddressCard({
           </>
         ) : (
           <>
-            {/* Country display */}
             <div>
               <label className="text-sm text-slate-600">
                 País
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="mt-1 text-slate-900" title={data.pais || ""}>
-                {getCountryName(data.pais) || (
+                {truncateText(data.pais, 25) || (
                   <span className="text-slate-400">No disponible</span>
                 )}
               </div>
             </div>
-            {/* State display */}
             <div>
               <label className="text-sm text-slate-600">
                 Estado/Provincia
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="mt-1 text-slate-900" title={data.estado || ""}>
-                {getStateName(data.pais, data.estado) || (
+                {truncateText(data.estado, 25) || (
                   <span className="text-slate-400">No disponible</span>
                 )}
               </div>
             </div>
-            {/* City display */}
             <div>
               <label className="text-sm text-slate-600">Ciudad</label>
               <div className="mt-1 text-slate-900" title={data.ciudad || ""}>
@@ -333,7 +392,6 @@ export default function AddressCard({
           </>
         )}
 
-        {/* Other address fields */}
         {isEditing ? (
           <FormField
             label="Colonia"
