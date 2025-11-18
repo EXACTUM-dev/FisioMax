@@ -50,6 +50,12 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
 
   const hasFile = (v) => !!v;
 
+  // Debug: Log data to see what we're receiving
+  useEffect(() => {
+    console.log('DocumentsCard data:', data);
+    console.log('documentosadicionales:', data.documentosadicionales);
+  }, [data]);
+
   // Reset form when data changes
   useEffect(() => {
     setFormFiles({
@@ -317,13 +323,31 @@ export default function DocumentsCard({data = {}, canEdit = false, onSave, userI
         {!isEditing && data.documentosadicionales && data.documentosadicionales.length > 0 && (
           <>
             {data.documentosadicionales.map((doc, index) => (
-              <DocumentRow 
-                key={index}
-                label={`Documento adicional ${index + 1}`} 
-                fileUrl={doc} 
-                filename={`documento_adicional_${index + 1}.pdf`}
-                fieldName={`extraDoc${index}`}
-              />
+              <div key={index} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+                <span className="text-slate-600">{`Documento adicional ${index + 1}`}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-green-600 font-medium">Cargado</span>
+                  <button
+                    onClick={() => handleViewDocument(doc)}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                    title="Ver documento"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDownloadDocument(doc, `documento_adicional_${index + 1}.pdf`)}
+                    className="text-slate-600 hover:text-slate-800 text-sm font-medium transition-colors"
+                    title="Descargar documento"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             ))}
           </>
         )}

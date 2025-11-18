@@ -199,7 +199,7 @@ export async function getUserByClerkId(clerkId) {
 
     const user = decryptUserData(rows[0]);
 
-    // Try to get additional documents if the table exists
+    // Get additional documents from separate table
     try {
       const [docRows] = await dbPool.query(
         `SELECT 
@@ -296,7 +296,32 @@ export async function getUserById(userId) {
       LIMIT 1`,
       [userId]
     );
-    return rows.length > 0 ? decryptUserData(rows[0]) : null;
+    if (rows.length === 0) return null;
+    
+    const user = decryptUserData(rows[0]);
+    
+    // Get additional documents from separate table
+    try {
+      const [docRows] = await dbPool.query(
+        `SELECT 
+          IDDocumento,
+          nombreArchivo,
+          urlArchivo,
+          createdAt
+        FROM documentosadicionales
+        WHERE IDUsuario = ?`,
+        [user.IDUsuario]
+      );
+      user.documentosadicionales = docRows;
+    } catch (docError) {
+      console.warn(
+        "documentosadicionales table not found or error:",
+        docError.message
+      );
+      user.documentosadicionales = [];
+    }
+    
+    return user;
   } catch (error) {
     console.error("Error al consultar usuario por ID:", error);
     throw error;

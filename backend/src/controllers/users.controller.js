@@ -1,7 +1,7 @@
 /**
  * @fileoverview Controller to handle user-related requests.
  * Manages user profile retrieval and transformation, including document URL generation.
- * @version 1.0.0
+ * @version 1.1.0
  * @author EXACTUM-dev
  */
 
@@ -76,8 +76,18 @@ export async function getCurrentUserProfile(req, res) {
 
     // Generate presigned URLs for additional documents
     const documentosadicionalesUrls =
-      user.documentosAdicionales && user.documentosadicionales.length > 0
-        ? await S3Service.getPresignedUrls(user.documentosadicionales)
+      user.documentosadicionales && user.documentosadicionales.length > 0
+        ? await Promise.all(
+            user.documentosadicionales.map(async (doc) => {
+              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+              return {
+                id: doc.IDDocumento,
+                nombre: doc.nombreArchivo,
+                url: url,
+                createdAt: doc.createdAt,
+              };
+            })
+          )
         : [];
 
     const transformedUser = {
@@ -172,7 +182,17 @@ export async function getUserProfileById(req, res) {
     // Generate presigned URLs for additional documents
     const documentosadicionalesUrls =
       user.documentosadicionales && user.documentosadicionales.length > 0
-        ? await S3Service.getPresignedUrls(user.documentosadicionales)
+        ? await Promise.all(
+            user.documentosadicionales.map(async (doc) => {
+              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+              return {
+                id: doc.IDDocumento,
+                nombre: doc.nombreArchivo,
+                url: url,
+                createdAt: doc.createdAt,
+              };
+            })
+          )
         : [];
 
     const transformedUser = {
@@ -519,7 +539,7 @@ export async function updateUserDocuments(req, res) {
         );
       }
 
-      // Handle extra documents
+      // Handle extra documents - upload to S3 and save to documentosadicionales table
       const extraDocs = [];
       Object.keys(req.files || {}).forEach((key) => {
         if (key.startsWith("extraDoc")) {
@@ -528,21 +548,53 @@ export async function updateUserDocuments(req, res) {
       });
 
       if (extraDocs.length > 0) {
-        // Delete old extra documents if they exist
-        if (currentUser.documentosadicionales && currentUser.documentosadicionales.length > 0) {
-          await Promise.all(
-            currentUser.documentosadicionales.map(docKey => 
-              S3Service.deleteFile(docKey)
-            )
-          );
-        }
-
-        // Upload new extra documents
-        const extraDocsUrls = await Promise.all(
-          extraDocs.map((file) => S3Service.uploadFile(file, "documentos-extra"))
-        );
+        // Get database connection from pool
+        const { dbPool } = await import("../../config.js");
+        const connection = await dbPool.getConnection();
         
-        updateData.documentosadicionales = extraDocsUrls;
+        try {
+          await connection.beginTransaction();
+          
+          // Delete old extra documents from S3 and database
+          const [oldDocs] = await connection.query(
+            `SELECT IDDocumento, urlArchivo FROM documentosadicionales WHERE IDUsuario = ?`,
+            [userId]
+          );
+          
+          if (oldDocs.length > 0) {
+            // Delete from S3
+            await Promise.all(
+              oldDocs.map(doc => S3Service.deleteFile(doc.urlArchivo))
+            );
+            
+            // Delete from database
+            await connection.query(
+              `DELETE FROM documentosadicionales WHERE IDUsuario = ?`,
+              [userId]
+            );
+          }
+
+          // Upload new extra documents to S3
+          const extraDocsUrls = await Promise.all(
+            extraDocs.map((file) => S3Service.uploadFile(file, "documentos-extra"))
+          );
+          
+          // Insert new documents into database
+          for (const docUrl of extraDocsUrls) {
+            await connection.query(
+              `INSERT INTO documentosadicionales (IDUsuario, nombreArchivo, urlArchivo, createdAt) 
+               VALUES (?, ?, ?, NOW())`,
+              [userId, "Documento adicional", docUrl]
+            );
+          }
+          
+          await connection.commit();
+        } catch (error) {
+          await connection.rollback();
+          throw error;
+        } finally {
+          connection.release();
+        }
       }
     } else {
       console.warn("AWS S3 not configured. Files will not be uploaded.");
@@ -582,7 +634,17 @@ export async function updateUserDocuments(req, res) {
     // Generate presigned URLs for additional documents
     const documentosadicionalesUrls =
       updated.documentosadicionales && updated.documentosadicionales.length > 0
-        ? await S3Service.getPresignedUrls(updated.documentosadicionales)
+        ? await Promise.all(
+            updated.documentosadicionales.map(async (doc) => {
+              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+              return {
+                id: doc.IDDocumento,
+                nombre: doc.nombreArchivo,
+                url: url,
+                createdAt: doc.createdAt,
+              };
+            })
+          )
         : [];
 
     const transformedUser = {
