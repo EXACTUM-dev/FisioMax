@@ -389,6 +389,11 @@ export async function updateUser(req, res) {
       sanitized.membershipRegisteredAt = updateData.membershipRegisteredAt;
     }
 
+    // Pass through membershipHoursFormation (numeric field)
+    if (updateData.membershipHoursFormation !== undefined) {
+      sanitized.membershipHoursFormation = updateData.membershipHoursFormation;
+    }
+
     const updated = await updateUserById(userId, sanitized);
     if (!updated) {
       return res

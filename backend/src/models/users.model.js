@@ -421,6 +421,7 @@ export async function updateUserClerkId(userId, clerkID) {
  * @param {string} [updateData.membershipRegisteredAt] - Membership registration date
  * @param {string} [updateData.membershipExpiresAt] - Membership expiration date
  * @param {string} [updateData.membershipPaymentStatus] - Payment status
+ * @param {number|string} [updateData.membershipHoursFormation] - Service hours (horasFormacion)
  * @returns {Promise<Object|null>} Updated user object (with decrypted fields) or null if not found
  * @throws {Error} When userId is missing or database operation fails
  */
@@ -466,6 +467,7 @@ export async function updateUserById(userId, updateData) {
       "membershipRegisteredAt",
       "membershipExpiresAt",
       "membershipPaymentStatus",
+      "membershipHoursFormation",
     ];
 
     // Encrypt sensitive fields before update
@@ -507,9 +509,14 @@ export async function updateUserById(userId, updateData) {
         else if (field === "membershipRegisteredAt") dbField = "createdAt";
         else if (field === "membershipExpiresAt") dbField = "fechaVencimiento";
         else if (field === "membershipPaymentStatus") dbField = "estatusPago";
+        else if (field === "membershipHoursFormation") dbField = "horasFormacion";
 
         membershipSetClauses.push(`${dbField} = ?`);
-        membershipValues.push(updateData[field]);
+        // Convert to number for horasFormacion if it's a string
+        const value = field === "membershipHoursFormation" && updateData[field] !== null
+          ? parseInt(updateData[field], 10) || 0
+          : updateData[field];
+        membershipValues.push(value);
       }
     }
 
