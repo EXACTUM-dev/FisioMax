@@ -193,9 +193,7 @@ export default function AddressCard({
     if (!form.estado || form.estado.trim() === "") {
       missingFields.push("Estado / Provincia");
     }
-    if (!form.ciudad || form.ciudad.trim() === "") {
-      missingFields.push("Ciudad");
-    }
+
     if (missingFields.length > 0) {
       setValidationErrors(missingFields);
       setShowValidationModal(true);
@@ -294,7 +292,6 @@ export default function AddressCard({
               value={form.ciudad}
               onChange={handleChange}
               options={cities}
-              required={true}
               placeholder="Selecciona una ciudad"
             />
           </>
@@ -326,10 +323,7 @@ export default function AddressCard({
             </div>
             {/* City display */}
             <div>
-              <label className="text-sm text-slate-600">
-                Ciudad
-                <span className="text-red-500 ml-1">*</span>
-              </label>
+              <label className="text-sm text-slate-600">Ciudad</label>
               <div className="mt-1 text-slate-900" title={data.ciudad || ""}>
                 {truncateText(data.ciudad, 25) || (
                   <span className="text-slate-400">No disponible</span>

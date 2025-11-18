@@ -108,6 +108,17 @@ export async function updateRole(req, res) {
       });
     }
 
+    // Check for duplicate name (only if name is being changed)
+    if (sanitized.name.trim() !== role.nombre) {
+      const existingRole = await findRoleByName(sanitized.name.trim());
+      if (existingRole && existingRole.IDRol !== parseInt(id) && existingRole.eliminado === 0) {
+        return res.status(409).json({
+          success: false,
+          error: "Ya existe un rol con ese nombre",
+        });
+      }
+    }
+
     // Update role basic info (name and description)
     await updateRoleById(id, { name: sanitized.name, description: sanitized.description });
 
@@ -126,6 +137,15 @@ export async function updateRole(req, res) {
     });
   } catch (error) {
     console.error("Error updating role:", error);
+
+    // Handle unique constraint violation
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return res.status(409).json({
+        success: false,
+        error: "Ya existe un rol con ese nombre",
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       error: error.message || "Error updating role",
@@ -214,6 +234,15 @@ export async function createRole(req, res) {
       });
     }
 
+    // Check for duplicate name before creating
+    const existingRole = await findRoleByName(sanitized.name.trim());
+    if (existingRole && existingRole.eliminado === 0) {
+      return res.status(409).json({
+        success: false,
+        error: "Ya existe un rol con ese nombre",
+      });
+    }
+
     // Let DB generate the ID and return it
     const createdRole = await createRoleWithPrivileges(
       { name: sanitized.name, description: sanitized.description },
@@ -232,6 +261,14 @@ export async function createRole(req, res) {
     });
   } catch (error) {
     console.error("Error creating role:", error);
+
+    // Handle unique constraint violation
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return res.status(409).json({
+        success: false,
+        error: "Ya existe un rol con ese nombre",
+      });
+    }
     return res.status(500).json({
       success: false,
       error: error.message || "Error creating role",

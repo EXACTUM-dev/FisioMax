@@ -163,7 +163,6 @@ export default function FullProfileForm({
         <Dropdown
           label="Ciudad"
           name="ciudad"
-          required
           value={formData.ciudad}
           onChange={onChange}
           options={cities}
