@@ -368,8 +368,6 @@ export default function RolesPage() {
             <Title2 className="mb-0">Administración de Roles y Permisos</Title2>
           </div>
 
-          {errorBanner}
-
           <DataSwitchContainer
             initialKey="roles"
             loading={loading}
