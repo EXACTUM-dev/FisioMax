@@ -136,8 +136,8 @@ export default function ProfilePage() {
   const isOwnProfile = !userId; // No userId means viewing own profile
   const canEdit = isOwnProfile || (userId && hasUserManagementPrivilege);
 
-  // History can only be edited by users with "Gestión de Usuarios" privilege (not by the user themselves)
-  const canEditHistory = hasUserManagementPrivilege && userId;
+  // History can be edited by users viewing their own profile OR by admins viewing another user's profile
+  const canEditHistory = isOwnProfile || (userId && hasUserManagementPrivilege);
 
   // Membership can only be edited by users with "Gestión de Usuarios" privilege viewing another user's profile
   const canEditMembership = hasUserManagementPrivilege && userId;

@@ -199,7 +199,7 @@ export async function getUserByClerkId(clerkId) {
 
     const user = decryptUserData(rows[0]);
 
-    // Try to get additional documents if the table exists
+    // Get additional documents from separate table
     try {
       const [docRows] = await dbPool.query(
         `SELECT 
@@ -296,7 +296,32 @@ export async function getUserById(userId) {
       LIMIT 1`,
       [userId]
     );
-    return rows.length > 0 ? decryptUserData(rows[0]) : null;
+    if (rows.length === 0) return null;
+    
+    const user = decryptUserData(rows[0]);
+    
+    // Get additional documents from separate table
+    try {
+      const [docRows] = await dbPool.query(
+        `SELECT 
+          IDDocumento,
+          nombreArchivo,
+          urlArchivo,
+          createdAt
+        FROM documentosadicionales
+        WHERE IDUsuario = ?`,
+        [user.IDUsuario]
+      );
+      user.documentosadicionales = docRows;
+    } catch (docError) {
+      console.warn(
+        "documentosadicionales table not found or error:",
+        docError.message
+      );
+      user.documentosadicionales = [];
+    }
+    
+    return user;
   } catch (error) {
     console.error("Error al consultar usuario por ID:", error);
     throw error;
@@ -491,6 +516,7 @@ export async function updateUserClerkId(userId, clerkID) {
  * @param {string} [updateData.membershipRegisteredAt] - Membership registration date
  * @param {string} [updateData.membershipExpiresAt] - Membership expiration date
  * @param {string} [updateData.membershipPaymentStatus] - Payment status
+ * @param {number|string} [updateData.membershipHoursFormation] - Service hours (horasFormacion)
  * @returns {Promise<Object|null>} Updated user object (with decrypted fields) or null if not found
  * @throws {Error} When userId is missing or database operation fails
  */
@@ -536,6 +562,7 @@ export async function updateUserById(userId, updateData) {
       "membershipRegisteredAt",
       "membershipExpiresAt",
       "membershipPaymentStatus",
+      "membershipHoursFormation",
     ];
 
     // Normalize email if present
@@ -585,9 +612,14 @@ export async function updateUserById(userId, updateData) {
         else if (field === "membershipRegisteredAt") dbField = "createdAt";
         else if (field === "membershipExpiresAt") dbField = "fechaVencimiento";
         else if (field === "membershipPaymentStatus") dbField = "estatusPago";
+        else if (field === "membershipHoursFormation") dbField = "horasFormacion";
 
         membershipSetClauses.push(`${dbField} = ?`);
-        membershipValues.push(updateData[field]);
+        // Convert to number for horasFormacion if it's a string
+        const value = field === "membershipHoursFormation" && updateData[field] !== null
+          ? parseInt(updateData[field], 10) || 0
+          : updateData[field];
+        membershipValues.push(value);
       }
     }
 

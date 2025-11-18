@@ -1,0 +1,66 @@
+name: CD Frontend (Docker -> ECS)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Docker Image
+        env:
+          ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          REGION: ${{ secrets.AWS_REGION }}
+          REPO: ${{ secrets.FRONTEND_ECR_REPO }}
+        run: |
+          IMAGE_URI="$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/$REPO:${{ github.sha }}"
+          echo "IMAGE_URI=$IMAGE_URI"
+
+          docker build -t "$IMAGE_URI" ./frontend
+          docker push "$IMAGE_URI"
+
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: Render Task Definition
+        env:
+          IMAGE_URI: ${{ env.IMAGE_URI }}
+        run: |
+          sed -e "s|<IMAGE_URI>|$IMAGE_URI|g" \
+            frontend-task-def.json > frontend-task-def-updated.json
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: frontend-task-def-updated.json
+          service: frontend-service
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Send Discord Notification
+        if: always()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          title: "Frontend Deployment"
+          description: |
+            **Service:** frontend-service
+            **Cluster:** ${{ secrets.ECS_CLUSTER }}
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}

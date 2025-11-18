@@ -321,7 +321,7 @@ export default function ProfileFormSection({
         errors={errors}
         isEditing={isEditingContact}
         canEdit={canEdit}
-        isOwn= {isOwn}
+        isOwn={isOwn}
         onToggleEdit={() => setIsEditingContact((v) => !v)}
         onChange={handleInputChange}
         onSave={handleSaveContact}

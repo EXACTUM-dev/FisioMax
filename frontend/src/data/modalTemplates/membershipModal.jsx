@@ -352,19 +352,21 @@ function MembershipModalContent({
                             row.url && downloadDocument(row.url, row.key)
                           }
                           disabled={!row.url}
-                          className={
-                            "px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 " +
-                            (row.url
-                              ? "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-md hover:scale-105"
-                              : "bg-slate-50 text-slate-300 cursor-not-allowed") +
-                            " shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-1 active:scale-95"
-                          }
+                          className={"text-slate-600 hover:text-slate-800 text-sm font-medium transition-colors"}
                         >
-                          <img
-                            src={pdfIcon}
-                            alt={row.url ? "Descargar PDF" : "Sin archivo"}
-                            className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
-                          />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            />
+                          </svg>
                         </button>
                         {!row.url && (
                           <span className="text-xs text-slate-400">

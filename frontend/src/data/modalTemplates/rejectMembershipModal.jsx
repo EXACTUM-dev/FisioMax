@@ -29,10 +29,11 @@ export default function RejectMembershipModal({
   onCancel,
   onConfirm,
   title = "Rechazar solicitud",
-  subtitle = "A continuación, proporcione el motivo por el cual la solicitud de membresía fue rechazada."
+  subtitle = "A continuación, proporcione el motivo por el cual la solicitud de membresía fue rechazada.",
 }) {
   // State to store the rejection reason entered by the user
   const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
 
   // If the modal is not open, do not render anything
   if (!open) return null;
@@ -44,6 +45,15 @@ export default function RejectMembershipModal({
    */
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onCancel();
+  };
+
+  const handleConfirm = () => {
+    if (!reason.trim()) {
+      setError("Debes ingresar el motivo del rechazo.");
+      return;
+    }
+    setError("");
+    onConfirm(reason);
   };
 
   return (
@@ -61,7 +71,9 @@ export default function RejectMembershipModal({
       <div className="flex flex-col">
         {/* Title and subtitle */}
         <Title2 className="text-center mb-4">{title}</Title2>
-        <Paragraph2 className="text-center mb-6 leading-relaxed">{subtitle}</Paragraph2>
+        <Paragraph2 className="text-center mb-6 leading-relaxed">
+          {subtitle}
+        </Paragraph2>
 
         {/* Text input for rejection reason */}
         <FormField
@@ -74,6 +86,9 @@ export default function RejectMembershipModal({
           multiline
           rows={4}
         />
+        {error && (
+          <div className="text-red-500 text-sm mt-2 text-center">{error}</div>
+        )}
 
         {/* Action buttons */}
         <div className="flex justify-center gap-3 mt-6">
@@ -87,7 +102,7 @@ export default function RejectMembershipModal({
           <Button
             label="Continuar"
             variant="brand"
-            onClick={() => onConfirm(reason)}
+            onClick={handleConfirm}
             radius="xl"
             className="min-w-[120px] bg-[#E0E000] hover:bg-[#d0d000] text-black font-medium"
           />

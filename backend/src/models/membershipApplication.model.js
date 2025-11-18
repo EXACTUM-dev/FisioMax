@@ -187,15 +187,15 @@ class MembershipApplication {
         `SELECT * FROM usuario WHERE eliminado = 0`,
         [encryptedData.correo]
       );
-      const decryptUsers= decryptApplicationsData(existingUsers);
+      const decryptUsers = decryptApplicationsData(existingUsers);
 
       const existingEmail = decryptUsers.some(
-        users => users.correo === dataToEncrypt.correo
+        (users) => users.correo === dataToEncrypt.correo
       );
 
       if (existingEmail) {
-        const duplicateError = new Error('Duplicate entry');
-        duplicateError.code = 'ER_DUP_ENTRY';
+        const duplicateError = new Error("Duplicate entry");
+        duplicateError.code = "ER_DUP_ENTRY";
         throw duplicateError;
       }
 
