@@ -165,19 +165,24 @@ export default function DocumentsCard({
       return;
     }
 
-    // Validate required documents
-    if (!validateDocuments()) {
+    // Check if there are any actual File objects to upload
+    const hasFiles =
+      (formFiles.titulo && formFiles.titulo instanceof File) ||
+      (formFiles.cedula && formFiles.cedula instanceof File) ||
+      (formFiles.constancias && formFiles.constancias instanceof File) ||
+      extraDocs.some((doc) => doc.file && doc.file instanceof File);
+    
+    if (!hasFiles) {
+      // No files selected, just close edit mode
+      setIsEditing(false);
       return;
     }
 
-    // Check if there are any files to upload
-    const hasFiles =
-      formFiles.titulo ||
-      formFiles.cedula ||
-      formFiles.constancias ||
-      extraDocs.some((doc) => doc.file);
-    if (!hasFiles) {
-      setIsEditing(false);
+    // Validate required documents only if user is uploading for the first time
+    // (i.e., if they don't have a titulo already and aren't uploading one now)
+    if (!data.titulo && !formFiles.titulo) {
+      setValidationErrors(["Título / Kardex"]);
+      setShowValidationModal(true);
       return;
     }
 
@@ -187,28 +192,40 @@ export default function DocumentsCard({
 
       // Create FormData with files
       const formData = new FormData();
-      if (formFiles.titulo) {
+      let fileCount = 0;
+      
+      if (formFiles.titulo && formFiles.titulo instanceof File) {
         formData.append("titulo", formFiles.titulo);
+        fileCount++;
       }
-      if (formFiles.cedula) {
+      if (formFiles.cedula && formFiles.cedula instanceof File) {
         formData.append("cedula", formFiles.cedula);
+        fileCount++;
       }
-      if (formFiles.constancias) {
+      if (formFiles.constancias && formFiles.constancias instanceof File) {
         formData.append("constancias", formFiles.constancias);
+        fileCount++;
       }
 
-      // Add extra documents
+      // Add extra documents - only if they have actual file objects
       extraDocs.forEach((doc, index) => {
-        if (doc.file) {
+        if (doc.file && doc.file instanceof File) {
           formData.append(`extraDoc${index + 1}`, doc.file);
+          fileCount++;
         }
       });
+
+      // Double check that we actually have files to upload
+      if (fileCount === 0) {
+        setIsEditing(false);
+        setIsUploading(false);
+        return;
+      }
 
       // Upload documents
       const updatedData = await updateUserDocuments(userId, formData, token);
 
       // Reload profile to get fresh presigned URLs
-      // Use getCurrentUserProfile if userId matches current user, otherwise getUserProfileById
       const refreshedProfile = await getUserProfileById(userId, token);
 
       // Call onSave with updated data to refresh parent component
