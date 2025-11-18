@@ -5,9 +5,10 @@
  * @author EXACTUM-dev
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import EditButton from "../atoms/editButton";
-import SuccessErrorModal from './successErrorModal';
+import SuccessErrorModal from "./successErrorModal";
+import Button from "../atoms/button";
 
 /**
  * Displays user history/stats card with editable field for service hours.
@@ -18,37 +19,44 @@ import SuccessErrorModal from './successErrorModal';
  * @return {!JSX.Element} History card component.
  */
 
-export default function HistoryCard({ data = {}, canEdit = false, onSave, onEditChange }) {
+export default function HistoryCard({
+  data = {},
+  canEdit = false,
+  onSave,
+  onEditChange,
+}) {
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Notify parent component when editing state changes
   useEffect(() => {
     if (onEditChange) {
       onEditChange(isEditing);
     }
   }, [isEditing, onEditChange]);
-  
+
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('success');
-  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState("success");
+  const [modalMessage, setModalMessage] = useState("");
   // Get horasFormacion from membership data
-  const horasFormacion = data.membershipHoursFormation || data.horasServicio || '';
+  const horasFormacion =
+    data.membershipHoursFormation || data.horasServicio || "";
   const [form, setForm] = useState({
-    horasServicio: horasFormacion
+    horasServicio: horasFormacion,
   });
 
   // Reset form when data changes
   useEffect(() => {
-    const horasFormacionValue = data.membershipHoursFormation || data.horasServicio || '';
+    const horasFormacionValue =
+      data.membershipHoursFormation || data.horasServicio || "";
     setForm({
-      horasServicio: horasFormacionValue
+      horasServicio: horasFormacionValue,
     });
   }, [data]);
 
   function handleChange(e) {
     const { name, value } = e.target;
     // Only allow numbers
-    const numericValue = value === '' ? '' : value.replace(/\D/g, '');
+    const numericValue = value === "" ? "" : value.replace(/\D/g, "");
     setForm((prev) => ({ ...prev, [name]: numericValue }));
   }
 
@@ -56,19 +64,24 @@ export default function HistoryCard({ data = {}, canEdit = false, onSave, onEdit
     if (!onSave) return;
     try {
       await onSave({
-        membershipHoursFormation: form.horasServicio || null
+        membershipHoursFormation: form.horasServicio || null,
       });
       setIsEditing(false);
-      
+
       // Show success modal
-      setModalType('success');
-      setModalMessage('Las horas de formación se han actualizado exitosamente.');
+      setModalType("success");
+      setModalMessage(
+        "Las horas de formación se han actualizado exitosamente."
+      );
       setShowModal(true);
     } catch (error) {
-      console.error('Error saving history:', error);
+      console.error("Error saving history:", error);
       // Show error modal
-      setModalType('error');
-      setModalMessage(error.message || 'Error al guardar las horas de formación. Por favor, intente nuevamente.');
+      setModalType("error");
+      setModalMessage(
+        error.message ||
+          "Error al guardar las horas de formación. Por favor, intente nuevamente."
+      );
       setShowModal(true);
     }
   }
@@ -78,7 +91,7 @@ export default function HistoryCard({ data = {}, canEdit = false, onSave, onEdit
       <div className="flex justify-between items-start mb-3">
         <h3 className="text-lg font-semibold">Historial</h3>
         {canEdit && (
-          <EditButton 
+          <EditButton
             isEditing={isEditing}
             onClick={() => setIsEditing((v) => !v)}
             editLabel="Editar"
@@ -100,29 +113,32 @@ export default function HistoryCard({ data = {}, canEdit = false, onSave, onEdit
               placeholder="0"
             />
           ) : (
-            <div className="font-medium mt-2">{horasFormacion || '—'}</div>
+            <div className="font-medium mt-2">{horasFormacion || "—"}</div>
           )}
         </div>
       </div>
 
       {isEditing && (
-        <div className="mt-4 flex justify-end gap-2">
-          <button
+        <div className="mt-4 flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={() => {
               setIsEditing(false);
-              // Restore original values
-              const horasFormacionValue = data.membershipHoursFormation || data.horasServicio || '';
+              // Restaurar valores originales
+              const horasFormacionValue =
+                data.membershipHoursFormation || data.horasServicio || "";
               setForm({
-                horasServicio: horasFormacionValue
+                horasServicio: horasFormacionValue,
               });
             }}
-            className="px-3 py-1 border rounded"
           >
             Cancelar
-          </button>
-          <button onClick={handleSave} className="px-3 py-1 rounded text-white" style={{background:'#CAD00F'}}>
+          </Button>
+          <Button type="button" variant="brand" size="sm" onClick={handleSave}>
             Guardar
-          </button>
+          </Button>
         </div>
       )}
 
@@ -141,4 +157,3 @@ export default function HistoryCard({ data = {}, canEdit = false, onSave, onEdit
     </section>
   );
 }
-
