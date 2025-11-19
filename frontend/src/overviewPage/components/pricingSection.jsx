@@ -7,6 +7,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
+import Button from "../../atoms/button";
 
 export default function PricingSection() {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ export default function PricingSection() {
                 <p className="text-gray-600 mb-6 text-sm mt-6">
                   {plan.description}
                 </p>
-                <button
+                <Button
                   onClick={() => {
                     navigate("/solicitud-membresia", {
                       state: {
@@ -99,10 +100,11 @@ export default function PricingSection() {
                       },
                     });
                   }}
-                  className="w-full py-3 rounded-md font-semibold transition-colors bg-gray-900 hover:bg-gray-800 text-white mt-auto"
+                  variant="gray"
+                  className="w-full py-3 font-semibold mt-auto"
                 >
                   Elegir plan
-                </button>
+                </Button>
               </div>
             </div>
           ))}
