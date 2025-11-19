@@ -5,7 +5,6 @@
  * @author EXACTUM-dev
  */
 import React, { useState, useEffect, useRef } from "react";
-import { AiOutlineInfoCircle } from "react-icons/ai";
 import { useNavigate, useLocation } from "react-router-dom";
 import Button from "../atoms/button";
 import BackButton from "../atoms/backButton";
@@ -226,68 +225,6 @@ export default function MembershipApplicationPage() {
               errors={errors}
               setErrors={setErrors}
             />
-
-            <div className="pt-10 mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-sm font-semibold text-gray-800 mb-2 block">
-                  Tipo de membresía <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="membershipType"
-                  value={formData.membershipType}
-                  onChange={handleMembershipChange}
-                  className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#CAD00F] transition"
-                  required
-                >
-                  <option value="">Selecciona el tipo de membresía</option>
-                  <option value="Estudiante/Pasante">Estudiante/Pasante</option>
-                  <option value="Licenciados en Formación">
-                    Licenciados en Formación
-                  </option>
-                  <option value="Especializados">Especializados</option>
-                </select>
-              </div>
-              <div className="relative">
-                <label className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
-                  Horas de formación
-                  <button
-                    type="button"
-                    className="ml-2 text-[#CAD00F] hover:text-[#b8bd0d] focus:outline-none"
-                    onClick={() => setShowInfoFormation((v) => !v)}
-                    aria-label="Información sobre horas de formación"
-                  >
-                    <AiOutlineInfoCircle size={20} />
-                  </button>
-                  {formData.membershipType === "Especializados" && (
-                    <span className="text-red-500 ml-1">*</span>
-                  )}
-                </label>
-                <input
-                  type="number"
-                  name="membershipHoursFormation"
-                  value={formData.membershipHoursFormation}
-                  onChange={handleMembershipChange}
-                  className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#CAD00F] transition"
-                  min="0"
-                  placeholder="Ejemplo: 120"
-                  required={formData.membershipType === "Especializados"}
-                />
-                {showInfoFormation && (
-                  <div className="absolute z-10 left-0 mt-2 w-72 bg-white border border-[#CAD00F] rounded shadow-lg p-4 text-sm text-gray-700">
-                    Justifica tus horas de formación en piso pélvico con
-                    certificados. Para especialistas, es necesario mínimo tener
-                    120 horas.
-                  </div>
-                )}
-                {formData.membershipType === "Especializados" &&
-                  Number(formData.membershipHoursFormation) < 120 && (
-                    <p className="text-xs text-red-500 mt-2">
-                      Para especialistas, debes tener al menos 120 horas de
-                      formación.
-                    </p>
-                  )}
-              </div>
-            </div>
 
             {/* Documentation section */}
             <h3 className="text-lg font-semibold text-gray-800 mb-4 mt-6">
