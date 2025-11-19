@@ -47,6 +47,7 @@ const config = {
   auth: {
     jwtSecret: process.env.JWT_SECRET,
     sessionSecret: process.env.SESSION_SECRET,
+    sessionTimeout: 30 * 60 * 1000, // 30 minutes in milliseconds
   },
 
   // Clerk configuration

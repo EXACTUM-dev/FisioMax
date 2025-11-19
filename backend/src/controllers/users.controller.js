@@ -521,6 +521,14 @@ export async function updateUserDocuments(req, res) {
     const isS3Configured =
       process.env.AWS_REGION && process.env.AWS_BUCKET_NAME;
 
+    // Extract extra documents from req.files
+    const extraDocs = [];
+    Object.keys(req.files || {}).forEach((key) => {
+      if (key.startsWith("extraDoc")) {
+        extraDocs.push(req.files[key][0]);
+      }
+    });
+
     if (isS3Configured) {
       // Upload files to S3 if provided, and delete old ones
       if (req.files?.titulo?.[0]) {
@@ -552,13 +560,6 @@ export async function updateUserDocuments(req, res) {
       }
 
       // Handle extra documents - upload to S3 and save to documentosadicionales table
-      const extraDocs = [];
-      Object.keys(req.files || {}).forEach((key) => {
-        if (key.startsWith("extraDoc")) {
-          extraDocs.push(req.files[key][0]);
-        }
-      });
-
       if (extraDocs.length > 0) {
         // Get database connection from pool
         const { dbPool } = await import("../../config.js");
@@ -623,19 +624,27 @@ export async function updateUserDocuments(req, res) {
       }
     }
 
-    if (Object.keys(updateData).length === 0) {
+    // Check if any files were provided (main docs or extra docs)
+    const hasMainDocs = Object.keys(updateData).length > 0;
+    const hasAnyFiles = hasMainDocs || (isS3Configured && extraDocs.length > 0);
+
+    if (!hasAnyFiles) {
       return res.status(400).json({
         success: false,
         error: "No se proporcionaron archivos para actualizar",
       });
     }
 
-    const updated = await updateUserById(userId, updateData);
-
-    if (!updated) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Usuario no encontrado" });
+    // Only update main user fields if there are changes
+    let updated = currentUser;
+    if (hasMainDocs) {
+      updated = await updateUserById(userId, updateData);
+      
+      if (!updated) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Usuario no encontrado" });
+      }
     }
 
     // Generate fresh presigned URLs for all documents
