@@ -9,6 +9,7 @@ import React, { useState, useEffect } from "react";
 import EditButton from "../atoms/editButton";
 import SuccessErrorModal from "./successErrorModal";
 import Button from "../atoms/button";
+import FormField from "../molecules/form";
 
 /**
  * Displays user history/stats card with editable field for service hours.
@@ -102,18 +103,21 @@ export default function HistoryCard({
 
       <div className="text-center text-sm text-slate-700">
         <div>
-          <div className="text-xs text-slate-500">Horas de formación</div>
           {isEditing ? (
-            <input
+            <FormField
+              label="Horas de formación"
               type="text"
               name="horasServicio"
               value={form.horasServicio}
               onChange={handleChange}
-              className="mt-2 w-full border rounded px-2 py-1 text-center"
               placeholder="0"
+              showCounter={false}
             />
           ) : (
-            <div className="font-medium mt-2">{horasFormacion || "—"}</div>
+            <>
+              <div className="text-xs text-slate-500">Horas de formación</div>
+              <div className="font-medium mt-2">{horasFormacion || "—"}</div>
+            </>
           )}
         </div>
       </div>
