@@ -15,12 +15,11 @@ export default function HeroSection() {
     <section className="bg-gray-50 py-20 px-4">
       <div className="max-w-6xl mx-auto text-center">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-          Impulsa tu práctica en piso pélvico con el apoyo de una comunidad
-          profesional.
+          Profesionalizando tu práctica clínica en el beneficio de tus pacientes
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          Formación constante, recursos actualizados y una red nacional de
-          especialistas reunidos en un solo lugar.
+          Pertenece a la primer sociedad creada por fisioterapeutas pélvicos del
+          país, con el objetivo de mejorar nuestra práctica profesional.
         </p>
         <div className="flex flex-col gap-2 justify-center items-center">
           <button

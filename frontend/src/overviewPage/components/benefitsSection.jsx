@@ -12,7 +12,7 @@ const benefitData = [
     key: "biblioteca",
     icon: <BookOpen className="w-6 h-6" />,
     title: "Biblioteca Digital",
-    desc: "Explora una vasta biblioteca de guías, podcasts y recursos exclusivos.",
+    desc: "Explora una vasta biblioteca de guías y recursos exclusivos.",
     image: (
       <div className="w-full h-full flex flex-col items-center justify-center gap-3">
         <div className="h-4 bg-gray-200 rounded w-2/3"></div>
@@ -37,7 +37,7 @@ const benefitData = [
     key: "sesiones",
     icon: <Users className="w-6 h-6" />,
     title: "Sesiones con Expertos",
-    desc: "Participa en sesiones con líderes del sector, OKI con talleres interactivos.",
+    desc: "Participa en sesiones con líderes del sector.",
     image: (
       <div className="w-full h-full flex flex-col items-center justify-center gap-3">
         <div className="h-4 bg-gray-200 rounded w-1/2"></div>

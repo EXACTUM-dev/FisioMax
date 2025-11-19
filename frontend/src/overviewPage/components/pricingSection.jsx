@@ -21,9 +21,8 @@ export default function PricingSection() {
         "Artículos semanales",
         "Sesiones mensuales",
         "Libros y materiales digitales",
-        "Podcasts especializados",
         "Contenido exclusivo en la plataforma",
-        "Acceso a congresos",
+        "Acceso a congresos con precio preferencial",
         "Publicaciones exclusivas",
         "Red de contactos",
       ],
@@ -35,7 +34,7 @@ export default function PricingSection() {
         "Para personas con título y cédula profesional, con menos de 120 horas de formación.",
       features: [
         "Todo lo anterior, más:",
-        "Derecho a voz en asambleas",
+        "Descuentos en formaciones especializadas en piso pélvico",
         "Oportunidad de participar en comités",
       ],
     },
@@ -46,7 +45,7 @@ export default function PricingSection() {
         "Para profesionistas con título, cédula y más de 120 horas de formación.",
       features: [
         "Todo lo anterior, más:",
-        "Posibilidad de ser ponente en eventos",
+        "Posibilidad de ser ponente en eventos y sesiones",
         "Aparición en el directorio público de especialistas",
       ],
     },

@@ -40,9 +40,9 @@ export default function AboutSection() {
               Nuestra Misión
             </h2>
             <p className="text-gray-700 mb-4 leading-relaxed">
-              La SOMEFIPP surge con la misión de elevar el estándar de la
-              fisioterapia de piso pélvico en México mediante formación
-              continua, acceso a expertos y un respaldo profesional sólido.
+              La SOMEFIPP surge con la misión de profesionalizar la fisioterapia
+              de piso pélvico en México mediante formación continua, acceso a
+              expertos y un respaldo profesional sólido.
             </p>
             <p className="text-gray-700 leading-relaxed">
               Desde 2022 hemos crecido de manera sostenida, consolidándonos como
