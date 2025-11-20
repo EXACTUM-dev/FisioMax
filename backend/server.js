@@ -97,7 +97,7 @@ app.use("/api/users", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/logs", loginLogsRoutes);
-app.use("/api/notifications", notificationsRoutes);
+app.use("/api/ses", notificationsRoutes);
 /**
  * Routes for video content access.
  */
