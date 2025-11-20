@@ -13,8 +13,7 @@ router.post("/notifications", express.json(), async (req, res) => {
 
   // Confirm the subscription
   if (messageType === "SubscriptionConfirmation") {
-    const fetch = (await import("node-fetch")).default;
-    await fetch(message.SubscribeURL); // Confirm SNS subscription
+    await fetch(message.SubscribeURL);
     return res.status(200).send("Subscription confirmed");
   }
 
