@@ -1,15 +1,17 @@
 /**
  * @fileoverview Membership card component for displaying membership information.
  * Shows registration date, expiration date, and membership plan.
- * @version 1.1.0
+ * @version 1.2.0
  * @author EXACTUM-dev
  */
 
 import React, { useState, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
 import Button from "../atoms/button";
 import EditButton from "../atoms/editButton";
 import Dropdown from "../molecules/dropdown";
-import SuccessErrorModal from "./successErrorModal"; // Import success/error feedback modal
+import SuccessErrorModal from "./successErrorModal";
+import PaymentService from "../services/paymentService";
 
 /**
  * Displays user's membership information and payment button.
@@ -26,6 +28,7 @@ export default function MembershipCard({
   onSave,
   onEditChange,
 }) {
+  const { user } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     membershipType: "",
@@ -147,6 +150,17 @@ export default function MembershipCard({
     }));
   };
 
+  const handlePayment = () => {
+    // Redirect to Mercado Pago with user metadata
+    PaymentService.redirectToPayment(
+      'http://link.mercadopago.com.mx/somefipp',
+      {
+        userId: data.IDUsuario,
+        membershipId: data.IDMembresia,
+      }
+    );
+  };
+
   // Options for membership type dropdown
   const membershipTypeOptions = [
     { value: "", label: "Seleccionar plan" },
@@ -206,10 +220,7 @@ export default function MembershipCard({
                 <Button
                     size="sm"
                     label="Pagar membresía"
-                    onClick={() => {
-                        // Reemplaza 'URL_DE_REDIRECCION' con el link al que quieres ir.
-                        window.location.href = 'http://link.mercadopago.com.mx/somefipp';
-                    }}
+                    onClick={handlePayment}
                     className="cursor-pointer"
                 />
             </div>
