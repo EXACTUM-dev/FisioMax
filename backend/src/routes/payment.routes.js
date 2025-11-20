@@ -6,6 +6,7 @@
 
 import express from 'express';
 import PaymentController from '../controllers/payment.controller.js';
+import { requireAuth } from '../middlewares/clerkAuth.js';
 import { requireDbUser } from '../middlewares/requireDbUser.js';
 
 const router = express.Router();
@@ -24,6 +25,7 @@ router.post('/webhook', PaymentController.handleWebhook);
  */
 router.get(
   '/status/:paymentId',
+  requireAuth,
   requireDbUser,
   PaymentController.getPaymentStatus
 );
@@ -33,13 +35,13 @@ router.get(
  * Get all payments for the authenticated user.
  * Requires authentication.
  */
-router.get('/user', requireDbUser, PaymentController.getUserPayments);
+router.get('/user', requireAuth, requireDbUser, PaymentController.getUserPayments);
 
 /**
  * POST /api/payments
  * Create a payment record.
  * Requires authentication.
  */
-router.post('/', requireDbUser, PaymentController.createPaymentRecord);
+router.post('/', requireAuth, requireDbUser, PaymentController.createPaymentRecord);
 
 export default router;

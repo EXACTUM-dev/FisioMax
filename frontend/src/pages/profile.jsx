@@ -34,6 +34,9 @@ import {
   updateUserOwnById,
 } from "../controllers/profile.controller";
 
+// Services
+import PaymentService from "../services/paymentService";
+
 // Hooks
 import { useDbUser } from "../hooks/useDbUser";
 
@@ -50,6 +53,7 @@ export default function ProfilePage() {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [paymentTickets, setPaymentTickets] = useState([]);
   const isNavigatingRef = useRef(false);
 
   const { user, isLoaded } = useUser();
@@ -95,6 +99,17 @@ export default function ProfilePage() {
           ? await getUserProfileById(userId, token)
           : me;
         setUserProfile(profileData);
+
+        // Fetch payment tickets only for own profile (not when viewing others)
+        if (!userId) {
+          try {
+            const paymentsData = await PaymentService.getUserPayments(getToken);
+            setPaymentTickets(paymentsData.payments || []);
+          } catch (paymentErr) {
+            console.error("Error fetching payment tickets:", paymentErr);
+            // Don't block the page if payments fail, just log the error
+          }
+        }
       } catch (err) {
         console.error("Error fetching profile:", err);
         setError(err.message);
@@ -285,7 +300,7 @@ export default function ProfilePage() {
                   onSave={handleSaveEdits}
                   onEditChange={setIsEditing}
                 />
-                <TicketsCard tickets={[]} />
+                <TicketsCard tickets={paymentTickets} />
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@
 
 import PaymentService from '../services/payment.service.js';
 import Payment from '../models/payment.model.js';
+import { getUsuarioByClerkId } from '../models/users.model.js';
 
 /**
  * Payment controller.
@@ -80,16 +81,26 @@ const PaymentController = {
    */
   async getUserPayments(req, res) {
     try {
-      const userId = req.user?.IDUsuario;
+      const clerkId = req.auth?.userId;
 
-      if (!userId) {
+      if (!clerkId) {
         return res.status(401).json({
           success: false,
           message: 'User not authenticated',
         });
       }
 
-      const paymentStatus = await PaymentService.getUserPaymentStatus(userId);
+      // Get user from database using Clerk ID
+      const user = await getUsuarioByClerkId(clerkId);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found in database',
+        });
+      }
+
+      const paymentStatus = await PaymentService.getUserPaymentStatus(user.IDUsuario);
 
       res.json({
         success: true,
