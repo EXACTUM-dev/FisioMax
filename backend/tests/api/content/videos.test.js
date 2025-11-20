@@ -31,6 +31,9 @@ jest.unstable_mockModule("@clerk/express", () => ({
   ClerkExpressWithAuth: jest.fn(() => (req, res, next) => next()),
 }));
 
+// Register shared test mocks (routes/cloudfront behavior) for this test file
+await import("../../test-utils/register-mocks.js");
+
 const { app } = await import("../../../server.js");
 const request = (await import("supertest")).default;
 
