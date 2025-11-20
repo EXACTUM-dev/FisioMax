@@ -10,6 +10,7 @@ const router = express.Router();
 router.post("/notifications", express.json(), async (req, res) => {
   const messageType = req.headers["x-amz-sns-message-type"];
   const message = req.body;
+  console.log(message);
 
   // Confirm the subscription
   if (messageType === "SubscriptionConfirmation") {
