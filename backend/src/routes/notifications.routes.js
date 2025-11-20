@@ -8,6 +8,7 @@ import express from "express";
 const router = express.Router();
 
 router.post("/notifications", express.json(), async (req, res) => {
+  console.log("SNS RAW BODY:", JSON.stringify(req.body, null, 2));
   const messageType = req.headers["x-amz-sns-message-type"];
   const message = req.body;
   console.log(message);
