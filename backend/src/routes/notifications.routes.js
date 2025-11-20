@@ -7,7 +7,7 @@
 import express from "express";
 const router = express.Router();
 
-router.post("/ses/notifications", express.text({ type: "*/*" }), async (req, res, next) => {
+router.post("/notifications", express.text({ type: "*/*" }), async (req, res, next) => {
   try {
     console.log("SNS RAW BODY:", req.body);
 
