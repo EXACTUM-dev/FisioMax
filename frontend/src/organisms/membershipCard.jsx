@@ -201,6 +201,18 @@ export default function MembershipCard({
                 {paymentStatus}
               </span>
             </div>
+
+            <div className="mt-4">
+                <Button
+                    size="sm"
+                    label="Pagar membresía"
+                    onClick={() => {
+                        // Reemplaza 'URL_DE_REDIRECCION' con el link al que quieres ir.
+                        window.location.href = 'http://link.mercadopago.com.mx/somefipp';
+                    }}
+                    className="cursor-pointer"
+                />
+            </div>
           </div>
         </>
       ) : (
