@@ -7,37 +7,40 @@
 import express from "express";
 const router = express.Router();
 
-router.post("/notifications", express.json(), async (req, res) => {
-  console.log("SNS RAW BODY:", JSON.stringify(req.body, null, 2));
-  const messageType = req.headers["x-amz-sns-message-type"];
-  const message = req.body;
-  console.log(message);
+router.post("/ses/notifications", express.text({ type: "*/*" }), async (req, res, next) => {
+  try {
+    console.log("SNS RAW BODY:", req.body);
 
-  // Confirm the subscription
-  if (messageType === "SubscriptionConfirmation") {
-    await fetch(message.SubscribeURL);
-    return res.status(200).send("Subscription confirmed");
+    if (!req.body) {
+      throw new Error("SNS payload vacío");
+    }
+
+    // SNS envía texto plano → convertir a JSON
+    const message = JSON.parse(req.body);
+
+    console.log("SNS PARSED MESSAGE:", message);
+
+    // Confirmación de suscripción
+    if (message.Type === "SubscriptionConfirmation") {
+      console.log("Confirmando suscripción SNS...");
+
+      const response = await fetch(message.SubscribeURL);
+      console.log("SNS confirm response:", response.status);
+
+      return res.status(200).json({ ok: true, message: "SNS subscription confirmed" });
+    }
+
+    // Manejo de notificaciones reales (SES bounces o complaints)
+    if (message.Type === "Notification") {
+      const inner = JSON.parse(message.Message);
+      console.log("SES EVENT:", inner);
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error("Error interno en SNS route:", error);
+    return res.status(500).json({ error: error.message });
   }
-
-  if (messageType === "Notification") {
-    const snsMessage = JSON.parse(message.Message);
-
-    if (snsMessage.notificationType === "Bounce") {
-      console.log("Bounce detected:", snsMessage);
-      // Marcar el correo como inválido en tu DB
-    }
-
-    if (snsMessage.notificationType === "Complaint") {
-      console.log("Complaint detected:", snsMessage);
-      // Desuscribir o pausar envíos a este correo
-    }
-
-    if (snsMessage.notificationType === "Delivery") {
-      console.log("Delivery:", snsMessage);
-    }
-  }
-
-  res.status(200).send("OK");
 });
 
 export default router;
