@@ -6,12 +6,19 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 import Button from "../atoms/button";
 import EditButton from "../atoms/editButton";
 import Dropdown from "../molecules/dropdown";
 import SuccessErrorModal from "./successErrorModal";
 import PaymentService from "../services/paymentService";
+
+// Membership prices in MXN
+const MEMBERSHIP_PRICES = {
+  'básica': 1500,
+  'premium': 2500,
+  'empresarial': 5000,
+};
 
 /**
  * Displays user's membership information and payment button.
@@ -29,6 +36,7 @@ export default function MembershipCard({
   onEditChange,
 }) {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     membershipType: "",
@@ -41,6 +49,7 @@ export default function MembershipCard({
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success"); // "success" | "error"
   const [modalMessage, setModalMessage] = useState("");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Initialize form data when data changes or entering edit mode
   useEffect(() => {
@@ -150,15 +159,30 @@ export default function MembershipCard({
     }));
   };
 
-  const handlePayment = () => {
-    // Redirect to Mercado Pago with user metadata
-    PaymentService.redirectToPayment(
-      'http://link.mercadopago.com.mx/somefipp',
-      {
-        userId: data.IDUsuario,
-        membershipId: data.IDMembresia,
-      }
-    );
+  const handlePayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+      
+      const membershipType = data.membershipType || 'básica';
+      const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
+
+      // Create payment preference and redirect to Mercado Pago
+      await PaymentService.createPreferenceAndPay(
+        {
+          membershipType,
+          amount,
+        },
+        getToken
+      );
+    } catch (error) {
+      console.error('Error al iniciar pago:', error);
+      setModalType('error');
+      setModalMessage(
+        error?.message || 'No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.'
+      );
+      setShowModal(true);
+      setIsProcessingPayment(false);
+    }
   };
 
   // Options for membership type dropdown
@@ -219,8 +243,9 @@ export default function MembershipCard({
             <div className="mt-4">
                 <Button
                     size="sm"
-                    label="Pagar membresía"
+                    label={isProcessingPayment ? "Procesando..." : "Pagar membresía"}
                     onClick={handlePayment}
+                    disabled={isProcessingPayment}
                     className="cursor-pointer"
                 />
             </div>

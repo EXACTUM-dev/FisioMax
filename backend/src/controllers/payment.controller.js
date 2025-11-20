@@ -154,6 +154,71 @@ const PaymentController = {
       });
     }
   },
+
+  /**
+   * Create a payment preference for Mercado Pago.
+   * @param {Object} req - Express request object.
+   * @param {Object} res - Express response object.
+   */
+  async createPaymentPreference(req, res) {
+    try {
+      const clerkId = req.auth?.userId;
+
+      if (!clerkId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated',
+        });
+      }
+
+      // Get user from database using Clerk ID
+      const user = await getUsuarioByClerkId(clerkId);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found in database',
+        });
+      }
+
+      const { membershipType, amount } = req.body;
+
+      // Validate required fields
+      if (!user.IDMembresia) {
+        return res.status(400).json({
+          success: false,
+          message: 'User does not have a membership',
+        });
+      }
+
+      if (!membershipType || !amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields: membershipType, amount',
+        });
+      }
+
+      // Create payment preference in Mercado Pago
+      const preference = await PaymentService.createPaymentPreference({
+        membershipId: user.IDMembresia,
+        membershipType,
+        amount,
+        userEmail: user.correo,
+      });
+
+      res.json({
+        success: true,
+        preference,
+      });
+    } catch (error) {
+      console.error('Error creating payment preference:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error creating payment preference',
+        error: error.message,
+      });
+    }
+  },
 };
 
 export default PaymentController;

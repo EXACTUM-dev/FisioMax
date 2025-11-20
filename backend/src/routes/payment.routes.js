@@ -44,4 +44,11 @@ router.get('/user', requireAuth, requireDbUser, PaymentController.getUserPayment
  */
 router.post('/', requireAuth, requireDbUser, PaymentController.createPaymentRecord);
 
+/**
+ * POST /api/payments/create-preference
+ * Create a payment preference in Mercado Pago.
+ * Requires authentication.
+ */
+router.post('/create-preference', requireAuth, requireDbUser, PaymentController.createPaymentPreference);
+
 export default router;

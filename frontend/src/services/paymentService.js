@@ -120,6 +120,41 @@ const PaymentService = {
   },
 
   /**
+   * Create a payment preference and redirect to Mercado Pago.
+   * @param {Object} paymentData - Payment data.
+   * @param {string} paymentData.membershipType - Membership type.
+   * @param {number} paymentData.amount - Payment amount.
+   * @param {Function} getToken - Clerk getToken function.
+   * @returns {Promise<void>}
+   */
+  async createPreferenceAndPay(paymentData, getToken) {
+    try {
+      const token = await getToken();
+      const response = await fetch(buildApiUrl('/api/payments/create-preference'), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error creating payment preference');
+      }
+
+      const result = await response.json();
+      
+      // Redirect to Mercado Pago checkout
+      window.location.href = result.preference.init_point;
+    } catch (error) {
+      console.error('Error creating payment preference:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Get pending payment data from session storage.
    * @returns {Object|null} Pending payment data or null.
    */
