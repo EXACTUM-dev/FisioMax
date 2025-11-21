@@ -1,3 +1,5 @@
+// Ensure test env vars are loaded before importing server/config
+import "../setup.js";
 import { jest } from "@jest/globals";
 import request from "supertest";
 

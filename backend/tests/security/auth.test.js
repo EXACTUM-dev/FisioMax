@@ -6,6 +6,8 @@
  * Pruebas que validan la seguridad del sistema de autenticación con Clerk
  */
 
+// Ensure test env vars are loaded before other imports
+import "../setup.js";
 import request from "supertest";
 import express from "express";
 import cors from "cors";

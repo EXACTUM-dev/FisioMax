@@ -6,6 +6,8 @@
  * Pruebas que validan la configuración de seguridad HTTP y CORS
  */
 
+// Ensure test env vars are loaded before other imports
+import "../setup.js";
 import request from "supertest";
 import express from "express";
 import helmet from "helmet";
