@@ -6,7 +6,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUser as useClerkUser, useAuth } from "@clerk/clerk-react";
+import { useUser } from "../contexts/UserContext";
 import { useNavigate, useParams } from "react-router-dom";
 
 // Components
@@ -18,9 +19,12 @@ import AlertBanner from "../atoms/alertBanner";
 import Button from "../atoms/button";
 import BackButton from "../atoms/backButton";
 import { Title2 } from "../atoms/typography";
+import ConfirmationModal from "../molecules/confirmationModal";
+import SuccessErrorModal from "../organisms/successErrorModal";
 
 // Services
 import { getDedicatedContent } from "../services/dedicatedContentServices";
+import { deleteContent } from "../services/contentServices";
 
 /**
  * Content type configuration
@@ -58,7 +62,8 @@ const CONTENT_CONFIG = {
  * @returns {React.Element}
  */
 export default function DedicatedContentPage() {
-  const { user, isLoaded } = useUser();
+  const { user: clerkUser } = useClerkUser();
+  const { userData, isLoading: isUserLoading } = useUser();
   const { getToken } = useAuth();
   const navigate = useNavigate();
   const { contentCategory } = useParams();
@@ -76,6 +81,15 @@ export default function DedicatedContentPage() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
+
+  // Delete modal states
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [deleteResult, setDeleteResult] = useState({ success: false, message: "" });
+  const [contentToDelete, setContentToDelete] = useState(null);
+
+  // Check if user is admin (roleId 10 = Admin)
+  const isAdmin = userData?.roleId === 10;
 
   const limit = 12;
 
@@ -167,14 +181,62 @@ export default function DedicatedContentPage() {
     fetchContent(true);
   };
 
-  if (!isLoaded || !config) {
+  /**
+   * Handles edit action
+   */
+  const handleEdit = (slide) => {
+    console.log("Editar contenido:", slide);
+    // TODO: Implementar edición
+  };
+
+  /**
+   * Handles delete action - shows confirmation modal
+   */
+  const handleDelete = (slide) => {
+    setContentToDelete(slide);
+    setShowConfirmModal(true);
+  };
+
+  /**
+   * Confirms and executes deletion
+   */
+  const handleConfirmDelete = async () => {
+    setShowConfirmModal(false);
+
+    if (!contentToDelete) return;
+
+    try {
+      const token = await getToken();
+      await deleteContent(contentToDelete.id, token);
+
+      // Remove from local state
+      setContent((prev) => prev.filter((item) => item.id !== contentToDelete.id));
+      setTotal((prev) => prev - 1);
+
+      setDeleteResult({
+        success: true,
+        message: "Contenido eliminado exitosamente",
+      });
+    } catch (error) {
+      console.error("Error deleting content:", error);
+      setDeleteResult({
+        success: false,
+        message: error.message || "Error al eliminar el contenido",
+      });
+    } finally {
+      setContentToDelete(null);
+      setShowResultModal(true);
+    }
+  };
+
+  if (isUserLoading || !config) {
     return <Loading fullscreen message="Cargando..." />;
   }
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       <AppHeader
-        user={user}
+        user={clerkUser}
         showSearch={true}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -262,7 +324,12 @@ export default function DedicatedContentPage() {
                 </div>
               ) : (
                 <>
-                  <GridCarousel slides={content} />
+                  <GridCarousel 
+                    slides={content}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    showActions={isAdmin}
+                  />
 
                   {/* Load more button */}
                   {hasMore && (
@@ -290,6 +357,29 @@ export default function DedicatedContentPage() {
           )}
         </div>
       </main>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        open={showConfirmModal}
+        title="¿Eliminar contenido?"
+        message={`¿Estás seguro de que deseas eliminar "${contentToDelete?.title}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirmModal(false);
+          setContentToDelete(null);
+        }}
+      />
+
+      {/* Result Modal */}
+      <SuccessErrorModal
+        open={showResultModal}
+        success={deleteResult.success}
+        title={deleteResult.success ? "¡Éxito!" : "Error"}
+        message={deleteResult.message}
+        onClose={() => setShowResultModal(false)}
+      />
     </div>
   );
 }

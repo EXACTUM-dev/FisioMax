@@ -35,10 +35,34 @@ const formatDate = (dateString) => {
  * @component
  * @param {Object} props
  * @param {Array} props.slides - Content slides array
+ * @param {Function} props.onEdit - Callback when edit is clicked
+ * @param {Function} props.onDelete - Callback when delete is clicked
+ * @param {boolean} props.showActions - Whether to show action menu (3 dots)
  * @returns {React.Element}
  */
-export default function GridCarousel({ slides = [] }) {
+export default function GridCarousel({ 
+  slides = [], 
+  onEdit, 
+  onDelete, 
+  showActions = false 
+}) {
   const navigate = useNavigate();
+  const [openMenuId, setOpenMenuId] = React.useState(null);
+  const menuRefs = React.useRef({});
+
+  // Close menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuId && menuRefs.current[openMenuId]) {
+        if (!menuRefs.current[openMenuId].contains(event.target)) {
+          setOpenMenuId(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenuId]);
 
   /**
    * Handles card click to navigate to content page
@@ -46,6 +70,32 @@ export default function GridCarousel({ slides = [] }) {
    */
   const handleCardClick = (contentId) => {
     navigate(`/content/${contentId}`);
+  };
+
+  /**
+   * Toggles the action menu for a specific card
+   */
+  const handleMenuToggle = (e, contentId) => {
+    e.stopPropagation();
+    setOpenMenuId(openMenuId === contentId ? null : contentId);
+  };
+
+  /**
+   * Handles edit action
+   */
+  const handleEditClick = (e, slide) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    if (onEdit) onEdit(slide);
+  };
+
+  /**
+   * Handles delete action
+   */
+  const handleDeleteClick = (e, slide) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    if (onDelete) onDelete(slide);
   };
 
   /**
@@ -142,6 +192,74 @@ export default function GridCarousel({ slides = [] }) {
                     }
                   }
                 >
+                  {/* Three dots menu */}
+                  {showActions && (
+                    <div
+                      className="absolute top-2 right-2 z-10"
+                      ref={(el) => (menuRefs.current[slide.id] = el)}
+                    >
+                      <button
+                        onClick={(e) => handleMenuToggle(e, slide.id)}
+                        className="bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+                        aria-label="Opciones"
+                      >
+                        <svg
+                          className="w-5 h-5 text-gray-700"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle cx="12" cy="5" r="2" />
+                          <circle cx="12" cy="12" r="2" />
+                          <circle cx="12" cy="19" r="2" />
+                        </svg>
+                      </button>
+
+                      {/* Dropdown menu */}
+                      {openMenuId === slide.id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+                          <button
+                            onClick={(e) => handleEditClick(e, slide)}
+                            className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            Modificar
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteClick(e, slide)}
+                            className="w-full text-left px-4 py-3 hover:bg-red-50 flex items-center gap-2 text-red-600"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                            Eliminar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div
                     className="hidden md:block w-full h-full"
                     style={{

@@ -148,11 +148,15 @@ const uploadFields = (req, res, next) => {
   });
 };
 
+// Import role middleware
+import { requireRole } from "../middlewares/requireRoles.js";
+
 // Protected routes - require Clerk authentication
 router.get("/", requireAuth, contentController.index);
 router.get("/available", requireAuth, contentController.index);
 router.get("/:contentId", requireAuth, contentController.show);
 router.post("/upload", requireAuth, uploadFields, contentController.upload);
 router.post("/presign", requireAuth, contentController.presignUploadUrl);
+router.delete("/:contentId", requireAuth, requireRole("Admin"), contentController.deleteContent);
 
 export default router;

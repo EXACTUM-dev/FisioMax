@@ -10,6 +10,7 @@ import {
   getContentById,
   createContent,
   assignContentToPrivileges,
+  softDeleteContent,
 } from "../models/content.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
@@ -416,6 +417,59 @@ export async function presignUploadUrl(req, res) {
     return res.status(500).json({
       success: false,
       message: "No se pudo generar la URL de subida",
+    });
+  }
+}
+
+/**
+ * Deletes content (soft delete in DB + physical delete in S3)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function deleteContent(req, res) {
+  try {
+    const { contentId } = req.params;
+
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de contenido es requerido",
+      });
+    }
+
+    // Soft delete in database and get S3 keys
+    const { mainKey, thumbnailKey } = await softDeleteContent(contentId);
+
+    // Delete files from S3 in parallel
+    const deletePromises = [];
+    
+    if (mainKey) {
+      deletePromises.push(S3Service.deleteFile(mainKey));
+    }
+    
+    if (thumbnailKey) {
+      deletePromises.push(S3Service.deleteFile(thumbnailKey));
+    }
+
+    await Promise.all(deletePromises);
+
+    return res.status(200).json({
+      success: true,
+      message: "Contenido eliminado exitosamente",
+    });
+  } catch (error) {
+    console.error("Error deleting content:", error);
+
+    if (error.message === "Content not found") {
+      return res.status(404).json({
+        success: false,
+        message: "El contenido no existe",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Error al eliminar el contenido",
     });
   }
 }
