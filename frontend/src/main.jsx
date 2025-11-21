@@ -11,6 +11,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { UserProvider } from "./contexts/UserContext.jsx";
+import authConfig from "./config/auth.config.js";
 import "../index.css";
 import App from "../App.jsx";
 
@@ -19,7 +20,7 @@ import App from "../App.jsx";
  * Lanza un error si la clave no está definida, previniendo la ejecución de la app sin autenticación.
  * @const {string}
  */
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const PUBLISHABLE_KEY = authConfig.publishableKey;
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Clerk Publishable Key. Please set VITE_CLERK_PUBLISHABLE_KEY in your .env file.");
 }
@@ -30,7 +31,13 @@ if (!PUBLISHABLE_KEY) {
  */
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+      <ClerkProvider 
+        publishableKey={PUBLISHABLE_KEY}
+        appearance={{
+          variables: { colorPrimary: '#0F172A' }
+        }}
+        sessionTokenRefreshInSeconds={authConfig.sessionTokenRefreshInSeconds}
+      >
         <UserProvider>
           <BrowserRouter>
             <App />

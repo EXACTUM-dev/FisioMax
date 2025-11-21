@@ -7,7 +7,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
-import {useDbUser} from '../hooks/useDbUser';
+import { useDbUser } from "../hooks/useDbUser";
 // Confirmation modal for logout
 import ConfirmationModal from "../molecules/confirmationModal";
 
@@ -62,7 +62,7 @@ function SidebarLink({ icon, label, open, active, onClick }) {
       onClick={onClick}
       title={!open ? label : undefined}
       aria-current={active ? "page" : undefined}
-      className="group relative flex h-12 w-full items-center rounded-md hover:bg-slate-200 hover:shadow-sm transition-all duration-200 hover:scale-[1.02]"
+      className="group relative flex h-12 w-full items-center rounded-md hover:bg-slate-200 hover:shadow-sm transition-all duration-200 hover:scale-[1.02] cursor-pointer"
     >
       {/* Fixed and centered icon (80px column) */}
       <div className="absolute left-0 w-[80px] h-full flex justify-center items-center">
@@ -96,7 +96,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(current);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const {userData} = useDbUser();
+  const { userData } = useDbUser();
   const { signOut } = useClerk();
   const navigate = useNavigate();
   const userRole = userData?.role;
@@ -117,15 +117,14 @@ export default function Sidebar({ current = "home", onNavigate }) {
     // Don't show loading state - just hide the button until we know
     if (userRole === "Admin") {
       baseLinks.splice(2, 0, {
-        key: "bolt", 
-        label: "Panel de Control", 
-        icon: boltSrc 
+        key: "bolt",
+        label: "Panel de Control",
+        icon: boltSrc,
       });
     }
 
     return baseLinks;
   }, [userRole]);
-
 
   // Map keys to routes handled here
   const routeMap = useMemo(
@@ -140,7 +139,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
   const handleNavigate = (key) => {
     if (key === "logout") {
       // Logout con redirección a /login
-      setShowLogoutModal(true)
+      setShowLogoutModal(true);
       //signOut({ redirectUrl: "/login" });
       return;
     }

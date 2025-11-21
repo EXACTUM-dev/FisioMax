@@ -85,19 +85,24 @@ export function buildRolePermissionsColumns({
        * @param {Object} row - Table row data object
        * @returns {React.Element} Edit button with icon
        */
-      render: (row) => (
-        <EditButton
-          isEditing={false}
-          onClick={(e) => {
-            // Prevent default navigation behavior
-            e.preventDefault();
-            e.stopPropagation();
-            // Call the edit handler with row data
-            onEdit?.(row);
-          }}
-          editLabel={editTooltip}
-        />
-      ),
+      render: (row) => {
+        if (row?.rol?.toLowerCase() === "admin") {
+          return null;
+        }
+        return (
+          <EditButton
+            isEditing={false}
+            onClick={(e) => {
+              // Prevent default navigation behavior
+              e.preventDefault();
+              e.stopPropagation();
+              // Call the edit handler with row data
+              onEdit?.(row);
+            }}
+            editLabel={editTooltip}
+          />
+        )
+      },
     },
   ];
 
@@ -113,26 +118,31 @@ export function buildRolePermissionsColumns({
        * @param {Object} row - Table row data object
        * @returns {React.Element} Delete button with icon
        */
-      render: (row) => (
-        <button
-          type="button"
-          title="Eliminar"
-          onClick={(e) => {
-            // Prevent default navigation behavior
-            e.preventDefault();
-            e.stopPropagation();
-            // Call the delete handler with row data
-            onDelete?.(row);
-          }}
-          className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-red-50"
-        >
-          <img
-            src={trashIcon}
-            alt="Eliminar"
-            className="w-5 h-5 object-contain opacity-80"
-          />
-        </button>
-      ),
+      render: (row) => {
+        if (row?.rol?.toLowerCase() === "admin") {
+          return null;
+        }
+        return (
+          <button
+            type="button"
+            title="Eliminar"
+            onClick={(e) => {
+              // Prevent default navigation behavior
+              e.preventDefault();
+              e.stopPropagation();
+              // Call the delete handler with row data
+              onDelete?.(row);
+            }}
+            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-red-50"
+          >
+            <img
+              src={trashIcon}
+              alt="Eliminar"
+              className="w-5 h-5 object-contain cursor-pointer opacity-80"
+            />
+          </button>
+        );
+      },
     });
   }
 

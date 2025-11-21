@@ -1,6 +1,6 @@
 /**
  * @fileoverview Clerk authentication middleware for Express.js.
- * @version 1.0.0
+ * @version 1.1.0
  * @author EXACTUM-dev
  *
  * Verifies Clerk JWT and attaches user information to the request.
@@ -57,12 +57,14 @@ export const autoSyncClerkId = async (req, res, next) => {
     )?.emailAddress;
 
     if (!email) {
-      console.warn(`Clerk user ${clerkUserId} has no primary email`);
       return next();
     }
 
-    // Search for user in DB by email
-    const dbUser = await getUserByEmail(email);
+    // Normalize email (lowercase, trim)
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Search for user in DB by email (getUserByEmail already encrypts it)
+    const dbUser = await getUserByEmail(normalizedEmail);
 
     if (!dbUser) {
       // User doesn't exist in DB, do nothing (requireDbUser will block it)
@@ -72,7 +74,6 @@ export const autoSyncClerkId = async (req, res, next) => {
     // User exists in DB but has no clerkID, link automatically
     if (!dbUser.clerkID) {
       await updateUserClerkId(dbUser.IDUsuario, clerkUserId);
-      console.log(`Auto-linked: ${email} -> clerkID: ${clerkUserId}`);
     }
 
     next();

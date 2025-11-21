@@ -22,7 +22,8 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    files: 50, // Maximum 50 parts total (includes text fields + files)
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
@@ -36,24 +37,64 @@ const upload = multer({
 // Middleware to handle multiple file uploads
 const uploadFields = upload.fields([
   { name: 'degreeDocument', maxCount: 1 },
-  { name: 'titulo', maxCount: 1 },
   { name: 'professionalId', maxCount: 1 },
-  { name: 'cedula', maxCount: 1 },
   { name: 'certificates', maxCount: 1 },
-  { name: 'constancias', maxCount: 1 },
   { name: 'extraDoc1', maxCount: 1 },
   { name: 'extraDoc2', maxCount: 1 },
   { name: 'extraDoc3', maxCount: 1 },
   { name: 'extraDoc4', maxCount: 1 },
   { name: 'extraDoc5', maxCount: 1 },
+  { name: 'extraDoc6', maxCount: 1 },
+  { name: 'extraDoc7', maxCount: 1 },
+  { name: 'extraDoc8', maxCount: 1 },
+  { name: 'extraDoc9', maxCount: 1 },
+  { name: 'extraDoc10', maxCount: 1 },
 ]);
+
+// Error handler middleware for file uploads
+const handleUploadError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        success: false,
+        message: 'Archivo demasiado grande. El límite es 10MB por archivo.',
+      });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        success: false,
+        message: 'Demasiados campos en el formulario. Por favor contacta al administrador.',
+      });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        message: `Campo de archivo no esperado: ${err.field}`,
+        field: err.field,
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: `Error al subir archivos: ${err.message}`,
+    });
+  }
+  
+  if (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'Error al procesar los archivos',
+    });
+  }
+  
+  next();
+};
 
 /**
  * @route POST /api/membership-applications
  * @desc Create a new membership application
  * @access Public
  */
-router.post('/', uploadFields, createMembershipApplication);
+router.post('/', uploadFields, handleUploadError, createMembershipApplication);
 
 
 /**

@@ -8,7 +8,7 @@
 
 import S3Service from "../services/s3Service.js";
 import db from "../../database/db.js";
-import { encryptFields, decryptFields } from "../utils/encryption.js";
+import { encryptFields, decryptFields } from "../services/encryptionService.js";
 
 /**
  * Sensitive fields that must be encrypted/decrypted.
@@ -156,12 +156,12 @@ class MembershipApplication {
     try {
       await conn.beginTransaction();
 
-      // Prepare data for encryption
+      // Prepare data for encryption with normalized email
       const dataToEncrypt = {
         nombres: this.firstName,
         apellidoP: this.lastName,
         apellidoM: this.middleName,
-        correo: this.email,
+        correo: this.email ? this.email.toLowerCase().trim() : this.email,
         telefonoProfesional: this.professionalPhone,
         telefonoWhatsapp: this.whatsappPhone,
         colonia: this.neighborhood,
@@ -182,6 +182,22 @@ class MembershipApplication {
         this.documents.titulo || this.documents.degreeDocument || null;
       const certificatesUrl =
         this.documents.constancias || this.documents.certificates || null;
+      // Check for existing user with same email that is not deleted
+      const [existingUsers] = await conn.query(
+        `SELECT * FROM usuario WHERE eliminado = 0`,
+        [encryptedData.correo]
+      );
+      const decryptUsers = decryptApplicationsData(existingUsers);
+
+      const existingEmail = decryptUsers.some(
+        (users) => users.correo === dataToEncrypt.correo
+      );
+
+      if (existingEmail) {
+        const duplicateError = new Error("Duplicate entry");
+        duplicateError.code = "ER_DUP_ENTRY";
+        throw duplicateError;
+      }
 
       // Insert user with encrypted data
       const [userResult] = await conn.query(

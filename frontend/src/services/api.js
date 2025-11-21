@@ -19,11 +19,32 @@ async function handleResponse(response) {
   const data = await response.json();
 
   if (!response.ok) {
-    const error = {
+    // Create proper Error instance with response information
+    const error = new Error(data.error || data.message || "Ha ocurrido un error");
+    
+    // Attach response information in a format compatible with error handling
+    error.response = {
       status: response.status,
-      message: data.error || "Ha ocurrido un error",
-      data,
+      data: data,
     };
+    
+    // Also attach status directly for backward compatibility
+    error.status = response.status;
+    
+    // Check for session expiration
+    if (response.status === 401 && data.code === 'SESSION_EXPIRED') {
+      error.code = 'SESSION_EXPIRED';
+      error.message = 'Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.';
+      
+      // Trigger a custom event for session expiration
+      window.dispatchEvent(new CustomEvent('session-expired', { detail: data }));
+    } else if (response.status === 409) {
+      error.code = "CONFLICT";
+    } else if (response.status >= 500) {
+      error.code = "SERVER_ERROR";
+    } else if (response.status >= 400) {
+      error.code = "CLIENT_ERROR";
+    }
 
     throw error;
   }

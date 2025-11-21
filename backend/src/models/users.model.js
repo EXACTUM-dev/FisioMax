@@ -8,7 +8,12 @@
 
 import { dbPool } from "../../config.js";
 import { findRoleByName } from "./roles.model.js";
-import { encrypt, encryptFields, decryptFields } from "../utils/encryption.js";
+import {
+  encrypt,
+  decrypt,
+  encryptFields,
+  decryptFields,
+} from "../services/encryptionService.js";
 
 /**
  * Sensitive fields that must be encrypted/decrypted.
@@ -194,7 +199,7 @@ export async function getUserByClerkId(clerkId) {
 
     const user = decryptUserData(rows[0]);
 
-    // Try to get additional documents if the table exists
+    // Get additional documents from separate table
     try {
       const [docRows] = await dbPool.query(
         `SELECT 
@@ -291,7 +296,32 @@ export async function getUserById(userId) {
       LIMIT 1`,
       [userId]
     );
-    return rows.length > 0 ? decryptUserData(rows[0]) : null;
+    if (rows.length === 0) return null;
+    
+    const user = decryptUserData(rows[0]);
+    
+    // Get additional documents from separate table
+    try {
+      const [docRows] = await dbPool.query(
+        `SELECT 
+          IDDocumento,
+          nombreArchivo,
+          urlArchivo,
+          createdAt
+        FROM documentosadicionales
+        WHERE IDUsuario = ?`,
+        [user.IDUsuario]
+      );
+      user.documentosadicionales = docRows;
+    } catch (docError) {
+      console.warn(
+        "documentosadicionales table not found or error:",
+        docError.message
+      );
+      user.documentosadicionales = [];
+    }
+    
+    return user;
   } catch (error) {
     console.error("Error al consultar usuario por ID:", error);
     throw error;
@@ -308,8 +338,11 @@ export async function getUserById(userId) {
  */
 export async function getUserByEmail(email) {
   try {
-    // Encrypt email for search
-    const encryptedEmail = encrypt(email);
+    // Normalize email before encrypting (lowercase, trim)
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Encrypt normalized email for search
+    const encryptedEmail = encrypt(normalizedEmail);
 
     const [rows] = await dbPool.query(
       `SELECT 
@@ -352,9 +385,71 @@ export async function getUserByEmail(email) {
       WHERE u.correo = ? 
         AND u.deletedAt IS NULL 
         AND u.eliminado = 0
+      ORDER BY u.IDUsuario DESC
       LIMIT 1`,
       [encryptedEmail]
     );
+
+    // If not found with encrypted search, try decrypting all and searching
+    if (rows.length === 0) {
+      const [allRows] = await dbPool.query(
+        `SELECT 
+          u.IDUsuario,
+          u.clerkID,
+          u.nombres, 
+          u.apellidoP, 
+          u.apellidoM,
+          u.foto,
+          u.correo,
+          u.telefonoProfesional,
+          u.telefonoWhatsapp,
+          u.fechaNacimiento,
+          u.cedula,
+          u.titulo,
+          u.constancias,
+          u.licenciatura,
+          u.pais,
+          u.estado,
+          u.ciudad,
+          u.calle,
+          u.numExterior,
+          u.numInterior,
+          u.colonia,
+          u.codigoPostal,
+          u.instagram,
+          u.linkedin,
+          u.facebook,
+          u.paginaWeb,
+          r.IDRol,
+          r.nombre as rolNombre,
+          r.descripcion as rolDescripcion
+        FROM usuario u
+        LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
+          AND ur.deletedAt IS NULL 
+          AND ur.eliminado = 0
+        LEFT JOIN rol r ON ur.IDRol = r.IDRol 
+          AND r.deletedAt IS NULL 
+          AND r.eliminado = 0
+        WHERE u.deletedAt IS NULL 
+          AND u.eliminado = 0
+        ORDER BY u.IDUsuario DESC`
+      );
+
+      // Decrypt and search
+      for (const row of allRows) {
+        const decryptedUser = decryptUserData(row);
+        if (
+          decryptedUser &&
+          decryptedUser.correo &&
+          decryptedUser.correo.toLowerCase().trim() === normalizedEmail
+        ) {
+          return decryptedUser;
+        }
+      }
+
+      return null;
+    }
+
     return rows.length > 0 ? decryptUserData(rows[0]) : null;
   } catch (error) {
     console.error("Error al consultar usuario por email:", error);
@@ -421,6 +516,7 @@ export async function updateUserClerkId(userId, clerkID) {
  * @param {string} [updateData.membershipRegisteredAt] - Membership registration date
  * @param {string} [updateData.membershipExpiresAt] - Membership expiration date
  * @param {string} [updateData.membershipPaymentStatus] - Payment status
+ * @param {number|string} [updateData.membershipHoursFormation] - Service hours (horasFormacion)
  * @returns {Promise<Object|null>} Updated user object (with decrypted fields) or null if not found
  * @throws {Error} When userId is missing or database operation fails
  */
@@ -466,23 +562,32 @@ export async function updateUserById(userId, updateData) {
       "membershipRegisteredAt",
       "membershipExpiresAt",
       "membershipPaymentStatus",
+      "membershipHoursFormation",
     ];
 
+    // Normalize email if present
+    const normalizedUpdateData = {
+      ...updateData,
+      ...(updateData.correo && {
+        correo: updateData.correo.toLowerCase().trim(),
+      }),
+    };
+
     // Encrypt sensitive fields before update
-    const encryptedData = encryptFields(updateData, SENSITIVE_FIELDS);
+    const encryptedData = encryptFields(normalizedUpdateData, SENSITIVE_FIELDS);
 
     const userSetClauses = [];
     const userValues = [];
 
     // Build SET clauses for usuario table
     for (const field of userAllowedFields) {
-      if (Object.prototype.hasOwnProperty.call(updateData, field)) {
+      if (Object.prototype.hasOwnProperty.call(normalizedUpdateData, field)) {
         userSetClauses.push(`${field} = ?`);
         // Use encrypted value if field is sensitive, otherwise use original
         const valueToUse =
           SENSITIVE_FIELDS.includes(field) && encryptedData[field]
             ? encryptedData[field]
-            : updateData[field];
+            : normalizedUpdateData[field];
         userValues.push(valueToUse);
       }
     }
@@ -507,9 +612,14 @@ export async function updateUserById(userId, updateData) {
         else if (field === "membershipRegisteredAt") dbField = "createdAt";
         else if (field === "membershipExpiresAt") dbField = "fechaVencimiento";
         else if (field === "membershipPaymentStatus") dbField = "estatusPago";
+        else if (field === "membershipHoursFormation") dbField = "horasFormacion";
 
         membershipSetClauses.push(`${dbField} = ?`);
-        membershipValues.push(updateData[field]);
+        // Convert to number for horasFormacion if it's a string
+        const value = field === "membershipHoursFormation" && updateData[field] !== null
+          ? parseInt(updateData[field], 10) || 0
+          : updateData[field];
+        membershipValues.push(value);
       }
     }
 
@@ -587,8 +697,14 @@ export async function createUserWithClerkId(userData) {
       codigoPostal = null,
     } = userData;
 
+    // Normalize email before encryption
+    const normalizedUserData = {
+      ...userData,
+      correo: correo ? correo.toLowerCase().trim() : correo,
+    };
+
     // Encrypt sensitive data before insertion
-    const encryptedData = encryptFields(userData, SENSITIVE_FIELDS);
+    const encryptedData = encryptFields(normalizedUserData, SENSITIVE_FIELDS);
 
     const [result] = await connection.query(
       `INSERT INTO usuario 
@@ -597,19 +713,19 @@ export async function createUserWithClerkId(userData) {
       [
         IDUsuario,
         clerkID,
-        encryptedData.nombres || nombres,
-        encryptedData.apellidoP || apellidoP,
-        encryptedData.apellidoM || apellidoM,
-        encryptedData.correo || correo,
-        encryptedData.telefonoProfesional || telefonoProfesional,
-        encryptedData.telefonoWhatsapp || telefonoWhatsapp,
+        encryptedData.nombres,
+        encryptedData.apellidoP,
+        encryptedData.apellidoM,
+        encryptedData.correo,
+        encryptedData.telefonoProfesional,
+        encryptedData.telefonoWhatsapp,
         fechaNacimiento,
         foto,
         pais,
         estado,
         ciudad,
-        encryptedData.colonia || colonia,
-        encryptedData.codigoPostal || codigoPostal,
+        encryptedData.colonia,
+        encryptedData.codigoPostal,
       ]
     );
 

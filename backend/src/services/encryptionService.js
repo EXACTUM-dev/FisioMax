@@ -6,9 +6,10 @@
  */
 
 import crypto from "crypto";
+import config from "../../config.js";
 
 const ALGORITHM = "aes-256-gcm";
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+const ENCRYPTION_KEY = config.encryption.key;
 const IV_LENGTH = 16;
 
 /**
@@ -62,7 +63,7 @@ export function decrypt(encryptedText) {
 
     return decrypted;
   } catch (error) {
-    console.error("Error decrypting:", error);
+    // Return original text if decryption fails (might be unencrypted data)
     return encryptedText;
   }
 }
@@ -76,7 +77,11 @@ export function decrypt(encryptedText) {
 export function encryptFields(data, fields) {
   const result = { ...data };
   fields.forEach((field) => {
-    if (result[field]) {
+    if (
+      result[field] !== undefined &&
+      result[field] !== null &&
+      result[field] !== ""
+    ) {
       result[field] = encrypt(result[field]);
     }
   });
@@ -92,7 +97,11 @@ export function encryptFields(data, fields) {
 export function decryptFields(data, fields) {
   const result = { ...data };
   fields.forEach((field) => {
-    if (result[field]) {
+    if (
+      result[field] !== undefined &&
+      result[field] !== null &&
+      result[field] !== ""
+    ) {
       result[field] = decrypt(result[field]);
     }
   });

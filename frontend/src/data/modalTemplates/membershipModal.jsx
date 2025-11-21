@@ -347,24 +347,55 @@ function MembershipModalContent({
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
+                          title={row.url ? "Ver documento" : "Sin archivo"}
+                          onClick={() =>
+                            row.url && window.open(row.url, "_blank", "noopener,noreferrer")
+                          }
+                          disabled={!row.url}
+                          className="text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
                           title={row.url ? "Descargar PDF" : "Sin archivo"}
                           onClick={() =>
                             row.url && downloadDocument(row.url, row.key)
                           }
                           disabled={!row.url}
-                          className={
-                            "px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 " +
-                            (row.url
-                              ? "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-md hover:scale-105"
-                              : "bg-slate-50 text-slate-300 cursor-not-allowed") +
-                            " shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-1 active:scale-95"
-                          }
+                          className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <img
-                            src={pdfIcon}
-                            alt={row.url ? "Descargar PDF" : "Sin archivo"}
-                            className="w-5 h-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
-                          />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            />
+                          </svg>
                         </button>
                         {!row.url && (
                           <span className="text-xs text-slate-400">
@@ -388,7 +419,7 @@ function MembershipModalContent({
         <div className="flex justify-end gap-3">
           <Button
             label="Rechazar"
-            variant="cancel"
+            variant="outline"
             onClick={() => setShowRejectModal(true)}
             disabled={isProcessing}
           />

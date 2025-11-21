@@ -7,7 +7,7 @@
 
 import express from "express";
 import multer from "multer";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser } from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser} from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
@@ -19,7 +19,8 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    files: 50, // Maximum 50 parts total (includes text fields + files)
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
@@ -30,12 +31,73 @@ const upload = multer({
   }
 });
 
-// Middleware to handle document file uploads
-const uploadDocuments = upload.fields([
-  { name: 'titulo', maxCount: 1 },
-  { name: 'cedula', maxCount: 1 },
-  { name: 'constancias', maxCount: 1 },
-]);
+// Middleware to handle document file uploads with error logging
+const uploadDocuments = (req, res, next) => {
+  const uploader = upload.fields([
+    { name: 'titulo', maxCount: 1 },
+    { name: 'cedula', maxCount: 1 },
+    { name: 'constancias', maxCount: 1 },
+    { name: 'extraDoc1', maxCount: 1 },
+    { name: 'extraDoc2', maxCount: 1 },
+    { name: 'extraDoc3', maxCount: 1 },
+    { name: 'extraDoc4', maxCount: 1 },
+    { name: 'extraDoc5', maxCount: 1 },
+    { name: 'extraDoc6', maxCount: 1 },
+    { name: 'extraDoc7', maxCount: 1 },
+    { name: 'extraDoc8', maxCount: 1 },
+    { name: 'extraDoc9', maxCount: 1 },
+    { name: 'extraDoc10', maxCount: 1 },
+  ]);
+
+  uploader(req, res, (err) => {
+    if (err) {
+      console.log('=== MULTER ERROR ===');
+      console.log('Error:', err);
+      console.log('Error code:', err.code);
+      console.log('Field:', err.field);
+      console.log('Files received:', req.files ? Object.keys(req.files) : 'none');
+    }
+    next(err);
+  });
+};
+
+// Error handler middleware for file uploads
+const handleUploadError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        success: false,
+        message: 'Archivo demasiado grande. El límite es 10MB por archivo.',
+      });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        success: false,
+        message: 'Demasiados campos en el formulario. Por favor contacta al administrador.',
+      });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        message: `Campo de archivo no esperado: ${err.field}`,
+        field: err.field,
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: `Error al subir archivos: ${err.message}`,
+    });
+  }
+  
+  if (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'Error al procesar los archivos',
+    });
+  }
+  
+  next();
+};
 
 /**
  * Route to get all users.
@@ -70,7 +132,7 @@ router.get("/profile", requireAuth, getCurrentUserProfile);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/:userId", requireAuth, authorize(["Gestión de Usuarios"]), getUserProfileById);
+router.get("/:userId", requireAuth, getUserProfileById);
 
 /**
  * Route to update a user's information
@@ -116,10 +178,10 @@ router.patch("/:userId/rol", requireAuth, authorize(["Gestión de Usuarios"]), a
 router.patch(
   "/:userId/documents",
   requireAuth,
-  authorize(["Gestión de Usuarios"]),
   autoSyncClerkId,
   requireDbUser,
   uploadDocuments,
+  handleUploadError,
   updateUserDocuments
 );
 
@@ -140,6 +202,24 @@ router.delete(
   autoSyncClerkId,
   requireDbUser,
   deleteUser
+);
+
+/**
+ * Route to update a user own information
+ * @name PATCH /:userId
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication and authorization.
+ * @param {function} handler - Request handler.
+ */
+router.patch(
+  "/own/:userId",
+  requireAuth,
+  autoSyncClerkId,
+  requireDbUser,
+  updateUser
 );
 
 export default router;

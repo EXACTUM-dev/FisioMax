@@ -26,7 +26,7 @@ const BackButton = ({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center justify-center transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#CAD00F] ${className}`}
+      className={`inline-flex items-center justify-center transition-opacity cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#CAD00F] ${className}`}
       aria-label={ariaLabel}
       type="button"
     >

@@ -60,7 +60,6 @@ export const createMembershipApplication = async (req, res) => {
         "birthDate",
         "country",
         "state",
-        "city",
       ],
       maxLengths: {
         firstName: 100,
@@ -216,6 +215,15 @@ export const createMembershipApplication = async (req, res) => {
         success: false,
         message: "Este usuario ya está registrado",
         error: "DUPLICATE_ENTRY",
+      });
+    }
+
+    // Check if it's a validation error from sanitization
+    if (error.message && error.message.includes("requerido")) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+        error: "VALIDATION_ERROR",
       });
     }
 

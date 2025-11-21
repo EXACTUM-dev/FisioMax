@@ -1,9 +1,11 @@
 /**
  * @fileoverview Membership application form
+ * @description Page for users to apply for membership
  * @version 0.2.0
+ * @author EXACTUM-dev
  */
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Button from "../atoms/button";
 import BackButton from "../atoms/backButton";
 import FileUpload from "../molecules/fileUpload";
@@ -23,15 +25,33 @@ import {
   PROFILE_VALIDATION_RULES,
 } from "../utils/profileFormValidation";
 
+import MembershipInfoModal from "../overviewPage/membershipInfoModal";
+
 export default function MembershipApplicationPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const isNavigatingRef = useRef(false);
 
-  const [formData, setFormData] = useState({ ...INITIAL_FORM_STATE });
+  const initialMembershipType = location.state?.selectedPlan || "";
+  const [showInfoFormation, setShowInfoFormation] = useState(false);
+
+  const [formData, setFormData] = useState({
+    ...INITIAL_FORM_STATE,
+    membershipType: initialMembershipType,
+    membershipHoursFormation: "",
+  });
+  const handleMembershipChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
   const [extraDocs, setExtraDocs] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [showInfoModal, setShowInfoModal] = useState(
+    (location.state?.showInfoModal && location.state?.fromOverview === true) ||
+      false
+  );
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
@@ -53,6 +73,9 @@ export default function MembershipApplicationPage() {
       extraDocs.length > 0
     );
   };
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -88,7 +111,15 @@ export default function MembershipApplicationPage() {
 
     setIsSubmitting(true);
     try {
-      const formDataToSend = prepareFormDataForSubmission(formData, extraDocs);
+      const formDataToSend = prepareFormDataForSubmission(
+        {
+          ...formData,
+          membershipType: formData.membershipType,
+          membershipHoursFormation: formData.membershipHoursFormation,
+          membershipHoursSocial: formData.membershipHoursSocial,
+        },
+        extraDocs
+      );
       const res = await fetch(MEMBERSHIP_API.CREATE, {
         method: "POST",
         body: formDataToSend,
@@ -103,6 +134,10 @@ export default function MembershipApplicationPage() {
         );
         setShowModal(true);
         isNavigatingRef.current = true;
+        if (location.state?.fromOverview === true) {
+          navigate("/login?mode=signup&fromMembership=1");
+          return;
+        }
       } else if (res.status === 409) {
         setModalType("error");
         setModalMessage("Este correo o teléfono ya está registrado");
@@ -144,6 +179,11 @@ export default function MembershipApplicationPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <MembershipInfoModal
+        open={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+        selectedPlan={formData.membershipType}
+      />
       <div className="border-gray-200 py-4">
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex items-center justify-center">

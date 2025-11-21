@@ -42,4 +42,3 @@ export async function insertLoginErrorLog({
 
   return result.insertId;
 }
-

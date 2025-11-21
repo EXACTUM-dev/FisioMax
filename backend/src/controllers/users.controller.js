@@ -1,7 +1,7 @@
 /**
  * @fileoverview Controller to handle user-related requests.
  * Manages user profile retrieval and transformation, including document URL generation.
- * @version 1.0.0
+ * @version 1.1.0
  * @author EXACTUM-dev
  */
 
@@ -76,8 +76,18 @@ export async function getCurrentUserProfile(req, res) {
 
     // Generate presigned URLs for additional documents
     const documentosadicionalesUrls =
-      user.documentosAdicionales && user.documentosadicionales.length > 0
-        ? await S3Service.getPresignedUrls(user.documentosadicionales)
+      user.documentosadicionales && user.documentosadicionales.length > 0
+        ? await Promise.all(
+            user.documentosadicionales.map(async (doc) => {
+              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+              return {
+                id: doc.IDDocumento,
+                nombre: doc.nombreArchivo,
+                url: url,
+                createdAt: doc.createdAt,
+              };
+            })
+          )
         : [];
 
     const transformedUser = {
@@ -172,7 +182,17 @@ export async function getUserProfileById(req, res) {
     // Generate presigned URLs for additional documents
     const documentosadicionalesUrls =
       user.documentosadicionales && user.documentosadicionales.length > 0
-        ? await S3Service.getPresignedUrls(user.documentosadicionales)
+        ? await Promise.all(
+            user.documentosadicionales.map(async (doc) => {
+              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+              return {
+                id: doc.IDDocumento,
+                nombre: doc.nombreArchivo,
+                url: url,
+                createdAt: doc.createdAt,
+              };
+            })
+          )
         : [];
 
     const transformedUser = {
@@ -381,12 +401,29 @@ export async function updateUser(req, res) {
       sanitized.email = sanitizeEmail(updateData.email);
     }
 
-    // Pass through dates
+    const formatDateForMySQL = (isoDate) => {
+      if (!isoDate) return null;
+      // Transform '2025-11-07T00:00:00.000Z' -> '2025-11-07 00:00:00'
+      return isoDate.replace("T", " ").replace(".000Z", "");
+    };
+
+    // Pass through membershipExpiresAt as date (already validated by database)
     if (updateData.membershipExpiresAt) {
-      sanitized.membershipExpiresAt = updateData.membershipExpiresAt;
+      sanitized.membershipExpiresAt = formatDateForMySQL(
+        updateData.membershipExpiresAt
+      );
     }
+
+    // Pass through membershipRegisteredAt as date (already validated by database)
     if (updateData.membershipRegisteredAt) {
-      sanitized.membershipRegisteredAt = updateData.membershipRegisteredAt;
+      sanitized.membershipRegisteredAt = formatDateForMySQL(
+        updateData.membershipRegisteredAt
+      );
+    }
+
+    // Pass through membershipHoursFormation (numeric field)
+    if (updateData.membershipHoursFormation !== undefined) {
+      sanitized.membershipHoursFormation = updateData.membershipHoursFormation;
     }
 
     const updated = await updateUserById(userId, sanitized);
@@ -452,7 +489,7 @@ export async function updateUser(req, res) {
 }
 
 /**
- * Update user documents (titulo, cedula, constancias).
+ * Update user documents (titulo, cedula, constancias, and extra documents).
  * Handles file uploads to S3 and updates database.
  * @async
  * @function updateUserDocuments
@@ -484,6 +521,14 @@ export async function updateUserDocuments(req, res) {
     const isS3Configured =
       process.env.AWS_REGION && process.env.AWS_BUCKET_NAME;
 
+    // Extract extra documents from req.files
+    const extraDocs = [];
+    Object.keys(req.files || {}).forEach((key) => {
+      if (key.startsWith("extraDoc")) {
+        extraDocs.push(req.files[key][0]);
+      }
+    });
+
     if (isS3Configured) {
       // Upload files to S3 if provided, and delete old ones
       if (req.files?.titulo?.[0]) {
@@ -513,6 +558,59 @@ export async function updateUserDocuments(req, res) {
           "constancias"
         );
       }
+
+      // Handle extra documents - upload to S3 and save to documentosadicionales table
+      if (extraDocs.length > 0) {
+        // Get database connection from pool
+        const { dbPool } = await import("../../config.js");
+        const connection = await dbPool.getConnection();
+
+        try {
+          await connection.beginTransaction();
+
+          // Delete old extra documents from S3 and database
+          const [oldDocs] = await connection.query(
+            `SELECT IDDocumento, urlArchivo FROM documentosadicionales WHERE IDUsuario = ?`,
+            [userId]
+          );
+
+          if (oldDocs.length > 0) {
+            // Delete from S3
+            await Promise.all(
+              oldDocs.map((doc) => S3Service.deleteFile(doc.urlArchivo))
+            );
+
+            // Delete from database
+            await connection.query(
+              `DELETE FROM documentosadicionales WHERE IDUsuario = ?`,
+              [userId]
+            );
+          }
+
+          // Upload new extra documents to S3
+          const extraDocsUrls = await Promise.all(
+            extraDocs.map((file) =>
+              S3Service.uploadFile(file, "documentos-extra")
+            )
+          );
+
+          // Insert new documents into database
+          for (const docUrl of extraDocsUrls) {
+            await connection.query(
+              `INSERT INTO documentosadicionales (IDUsuario, nombreArchivo, urlArchivo, createdAt) 
+               VALUES (?, ?, ?, NOW())`,
+              [userId, "Documento adicional", docUrl]
+            );
+          }
+
+          await connection.commit();
+        } catch (error) {
+          await connection.rollback();
+          throw error;
+        } finally {
+          connection.release();
+        }
+      }
     } else {
       console.warn("AWS S3 not configured. Files will not be uploaded.");
       if (req.files?.titulo?.[0]) {
@@ -526,19 +624,27 @@ export async function updateUserDocuments(req, res) {
       }
     }
 
-    if (Object.keys(updateData).length === 0) {
+    // Check if any files were provided (main docs or extra docs)
+    const hasMainDocs = Object.keys(updateData).length > 0;
+    const hasAnyFiles = hasMainDocs || (isS3Configured && extraDocs.length > 0);
+
+    if (!hasAnyFiles) {
       return res.status(400).json({
         success: false,
         error: "No se proporcionaron archivos para actualizar",
       });
     }
 
-    const updated = await updateUserById(userId, updateData);
-
-    if (!updated) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Usuario no encontrado" });
+    // Only update main user fields if there are changes
+    let updated = currentUser;
+    if (hasMainDocs) {
+      updated = await updateUserById(userId, updateData);
+      
+      if (!updated) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Usuario no encontrado" });
+      }
     }
 
     // Generate fresh presigned URLs for all documents
@@ -547,6 +653,22 @@ export async function updateUserDocuments(req, res) {
       S3Service.getPresignedUrl(updated.titulo),
       S3Service.getPresignedUrl(updated.constancias),
     ]);
+
+    // Generate presigned URLs for additional documents
+    const documentosadicionalesUrls =
+      updated.documentosadicionales && updated.documentosadicionales.length > 0
+        ? await Promise.all(
+            updated.documentosadicionales.map(async (doc) => {
+              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+              return {
+                id: doc.IDDocumento,
+                nombre: doc.nombreArchivo,
+                url: url,
+                createdAt: doc.createdAt,
+              };
+            })
+          )
+        : [];
 
     const transformedUser = {
       nombres: updated.nombres || "",
@@ -572,6 +694,7 @@ export async function updateUserDocuments(req, res) {
       cedula: cedulaUrl,
       titulo: tituloUrl,
       constancias: constanciasUrl,
+      documentosadicionales: documentosadicionalesUrls,
       IDUsuario: updated.IDUsuario,
       IDRol: updated.IDRol || null,
       rol: updated.rolNombre || null,
