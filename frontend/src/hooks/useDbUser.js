@@ -54,24 +54,7 @@ export function useDbUser() {
 
       try {
         // Get Clerk token
-        let token;
-        try {
-          token = await getToken();
-        } catch (tokenError) {
-          /**
-           * Log error when failing to obtain Clerk authentication token.
-           */
-          sendLoginErrorLog({
-            usuario: userId,
-            codigoError: 'CLERK_TOKEN_ERROR',
-            mensajeError: 'Error al obtener token de autenticación de Clerk',
-            detalles: {
-              message: tokenError?.message,
-              endpoint: API_CONFIG.ENDPOINTS.AUTH_PROFILE,
-            },
-          });
-          throw tokenError;
-        }
+        const token = await getToken();
 
         // Query backend endpoint
         const response = await fetch(
@@ -85,10 +68,7 @@ export function useDbUser() {
         );
 
         if (response.status === 403) {
-          /**
-           * User authenticated in Clerk but doesn't exist in database.
-           * Log this error for tracking purposes.
-           */
+          // User authenticated in Clerk but doesn't exist in DB
           sendLoginErrorLog({
             usuario: userId,
             codigoError: 'DB_USER_NOT_FOUND',
@@ -107,37 +87,7 @@ export function useDbUser() {
           return;
         }
 
-        if (response.status === 401) {
-          /**
-           * Unauthorized - invalid or expired authentication token.
-           * Log this error for tracking purposes.
-           */
-          sendLoginErrorLog({
-            usuario: userId,
-            codigoError: 'CLERK_UNAUTHORIZED',
-            mensajeError: 'Token de autenticación inválido o expirado',
-            detalles: {
-              endpoint: API_CONFIG.ENDPOINTS.AUTH_PROFILE,
-              status: response.status,
-            },
-          });
-          throw new Error(`Error de autenticación: ${response.status}`);
-        }
-
         if (!response.ok) {
-          /**
-           * Error verifying user in the system.
-           * Log this error for tracking purposes.
-           */
-          sendLoginErrorLog({
-            usuario: userId,
-            codigoError: 'USER_VERIFICATION_ERROR',
-            mensajeError: `Error al verificar usuario: ${response.status}`,
-            detalles: {
-              endpoint: API_CONFIG.ENDPOINTS.AUTH_PROFILE,
-              status: response.status,
-            },
-          });
           throw new Error(`Error al verificar usuario: ${response.status}`);
         }
 
@@ -150,21 +100,15 @@ export function useDbUser() {
           error: null,
         });
       } catch (err) {
-        /**
-         * Only log if not already logged to avoid duplicate entries.
-         */
-        if (!err._logged) {
-          sendLoginErrorLog({
-            usuario: userId,
-            codigoError: 'DB_USER_CHECK_FAILED',
-            mensajeError: 'Error al verificar usuario en la base de datos',
-            detalles: {
-              message: err?.message,
-              endpoint: API_CONFIG.ENDPOINTS.AUTH_PROFILE,
-            },
-          });
-          err._logged = true;
-        }
+
+        sendLoginErrorLog({
+          usuario: userId,
+          codigoError: 'DB_USER_CHECK_FAILED',
+          mensajeError: 'Error al verificar usuario en la base de datos',
+          detalles: {
+            message: err?.message,
+          },
+        });
         setState({
           isLoading: false,
           existsInDB: false,

@@ -49,26 +49,6 @@ export default function LoginPage() {
           },
         });
       }
-
-      if (event === "signUp:failed") {
-        const identifier =
-          payload?.attempt?.identifier ||
-          payload?.emailAddress ||
-          payload?.identifier ||
-          null;
-
-        sendLoginErrorLog({
-          usuario: identifier,
-          codigoError: payload?.error?.code || "CLERK_SIGNUP_FAILED",
-          mensajeError:
-            payload?.error?.message || "Intento fallido de registro",
-          detalles: {
-            reason: payload?.reason,
-            errors: payload?.errors,
-            status: payload?.status,
-          },
-        });
-      }
     });
 
     return () => {
