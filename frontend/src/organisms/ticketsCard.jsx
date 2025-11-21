@@ -93,6 +93,40 @@ const getReceiptUrl = (webhookData) => {
 };
 
 /**
+ * Downloads the receipt PDF by fetching and creating a blob.
+ * @param {string} url - Receipt URL.
+ * @param {string} filename - Suggested filename for download.
+ * @return {Promise<void>}
+ */
+const handleDownloadReceipt = async (url, filename) => {
+  if (!url) return;
+
+  try {
+    // Fetch the file as a blob
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    // Create a temporary URL for the blob
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Error descargando comprobante:', error);
+    // Fallback: open in new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+};
+
+/**
  * Displays user's payment tickets in a card layout with pagination.
  * @param {!Object} props - Component props.
  * @param {!Array<!Object>} props.tickets - Array of ticket objects.
@@ -149,8 +183,8 @@ export default function TicketsCard({ tickets = [] }) {
                 onClick={handlePrevious}
                 disabled={!canGoUp}
                 className={`p-2 rounded-md transition-colors ${canGoUp
-                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                    : 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  : 'bg-slate-50 text-slate-300 cursor-not-allowed'
                   }`}
                 aria-label="Ver tickets anteriores"
               >
@@ -180,10 +214,10 @@ export default function TicketsCard({ tickets = [] }) {
                   </div>
                   <div
                     className={`px-2 py-1 rounded text-xs font-medium ${ticket.membershipPaymentStatus === 'Pagado'
-                        ? 'bg-green-100 text-green-700'
-                        : ticket.membershipPaymentStatus === 'Pendiente'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
+                      ? 'bg-green-100 text-green-700'
+                      : ticket.membershipPaymentStatus === 'Pendiente'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
                       }`}
                   >
                     {ticket.membershipPaymentStatus}
@@ -218,16 +252,62 @@ export default function TicketsCard({ tickets = [] }) {
                   )}
                 </div>
 
-                {/* Receipt button */}
+                {/* Receipt buttons */}
                 {getReceiptUrl(ticket.response_webhook) && (
                   <div className="mt-3 pt-3 border-t border-slate-200">
-                    <button
-                      onClick={() => window.open(getReceiptUrl(ticket.response_webhook), '_blank')}
-                      className="w-full px-3 py-2 bg-[#CAD00F] hover:bg-[#b8bd0d] text-slate-900 font-medium rounded-md transition-colors flex items-center justify-center gap-2 text-sm"
-                    >
-                      <span>📄</span>
-                      Ver Comprobante
-                    </button>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Comprobante:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-green-600 font-medium">Disponible</span>
+                        <button
+                          onClick={() => window.open(getReceiptUrl(ticket.response_webhook), '_blank', 'noopener,noreferrer')}
+                          className="text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
+                          title="Ver comprobante"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadReceipt(
+                            getReceiptUrl(ticket.response_webhook),
+                            `comprobante_${ticket.folio}.pdf`
+                          )}
+                          className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
+                          title="Descargar comprobante"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -241,8 +321,8 @@ export default function TicketsCard({ tickets = [] }) {
                 onClick={handleNext}
                 disabled={!canGoDown}
                 className={`p-2 rounded-md transition-colors ${canGoDown
-                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                    : 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  : 'bg-slate-50 text-slate-300 cursor-not-allowed'
                   }`}
                 aria-label="Ver tickets siguientes"
               >
