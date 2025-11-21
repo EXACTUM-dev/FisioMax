@@ -146,7 +146,9 @@ app.use((err, req, res, next) => {
  * @param {function} next - Express next function.
  */
 const secureErrorHandler = async (err, req, res, next) => {
-  // Log error for internal debugging (without exposing to client)
+  /**
+   * Log error for internal debugging (without exposing to client).
+   */
   console.error("Error interno:", {
     message: err.message,
     stack: err.stack,
@@ -164,7 +166,10 @@ const secureErrorHandler = async (err, req, res, next) => {
   }
 
   if (err.name === "UnauthorizedError" || err.status === 401) {
-    // Registrar error de autenticación de Clerk
+    /**
+     * Log Clerk authentication error when token is invalid or expired.
+     * @type {Error} err - The authentication error that occurred
+     */
     try {
       await insertLoginErrorLog({
         usuario: req.auth?.userId || null,
@@ -180,7 +185,10 @@ const secureErrorHandler = async (err, req, res, next) => {
         },
       });
     } catch (logError) {
-      // No interrumpir el flujo si falla el registro
+      /**
+       * Don't interrupt the flow if logging fails.
+       * @type {Error} logError - The error that occurred during logging
+       */
       console.error('Error al registrar log de autenticación:', logError);
     }
 

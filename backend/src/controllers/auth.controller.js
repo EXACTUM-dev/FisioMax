@@ -65,7 +65,10 @@ export const getProfile = async (req, res) => {
     } catch (error) {
         console.error('auth.controller.getProfile error:', error);
         
-        // Registrar error al obtener perfil
+        /**
+         * Log error when failing to fetch user profile.
+         * @type {Error} error - The error that occurred during profile fetch
+         */
         try {
             await insertLoginErrorLog({
                 usuario: req.auth?.userId || null,
@@ -80,7 +83,10 @@ export const getProfile = async (req, res) => {
                 },
             });
         } catch (logError) {
-            // No interrumpir el flujo si falla el registro
+            /**
+             * Don't interrupt the flow if logging fails.
+             * @type {Error} logError - The error that occurred during logging
+             */
             console.error('Error al registrar log de perfil:', logError);
         }
         

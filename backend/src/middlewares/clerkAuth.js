@@ -82,7 +82,10 @@ export const autoSyncClerkId = async (req, res, next) => {
   } catch (error) {
     console.error("Error in autoSyncClerkId:", error);
     
-    // Registrar error de sincronización
+    /**
+     * Log synchronization error when failing to sync clerkID with database.
+     * @type {Error} error - The error that occurred during synchronization
+     */
     try {
       await insertLoginErrorLog({
         usuario: req.auth?.userId || null,
@@ -97,7 +100,10 @@ export const autoSyncClerkId = async (req, res, next) => {
         },
       });
     } catch (logError) {
-      // No interrumpir el flujo si falla el registro
+      /**
+       * Don't interrupt the flow if logging fails.
+       * @type {Error} logError - The error that occurred during logging
+       */
       console.error('Error al registrar log de sincronización:', logError);
     }
     

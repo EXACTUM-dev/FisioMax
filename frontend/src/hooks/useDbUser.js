@@ -58,7 +58,10 @@ export function useDbUser() {
         try {
           token = await getToken();
         } catch (tokenError) {
-          // Error al obtener el token de Clerk
+          /**
+           * Log error when failing to obtain Clerk authentication token.
+           * @type {Error} tokenError - The error thrown by getToken()
+           */
           sendLoginErrorLog({
             usuario: userId,
             codigoError: 'CLERK_TOKEN_ERROR',
@@ -83,7 +86,10 @@ export function useDbUser() {
         );
 
         if (response.status === 403) {
-          // User authenticated in Clerk but doesn't exist in DB
+          /**
+           * User authenticated in Clerk but doesn't exist in database.
+           * Log this error for tracking purposes.
+           */
           sendLoginErrorLog({
             usuario: userId,
             codigoError: 'DB_USER_NOT_FOUND',
@@ -103,7 +109,10 @@ export function useDbUser() {
         }
 
         if (response.status === 401) {
-          // Unauthorized - token inválido o expirado
+          /**
+           * Unauthorized - invalid or expired authentication token.
+           * Log this error for tracking purposes.
+           */
           sendLoginErrorLog({
             usuario: userId,
             codigoError: 'CLERK_UNAUTHORIZED',
@@ -117,6 +126,10 @@ export function useDbUser() {
         }
 
         if (!response.ok) {
+          /**
+           * Error verifying user in the system.
+           * Log this error for tracking purposes.
+           */
           sendLoginErrorLog({
             usuario: userId,
             codigoError: 'USER_VERIFICATION_ERROR',
@@ -138,7 +151,10 @@ export function useDbUser() {
           error: null,
         });
       } catch (err) {
-        // Solo registrar si no se registró antes
+        /**
+         * Only log if not already logged to avoid duplicate entries.
+         * @type {Error} err - The error that occurred
+         */
         if (!err._logged) {
           sendLoginErrorLog({
             usuario: userId,
