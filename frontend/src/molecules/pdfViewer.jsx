@@ -1,11 +1,16 @@
 /**
  * @fileoverview PDFViewer molecule for displaying PDF articles inline
- * @version 0.1.0
+ * @version 0.1.1
  * @author EXACTUM-dev
  * @description Simple PDF viewer without custom zoom or reload controls
  */
-
 import React, { useRef } from "react";
+
+function isMobile() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+}
 
 export default function PDFViewer({ url, onError }) {
   const iframeRef = useRef(null);
@@ -18,6 +23,13 @@ export default function PDFViewer({ url, onError }) {
     );
   }
 
+  // Use Google Docs viewer for mobile devices
+  const viewerUrl = isMobile()
+    ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(
+        url
+      )}`
+    : url;
+
   return (
     <div className="w-full">
       <div
@@ -26,7 +38,7 @@ export default function PDFViewer({ url, onError }) {
       >
         <iframe
           ref={iframeRef}
-          src={url}
+          src={viewerUrl}
           title="PDF Article"
           width="100%"
           height="100%"

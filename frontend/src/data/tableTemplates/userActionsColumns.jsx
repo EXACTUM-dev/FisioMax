@@ -74,7 +74,7 @@ export function buildUserActionsColumns({
           type="button"
           title="Eliminar"
           onClick={() => onDelete?.(row)}
-          className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-red-50"
+          className="inline-flex items-center justify-center w-8 h-8 rounded cursor-pointer hover:bg-red-50"
         >
           <img
             src={trashIcon}

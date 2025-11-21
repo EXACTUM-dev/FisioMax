@@ -34,7 +34,7 @@ export default function Footer() {
 
         <div className="flex flex-col items-center justify-center flex-1 md:flex-row md:gap-2">
           <span className="text-xs text-gray-400">
-            © 2024 SOMEFIPP. Todos los derechos reservados.
+            © 2025 SOMEFIPP. Todos los derechos reservados.
           </span>
           <span className="hidden md:inline-block mx-2">|</span>
           <a

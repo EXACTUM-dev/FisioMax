@@ -29,7 +29,7 @@ export default function SocialProof() {
           </div>
           <div className="hidden md:block w-px h-20 bg-gray-300 mx-8"></div>
           <div className="flex-1">
-            <p className="text-6xl font-extrabold text-[#232323] mb-2">40+</p>
+            <p className="text-6xl font-extrabold text-[#232323] mb-2">20+</p>
             <p className="text-lg text-gray-700 font-medium">
               Expertos en el último año
             </p>

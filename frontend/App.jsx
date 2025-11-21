@@ -1,12 +1,15 @@
 /**
  * @fileoverview App router: Protect routes and mounts pages
  * @author EXACTUM-dev
- * @version 1.0.0
+ * @version 1.1.0
  */
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@clerk/clerk-react";
 import ProtectedRoute from "./src/components/ProtectedRoute";
+import { useSessionTimeout } from "./src/hooks/useSessionTimeout";
+import SessionExpiredModal from "./src/components/SessionExpiredModal";
 
 // Pages
 import HomePage from "./src/pages/homePage";
@@ -26,8 +29,17 @@ import RolesPage from "./src/pages/roles";
 
 // App component with routes
 export default function App() {
+  const { isSignedIn } = useAuth();
+
+  // Enable session timeout monitoring for authenticated users
+  const { showExpiredModal } = useSessionTimeout({
+    enabled: isSignedIn,
+  });
+
   return (
-    <Routes>
+    <>
+      <SessionExpiredModal open={showExpiredModal} />
+      <Routes>
       <Route path="/overview" element={<OverviewPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -118,6 +130,7 @@ export default function App() {
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
