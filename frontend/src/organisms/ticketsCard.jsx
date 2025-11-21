@@ -77,19 +77,31 @@ const getMembershipTypeLabel = (type) => {
 
 /**
  * Extract receipt URL from webhook response.
+ * For cash payments (OXXO, etc.), returns the PDF ticket URL.
+ * For card payments, returns the Mercado Pago payment detail URL.
  * @param {Object} webhookData - Response webhook data from Mercado Pago.
  * @returns {string|null} Receipt URL or null if not available.
  */
 const getReceiptUrl = (webhookData) => {
   if (!webhookData) return null;
 
-  // Try to get the external resource URL (receipt PDF)
+  // Try to get the external resource URL (receipt PDF for cash payments)
   const receiptUrl = webhookData.transaction_details?.external_resource_url;
 
   // Also check for point_of_interaction data (alternative location)
   const alternativeUrl = webhookData.point_of_interaction?.transaction_data?.ticket_url;
 
-  return receiptUrl || alternativeUrl || null;
+  // If we have a PDF receipt URL, return it
+  if (receiptUrl || alternativeUrl) {
+    return receiptUrl || alternativeUrl;
+  }
+
+  // For card payments (no PDF), generate Mercado Pago detail URL
+  if (webhookData.id) {
+    return `https://www.mercadopago.com.mx/activities?q=${webhookData.id}`;
+  }
+
+  return null;
 };
 
 /**
