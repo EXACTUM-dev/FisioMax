@@ -13,11 +13,15 @@ import Dropdown from "../molecules/dropdown";
 import SuccessErrorModal from "./successErrorModal";
 import PaymentService from "../services/paymentService";
 
-// Membership prices in MXN
+// Membership prices in MXN (per year)
 const MEMBERSHIP_PRICES = {
-  'básica': 1500,
-  'premium': 2500,
-  'empresarial': 5000,
+  'Estudiante/Pasante': 900,
+  'Licenciados en Formación': 1100,
+  'Especializados': 1500,
+  'Ordinaria': 1500, // Default/legacy type
+  'básica': 5,
+  'premium': 1100,
+  'empresarial': 1500,
 };
 
 /**
