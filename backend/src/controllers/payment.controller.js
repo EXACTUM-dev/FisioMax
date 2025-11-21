@@ -162,29 +162,41 @@ const PaymentController = {
    */
   async createPaymentPreference(req, res) {
     try {
+      console.log('[Payment Preference] Request received');
       const clerkId = req.auth?.userId;
 
       if (!clerkId) {
+        console.log('[Payment Preference] No Clerk ID found');
         return res.status(401).json({
           success: false,
           message: 'User not authenticated',
         });
       }
 
+      console.log('[Payment Preference] Fetching user for Clerk ID:', clerkId);
       // Get user from database using Clerk ID
       const user = await getUsuarioByClerkId(clerkId);
 
       if (!user) {
+        console.log('[Payment Preference] User not found in database');
         return res.status(404).json({
           success: false,
           message: 'User not found in database',
         });
       }
 
+      console.log('[Payment Preference] User found:', {
+        IDUsuario: user.IDUsuario,
+        IDMembresia: user.IDMembresia,
+        correo: user.correo ? 'present' : 'missing',
+      });
+
       const { membershipType, amount } = req.body;
+      console.log('[Payment Preference] Request body:', { membershipType, amount });
 
       // Validate required fields
       if (!user.IDMembresia) {
+        console.log('[Payment Preference] User does not have a membership');
         return res.status(400).json({
           success: false,
           message: 'User does not have a membership',
@@ -192,12 +204,22 @@ const PaymentController = {
       }
 
       if (!membershipType || !amount) {
+        console.log('[Payment Preference] Missing required fields');
         return res.status(400).json({
           success: false,
           message: 'Missing required fields: membershipType, amount',
         });
       }
 
+      if (!user.correo) {
+        console.log('[Payment Preference] User email is missing');
+        return res.status(400).json({
+          success: false,
+          message: 'User email is required for payment',
+        });
+      }
+
+      console.log('[Payment Preference] Creating payment preference...');
       // Create payment preference in Mercado Pago
       const preference = await PaymentService.createPaymentPreference({
         membershipId: user.IDMembresia,
@@ -206,16 +228,19 @@ const PaymentController = {
         userEmail: user.correo,
       });
 
+      console.log('[Payment Preference] Preference created successfully');
       res.json({
         success: true,
         preference,
       });
     } catch (error) {
-      console.error('Error creating payment preference:', error);
+      console.error('[Payment Preference] Error:', error);
+      console.error('[Payment Preference] Error stack:', error.stack);
       res.status(500).json({
         success: false,
         message: 'Error creating payment preference',
         error: error.message,
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
       });
     }
   },

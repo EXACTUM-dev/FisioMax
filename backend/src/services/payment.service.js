@@ -153,13 +153,18 @@ const PaymentService = {
    */
   async createPaymentPreference(preferenceData) {
     try {
+      console.log('[Payment Service] Creating preference with data:', preferenceData);
       const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
 
       if (!accessToken) {
+        console.error('[Payment Service] MERCADO_PAGO_ACCESS_TOKEN not configured');
         throw new Error('MERCADO_PAGO_ACCESS_TOKEN not configured');
       }
 
       const { membershipId, membershipType, amount, userEmail } = preferenceData;
+
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
 
       const preference = {
         items: [
@@ -179,13 +184,20 @@ const PaymentService = {
           membership_type: membershipType,
         },
         back_urls: {
-          success: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/return`,
-          failure: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/return`,
-          pending: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/return`,
+          success: `${frontendUrl}/payment/return`,
+          failure: `${frontendUrl}/payment/return`,
+          pending: `${frontendUrl}/payment/return`,
         },
-        auto_return: 'approved',
-        notification_url: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/payments/webhook`,
+        notification_url: `${backendUrl}/api/payments/webhook`,
       };
+
+      // Only enable auto_return in production (not with localhost)
+      if (!frontendUrl.includes('localhost')) {
+        preference.auto_return = 'approved';
+      }
+
+      console.log('[Payment Service] Preference object:', JSON.stringify(preference, null, 2));
+      console.log('[Payment Service] Calling Mercado Pago API...');
 
       const response = await fetch(
         'https://api.mercadopago.com/checkout/preferences',
@@ -199,19 +211,26 @@ const PaymentService = {
         }
       );
 
+      console.log('[Payment Service] Mercado Pago response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Mercado Pago preference creation error:', errorData);
-        throw new Error('Failed to create payment preference');
+        console.error('[Payment Service] Mercado Pago preference creation error:', errorData);
+        throw new Error(`Mercado Pago API error: ${JSON.stringify(errorData)}`);
       }
 
       const result = await response.json();
+      console.log('[Payment Service] Preference created successfully:', {
+        id: result.id,
+        init_point: result.init_point ? 'present' : 'missing',
+      });
+
       return {
         id: result.id,
         init_point: result.init_point,
       };
     } catch (error) {
-      console.error('Error creating payment preference:', error);
+      console.error('[Payment Service] Error creating payment preference:', error);
       throw error;
     }
   },
