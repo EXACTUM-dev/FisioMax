@@ -150,19 +150,31 @@ export default function StatisticsView() {
       const queryString = params.toString();
       const url = `/api/statistics/memberships/export${queryString ? `?${queryString}` : ""}`;
       
-      const response = await fetchWithClerk(url, { method: "GET" }, token);
-      
-      // If backend returns a blob URL or file, handle download
-      if (response?.url || response?.blob) {
-        const link = document.createElement("a");
-        link.href = response.url || URL.createObjectURL(response.blob);
-        link.download = `reporte-membresias-${new Date().toISOString().split("T")[0]}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        console.warn("Formato de respuesta no esperado para exportación PDF");
+      // Use fetch directly for PDF blob response
+      const headers = new Headers();
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
       }
+
+      const response = await fetch(url, { method: "GET", headers });
+      
+      if (!response.ok) {
+        throw new Error(`Error al exportar PDF: ${response.status} ${response.statusText}`);
+      }
+
+      // Get PDF as blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `reporte-membresias-${new Date().toISOString().split("T")[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up blob URL
+      URL.revokeObjectURL(link.href);
     } catch (err) {
       console.error("Error al exportar PDF:", err);
       alert("Error al exportar el reporte. Por favor intente más tarde.");
