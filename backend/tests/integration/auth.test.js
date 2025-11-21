@@ -15,16 +15,38 @@ app.use(express.json());
 app.get("/api/usuarios", (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: "No autorizado" });
-  if (auth === "Bearer token-invalido") return res.status(401).json({ error: "No autorizado" });
-  if (auth === `Bearer mock-valid-token`) return res.status(200).json({ message: "Usuarios list", data: [], authenticatedUserId: "test-user-123" });
-  if (auth === "Bearer admin-token") return res.status(200).json({ message: "Usuarios list", data: [], authenticatedUserId: "admin-user-123" });
-  return res.status(200).json({ message: "Usuarios list", data: [], authenticatedUserId: "regular-user-123" });
+  if (auth === "Bearer token-invalido")
+    return res.status(401).json({ error: "No autorizado" });
+  if (auth === `Bearer mock-valid-token`)
+    return res
+      .status(200)
+      .json({
+        message: "Usuarios list",
+        data: [],
+        authenticatedUserId: "test-user-123",
+      });
+  if (auth === "Bearer admin-token")
+    return res
+      .status(200)
+      .json({
+        message: "Usuarios list",
+        data: [],
+        authenticatedUserId: "admin-user-123",
+      });
+  return res
+    .status(200)
+    .json({
+      message: "Usuarios list",
+      data: [],
+      authenticatedUserId: "regular-user-123",
+    });
 });
 
 app.get("/api/admin", (req, res) => {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: "No autorizado" });
-  if (auth === "Bearer admin-token") return res.status(200).json({ message: "Panel de administración" });
+  if (auth === "Bearer admin-token")
+    return res.status(200).json({ message: "Panel de administración" });
   return res.status(403).json({ error: "Acceso denegado" });
 });
 
