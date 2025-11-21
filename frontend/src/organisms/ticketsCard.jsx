@@ -322,28 +322,31 @@ export default function TicketsCard({ tickets = [] }) {
                             />
                           </svg>
                         </button>
-                        <button
-                          onClick={() => handleDownloadReceipt(
-                            getReceiptUrl(ticket.response_webhook),
-                            `comprobante_${ticket.folio}.pdf`
-                          )}
-                          className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
-                          title="Descargar comprobante"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        {/* Only show download button for actual PDF receipts, not Mercado Pago activity links */}
+                        {!getReceiptUrl(ticket.response_webhook)?.includes('mercadopago.com/activities') && (
+                          <button
+                            onClick={() => handleDownloadReceipt(
+                              getReceiptUrl(ticket.response_webhook),
+                              `comprobante_${ticket.folio}.pdf`
+                            )}
+                            className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
+                            title="Descargar comprobante"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                            />
-                          </svg>
-                        </button>
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
