@@ -43,7 +43,7 @@ const formatCurrency = (amount) => {
  */
 const getPaymentMethodLabel = (method) => {
   if (!method) return 'No especificado';
-  
+
   const methods = {
     'visa': '💳 Visa',
     'master': '💳 Mastercard',
@@ -53,7 +53,7 @@ const getPaymentMethodLabel = (method) => {
     'bancomer': '🏦 Bancomer',
     'banamex': '🏦 Banamex',
   };
-  
+
   return methods[method.toLowerCase()] || `💳 ${method}`;
 };
 
@@ -64,15 +64,32 @@ const getPaymentMethodLabel = (method) => {
  */
 const getMembershipTypeLabel = (type) => {
   if (!type) return 'Sin tipo';
-  
+
   const types = {
     'básica': 'Básica',
     'premium': 'Premium',
     'empresarial': 'Empresarial',
     'ordinaria': 'Ordinaria',
   };
-  
+
   return types[type.toLowerCase()] || type;
+};
+
+/**
+ * Extract receipt URL from webhook response.
+ * @param {Object} webhookData - Response webhook data from Mercado Pago.
+ * @returns {string|null} Receipt URL or null if not available.
+ */
+const getReceiptUrl = (webhookData) => {
+  if (!webhookData) return null;
+
+  // Try to get the external resource URL (receipt PDF)
+  const receiptUrl = webhookData.transaction_details?.external_resource_url;
+
+  // Also check for point_of_interaction data (alternative location)
+  const alternativeUrl = webhookData.point_of_interaction?.transaction_data?.ticket_url;
+
+  return receiptUrl || alternativeUrl || null;
 };
 
 /**
@@ -110,13 +127,12 @@ export default function TicketsCard({ tickets = [] }) {
                   </div>
                 </div>
                 <div
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    ticket.membershipPaymentStatus === 'Pagado'
-                      ? 'bg-green-100 text-green-700'
-                      : ticket.membershipPaymentStatus === 'Pendiente'
+                  className={`px-2 py-1 rounded text-xs font-medium ${ticket.membershipPaymentStatus === 'Pagado'
+                    ? 'bg-green-100 text-green-700'
+                    : ticket.membershipPaymentStatus === 'Pendiente'
                       ? 'bg-yellow-100 text-yellow-700'
                       : 'bg-red-100 text-red-700'
-                  }`}
+                    }`}
                 >
                   {ticket.membershipPaymentStatus}
                 </div>
@@ -149,6 +165,19 @@ export default function TicketsCard({ tickets = [] }) {
                   </div>
                 )}
               </div>
+
+              {/* Receipt button */}
+              {getReceiptUrl(ticket.response_webhook) && (
+                <div className="mt-3 pt-3 border-t border-slate-200">
+                  <button
+                    onClick={() => window.open(getReceiptUrl(ticket.response_webhook), '_blank')}
+                    className="w-full px-3 py-2 bg-[#CAD00F] hover:bg-[#b8bd0d] text-slate-900 font-medium rounded-md transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                    <span>📄</span>
+                    Ver Comprobante
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

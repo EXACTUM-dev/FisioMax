@@ -80,11 +80,13 @@ const Payment = {
   /**
    * Get all payments for a specific user.
    * @param {number} IDUsuario - User ID.
-   * @return {Promise<Array>} Array of payment records.
+   * @return {Promise<Array>} Array of payment records with parsed webhook data.
    */
   async findByUser(IDUsuario) {
     const [rows] = await db.query(
-      `SELECT p.*, m.tipo as membershipType, m.estatusPago as membershipPaymentStatus
+      `SELECT p.IDPago, p.IDMembresia, p.folio, p.cantidad, p.payment_method_id, 
+              p.fechaPago, p.response_webhook,
+              m.tipo as membershipType, m.estatusPago as membershipPaymentStatus
        FROM pago p
        INNER JOIN membresia m ON p.IDMembresia = m.IDMembresia
        WHERE m.IDUsuario = ?
@@ -92,7 +94,11 @@ const Payment = {
       [IDUsuario]
     );
 
-    return rows;
+    // Parse response_webhook JSON for each payment
+    return rows.map(row => ({
+      ...row,
+      response_webhook: row.response_webhook ? JSON.parse(row.response_webhook) : null
+    }));
   },
 
   /**
