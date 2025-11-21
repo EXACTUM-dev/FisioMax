@@ -8,7 +8,7 @@ const __dirname = dirname(__filename);
 
 // Load test env early
 dotenv.config({
-  path: resolve(__dirname, ".env.test"),
+  path: resolve(__dirname, "..", ".env.test"),
   override: true,
 });
 
@@ -25,7 +25,7 @@ try {
         release: async () => {},
       }),
     }),
-    // Ensure default import shape is available as well
+    // Provide a default export shape so `import mysql from 'mysql2/promise'` works
     default: {
       createPool: (cfg) => ({
         query: async () => [[], []],
@@ -73,8 +73,7 @@ try {
 } catch (err) {}
 
 // Keep this setup minimal — tests import a dedicated test app instead of server.js
-
-// Dummy test so Jest doesn't fail if this file is picked up as a test suite
-test("security setup noop", () => {
+// Add a noop test so Jest recognizes this as a test suite during discovery.
+test("setup helper noop", () => {
   expect(true).toBe(true);
 });

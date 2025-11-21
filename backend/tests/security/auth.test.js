@@ -2,19 +2,19 @@
  * @fileoverview Pruebas de seguridad para autenticación y autorización
  * @version 1.0.0
  * @author EXACTUM-dev
- * 
+ *
  * Pruebas que validan la seguridad del sistema de autenticación con Clerk
  */
 
-import request from 'supertest';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import { requireAuth } from '../../src/middlewares/clerkAuth.js';
+import request from "supertest";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import { requireAuth } from "../../src/middlewares/clerkAuth.js";
 
 // Configurar app de prueba
-const { app } = await import('../../server.js');
+const { app } = await import("../../test-helpers/security/testApp.helper.js");
 
 /*
 // Middlewares de seguridad
@@ -65,7 +65,7 @@ app.get('/api/admin', requireAuth, (req, res) => {
   res.json({ message: 'Panel de administración' });
 });
 */
-describe('🔐 Pruebas de Seguridad - Autenticación', () => {
+describe("🔐 Pruebas de Seguridad - Autenticación", () => {
   /*
   describe('Rutas Públicas', () => {
     test('debe permitir acceso a rutas públicas sin autenticación', async () => {
@@ -124,53 +124,51 @@ describe('🔐 Pruebas de Seguridad - Autenticación', () => {
   });
   */
 
-  describe('Autorización por Roles', () => {
-    test('debe denegar acceso a usuarios sin rol de admin', async () => {
+  describe("Autorización por Roles", () => {
+    test("debe denegar acceso a usuarios sin rol de admin", async () => {
       // Simular token con usuario sin rol admin
-      const mockToken = 'valid_token_without_admin_role';
-      
+      const mockToken = "valid_token_without_admin_role";
+
       // Mock del middleware requireAuth para esta prueba
       const appWithMockAuth = express();
       appWithMockAuth.use(express.json());
-      
-      appWithMockAuth.get('/api/admin', (req, res) => {
+
+      appWithMockAuth.get("/api/admin", (req, res) => {
         // Simular que el usuario no tiene rol admin
         const userRoles = [];
-        if (!userRoles.includes('admin')) {
-          return res.status(403).json({ error: 'Acceso denegado' });
+        if (!userRoles.includes("admin")) {
+          return res.status(403).json({ error: "Acceso denegado" });
         }
-        res.json({ message: 'Panel de administración' });
+        res.json({ message: "Panel de administración" });
       });
 
-      const response = await request(appWithMockAuth)
-        .get('/api/admin');
-      
+      const response = await request(appWithMockAuth).get("/api/admin");
+
       expect(response.status).toBe(403);
-      expect(response.body.error).toBe('Acceso denegado');
+      expect(response.body.error).toBe("Acceso denegado");
     });
 
-    test('debe permitir acceso a usuarios con rol de admin', async () => {
+    test("debe permitir acceso a usuarios con rol de admin", async () => {
       // Mock del middleware requireAuth para esta prueba
       const appWithMockAuth = express();
       appWithMockAuth.use(express.json());
-      
-      appWithMockAuth.get('/api/admin', (req, res) => {
+
+      appWithMockAuth.get("/api/admin", (req, res) => {
         // Simular que el usuario tiene rol admin
-        const userRoles = ['admin'];
-        if (!userRoles.includes('admin')) {
-          return res.status(403).json({ error: 'Acceso denegado' });
+        const userRoles = ["admin"];
+        if (!userRoles.includes("admin")) {
+          return res.status(403).json({ error: "Acceso denegado" });
         }
-        res.json({ message: 'Panel de administración' });
+        res.json({ message: "Panel de administración" });
       });
 
-      const response = await request(appWithMockAuth)
-        .get('/api/admin');
-      
+      const response = await request(appWithMockAuth).get("/api/admin");
+
       expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Panel de administración');
+      expect(response.body.message).toBe("Panel de administración");
     });
   });
-/*
+  /*
   describe('Headers de Seguridad', () => {
     test('debe incluir headers de seguridad en respuestas', async () => {
       const response = await request(app)
@@ -184,24 +182,24 @@ describe('🔐 Pruebas de Seguridad - Autenticación', () => {
     });
   });
 */
-  describe('Rate Limiting', () => {
-    test('debe implementar protección contra ataques de fuerza bruta', async () => {
+  describe("Rate Limiting", () => {
+    test("debe implementar protección contra ataques de fuerza bruta", async () => {
       // Simular múltiples intentos de autenticación fallidos
       const promises = [];
-      
+
       for (let i = 0; i < 10; i++) {
         promises.push(
           request(app)
-            .get('/api/usuarios')
-            .set('Authorization', 'Bearer token_invalido')
+            .get("/api/usuarios")
+            .set("Authorization", "Bearer token_invalido")
         );
       }
-      
+
       const responses = await Promise.all(promises);
-      
-      // Todos los intentos deben fallar con 401
-      responses.forEach(response => {
-        expect(response.status).toBe(500);
+
+      // Todos los intentos deben fallar con 401 (no rate-limiter activo en test helper)
+      responses.forEach((response) => {
+        expect(response.status).toBe(401);
       });
     });
   });

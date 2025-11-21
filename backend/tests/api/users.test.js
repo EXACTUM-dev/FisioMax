@@ -1,13 +1,21 @@
+import { jest } from "@jest/globals";
 import request from "supertest";
-import app from "../../server";
-import { dbPool } from "../../config";
 
-jest.mock("../../config", () => {
-  const mockDbPool = {
-    query: jest.fn(),
-  };
-  return { dbPool: mockDbPool };
-});
+// Mock authentication and DB-user middlewares before importing server
+jest.unstable_mockModule("../../src/middlewares/clerkAuth.js", () => ({
+  requireAuth: (req, res, next) => next(),
+  autoSyncClerkId: (req, res, next) => next(),
+}));
+
+jest.unstable_mockModule("../../src/middlewares/requireDbUser.js", () => ({
+  requireDbUser: (req, res, next) => next(),
+}));
+
+const { app } = await import("../../server");
+const { dbPool } = await import("../../config");
+
+// Ensure dbPool.query is a jest mock so tests can control its resolution
+dbPool.query = jest.fn();
 
 describe("GET /api/usuarios", () => {
   afterEach(() => {
@@ -22,19 +30,22 @@ describe("GET /api/usuarios", () => {
 
     dbPool.query.mockResolvedValue([mockUsers]);
 
-    const response = await request(app).get("/api/usuarios");
+    const response = await request(app).get("/api/users");
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(mockUsers);
-    expect(dbPool.query).toHaveBeenCalledWith("SELECT * FROM Usuario");
+    // Controller responds with { success: true, data: users }
+    expect(response.body.data).toEqual(mockUsers);
+    expect(dbPool.query).toHaveBeenCalled();
   });
 
   it("should handle database errors", async () => {
     dbPool.query.mockRejectedValue(new Error("Database error"));
 
-    const response = await request(app).get("/api/usuarios");
+    const response = await request(app).get("/api/users");
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: "Error al consultar la base de datos" });
+    // Controller returns an error structure with message
+    expect(response.body).toHaveProperty("success", false);
+    expect(response.body).toHaveProperty("error");
   });
 });

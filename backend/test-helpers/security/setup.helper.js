@@ -8,7 +8,7 @@ const __dirname = dirname(__filename);
 
 // Load test env early
 dotenv.config({
-  path: resolve(__dirname, ".env.test"),
+  path: resolve(__dirname, "..", "tests", ".env.test"),
   override: true,
 });
 
@@ -25,7 +25,7 @@ try {
         release: async () => {},
       }),
     }),
-    // Ensure default import shape is available as well
+    // Also provide default export shape for code that does `import mysql from 'mysql2/promise'`
     default: {
       createPool: (cfg) => ({
         query: async () => [[], []],
@@ -39,42 +39,33 @@ try {
       }),
     },
   }));
-} catch (err) {
-  // ignore
-}
+} catch (err) {}
 
 // Mock external middlewares used by server so tests remain isolated
 try {
-  jest.unstable_mockModule("../../src/middlewares/clerkAuth.js", () => ({
+  jest.unstable_mockModule("../src/middlewares/clerkAuth.js", () => ({
     requireAuth: (req, res, next) => next(),
     autoSyncClerkId: (req, res, next) => next(),
   }));
 } catch (err) {}
 
 try {
-  jest.unstable_mockModule("../../src/middlewares/requireDbUser.js", () => ({
+  jest.unstable_mockModule("../src/middlewares/requireDbUser.js", () => ({
     requireDbUser: (req, res, next) => next(),
   }));
 } catch (err) {}
 
 try {
-  jest.unstable_mockModule("../../src/middlewares/sessionTimeout.js", () => ({
+  jest.unstable_mockModule("../src/middlewares/sessionTimeout.js", () => ({
     sessionTimeoutMiddleware: (req, res, next) => next(),
   }));
 } catch (err) {}
 
 try {
-  jest.unstable_mockModule("../../src/middlewares/rbacMiddleware.js", () => ({
+  jest.unstable_mockModule("../src/middlewares/rbacMiddleware.js", () => ({
     authorize:
       (roles = []) =>
       (req, res, next) =>
         next(),
   }));
 } catch (err) {}
-
-// Keep this setup minimal — tests import a dedicated test app instead of server.js
-
-// Dummy test so Jest doesn't fail if this file is picked up as a test suite
-test("security setup noop", () => {
-  expect(true).toBe(true);
-});

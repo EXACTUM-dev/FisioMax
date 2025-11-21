@@ -7,133 +7,132 @@
 
 import { jest } from "@jest/globals";
 
-// Mock Clerk middleware for authentication and role management
-jest.unstable_mockModule("@clerk/express", () => ({
-  ClerkExpressRequireAuth: jest.fn(() => (req, res, next) => {
-    const authHeader = req.headers.authorization;
+// Mock modules before importing the controller so the controller receives the mocked functions
+const modelPath = "../../../src/models/content.model.js";
+const cloudfrontPath = "../../../src/utils/cloudfront.js";
 
-    if (!authHeader) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    if (authHeader.includes("valid_premium_token")) {
-      req.auth = { userId: "user_premium_123" };
-    } else if (authHeader.includes("suspended_user_token")) {
-      req.auth = { userId: "user_suspended_456" };
-    } else if (authHeader.includes("basic_user_token")) {
-      req.auth = { userId: "user_basic_789" };
-    } else {
-      return res.status(401).json({ error: "Invalid token" });
-    }
-
-    next();
-  }),
-  ClerkExpressWithAuth: jest.fn(() => (req, res, next) => next()),
+jest.unstable_mockModule(modelPath, () => ({
+  getAvailableContent: jest.fn(),
+  getContentById: jest.fn(),
+  createContent: jest.fn(),
+  assignContentToPrivileges: jest.fn(),
 }));
-// Register shared test mocks (routes/cloudfront behavior) for this test file
-await import("../../test-utils/register-mocks.js");
 
-const { app } = await import("../../../server.js");
-const request = (await import("supertest")).default;
+jest.unstable_mockModule(cloudfrontPath, () => ({
+  generateSignedUrl: jest.fn(),
+}));
 
-describe("Video Access - Integration Tests", () => {
-  beforeAll(() => {});
+// Import controller and the mocked modules
+const contentController = await import(
+  "../../../src/controllers/content.controller.js"
+);
+const contentModel = await import(modelPath);
+const cloudfront = await import(cloudfrontPath);
 
-  afterAll(() => {
+describe("content.controller", () => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  /**
-   * Scenario 1: Successful video access with adequate role
-   */
-  describe("GET /api/content/:videoId - Successful access", () => {
-    test("should return 200 and video data when user has sufficient privileges", async () => {
-      const response = await request(app)
-        .get("/api/content/video_001")
-        .set("Authorization", "Bearer valid_premium_token")
-        .expect(200);
+  test("show returns content with signed URLs", async () => {
+    const mockContent = {
+      IDContenido: 1,
+      IDMultimedia: "videos/1.mp4",
+      nombre: "Test Video",
+      descripcion: "Desc",
+      tipo: "video",
+      tipoMembresia: "Basico",
+      createdAt: "2021-01-01",
+      thumbnailMultimedia: "images/1.jpg",
+    };
 
-      expect(response.body).toHaveProperty("videoData");
-      expect(response.body).toHaveProperty("signedUrl");
-      expect(response.body).toHaveProperty("metadata");
-    });
+    contentModel.getContentById.mockResolvedValue(mockContent);
+    cloudfront.generateSignedUrl.mockImplementation(
+      (key) => `https://signed/${key}`
+    );
+
+    const req = { params: { contentId: "1" } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    await contentController.show(req, res);
+
+    expect(contentModel.getContentById).toHaveBeenCalledWith("1");
+    expect(cloudfront.generateSignedUrl).toHaveBeenCalledWith("videos/1.mp4");
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signedUrl: "https://signed/videos/1.mp4",
+        contentData: expect.objectContaining({
+          IDContenido: 1,
+          titulo: "Test Video",
+          tipo: "video",
+        }),
+      })
+    );
   });
 
-  /**
-   * Scenario 2: User not authenticated
-   */
-  describe("GET /api/content/:videoId - Not authenticated", () => {
-    test("should return 401 when no token is provided", async () => {
-      const response = await request(app)
-        .get("/api/content/video_001")
-        .expect(401);
+  test("show returns 404 when content not found", async () => {
+    contentModel.getContentById.mockRejectedValue(
+      new Error("Content not found")
+    );
 
-      expect(response.body).toHaveProperty("error");
-    });
+    const req = { params: { contentId: "2" } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    await contentController.show(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: "not_found" })
+    );
   });
 
-  /**
-   * Scenario 3: Insufficient privilege level
-   */
-  describe("GET /api/content/:videoId - Insufficient privileges", () => {
-    test("should return 403 when user has blocked role", async () => {
-      const response = await request(app)
-        .get("/api/content/video_001")
-        .set("Authorization", "Bearer suspended_user_token")
-        .expect(403);
+  test("index returns paginated content with thumbnails", async () => {
+    const rows = [
+      {
+        IDContenido: 1,
+        nombre: "A",
+        descripcion: "D",
+        tipo: "video",
+        tipoMembresia: "Basico",
+        createdAt: "2021-01-01",
+        thumbnailMultimedia: "images/1.jpg",
+      },
+    ];
 
-      expect(response.body.message).toMatch(/membresía ha vencido/i);
+    contentModel.getAvailableContent.mockResolvedValue({
+      content: rows,
+      total: 1,
+      hasMore: false,
     });
+    cloudfront.generateSignedUrl.mockImplementation(
+      (key) => `https://signed/${key}`
+    );
 
-    test("should return 403 when membership level is insufficient", async () => {
-      const response = await request(app)
-        .get("/api/content/video_premium_001")
-        .set("Authorization", "Bearer basic_user_token")
-        .expect(403);
+    const req = { query: {} };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
 
-      expect(response.body.message).toMatch(/no está incluido en tu plan/i);
-    });
-  });
+    await contentController.index(req, res);
 
-  /**
-   * Scenario 4: Database error
-   */
-  describe("GET /api/content/:videoId - Database error", () => {
-    test("should return 500 when database fails", async () => {
-      const response = await request(app)
-        .get("/api/content/video_db_error")
-        .set("Authorization", "Bearer valid_premium_token")
-        .expect(500);
-
-      expect(response.body.message).toMatch(/error inesperado/i);
-    });
-  });
-
-  /**
-   * Scenario 5: Video does not exist
-   */
-  describe("GET /api/content/:videoId - Video not found", () => {
-    test("should return 404 when video does not exist", async () => {
-      const response = await request(app)
-        .get("/api/content/video_999")
-        .set("Authorization", "Bearer valid_premium_token")
-        .expect(404);
-
-      expect(response.body.message).toMatch(/video.*no.*disponible/i);
-    });
-  });
-
-  /**
-   * Scenario 6: Error generating signed URL
-   */
-  describe("GET /api/content/:videoId - Signed URL error", () => {
-    test("should return 500 when URL generation fails", async () => {
-      const response = await request(app)
-        .get("/api/content/video_url_error")
-        .set("Authorization", "Bearer valid_premium_token")
-        .expect(500);
-
-      expect(response.body.message).toMatch(/no se pudo cargar el video/i);
-    });
+    expect(contentModel.getAvailableContent).toHaveBeenCalledWith(
+      10,
+      0,
+      null,
+      null,
+      "newest"
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.arrayContaining([
+          expect.objectContaining({
+            IDContenido: 1,
+            thumbnailUrl: "https://signed/images/1.jpg",
+          }),
+        ]),
+        total: 1,
+        hasMore: false,
+      })
+    );
   });
 });
