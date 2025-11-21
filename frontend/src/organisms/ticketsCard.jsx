@@ -183,7 +183,7 @@ export default function TicketsCard({ tickets = [] }) {
                 onClick={handlePrevious}
                 disabled={!canGoUp}
                 className={`p-2 rounded-md transition-colors ${canGoUp
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer'
                   : 'bg-slate-50 text-slate-300 cursor-not-allowed'
                   }`}
                 aria-label="Ver tickets anteriores"
@@ -321,7 +321,7 @@ export default function TicketsCard({ tickets = [] }) {
                 onClick={handleNext}
                 disabled={!canGoDown}
                 className={`p-2 rounded-md transition-colors ${canGoDown
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer'
                   : 'bg-slate-50 text-slate-300 cursor-not-allowed'
                   }`}
                 aria-label="Ver tickets siguientes"
