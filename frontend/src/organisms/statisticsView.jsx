@@ -112,11 +112,11 @@ export default function StatisticsView() {
       
       const data = response?.data || response || {};
       
-      // Limitar a 5 elementos máximo por categoría
+      // Limitar a 5 elementos máximo por categoría (excepto residence que muestra todos)
       const limitData = (arr) => (arr || []).slice(0, 5);
       
       setStatistics({
-        residence: limitData(data.residence),
+        residence: data.residence || [], // Mostrar todos los estados
         category: limitData(data.category),
         education: limitData(data.education),
       });
@@ -181,6 +181,132 @@ export default function StatisticsView() {
     } finally {
       setExporting(false);
     }
+  };
+
+  /**
+   * Renders a horizontal wide bar chart (for residence with many states)
+   * @param {string} title - Chart title
+   * @param {Array} data - Chart data array
+   * @param {Array} colorScheme - Array of colors for bars
+   * @param {boolean} abbreviateLabels - Whether to abbreviate labels (for states)
+   */
+  const renderHorizontalBarChart = (title, data, colorScheme = ["#D2B40D", "#296B00", "#E58E15", "#cad00f"], abbreviateLabels = false) => {
+    if (!data || data.length === 0) {
+      return (
+        <div className="w-full h-64 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-gray-500">No hay datos disponibles</p>
+        </div>
+      );
+    }
+
+    const maxValue = Math.max(...data.map((d) => d.value || 0), 1);
+    const yAxisDisplayMax = Math.max(Math.ceil(maxValue / 5) * 5, 5);
+    
+    // Calculate Y-axis ticks
+    const yAxisTicks = 5;
+    const tickInterval = Math.ceil(yAxisDisplayMax / yAxisTicks);
+    const yAxisLabels = [];
+    for (let i = 0; i <= yAxisTicks; i++) {
+      yAxisLabels.push(i * tickInterval);
+    }
+
+    return (
+      <div className="w-full bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+          {title}
+        </h3>
+        <div className="relative" style={{ height: "300px" }}>
+          {/* Y-axis with labels */}
+          <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between pr-2" style={{ width: "40px" }}>
+            {yAxisLabels.reverse().map((tick, idx) => (
+              <div key={idx} className="relative">
+                <span className="text-xs text-gray-600 font-medium">
+                  {tick}
+                </span>
+                <div 
+                  className="absolute right-0 top-1/2 w-2 h-px bg-gray-300 transform -translate-y-1/2 translate-x-full"
+                  style={{ marginRight: "-8px" }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Chart area with bars - horizontal scrollable */}
+          <div className="ml-10 mr-4 relative" style={{ height: "260px" }}>
+            {/* Y-axis grid lines */}
+            <div className="absolute inset-0 flex flex-col justify-between">
+              {yAxisLabels.map((tick, idx) => (
+                <div 
+                  key={idx} 
+                  className="w-full border-t border-gray-200"
+                />
+              ))}
+            </div>
+
+            {/* Bars - horizontal layout with scroll */}
+            <div className="flex items-end justify-start gap-1.5 h-full px-2 pb-2 overflow-x-auto">
+              {data.map((item, index) => {
+                const chartHeight = 260;
+                const maxBarHeight = chartHeight * 0.95;
+                const barHeight = ((item.value || 0) / yAxisDisplayMax) * maxBarHeight;
+                const color = colorScheme[index % colorScheme.length];
+                // Calculate bar width based on number of items, with min and max constraints
+                const barWidth = Math.max(25, Math.min(50, 600 / Math.max(data.length, 10)));
+                
+                return (
+                  <div 
+                    key={item.label || index} 
+                    className="flex flex-col items-center relative group flex-shrink-0"
+                    style={{ width: `${barWidth}px` }}
+                  >
+                    {/* Bar */}
+                    <div 
+                      className="w-full rounded-t transition-all duration-500 relative"
+                      style={{
+                        height: `${barHeight}px`,
+                        backgroundColor: color,
+                        minHeight: item.value > 0 ? "4px" : "0",
+                      }}
+                    >
+                      {/* Tooltip on hover */}
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                        {item.value || 0}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* X-axis labels - scrollable */}
+          <div className="ml-10 mr-4 mt-2 flex justify-start gap-1.5 px-2 overflow-x-auto">
+            {data.map((item, index) => {
+              const displayLabel = abbreviateLabels 
+                ? abbreviateStateName(item.label || "Sin etiqueta")
+                : (item.label || "Sin etiqueta");
+              const barWidth = Math.max(25, Math.min(50, 600 / Math.max(data.length, 10)));
+              
+              return (
+                <div 
+                  key={index}
+                  className="text-center flex-shrink-0"
+                  style={{ width: `${barWidth}px` }}
+                >
+                  <span 
+                    className="text-gray-600 block break-words leading-tight px-1"
+                    style={{ fontSize: abbreviateLabels ? "0.6rem" : "0.65rem" }}
+                    title={item.label || "Sin etiqueta"}
+                  >
+                    {displayLabel}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   /**
@@ -382,26 +508,31 @@ export default function StatisticsView() {
         </div>
       )}
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {renderBarChart(
+      {/* Charts Layout */}
+      <div className="w-full space-y-6">
+        {/* Horizontal chart for residence - full width */}
+        {renderHorizontalBarChart(
           "Lugares de Residencia",
           statistics.residence,
           ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
           true // Abbreviate state names
         )}
-        {renderBarChart(
-          "Categoría de Membresía",
-          statistics.category,
-          ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
-          false
-        )}
-        {renderBarChart(
-          "Grado de Estudios",
-          statistics.education,
-          ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
-          false
-        )}
+        
+        {/* Two square charts below - side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {renderBarChart(
+            "Categoría de Membresía",
+            statistics.category,
+            ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
+            false
+          )}
+          {renderBarChart(
+            "Grado de Estudios",
+            statistics.education,
+            ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
+            false
+          )}
+        </div>
       </div>
     </div>
   );

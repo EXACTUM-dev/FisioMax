@@ -45,7 +45,6 @@ export async function getResidenceStatistics(startDate = null, endDate = null) {
     query += `
       GROUP BY estado
       ORDER BY value DESC
-      LIMIT 5
     `;
 
     const [rows] = await dbPool.query(query, params);

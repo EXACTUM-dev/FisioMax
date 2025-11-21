@@ -153,6 +153,151 @@ export const exportMembershipStatistics = async (req, res) => {
       } : { r: 210, g: 180, b: 13 }; // Default color
     };
 
+    // Helper function to add a horizontal wide bar chart (for residence)
+    const addHorizontalBarChart = (title, data, doc, colors = ["#D2B40D", "#296B00", "#E58E15", "#cad00f", "#8B4513"]) => {
+      // Page dimensions
+      const pageWidth = 612;
+      const pageHeight = 792;
+      const margin = 50;
+      const availableWidth = pageWidth - (margin * 2);
+      
+      // Calculate space needed
+      const titleHeight = 20;
+      const topSpacing = 10;
+      const bottomSpacing = 50;
+      const chartHeight = 250; // Fixed height for horizontal chart
+      const totalSpaceNeeded = titleHeight + topSpacing + chartHeight + bottomSpacing;
+      
+      // Check if we need a new page
+      const currentY = doc.y;
+      const availableSpace = pageHeight - currentY - margin - 30;
+      
+      if (availableSpace < totalSpaceNeeded) {
+        doc.addPage();
+      }
+      
+      // Title
+      doc.fontSize(14).font("Helvetica-Bold").text(title, { align: "center" });
+      doc.moveDown(0.5);
+      
+      if (!data || data.length === 0) {
+        doc.fontSize(11).font("Helvetica").fillColor("gray").text("No hay datos disponibles", { align: "center" });
+        doc.fillColor("black");
+        doc.moveDown(1);
+        return;
+      }
+
+      // Calculate max value for scaling
+      const maxValue = Math.max(...data.map((d) => d.value || 0), 1);
+      const yAxisMax = Math.max(Math.ceil(maxValue / 5) * 5, 5);
+
+      // Chart dimensions - full width, horizontal
+      const chartX = margin;
+      const chartY = doc.y + 10;
+      const chartWidth = availableWidth;
+      const chartHeightFinal = chartHeight;
+
+      // Chart area background
+      doc.rect(chartX, chartY, chartWidth, chartHeightFinal)
+        .fillColor("#fafafa")
+        .fill()
+        .strokeColor("#e0e0e0")
+        .lineWidth(1)
+        .stroke();
+
+      // Calculate bar dimensions
+      const barSpacing = 8; // Smaller spacing for more bars
+      const labelHeight = 50;
+      const valueLabelHeight = 25;
+      const yAxisLabelWidth = 40;
+      const chartPadding = 20;
+      const availableHeight = chartHeightFinal - labelHeight - valueLabelHeight - (chartPadding * 2);
+      const numBars = data.length;
+      const totalBarWidth = chartWidth - (yAxisLabelWidth + chartPadding * 2);
+      const barWidth = Math.max((totalBarWidth - (barSpacing * (numBars - 1))) / numBars, 8); // Minimum 8 points
+      const barStartX = chartX + yAxisLabelWidth + chartPadding;
+
+      // Draw Y-axis grid lines and labels
+      const numGridLines = 5;
+      doc.fontSize(9).fillColor("#333333").font("Helvetica");
+      for (let i = 0; i <= numGridLines; i++) {
+        const value = (yAxisMax / numGridLines) * i;
+        const y = chartY + chartHeightFinal - labelHeight - valueLabelHeight - chartPadding - (availableHeight * (i / numGridLines));
+        
+        // Grid line
+        doc.moveTo(chartX + yAxisLabelWidth, y)
+          .lineTo(chartX + chartWidth - chartPadding, y)
+          .strokeColor("#d0d0d0")
+          .lineWidth(0.8)
+          .stroke();
+        
+        // Y-axis label
+        doc.text(Math.round(value).toString(), chartX + 5, y - 5, { 
+          width: yAxisLabelWidth - 10, 
+          align: "right" 
+        });
+      }
+      doc.fillColor("black");
+
+      // Draw bars
+      data.forEach((item, index) => {
+        const barX = barStartX + (index * (barWidth + barSpacing));
+        const barValue = item.value || 0;
+        const barHeight = (barValue / yAxisMax) * availableHeight;
+        const barY = chartY + chartHeightFinal - labelHeight - valueLabelHeight - chartPadding - barHeight;
+
+        // Bar color
+        const color = colors[index % colors.length];
+        const rgb = hexToRgb(color);
+        
+        // Draw bar
+        doc.fillColor(`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
+        doc.strokeColor("#333333").lineWidth(0.8);
+        doc.rect(barX, barY, barWidth, barHeight);
+        doc.fillAndStroke();
+        doc.fillColor("black");
+
+        // Value label on top of bar
+        if (barValue > 0) {
+          doc.fontSize(8).font("Helvetica-Bold").fillColor("black");
+          const valueTextY = barY - 15;
+          if (valueTextY > chartY + 5) {
+            doc.text(String(barValue), barX, valueTextY, { 
+              width: barWidth, 
+              align: "center" 
+            });
+          }
+        }
+
+        // X-axis label (rotate or truncate if needed)
+        doc.fontSize(7).font("Helvetica").fillColor("black");
+        const labelText = (item.label || "Sin especificar");
+        const maxLabelLength = Math.floor(barWidth / 4); // Adjust based on bar width
+        const displayLabel = labelText.length > maxLabelLength 
+          ? labelText.substring(0, maxLabelLength - 3) + "..."
+          : labelText;
+        doc.text(displayLabel, barX, chartY + chartHeightFinal - labelHeight + 5, { 
+          width: barWidth, 
+          align: "center" 
+        });
+      });
+
+      // Draw axes
+      doc.strokeColor("black").lineWidth(1.5);
+      // X-axis
+      doc.moveTo(chartX + yAxisLabelWidth, chartY + chartHeightFinal - labelHeight - valueLabelHeight - chartPadding)
+        .lineTo(chartX + chartWidth - chartPadding, chartY + chartHeightFinal - labelHeight - valueLabelHeight - chartPadding)
+        .stroke();
+      // Y-axis
+      doc.moveTo(chartX + yAxisLabelWidth, chartY + chartPadding)
+        .lineTo(chartX + yAxisLabelWidth, chartY + chartHeightFinal - labelHeight - valueLabelHeight - chartPadding)
+        .stroke();
+
+      // Update Y position
+      doc.y = chartY + chartHeightFinal + 30;
+      doc.moveDown(0.5);
+    };
+
     // Helper function to add a centered square bar chart
     const addBarChart = (title, data, doc, colors = ["#D2B40D", "#296B00", "#E58E15", "#cad00f", "#8B4513"]) => {
       // Page dimensions (standard letter size: 612x792 points)
@@ -313,7 +458,10 @@ export const exportMembershipStatistics = async (req, res) => {
     // Each chart will automatically check for space and create new page if needed
     const colors = ["#D2B40D", "#296B00", "#E58E15", "#cad00f", "#8B4513"];
     
-    addBarChart("Lugares de Residencia", residence, doc, colors);
+    // Horizontal wide chart for residence (all states)
+    addHorizontalBarChart("Lugares de Residencia", residence, doc, colors);
+    
+    // Square charts for category and education
     addBarChart("Categoría de Membresía", category, doc, colors);
     addBarChart("Grado de Estudios", education, doc, colors);
 
