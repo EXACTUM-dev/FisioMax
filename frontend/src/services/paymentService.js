@@ -71,14 +71,21 @@ const PaymentService = {
   },
 
   /**
-   * Get all payments for the current user.
+   * Get all payments for the current user or another user (admin only).
    * @param {Function} getToken - Clerk getToken function.
+   * @param {number|null} userId - Optional user ID to fetch payments for (admin only).
    * @returns {Promise<Object>} User's payment history.
    */
-  async getUserPayments(getToken) {
+  async getUserPayments(getToken, userId = null) {
     try {
       const token = await getToken();
-      const response = await fetch(buildApiUrl('/api/payments/user'), {
+
+      // Build URL with optional userId query parameter
+      const url = userId
+        ? buildApiUrl(`/api/payments/user?userId=${userId}`)
+        : buildApiUrl('/api/payments/user');
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -107,7 +114,7 @@ const PaymentService = {
   redirectToPayment(paymentLink, userData) {
     // Add metadata as URL parameters if needed
     const url = new URL(paymentLink);
-    
+
     // Store user data in sessionStorage for when they return
     sessionStorage.setItem('pendingPayment', JSON.stringify({
       userId: userData.userId,
@@ -145,7 +152,7 @@ const PaymentService = {
       }
 
       const result = await response.json();
-      
+
       // Redirect to Mercado Pago checkout
       window.location.href = result.preference.init_point;
     } catch (error) {

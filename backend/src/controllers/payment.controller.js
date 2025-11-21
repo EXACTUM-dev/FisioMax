@@ -75,13 +75,14 @@ const PaymentController = {
   },
 
   /**
-   * Get all payments for the authenticated user.
+   * Get all payments for the authenticated user or another user (admin only).
    * @param {Object} req - Express request object.
    * @param {Object} res - Express response object.
    */
   async getUserPayments(req, res) {
     try {
       const clerkId = req.auth?.userId;
+      const targetUserId = req.query.userId; // Optional query parameter
 
       if (!clerkId) {
         return res.status(401).json({
@@ -90,17 +91,34 @@ const PaymentController = {
         });
       }
 
-      // Get user from database using Clerk ID
-      const user = await getUsuarioByClerkId(clerkId);
+      // Get requesting user from database using Clerk ID
+      const requestingUser = await getUsuarioByClerkId(clerkId);
 
-      if (!user) {
+      if (!requestingUser) {
         return res.status(404).json({
           success: false,
           message: 'User not found in database',
         });
       }
 
-      const paymentStatus = await PaymentService.getUserPaymentStatus(user.IDUsuario);
+      let targetUserIdToFetch;
+
+      // If viewing another user's payments
+      if (targetUserId && targetUserId !== requestingUser.IDUsuario.toString()) {
+        // Verify admin privileges
+        if (!requestingUser.isAdmin) {
+          return res.status(403).json({
+            success: false,
+            message: 'Insufficient privileges to view other users payments',
+          });
+        }
+        targetUserIdToFetch = parseInt(targetUserId);
+      } else {
+        // Viewing own payments
+        targetUserIdToFetch = requestingUser.IDUsuario;
+      }
+
+      const paymentStatus = await PaymentService.getUserPaymentStatus(targetUserIdToFetch);
 
       res.json({
         success: true,
