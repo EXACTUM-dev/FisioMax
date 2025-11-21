@@ -12,6 +12,8 @@ import {
   getUserByEmail,
   updateUserClerkId,
 } from "../models/users.model.js";
+import { insertLoginErrorLog } from "../models/loginLogs.model.js";
+import { getRequestIp } from "../utils/request.js";
 
 /**
  * Clerk authentication middleware that requires valid authentication.
@@ -79,6 +81,26 @@ export const autoSyncClerkId = async (req, res, next) => {
     next();
   } catch (error) {
     console.error("Error in autoSyncClerkId:", error);
+    
+    // Registrar error de sincronización
+    try {
+      await insertLoginErrorLog({
+        usuario: req.auth?.userId || null,
+        ipOrigen: getRequestIp(req),
+        agenteUsuario: req.headers['user-agent'] || null,
+        codigoError: 'CLERK_SYNC_ERROR',
+        mensajeError: 'Error al sincronizar clerkID con la base de datos',
+        detalles: {
+          path: req.originalUrl || req.url,
+          method: req.method,
+          message: error?.message,
+        },
+      });
+    } catch (logError) {
+      // No interrumpir el flujo si falla el registro
+      console.error('Error al registrar log de sincronización:', logError);
+    }
+    
     // Don't block the request due to a sync error
     next();
   }

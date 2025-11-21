@@ -6,6 +6,8 @@
  */
 import { getUserById } from '../services/auth.service.js';
 import { getUserRolesAndPermissions } from '../models/rbac.model.js';
+import { insertLoginErrorLog } from '../models/loginLogs.model.js';
+import { getRequestIp } from '../utils/request.js';
 
 /**
  * Retrieves the authenticated user's information combining Clerk and DB data.
@@ -62,6 +64,26 @@ export const getProfile = async (req, res) => {
         });
     } catch (error) {
         console.error('auth.controller.getProfile error:', error);
+        
+        // Registrar error al obtener perfil
+        try {
+            await insertLoginErrorLog({
+                usuario: req.auth?.userId || null,
+                ipOrigen: getRequestIp(req),
+                agenteUsuario: req.headers['user-agent'] || null,
+                codigoError: 'PROFILE_FETCH_ERROR',
+                mensajeError: 'Error al obtener perfil del usuario',
+                detalles: {
+                    path: req.originalUrl || req.url,
+                    method: req.method,
+                    message: error?.message,
+                },
+            });
+        } catch (logError) {
+            // No interrumpir el flujo si falla el registro
+            console.error('Error al registrar log de perfil:', logError);
+        }
+        
         return res.status(500).json({ 
             error: 'Error al obtener perfil', 
             detail: error?.message 

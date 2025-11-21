@@ -26,6 +26,8 @@ import authRoutes from "./src/routes/auth.route.js";
 import homePageRoutes from "./src/routes/homePage.route.js";
 import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
 import statisticsRoutes from "./src/routes/statistics.routes.js";
+import { insertLoginErrorLog } from "./src/models/loginLogs.model.js";
+import { getRequestIp } from "./src/utils/request.js";
 
 // Initialize Express application
 const app = express();
@@ -143,7 +145,7 @@ app.use((err, req, res, next) => {
  * @param {object} res - Express response object.
  * @param {function} next - Express next function.
  */
-const secureErrorHandler = (err, req, res, next) => {
+const secureErrorHandler = async (err, req, res, next) => {
   // Log error for internal debugging (without exposing to client)
   console.error("Error interno:", {
     message: err.message,
@@ -161,7 +163,27 @@ const secureErrorHandler = (err, req, res, next) => {
     });
   }
 
-  if (err.name === "UnauthorizedError") {
+  if (err.name === "UnauthorizedError" || err.status === 401) {
+    // Registrar error de autenticación de Clerk
+    try {
+      await insertLoginErrorLog({
+        usuario: req.auth?.userId || null,
+        ipOrigen: getRequestIp(req),
+        agenteUsuario: req.headers['user-agent'] || null,
+        codigoError: 'CLERK_AUTH_ERROR',
+        mensajeError: 'Error de autenticación de Clerk: token inválido o expirado',
+        detalles: {
+          path: req.originalUrl || req.url,
+          method: req.method,
+          errorName: err.name,
+          errorMessage: err.message,
+        },
+      });
+    } catch (logError) {
+      // No interrumpir el flujo si falla el registro
+      console.error('Error al registrar log de autenticación:', logError);
+    }
+
     return res.status(401).json({
       error: "No autorizado",
       timestamp: new Date().toISOString(),
