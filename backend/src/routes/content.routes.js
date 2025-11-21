@@ -8,6 +8,7 @@
 import express from "express";
 import multer from "multer";
 import { requireAuth } from "../middlewares/clerkAuth.js";
+import { requireRole } from "../middlewares/requireRoles.js";
 import * as contentController from "../controllers/content.controller.js";
 
 const router = express.Router();
@@ -147,9 +148,6 @@ const uploadFields = (req, res, next) => {
     next();
   });
 };
-
-// Import role middleware
-import { requireRole } from "../middlewares/requireRoles.js";
 
 // Protected routes - require Clerk authentication
 router.get("/", requireAuth, contentController.index);
