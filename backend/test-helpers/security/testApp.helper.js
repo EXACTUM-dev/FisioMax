@@ -8,8 +8,28 @@ const app = express();
 
 app.use(helmet());
 
-const origins = (process.env.CORS_ORIGINS || "").split(",").filter(Boolean);
-app.use(cors({ origin: origins.length ? origins : true, credentials: true }));
+const origins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+// Use a function to strictly validate incoming Origin header against allowed list.
+// If no origins are configured, fall back to the permissive behavior for tests.
+const allowedOrigins = origins.length ? origins : null;
+app.use(
+  cors({
+    origin: allowedOrigins
+      ? (origin, callback) => {
+          // Allow non-browser requests (no Origin header)
+          if (!origin) return callback(null, true);
+          if (allowedOrigins.indexOf(origin) !== -1)
+            return callback(null, true);
+          // Explicitly disallow other origins
+          return callback(null, false);
+        }
+      : true,
+    credentials: true,
+  })
+);
 app.use(compression({ threshold: 1024 }));
 app.use(morgan("combined"));
 
