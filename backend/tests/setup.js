@@ -48,8 +48,10 @@ process.env.AWS_SES_TO_EMAIL =
 process.env.AWS_REGION = process.env.AWS_REGION || "us-east-2";
 
 // CORS
+// Include common dev origins used by tests (Vite, CRA, other local dev servers)
 process.env.CORS_ORIGINS =
-  process.env.CORS_ORIGINS || "http://localhost:8129,http://localhost:2716";
+  process.env.CORS_ORIGINS ||
+  "http://localhost:5174,http://localhost:3000,http://localhost:8129,http://localhost:2716";
 
 // Rate limiting/logging defaults
 process.env.LOG_LEVEL = process.env.LOG_LEVEL || "error";
