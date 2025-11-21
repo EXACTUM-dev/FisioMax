@@ -13,6 +13,50 @@ import Loading from "../atoms/loading";
 import { Download, Calendar } from "lucide-react";
 
 /**
+ * Abbreviates long state names for better display in charts
+ * @param {string} stateName - Full state name
+ * @returns {string} Abbreviated state name
+ */
+const abbreviateStateName = (stateName) => {
+  if (!stateName) return stateName;
+  
+  const abbreviations = {
+    "Baja California Sur": "BCS",
+    "Baja California": "BC",
+    "Mexico City": "CDMX",
+    "Ciudad de México": "CDMX",
+    "Nuevo León": "NL",
+    "Jalisco": "Jal.",
+    "Yucatán": "Yuc.",
+    "Querétaro": "Qro.",
+    "Michoacán": "Mich.",
+    "Guanajuato": "Gto.",
+    "Lunda Norte Province": "Lunda Norte",
+    "Plateaux Department": "Plateaux",
+    "Badakhshan": "Badakh.",
+  };
+  
+  // Check if we have a specific abbreviation
+  if (abbreviations[stateName]) {
+    return abbreviations[stateName];
+  }
+  
+  // If name is longer than 12 characters, try to abbreviate common words
+  if (stateName.length > 12) {
+    return stateName
+      .replace(/\bProvince\b/gi, "Prov.")
+      .replace(/\bDepartment\b/gi, "Dept.")
+      .replace(/\bCalifornia\b/gi, "Calif.")
+      .replace(/\bNorth\b/gi, "N.")
+      .replace(/\bSouth\b/gi, "S.")
+      .replace(/\bEast\b/gi, "E.")
+      .replace(/\bWest\b/gi, "W.");
+  }
+  
+  return stateName;
+};
+
+/**
  * StatisticsView Component
  * @description Renders three bar charts with date filtering and PDF export functionality
  * @returns {JSX.Element} Statistics view with charts and controls
@@ -54,10 +98,13 @@ export default function StatisticsView() {
       
       const data = response?.data || response || {};
       
+      // Limitar a 5 elementos máximo por categoría
+      const limitData = (arr) => (arr || []).slice(0, 5);
+      
       setStatistics({
-        residence: data.residence || [],
-        category: data.category || [],
-        education: data.education || [],
+        residence: limitData(data.residence),
+        category: limitData(data.category),
+        education: limitData(data.education),
       });
     } catch (err) {
       console.error("Error al cargar estadísticas:", err);
@@ -111,9 +158,13 @@ export default function StatisticsView() {
   };
 
   /**
-   * Renders a simple bar chart (placeholder - can be replaced with Chart.js or Recharts)
+   * Renders a vertical bar chart with Y and X axes
+   * @param {string} title - Chart title
+   * @param {Array} data - Chart data array
+   * @param {Array} colorScheme - Array of colors for bars
+   * @param {boolean} abbreviateLabels - Whether to abbreviate labels (for states)
    */
-  const renderBarChart = (title, data, colorScheme = ["#f59e0b", "#10b981", "#3b82f6", "#ef4444"]) => {
+  const renderBarChart = (title, data, colorScheme = ["#D2B40D", "#296B00", "#E58E15", "#cad00f"], abbreviateLabels = false) => {
     if (!data || data.length === 0) {
       return (
         <div className="w-full h-64 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
@@ -123,45 +174,114 @@ export default function StatisticsView() {
     }
 
     const maxValue = Math.max(...data.map((d) => d.value || 0), 1);
+    
+    // Calcular el máximo dinámico para el eje Y basado en los datos reales
+    // Redondear hacia arriba al siguiente múltiplo de 5 para una escala más limpia
+    const yAxisDisplayMax = Math.max(Math.ceil(maxValue / 5) * 5, 5);
+    
+    // Calculate Y-axis ticks (5 intervals) - basado en el máximo dinámico
+    const yAxisTicks = 5;
+    const tickInterval = Math.ceil(yAxisDisplayMax / yAxisTicks);
+    const yAxisLabels = [];
+    for (let i = 0; i <= yAxisTicks; i++) {
+      yAxisLabels.push(i * tickInterval);
+    }
 
     return (
       <div className="w-full bg-white rounded-lg border border-gray-200 p-4">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
           {title}
         </h3>
-        <div className="space-y-3">
-          {data.map((item, index) => {
-            const percentage = ((item.value || 0) / maxValue) * 100;
-            const color = colorScheme[index % colorScheme.length];
-            
-            return (
-              <div key={item.label || index} className="space-y-1">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-700 font-medium">
-                    {item.label || "Sin etiqueta"}
-                  </span>
-                  <span className="text-gray-600 font-semibold">
-                    {item.value || 0}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
-                    style={{
-                      width: `${percentage}%`,
-                      backgroundColor: color,
-                    }}
-                  >
-                    {percentage > 10 && (
-                      <span className="text-white text-xs font-medium">
-                        {Math.round(percentage)}%
-                      </span>
-                    )}
-                  </div>
-                </div>
+        <div className="relative" style={{ height: "400px" }}>
+          {/* Y-axis with labels */}
+          <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between pr-2" style={{ width: "40px" }}>
+            {yAxisLabels.reverse().map((tick, idx) => (
+              <div key={idx} className="relative">
+                <span className="text-xs text-gray-600 font-medium">
+                  {tick}
+                </span>
+                <div 
+                  className="absolute right-0 top-1/2 w-2 h-px bg-gray-300 transform -translate-y-1/2 translate-x-full"
+                  style={{ marginRight: "-8px" }}
+                />
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Chart area with bars */}
+          <div className="ml-10 mr-4 relative" style={{ height: "360px" }}>
+            {/* Y-axis grid lines */}
+            <div className="absolute inset-0 flex flex-col justify-between">
+              {yAxisLabels.map((tick, idx) => (
+                <div 
+                  key={idx} 
+                  className="w-full border-t border-gray-200"
+                />
+              ))}
+            </div>
+
+            {/* Bars */}
+            <div className="flex items-end justify-around gap-2 h-full px-2 pb-2">
+              {data.map((item, index) => {
+                // Calcular altura en píxeles basándose en el máximo dinámico del eje Y
+                // La altura del contenedor es 360px, usamos ~95% para la barra más alta
+                const chartHeight = 360; // altura del contenedor en píxeles
+                const maxBarHeight = chartHeight * 0.95; // 95% del contenedor para la barra más alta
+                // Calcular altura proporcional: (valor / máximo del eje) * altura máxima de barra
+                const barHeight = ((item.value || 0) / yAxisDisplayMax) * maxBarHeight;
+                const color = colorScheme[index % colorScheme.length];
+                
+                return (
+                  <div 
+                    key={item.label || index} 
+                    className="flex flex-col items-center flex-1 relative group"
+                    style={{ maxWidth: "120px" }}
+                  >
+                    {/* Bar */}
+                    <div 
+                      className="w-full rounded-t transition-all duration-500 relative"
+                      style={{
+                        height: `${barHeight}px`,
+                        backgroundColor: color,
+                        minHeight: item.value > 0 ? "4px" : "0",
+                      }}
+                    >
+                      {/* Tooltip on hover */}
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                        {item.value || 0}
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* X-axis labels */}
+          <div className="ml-10 mr-4 mt-2 flex justify-around gap-1 px-2">
+            {data.map((item, index) => {
+              const displayLabel = abbreviateLabels 
+                ? abbreviateStateName(item.label || "Sin etiqueta")
+                : (item.label || "Sin etiqueta");
+              
+              return (
+                <div 
+                  key={index}
+                  className="flex-1 text-center min-w-0"
+                  style={{ maxWidth: "120px" }}
+                >
+                  <span 
+                    className="text-gray-600 block break-words leading-tight px-1"
+                    style={{ fontSize: abbreviateLabels ? "0.65rem" : "0.7rem" }}
+                    title={item.label || "Sin etiqueta"} // Show full name on hover
+                  >
+                    {displayLabel}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );
@@ -226,22 +346,26 @@ export default function StatisticsView() {
         {renderBarChart(
           "Lugares de Residencia",
           statistics.residence,
-          ["#f59e0b", "#10b981", "#3b82f6", "#ef4444"]
+          ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
+          true // Abbreviate state names
         )}
         {renderBarChart(
           "Categoría de Membresía",
           statistics.category,
-          ["#10b981", "#f59e0b", "#3b82f6", "#ef4444"]
+          ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
+          false
         )}
         {renderBarChart(
           "Grado de Estudios",
           statistics.education,
-          ["#3b82f6", "#f59e0b", "#10b981", "#ef4444"]
+          ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
+          false
         )}
       </div>
     </div>
   );
 }
+
 
 
 

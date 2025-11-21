@@ -8,7 +8,7 @@
 import { dbPool } from "../../config.js";
 
 /**
- * Gets the top 10 most frequent states from the usuario table
+ * Gets the top 5 most frequent states from the usuario table
  * @param {string|null} startDate - Optional start date filter (YYYY-MM-DD)
  * @param {string|null} endDate - Optional end date filter (YYYY-MM-DD)
  * @returns {Promise<Array<Object>>} Array of objects with label (state name) and value (count)
@@ -45,7 +45,7 @@ export async function getResidenceStatistics(startDate = null, endDate = null) {
     query += `
       GROUP BY estado
       ORDER BY value DESC
-      LIMIT 10
+      LIMIT 5
     `;
 
     const [rows] = await dbPool.query(query, params);
@@ -97,6 +97,7 @@ export async function getCategoryStatistics(startDate = null, endDate = null) {
     query += `
       GROUP BY m.tipo
       ORDER BY value DESC
+      LIMIT 5
     `;
 
     const [rows] = await dbPool.query(query, params);
@@ -149,6 +150,7 @@ export async function getEducationStatistics(startDate = null, endDate = null) {
     query += `
       GROUP BY u.licenciatura
       ORDER BY value DESC
+      LIMIT 5
     `;
 
     const [rows] = await dbPool.query(query, params);
