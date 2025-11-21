@@ -13,6 +13,20 @@ import Loading from "../atoms/loading";
 import { Download, Calendar } from "lucide-react";
 
 /**
+ * Formats a date string (YYYY-MM-DD) to a readable format (DD/MM/YYYY)
+ * @param {string} dateString - Date string in YYYY-MM-DD format
+ * @returns {string} Formatted date string in DD/MM/YYYY format
+ */
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString + "T00:00:00");
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+/**
  * Abbreviates long state names for better display in charts
  * @param {string} stateName - Full state name
  * @returns {string} Abbreviated state name
@@ -340,6 +354,21 @@ export default function StatisticsView() {
           {exporting ? "Exportando..." : "Exportar PDF"}
         </Button>
       </div>
+
+      {/* Date Range Message */}
+      {!loading && (
+        <div className="w-full text-center">
+          <p className="text-sm text-gray-600 font-medium">
+            {dateRange.startDate && dateRange.endDate
+              ? `Mostrando datos del ${formatDate(dateRange.startDate)} al ${formatDate(dateRange.endDate)}`
+              : dateRange.startDate
+              ? `Mostrando datos desde el ${formatDate(dateRange.startDate)}`
+              : dateRange.endDate
+              ? `Mostrando datos hasta el ${formatDate(dateRange.endDate)}`
+              : "Mostrando todos los datos disponibles"}
+          </p>
+        </div>
+      )}
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
