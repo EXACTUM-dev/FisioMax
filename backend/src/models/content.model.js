@@ -238,3 +238,57 @@ export async function assignContentToPrivileges(contentId, privilegeIds) {
     throw new Error("Database error");
   }
 }
+
+/**
+ * Soft deletes content and returns S3 keys for physical deletion
+ * @param {number} contentId - Content ID to delete
+ * @returns {Promise<Object>} Object with mainKey and thumbnailKey
+ * @throws {Error} If content not found or database error
+ */
+export async function softDeleteContent(contentId) {
+  // Get content info including S3 keys
+  const selectQuery = `
+    SELECT 
+      c.nombre,
+      c.IDMultimedia as mainKey,
+      t.IDMultimedia as thumbnailKey
+    FROM contenido c
+    LEFT JOIN contenido t 
+      ON t.nombre = c.nombre 
+      AND t.tipo = 'imagen'
+      AND t.eliminado = 0
+      AND t.deletedAt IS NULL
+    WHERE c.IDContenido = ?
+      AND c.eliminado = 0
+      AND c.deletedAt IS NULL
+      AND c.tipo IN (?)
+    LIMIT 1
+  `;
+
+  try {
+    const [rows] = await db.query(selectQuery, [contentId, DISPLAYABLE_CONTENT_TYPES]);
+
+    if (rows.length === 0) {
+      throw new Error("Content not found");
+    }
+
+    const { nombre, mainKey, thumbnailKey } = rows[0];
+
+    // Soft delete all content with this name (main + thumbnail)
+    const updateQuery = `
+      UPDATE contenido 
+      SET eliminado = 1, deletedAt = NOW()
+      WHERE nombre = ?
+    `;
+
+    await db.query(updateQuery, [nombre]);
+
+    return { mainKey, thumbnailKey };
+  } catch (error) {
+    if (error.message === "Content not found") {
+      throw error;
+    }
+    console.error("Database error in softDeleteContent:", error);
+    throw new Error("Database error");
+  }
+}

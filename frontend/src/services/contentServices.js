@@ -68,3 +68,26 @@ export async function getAvailableContent(
 
   return response.json();
 }
+
+/**
+ * Deletes a specific content by ID
+ * @param {string} contentId - Content ID to delete
+ * @param {string} token - Clerk authentication token
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export async function deleteContent(contentId, token) {
+  const response = await fetch(`${API_URL}/content/${contentId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to delete content");
+  }
+
+  return response.json();
+}
