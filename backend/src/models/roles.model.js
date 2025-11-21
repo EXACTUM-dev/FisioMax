@@ -5,11 +5,7 @@
  * @description Provides CRUD operations for roles and role-privilege assignments.
  */
 
-// Delay-loading the DB pool so tests can mock `../../config.js` at runtime.
-async function getDbPool() {
-  const mod = await import("../../config.js");
-  return mod.dbPool;
-}
+import { dbPool } from "../../config.js";
 
 /**
  * Find a role by its ID.
@@ -205,7 +201,6 @@ export async function createRoleWithPrivileges(
   { name, description = "" },
   privileges = []
 ) {
-  const dbPool = await getDbPool();
   const connection = await dbPool.getConnection();
   try {
     await connection.beginTransaction();

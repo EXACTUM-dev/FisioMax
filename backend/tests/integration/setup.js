@@ -30,6 +30,22 @@ process.env.CLERK_SECRET_KEY = "test-clerk-key";
 // Mock middlewares that depend on external services so integration tests can import `server` safely.
 // Tests can still override these mocks if needed.
 try {
+  // Ensure `config.js`'s `dbPool` is a test-friendly stub before any server import.
+  // This prevents the real pool from being created when `server.js` imports `config.js`.
+  jest.unstable_mockModule("../../config.js", () => {
+    const dbPoolStub = {
+      query: async () => [[], []],
+      getConnection: async () => ({
+        beginTransaction: async () => {},
+        query: async () => [{ insertId: 1, affectedRows: 1 }],
+        commit: async () => {},
+        rollback: async () => {},
+        release: async () => {},
+      }),
+    };
+    return { dbPool: dbPoolStub, default: { dbPool: dbPoolStub } };
+  });
+
   jest.unstable_mockModule("../../src/middlewares/clerkAuth.js", () => ({
     requireAuth: (req, res, next) => next(),
     autoSyncClerkId: (req, res, next) => next(),
@@ -121,11 +137,6 @@ try {
             .map((l) => l.route.path)
             .slice(0, 20)
         : [];
-    // eslint-disable-next-line no-console
-    console.log(
-      "[integration setup] routes before adding test routes:",
-      existing
-    );
   } catch (e) {
     // ignore
   }
@@ -323,11 +334,6 @@ try {
             })
             .slice(0, 20)
         : [];
-    // eslint-disable-next-line no-console
-    console.log(
-      "[integration setup] stack after adding test routes:",
-      stackInfo
-    );
   } catch (e) {
     // ignore
   }
@@ -385,8 +391,6 @@ try {
         .filter((l) => l && l.route && l.route.path)
         .slice(0, 10)
         .map((l) => l.route.path);
-      // eslint-disable-next-line no-console
-      console.log("[integration setup] first registered routes:", registered);
     } catch (e) {
       // ignore logging errors
     }
