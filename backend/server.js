@@ -168,7 +168,6 @@ const secureErrorHandler = async (err, req, res, next) => {
   if (err.name === "UnauthorizedError" || err.status === 401) {
     /**
      * Log Clerk authentication error when token is invalid or expired.
-     * @type {Error} err - The authentication error that occurred
      */
     try {
       await insertLoginErrorLog({
@@ -187,7 +186,6 @@ const secureErrorHandler = async (err, req, res, next) => {
     } catch (logError) {
       /**
        * Don't interrupt the flow if logging fails.
-       * @type {Error} logError - The error that occurred during logging
        */
       console.error('Error al registrar log de autenticación:', logError);
     }

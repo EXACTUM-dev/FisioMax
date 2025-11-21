@@ -60,7 +60,6 @@ export function useDbUser() {
         } catch (tokenError) {
           /**
            * Log error when failing to obtain Clerk authentication token.
-           * @type {Error} tokenError - The error thrown by getToken()
            */
           sendLoginErrorLog({
             usuario: userId,
@@ -153,7 +152,6 @@ export function useDbUser() {
       } catch (err) {
         /**
          * Only log if not already logged to avoid duplicate entries.
-         * @type {Error} err - The error that occurred
          */
         if (!err._logged) {
           sendLoginErrorLog({

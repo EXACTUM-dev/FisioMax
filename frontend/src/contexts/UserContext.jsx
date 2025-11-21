@@ -45,7 +45,6 @@ export function UserProvider({ children }) {
         } catch (tokenError) {
           /**
            * Log error when failing to obtain Clerk authentication token.
-           * @type {Error} tokenError - The error thrown by getToken()
            */
           sendLoginErrorLog({
             usuario: userId,
@@ -142,7 +141,6 @@ export function UserProvider({ children }) {
         console.error('Error verificando usuario en BD:', err);
         /**
          * Only log if not already logged to avoid duplicate entries.
-         * @type {Error} err - The error that occurred
          */
         if (!err._logged) {
           sendLoginErrorLog({
