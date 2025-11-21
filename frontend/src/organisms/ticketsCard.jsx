@@ -93,15 +93,46 @@ const getReceiptUrl = (webhookData) => {
 };
 
 /**
- * Displays user's payment tickets in a card layout.
+ * Displays user's payment tickets in a card layout with pagination.
  * @param {!Object} props - Component props.
  * @param {!Array<!Object>} props.tickets - Array of ticket objects.
  * @return {!JSX.Element} Tickets card component.
  */
 export default function TicketsCard({ tickets = [] }) {
+  const [currentPage, setCurrentPage] = React.useState(0);
+  const TICKETS_PER_PAGE = 2;
+
+  // Calculate pagination
+  const totalPages = Math.ceil(tickets.length / TICKETS_PER_PAGE);
+  const startIndex = currentPage * TICKETS_PER_PAGE;
+  const endIndex = startIndex + TICKETS_PER_PAGE;
+  const visibleTickets = tickets.slice(startIndex, endIndex);
+
+  const canGoUp = currentPage > 0;
+  const canGoDown = currentPage < totalPages - 1;
+
+  const handlePrevious = () => {
+    if (canGoUp) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (canGoDown) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
   return (
     <aside className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm max-w-md w-full">
-      <h3 className="text-lg font-semibold mb-3">Tickets de pago</h3>
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-lg font-semibold">Tickets de pago</h3>
+        {tickets.length > 0 && (
+          <span className="text-xs text-slate-500">
+            {tickets.length} {tickets.length === 1 ? 'ticket' : 'tickets'}
+          </span>
+        )}
+      </div>
 
       {tickets.length === 0 ? (
         <div className="text-center py-8 text-slate-500">
@@ -110,79 +141,130 @@ export default function TicketsCard({ tickets = [] }) {
           <div className="text-sm text-slate-500">Tus tickets de pago aparecerán aquí</div>
         </div>
       ) : (
-        <div className="space-y-3 max-h-[500px] overflow-y-auto">
-          {tickets.map((ticket) => (
-            <div
-              key={ticket.IDPago}
-              className="p-4 border border-slate-200 rounded-lg hover:shadow-md transition-shadow"
-            >
-              {/* Header with amount and date */}
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <div className="text-xl font-bold text-[#CAD00F]">
-                    {formatCurrency(ticket.cantidad)}
-                  </div>
-                  <div className="text-xs text-slate-500">
-                    {formatDate(ticket.fechaPago)}
-                  </div>
-                </div>
-                <div
-                  className={`px-2 py-1 rounded text-xs font-medium ${ticket.membershipPaymentStatus === 'Pagado'
-                    ? 'bg-green-100 text-green-700'
-                    : ticket.membershipPaymentStatus === 'Pendiente'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-red-100 text-red-700'
-                    }`}
-                >
-                  {ticket.membershipPaymentStatus}
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Folio:</span>
-                  <span className="font-mono text-xs text-slate-700">
-                    {ticket.folio.substring(0, 16)}...
-                  </span>
-                </div>
-
-                {ticket.membershipType && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">Membresía:</span>
-                    <span className="font-medium capitalize">
-                      {getMembershipTypeLabel(ticket.membershipType)}
-                    </span>
-                  </div>
-                )}
-
-                {ticket.payment_method_id && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">Método:</span>
-                    <span className="font-medium">
-                      {getPaymentMethodLabel(ticket.payment_method_id)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Receipt button */}
-              {getReceiptUrl(ticket.response_webhook) && (
-                <div className="mt-3 pt-3 border-t border-slate-200">
-                  <button
-                    onClick={() => window.open(getReceiptUrl(ticket.response_webhook), '_blank')}
-                    className="w-full px-3 py-2 bg-[#CAD00F] hover:bg-[#b8bd0d] text-slate-900 font-medium rounded-md transition-colors flex items-center justify-center gap-2 text-sm"
-                  >
-                    <span>📄</span>
-                    Ver Comprobante
-                  </button>
-                </div>
-              )}
+        <>
+          {/* Navigation buttons - Top */}
+          {tickets.length > TICKETS_PER_PAGE && (
+            <div className="flex justify-center mb-3">
+              <button
+                onClick={handlePrevious}
+                disabled={!canGoUp}
+                className={`p-2 rounded-md transition-colors ${canGoUp
+                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    : 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                  }`}
+                aria-label="Ver tickets anteriores"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+
+          {/* Tickets display */}
+          <div className="space-y-3">
+            {visibleTickets.map((ticket) => (
+              <div
+                key={ticket.IDPago}
+                className="p-4 border border-slate-200 rounded-lg hover:shadow-md transition-shadow"
+              >
+                {/* Header with amount and date */}
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <div className="text-xl font-bold text-[#CAD00F]">
+                      {formatCurrency(ticket.cantidad)}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {formatDate(ticket.fechaPago)}
+                    </div>
+                  </div>
+                  <div
+                    className={`px-2 py-1 rounded text-xs font-medium ${ticket.membershipPaymentStatus === 'Pagado'
+                        ? 'bg-green-100 text-green-700'
+                        : ticket.membershipPaymentStatus === 'Pendiente'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}
+                  >
+                    {ticket.membershipPaymentStatus}
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Folio:</span>
+                    <span className="font-mono text-xs text-slate-700">
+                      {ticket.folio.substring(0, 16)}...
+                    </span>
+                  </div>
+
+                  {ticket.membershipType && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Membresía:</span>
+                      <span className="font-medium capitalize">
+                        {getMembershipTypeLabel(ticket.membershipType)}
+                      </span>
+                    </div>
+                  )}
+
+                  {ticket.payment_method_id && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Método:</span>
+                      <span className="font-medium">
+                        {getPaymentMethodLabel(ticket.payment_method_id)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Receipt button */}
+                {getReceiptUrl(ticket.response_webhook) && (
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <button
+                      onClick={() => window.open(getReceiptUrl(ticket.response_webhook), '_blank')}
+                      className="w-full px-3 py-2 bg-[#CAD00F] hover:bg-[#b8bd0d] text-slate-900 font-medium rounded-md transition-colors flex items-center justify-center gap-2 text-sm"
+                    >
+                      <span>📄</span>
+                      Ver Comprobante
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Navigation buttons - Bottom */}
+          {tickets.length > TICKETS_PER_PAGE && (
+            <div className="flex justify-center mt-3">
+              <button
+                onClick={handleNext}
+                disabled={!canGoDown}
+                className={`p-2 rounded-md transition-colors ${canGoDown
+                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    : 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                  }`}
+                aria-label="Ver tickets siguientes"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Page indicator */}
+          {tickets.length > TICKETS_PER_PAGE && (
+            <div className="text-center mt-2">
+              <span className="text-xs text-slate-500">
+                Página {currentPage + 1} de {totalPages}
+              </span>
+            </div>
+          )}
+        </>
       )}
     </aside>
   );
 }
+
 
