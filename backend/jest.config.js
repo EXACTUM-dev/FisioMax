@@ -4,6 +4,8 @@ export default {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
+  // Ignore archived/duplicate helper folders to avoid accidental test discovery
+  testPathIgnorePatterns: ["<rootDir>/tests/**/_helpers/"],
   testMatch: ["**/tests/**/*.js", "**/?(*.)+(spec|test).js"],
   setupFiles: ["./tests/setup.js"],
   // Configuración para pruebas de integración

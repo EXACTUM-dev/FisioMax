@@ -1,7 +1,8 @@
 /**
  * @fileoverview Unit tests for profile-related backend endpoints
- * Tests GET /api/usuarios (profile list) using mocked model
+ * @version 0.1.0
  * @author EXACTUM-dev
+ * @description Tests for profile and users endpoints using mocked models
  */
 
 import { jest } from "@jest/globals";

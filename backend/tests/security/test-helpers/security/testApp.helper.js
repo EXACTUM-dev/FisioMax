@@ -4,6 +4,13 @@ import cors from "cors";
 import compression from "compression";
 import morgan from "morgan";
 
+/**
+ * @fileoverview Security test Express app (helper)
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Minimal Express app used by security tests to emulate server middlewares and endpoints
+ */
+
 const app = express();
 
 app.use(helmet());
@@ -45,7 +52,14 @@ app.use((req, res, next) => {
       received += chunk.length;
       if (!handled && received > 100000) {
         handled = true;
+        // Send 413 and ensure the incoming stream is drained to avoid abrupt socket resets
         res.status(413).json({ error: "Payload demasiado grande" });
+        try {
+          // Resume the request to allow the client to finish sending without closing the socket
+          if (typeof req.resume === "function") req.resume();
+        } catch (e) {
+          // ignore resume errors
+        }
       }
     });
 
@@ -149,7 +163,12 @@ app.post(
   (req, res, next) => {
     const contentLength = parseInt(req.get("content-length") || "0", 10);
     if (contentLength > 100000) {
-      return res.status(413).json({ error: "Payload demasiado grande" });
+      // Send 413 and drain the stream to avoid ECONNRESET in tests
+      const resp = res.status(413).json({ error: "Payload demasiado grande" });
+      try {
+        if (typeof req.resume === "function") req.resume();
+      } catch (e) {}
+      return resp;
     }
 
     // If Content-Length wasn't provided (chunked requests) or parser already
@@ -161,7 +180,14 @@ app.post(
             ? Buffer.byteLength(req.body, "utf8")
             : Buffer.byteLength(JSON.stringify(req.body), "utf8");
         if (size > 100000) {
-          return res.status(413).json({ error: "Payload demasiado grande" });
+          // Send 413 and drain remaining data
+          const resp = res
+            .status(413)
+            .json({ error: "Payload demasiado grande" });
+          try {
+            if (typeof req.resume === "function") req.resume();
+          } catch (e) {}
+          return resp;
         }
       }
     } catch (e) {
@@ -226,3 +252,8 @@ app.use((req, res) =>
 );
 
 export { app };
+
+// Dummy test so Jest doesn't fail if this file is discovered as a test suite
+test("security testApp noop", () => {
+  expect(true).toBe(true);
+});

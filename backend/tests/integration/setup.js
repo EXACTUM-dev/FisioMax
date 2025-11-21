@@ -1,6 +1,8 @@
 /**
- * Configuración base para pruebas de integración
- * @fileoverview Setup común para todas las pruebas de integración
+ * @fileoverview Integration test setup utilities
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Shared setup for integration tests: environment, mocked modules, and test-only handlers
  */
 
 import { jest } from "@jest/globals";
@@ -14,13 +16,13 @@ const __dirname = dirname(__filename);
 // Will hold the Express `app` exported by server.js once imported
 let app;
 
-// Cargar variables de entorno para testing
+// Load environment variables for testing
 dotenv.config({
   path: resolve(__dirname, "../.env.test"),
   override: true,
 });
 
-// Configurar variables de entorno específicas para integración
+// Set integration-specific environment variables
 process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "test-secret-key";
 process.env.CLERK_SECRET_KEY = "test-clerk-key";

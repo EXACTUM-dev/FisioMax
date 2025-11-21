@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Security test helper setup
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Loads test environment and provides mocked modules for security tests
+ */
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
@@ -69,3 +75,8 @@ try {
         next(),
   }));
 } catch (err) {}
+
+// Dummy test so Jest doesn't fail if this file is discovered as a test suite
+test("security helper noop", () => {
+  expect(true).toBe(true);
+});

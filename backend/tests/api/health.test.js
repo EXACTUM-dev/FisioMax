@@ -1,13 +1,16 @@
 /**
- * Test básico para verificar que la configuración de Jest funciona correctamente
+ * @fileoverview API Health Check test
+ * @version 0.1.0
+ * @author EXACTUM-dev
+ * @description Basic health-check test to verify Jest and Express setup
  */
 import express from "express";
 import request from "supertest";
 
-// Crea una app Express simple para testing
+// Create a simple Express app for testing
 const app = express();
 
-// Endpoint simple para probar
+// Simple test endpoint
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "API está funcionando correctamente" });
 });

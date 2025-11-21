@@ -1,6 +1,8 @@
 /**
- * Pruebas de integración para manejo de errores
- * @fileoverview Tests que verifican el manejo completo de diferentes tipos de errores
+ * @fileoverview Integration tests for error handling
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Verify server handling of validation, auth, permission and internal errors
  */
 
 import request from "supertest";
@@ -103,7 +105,7 @@ describe("Pruebas de Integración - Manejo de Errores", () => {
         .get("/api/ruta-inexistente")
         .expect(404);
 
-      // Express por defecto devuelve 404 para rutas no encontradas
+      // Express returns 404 for missing routes by default
       expect(response.status).toBe(404);
     });
   });
@@ -112,7 +114,7 @@ describe("Pruebas de Integración - Manejo de Errores", () => {
     test("debería manejar métodos HTTP no permitidos", async () => {
       const response = await request(app).delete("/api/test").expect(404);
 
-      // El endpoint no soporta DELETE
+      // The endpoint does not support DELETE
       expect(response.status).toBe(404);
     });
   });
@@ -123,7 +125,7 @@ describe("Pruebas de Integración - Manejo de Errores", () => {
         .get("/api/error/internal")
         .expect(500);
 
-      // Verificar que los headers de seguridad están presentes
+      // Verify that security headers are present
       expect(response.headers).toHaveProperty("x-content-type-options");
       expect(response.headers).toHaveProperty("x-frame-options");
     });

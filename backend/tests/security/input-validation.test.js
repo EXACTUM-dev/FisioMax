@@ -1,22 +1,21 @@
 /**
- * @fileoverview Pruebas de seguridad para validación de entrada
- * @version 1.0.0
+ * @fileoverview Security tests for input validation
+ * @version 1.0.1
  * @author EXACTUM-dev
- *
- * Pruebas que validan la sanitización y validación de datos de entrada
+ * @description Tests for input sanitization and validation logic to prevent XSS/SQLi/etc.
  */
 
 import request from "supertest";
 import express from "express";
 import joi from "joi";
 
-// Configurar app de prueba
+// Configure test app
 const app = express();
 // Allow larger payloads so validation logic runs (avoid 413 from body-parser)
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
-// Esquemas de validación con Joi
+// Validation schemas using Joi
 const userSchema = joi.object({
   nombre: joi.string().min(2).max(50).required(),
   email: joi.string().email().required(),
@@ -32,7 +31,7 @@ const loginSchema = joi.object({
   password: joi.string().min(8).required(),
 });
 
-// Middleware de validación
+// Validation middleware
 const validateInput = (schema) => {
   return (req, res, next) => {
     // Preprocess: trim email field to tolerate surrounding whitespace
@@ -46,12 +45,12 @@ const validateInput = (schema) => {
         details: error.details.map((detail) => detail.message),
       });
     }
-    req.body = value; // Datos sanitizados
+    req.body = value; // Sanitized data
     next();
   };
 };
 
-// Rutas de prueba
+// Test routes
 app.post("/api/usuarios", validateInput(userSchema), (req, res) => {
   res.json({
     message: "Usuario creado exitosamente",
@@ -68,7 +67,7 @@ app.post("/api/login", validateInput(loginSchema), (req, res) => {
 
 app.get("/api/search", (req, res) => {
   const query = req.query.q || "";
-  // Simular búsqueda en base de datos
+  // Simulate database search
   res.json({
     query: query,
     results: [],
@@ -94,7 +93,7 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
     test("debe rechazar datos con campos faltantes", async () => {
       const invalidUser = {
         nombre: "Juan",
-        // email faltante
+        // missing email
         edad: 25,
       };
 
@@ -126,7 +125,7 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
       const invalidUser = {
         nombre: "Juan Pérez",
         email: "juan@ejemplo.com",
-        edad: 150, // Edad inválida
+        edad: 150, // Invalid age
       };
 
       const response = await request(app)
@@ -150,8 +149,8 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
         .post("/api/usuarios")
         .send(invalidUser);
 
-      expect(response.status).toBe(200); // Joi permite esto, pero debería ser sanitizado
-      // En un caso real, deberías agregar sanitización adicional
+      expect(response.status).toBe(200); // Joi allows this, but it should be sanitized
+      // In a real case, you should add additional sanitization
     });
   });
 
@@ -159,7 +158,7 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
     test("debe rechazar contraseña demasiado corta", async () => {
       const loginData = {
         email: "usuario@ejemplo.com",
-        password: "123", // Contraseña muy corta
+        password: "123", // Password too short
       };
 
       const response = await request(app).post("/api/login").send(loginData);
@@ -187,7 +186,7 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
 
   describe("Protección contra Inyección SQL", () => {
     test("debe manejar consultas con caracteres especiales SQL", async () => {
-      // Simular consulta de búsqueda con intento de inyección SQL
+      // Simulate search query with attempted SQL injection
       const maliciousQuery = "'; DROP TABLE usuarios; --";
 
       const response = await request(app)
@@ -195,7 +194,7 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
         .query({ q: maliciousQuery });
 
       expect(response.status).toBe(200);
-      // La consulta debe ser tratada como texto literal, no como SQL
+      // The query should be treated as a literal string, not SQL
       expect(response.body.query).toBe(maliciousQuery);
     });
 
@@ -220,7 +219,7 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
         .query({ q: xssContent });
 
       expect(response.status).toBe(200);
-      // El contenido debe ser devuelto tal como se envió (no ejecutado)
+      // Content should be returned as-sent (not executed)
       expect(response.body.query).toBe(xssContent);
     });
 
@@ -238,9 +237,9 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
 
   describe("Validación de Tamaño de Datos", () => {
     test("debe rechazar payloads excesivamente grandes", async () => {
-      // Crear un objeto con datos muy grandes
+      // Create an object with very large data
       const largeData = {
-        nombre: "A".repeat(10000), // Nombre muy largo
+        nombre: "A".repeat(10000), // Very long name
         email: "juan@ejemplo.com",
         edad: 25,
       };
@@ -254,14 +253,14 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
     });
 
     test("debe manejar arrays muy grandes", async () => {
-      // Crear un array con muchos elementos
+      // Create an array with many elements
       const largeArray = Array(10000).fill({ id: 1, data: "test" });
 
       const response = await request(app)
         .post("/api/usuarios")
         .send({ usuarios: largeArray });
 
-      expect(response.status).toBe(400); // Debería rechazar por falta de validación del array
+      expect(response.status).toBe(400); // Should reject due to missing array validation
     });
   });
 
@@ -278,7 +277,7 @@ describe("🛡️ Pruebas de Seguridad - Validación de Entrada", () => {
         .send(userWithWhitespace);
 
       expect(response.status).toBe(200);
-      // Joi no sanitiza espacios por defecto, esto es una limitación a considerar
+      // Joi does not trim whitespace by default; consider this limitation
       expect(response.body.data.nombre).toBe("  Juan   Pérez  ");
     });
 

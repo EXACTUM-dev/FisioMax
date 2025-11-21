@@ -1,16 +1,15 @@
 /**
- * @fileoverview Pruebas de seguridad para manejo de errores
- * @version 1.0.0
+ * @fileoverview Security tests for error handling
+ * @version 1.0.1
  * @author EXACTUM-dev
- *
- * Pruebas que validan el manejo seguro de errores y excepciones
+ * @description Verify secure handling of errors and exceptions (no sensitive disclosure)
  */
 
 import request from "supertest";
 import express from "express";
 
-// Configurar app de prueba
-const { app } = await import("../../test-helpers/security/testApp.helper.js");
+// Configure test app
+const { app } = await import("./test-helpers/security/testApp.helper.js");
 describe("⚠️ Pruebas de Seguridad - Manejo de Errores", () => {
   describe("Exposición de Información Sensible", () => {
     test("no debe exponer stack traces en respuestas de error", async () => {
@@ -125,7 +124,7 @@ describe("⚠️ Pruebas de Seguridad - Manejo de Errores", () => {
 
   describe("Logging Seguro", () => {
     test("debe registrar errores sin exponer información sensible", () => {
-      // Mock console.error para capturar logs
+      // Mock console.error to capture logs
       const originalConsoleError = console.error;
       let loggedError = null;
 

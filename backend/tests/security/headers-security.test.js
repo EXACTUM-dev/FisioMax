@@ -1,22 +1,15 @@
 /**
- * @fileoverview Pruebas de seguridad para headers HTTP y configuración
- * @version 1.0.0
+ * @fileoverview Security tests for HTTP headers and configuration
+ * @version 1.0.1
  * @author EXACTUM-dev
- *
- * Pruebas que validan la configuración de seguridad HTTP y CORS
+ * @description Validate HTTP security headers, CORS and response hardening
  */
 
 // Ensure test env vars are loaded before other imports
 import "../setup.js";
 import request from "supertest";
-import express from "express";
-import helmet from "helmet";
-import cors from "cors";
-import compression from "compression";
-import morgan from "morgan";
-
-// Configurar app de prueba con middlewares de seguridad
-const { app } = await import("../../test-helpers/security/testApp.helper.js");
+// Configure test app with security middlewares
+const { app } = await import("./test-helpers/security/testApp.helper.js");
 describe("🔒 Pruebas de Seguridad - Headers y Configuración", () => {
   describe("Headers de Seguridad con Helmet", () => {
     test("debe incluir X-Content-Type-Options header", async () => {
@@ -125,7 +118,7 @@ describe("🔒 Pruebas de Seguridad - Headers y Configuración", () => {
         .get("/api/test")
         .set("Origin", "https://malicious-site.com");
 
-      // CORS no debería permitir este origen
+      // CORS should not allow this origin
       expect(response.headers["access-control-allow-origin"]).toBeUndefined();
     });
   });

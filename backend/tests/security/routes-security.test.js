@@ -1,15 +1,14 @@
 /**
- * @fileoverview Pruebas de seguridad específicas para las rutas de FisioMax
- * @version 1.0.0
+ * @fileoverview Security tests for FisioMax application routes
+ * @version 1.0.1
  * @author EXACTUM-dev
- *
- * Pruebas que validan la seguridad de las rutas reales implementadas en server.js
+ * @description Validate route-level security, auth, and response hardening
  */
 
 import request from "supertest";
-import { app } from "../../test-helpers/security/testApp.helper.js";
+import { app } from "./test-helpers/security/testApp.helper.js";
 
-// Usar la aplicación de pruebas para las pruebas
+// Use the test application for tests
 
 describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
   describe("Ruta Raíz (/)", () => {
@@ -57,7 +56,7 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
         .post("/login")
         .send("invalid json data");
 
-      expect(response.status).toBe(400); // Express devuelve 400 para JSON inválido
+      expect(response.status).toBe(400); // Express returns 400 for invalid JSON
     });
 
     test("debe incluir headers de seguridad en respuesta", async () => {
@@ -73,7 +72,7 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
       const largePayload = {
         email: "test@example.com",
         password: "password",
-        extraData: "A".repeat(1000000), // 1MB de datos extra
+        extraData: "A".repeat(1000000), // 1MB of extra data
       };
 
       const response = await request(app).post("/login").send(largePayload);
@@ -135,7 +134,7 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
 
   describe("Protección contra Ataques Comunes", () => {
     test("debe proteger contra inyección en parámetros de ruta", async () => {
-      // Intentar acceder a rutas inexistentes con payloads maliciosos
+      // Try accessing non-existent routes with malicious payloads
       const maliciousPaths = [
         "/api/usuarios/1; DROP TABLE usuarios; --",
         "/api/usuarios/1 OR 1=1",
@@ -146,7 +145,7 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
       for (const path of maliciousPaths) {
         const response = await request(app).get(path);
 
-        // Debe devolver 404 para rutas inexistentes, no ejecutar código malicioso
+        // Should return 404 for non-existent routes, not execute malicious code
         expect(response.status).toBe(404);
       }
     });
@@ -177,8 +176,8 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
-      // El tiempo de respuesta no debe ser excesivamente largo
-      expect(responseTime).toBeLessThan(5000); // Menos de 5 segundos
+      // Response time should not be excessively long
+      expect(responseTime).toBeLessThan(5000); // Less than 5 seconds
     });
   });
 
@@ -201,7 +200,7 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
         .set("Access-Control-Request-Method", "GET")
         .set("Access-Control-Request-Headers", "Authorization");
 
-      expect(response.status).toBe(204); // No Content para OPTIONS
+      expect(response.status).toBe(204); // No Content for OPTIONS
     });
 
     test("debe rechazar requests desde orígenes no permitidos", async () => {
@@ -209,7 +208,7 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
         .get("/")
         .set("Origin", "https://malicious-site.com");
 
-      // CORS no debería incluir el header para orígenes no permitidos
+      // CORS should not include the header for disallowed origins
       expect(response.headers["access-control-allow-origin"]).toBeUndefined();
     });
   });
@@ -226,7 +225,7 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
     });
 
     test("debe permitir métodos apropiados para cada ruta", async () => {
-      // GET para ruta raíz
+      // GET for root route
       const getResponse = await request(app).get("/");
       expect(getResponse.status).toBe(200);
 
@@ -238,7 +237,7 @@ describe("🛡️ Pruebas de Seguridad - Rutas de FisioMax", () => {
 
       // GET para usuarios (sin auth)
       const getUsersResponse = await request(app).get("/api/usuarios");
-      expect(getUsersResponse.status).toBe(401); // No autorizado, pero método permitido
+      expect(getUsersResponse.status).toBe(401); // Unauthorized, but method allowed
     });
   });
 

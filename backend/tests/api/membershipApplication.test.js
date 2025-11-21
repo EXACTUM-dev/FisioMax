@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Membership Application API tests
+ * @version 0.1.0
+ * @author EXACTUM-dev
+ * @description Tests for membership application creation, retrieval and status updates
+ */
 import request from "supertest";
 import express from "express";
 

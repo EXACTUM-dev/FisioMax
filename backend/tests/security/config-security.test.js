@@ -1,9 +1,8 @@
 /**
- * @fileoverview Pruebas de seguridad para configuración y variables de entorno
- * @version 1.0.0
+ * @fileoverview Security tests for configuration and environment variables
+ * @version 1.0.1
  * @author EXACTUM-dev
- *
- * Pruebas que validan la configuración segura de la aplicación
+ * @description Validate secure application configuration and environment handling
  */
 
 // Ensure test env vars are loaded before importing application config
@@ -11,7 +10,7 @@ import "../setup.js";
 import config from "../../config.js";
 import dotenv from "dotenv";
 
-// Cargar variables de entorno para pruebas
+// Load environment variables for tests
 dotenv.config({ path: ".env.test", override: true });
 
 describe("🔧 Pruebas de Seguridad - Configuración", () => {
@@ -19,7 +18,7 @@ describe("🔧 Pruebas de Seguridad - Configuración", () => {
     test("debe tener JWT_SECRET configurado en produccion", () => {
       const originalEnv = process.env.NODE_ENV;
 
-      // Simular entorno de producción
+      // Simulate production environment
       process.env.NODE_ENV = "production";
 
       // Verificar que JWT_SECRET esté definido
@@ -28,7 +27,7 @@ describe("🔧 Pruebas de Seguridad - Configuración", () => {
       expect(process.env.JWT_SECRET).not.toBe("your-secret-key");
       expect(process.env.JWT_SECRET).not.toBe("default-secret");
 
-      // Restaurar entorno original
+      // Restore original environment
       process.env.NODE_ENV = originalEnv;
     });
 
@@ -62,7 +61,7 @@ describe("🔧 Pruebas de Seguridad - Configuración", () => {
     });
 
     test("debe usar puerto seguro para base de datos", () => {
-      // Si se especifica puerto, debe ser el estándar o uno seguro
+      // If a port is specified, it should be the standard or a secure one
       if (config.db.port) {
         expect(config.db.port).not.toBe(3306); // Puerto por defecto de MySQL
         expect(config.db.port).not.toBe(5432); // Puerto por defecto de PostgreSQL
@@ -83,7 +82,7 @@ describe("🔧 Pruebas de Seguridad - Configuración", () => {
       // Simular entorno de producción
       process.env.NODE_ENV = "production";
 
-      // Recrear configuración
+      // Recreate configuration
       const prodConfig = {
         cors: {
           allowedOrigins: process.env.CORS_ORIGINS
@@ -97,7 +96,7 @@ describe("🔧 Pruebas de Seguridad - Configuración", () => {
         expect(origin).not.toBe("null");
       });
 
-      // Restaurar entorno original
+      // Restore original environment
       process.env.NODE_ENV = originalEnv;
     });
 

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Minimal security test Express app
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Lightweight app mirroring production middlewares/endpoints for security tests
+ */
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";

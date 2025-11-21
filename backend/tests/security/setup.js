@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Security tests setup utilities
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Loads environment and mocks for security test suites
+ */
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";

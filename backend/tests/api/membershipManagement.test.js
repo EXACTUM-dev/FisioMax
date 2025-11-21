@@ -3,7 +3,7 @@
  * @version 1.0.0
  * @author EXACTUM-dev
  *
- * User story: HU-08 - Revisar y aprobar solicitudes de membrecía
+ * User story: HU-08 - Review and approve membership applications
  */
 
 import request from "supertest";
@@ -247,7 +247,7 @@ describe("Gestión de Solicitudes de Membresía - API", () => {
     });
 
     it("should filter applications by payment status", async () => {
-      // State by  Adaptado del filtro por estado
+      // State: adapted from the status filter
       const response = await request(app).get(
         "/api/membresias?estatusPago=true"
       );
@@ -255,7 +255,7 @@ describe("Gestión de Solicitudes de Membresía - API", () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
 
-      // Verificar que todas las solicitudes retornadas tengan pago realizado
+      // Verify all returned applications have payment completed
       response.body.data.forEach((solicitud) => {
         expect(solicitud.estatusPago).toBe(true);
       });
@@ -286,8 +286,8 @@ describe("Gestión de Solicitudes de Membresía - API", () => {
   });
 
   // ==========================================
-  // VISUALIZACIÓN DE DOCUMENTOS
-  // Nuevo - específico para esta historia
+  // DOCUMENT VIEWING
+  // New - specific to this user story
   // ==========================================
 
   describe("GET /api/membresias/:id/documento/:tipo - Ver documento", () => {

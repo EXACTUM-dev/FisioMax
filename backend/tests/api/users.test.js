@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Users API tests
+ * @version 0.1.0
+ * @author EXACTUM-dev
+ * @description Tests for `GET /api/usuarios` including DB success and error cases
+ */
 // Ensure test env vars are loaded before importing server/config
 import "../setup.js";
 import { jest } from "@jest/globals";

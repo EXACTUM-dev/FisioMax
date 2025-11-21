@@ -1,12 +1,14 @@
 /**
- * Pruebas de integración para el servicio de email (SES)
- * @fileoverview Tests que verifican el funcionamiento completo del servicio de email
+ * @fileoverview Integration tests for email service (SES)
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Verify SES-based email sending and error handling
  */
 
 import request from "supertest";
 import { app } from "./testApp.js";
 
-// Mock del servicio SES
+// Mock the SES service
 jest.mock("@aws-sdk/client-ses", () => ({
   SESClient: jest.fn().mockImplementation(() => ({
     send: jest.fn(),
@@ -38,7 +40,7 @@ describe("Pruebas de Integración - Servicio de Email", () => {
     test("debería fallar con datos incompletos", async () => {
       const incompleteData = {
         nombre: "Juan Pérez",
-        // Falta email y mensaje
+        // Missing email and message
       };
 
       const response = await request(app)
@@ -67,7 +69,7 @@ describe("Pruebas de Integración - Servicio de Email", () => {
     });
 
     test("debería manejar errores del servicio SES", async () => {
-      // Mock para simular error del servicio SES
+      // Mock to simulate SES service error
       const { SESClient } = await import("@aws-sdk/client-ses");
       const mockSend = jest.fn().mockRejectedValue(new Error("SES Error"));
 
@@ -102,13 +104,13 @@ describe("Pruebas de Integración - Servicio de Email", () => {
         mensaje: "Mensaje de prueba",
       };
 
-      // En una implementación real, deberías validar el formato del email
-      // Por ahora solo verificamos que se procese la solicitud
+      // In a real implementation, you should validate the email format
+      // For now we just verify the request is processed
       const response = await request(app)
         .post("/api/contacto")
         .send(contactData);
 
-      // El endpoint actual no valida formato de email, pero debería
+      // The endpoint currently does not validate email format, but it should
       expect([200, 400]).toContain(response.status);
     });
 
@@ -148,7 +150,7 @@ describe("Pruebas de Integración - Servicio de Email", () => {
     test("debería configurar SES con la región correcta", async () => {
       const { SESClient } = await import("@aws-sdk/client-ses");
 
-      // Verificar que se instancia SESClient
+      // Verify that SESClient is instantiated
       expect(SESClient).toHaveBeenCalled();
     });
   });

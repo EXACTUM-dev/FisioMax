@@ -1,21 +1,20 @@
 /**
- * @fileoverview Pruebas de seguridad para el servidor real de FisioMax
- * @version 1.0.0
+ * @fileoverview Security tests for the real FisioMax server
+ * @version 1.0.1
  * @author EXACTUM-dev
- *
- * Pruebas que validan la seguridad del servidor real importado desde server.js
+ * @description Tests validating the security posture of the actual server import
  */
 
 import request from "supertest";
 
-// Configurar variables de entorno para pruebas antes de importar el servidor
+// Configure environment variables for tests before importing the server
 process.env.NODE_ENV = "test";
 process.env.PORT = "5001";
 process.env.CLERK_SECRET_KEY = "sk_test_clerk_secret_key_for_testing_purposes";
 process.env.CORS_ORIGINS = "http://localhost:5174";
 
-// Importar la aplicación de pruebas después de configurar las variables de entorno
-const { app } = await import("../../test-helpers/security/testApp.helper.js");
+// Import test application after setting environment variables
+const { app } = await import("./test-helpers/security/testApp.helper.js");
 
 describe("🛡️ Pruebas de Seguridad - Servidor Real de FisioMax", () => {
   describe("Ruta Raíz (/)", () => {
@@ -141,7 +140,7 @@ describe("🛡️ Pruebas de Seguridad - Servidor Real de FisioMax", () => {
 
   describe("Protección contra Ataques Comunes", () => {
     test("debe proteger contra inyección en parámetros de ruta", async () => {
-      // Intentar acceder a rutas inexistentes con payloads maliciosos
+      // Try accessing non-existent routes with malicious payloads
       const maliciousPaths = [
         "/api/usuarios/1; DROP TABLE usuarios; --",
         "/api/usuarios/1 OR 1=1",
@@ -152,7 +151,7 @@ describe("🛡️ Pruebas de Seguridad - Servidor Real de FisioMax", () => {
       for (const path of maliciousPaths) {
         const response = await request(app).get(path);
 
-        // Debe devolver 404 para rutas inexistentes, no ejecutar código malicioso
+        // Should return 404 for non-existent routes, not execute malicious code
         expect(response.status).toBe(404);
       }
     });
@@ -177,14 +176,14 @@ describe("🛡️ Pruebas de Seguridad - Servidor Real de FisioMax", () => {
     test("debe proteger contra ataques de timing", async () => {
       const startTime = Date.now();
 
-      // Request sin autenticación
+      // Request without authentication
       await request(app).get("/api/usuarios");
 
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
-      // El tiempo de respuesta no debe ser excesivamente largo
-      expect(responseTime).toBeLessThan(5000); // Menos de 5 segundos
+      // Response time should not be excessively long
+      expect(responseTime).toBeLessThan(5000); // Less than 5 seconds
     });
   });
 
@@ -207,7 +206,7 @@ describe("🛡️ Pruebas de Seguridad - Servidor Real de FisioMax", () => {
         .set("Access-Control-Request-Method", "GET")
         .set("Access-Control-Request-Headers", "Authorization");
 
-      expect(response.status).toBe(204); // No Content para OPTIONS
+      expect(response.status).toBe(204); // No Content for OPTIONS
     });
 
     test("debe rechazar requests desde orígenes no permitidos", async () => {
@@ -215,7 +214,7 @@ describe("🛡️ Pruebas de Seguridad - Servidor Real de FisioMax", () => {
         .get("/")
         .set("Origin", "https://malicious-site.com");
 
-      // CORS no debería incluir el header para orígenes no permitidos
+      // CORS should not include the header for disallowed origins
       expect(response.headers["access-control-allow-origin"]).toBeUndefined();
     });
   });
@@ -232,7 +231,7 @@ describe("🛡️ Pruebas de Seguridad - Servidor Real de FisioMax", () => {
     });
 
     test("debe permitir métodos apropiados para cada ruta", async () => {
-      // GET para ruta raíz
+      // GET for root route
       const getResponse = await request(app).get("/");
       expect(getResponse.status).toBe(200);
 
@@ -244,7 +243,7 @@ describe("🛡️ Pruebas de Seguridad - Servidor Real de FisioMax", () => {
 
       // GET para usuarios (sin auth)
       const getUsersResponse = await request(app).get("/api/usuarios");
-      expect(getUsersResponse.status).toBe(401); // No autorizado, pero método permitido
+      expect(getUsersResponse.status).toBe(401); // Unauthorized, but method allowed
     });
   });
 

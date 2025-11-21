@@ -1,6 +1,6 @@
 /**
  * @fileoverview Unit tests for createRoleWithPrivileges in roles model
- * @version 1.0.0
+ * @version 1.0.1
  * @author EXACTUM-dev
  * @description Tests for creating roles with and without privileges using mocked DB connection
  */

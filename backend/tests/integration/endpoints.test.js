@@ -1,6 +1,8 @@
 /**
- * Pruebas de integración para endpoints principales del servidor
- * @fileoverview Tests que verifican el funcionamiento completo de los endpoints
+ * @fileoverview Integration tests for main server endpoints
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Verify core HTTP endpoints and request/response shapes
  */
 
 import request from "supertest";
@@ -94,8 +96,8 @@ describe("Pruebas de Integración - Endpoints Principales", () => {
       // Restaurar console.error
       console.error = originalConsoleError;
 
-      // En un entorno de test real, esto debería ser 200
-      // Pero como no tenemos SES configurado, puede fallar
+      // In a real test environment this should be 200
+      // But since SES may not be configured here, it can fail
       expect([200, 500]).toContain(response.status);
     });
   });

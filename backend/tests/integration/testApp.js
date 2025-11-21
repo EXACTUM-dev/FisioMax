@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Minimal test Express app used by integration tests
+ * @version 0.1.1
+ * @author EXACTUM-dev
+ * @description Lightweight app mirroring production middlewares/endpoints for deterministic tests
+ */
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";

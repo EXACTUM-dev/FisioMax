@@ -1,9 +1,8 @@
 /**
- * @fileoverview Pruebas de seguridad para autenticación y autorización
- * @version 1.0.0
+ * @fileoverview Security tests for authentication and authorization
+ * @version 1.0.1
  * @author EXACTUM-dev
- *
- * Pruebas que validan la seguridad del sistema de autenticación con Clerk
+ * @description Tests that validate the authentication system (Clerk) and role-based access
  */
 
 // Ensure test env vars are loaded before other imports
@@ -15,11 +14,11 @@ import helmet from "helmet";
 import compression from "compression";
 import { requireAuth } from "../../src/middlewares/clerkAuth.js";
 
-// Configurar app de prueba
-const { app } = await import("../../test-helpers/security/testApp.helper.js");
+// Configure test app
+const { app } = await import("./test-helpers/security/testApp.helper.js");
 
 /*
-// Middlewares de seguridad
+// Security middlewares
 app.use(helmet());
 app.use(cors({
   origin: ['http://localhost:5174'],
@@ -30,12 +29,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-// Rutas de prueba que coinciden con server.js
+// Test routes matching server.js
 app.get('/api/public', (req, res) => {
   res.json({ message: 'Ruta pública accesible' });
 });
 
-// Ruta pública de login (como en server.js)
+// Public login route (as in server.js)
 app.post('/login', (req, res) => {
   res.json({
     message: 'Endpoint de login - Acceso público',
@@ -43,7 +42,7 @@ app.post('/login', (req, res) => {
   });
 });
 
-// Ruta protegida de usuarios (como en server.js)
+// Protected users route (as in server.js)
 app.get('/api/usuarios', requireAuth, (req, res) => {
   const userId = req.auth?.userId;
   
@@ -59,7 +58,7 @@ app.get('/api/usuarios', requireAuth, (req, res) => {
 });
 
 app.get('/api/admin', requireAuth, (req, res) => {
-  // Simular verificación de rol admin
+  // Simulate admin role check
   const userRoles = req.auth?.sessionClaims?.metadata?.roles || [];
   if (!userRoles.includes('admin')) {
     return res.status(403).json({ error: 'Acceso denegado' });
@@ -128,15 +127,15 @@ describe("🔐 Pruebas de Seguridad - Autenticación", () => {
 
   describe("Autorización por Roles", () => {
     test("debe denegar acceso a usuarios sin rol de admin", async () => {
-      // Simular token con usuario sin rol admin
+      // Simulate token with a user that lacks the admin role
       const mockToken = "valid_token_without_admin_role";
 
-      // Mock del middleware requireAuth para esta prueba
+      // Mock requireAuth middleware for this test
       const appWithMockAuth = express();
       appWithMockAuth.use(express.json());
 
       appWithMockAuth.get("/api/admin", (req, res) => {
-        // Simular que el usuario no tiene rol admin
+        // Simulate that the user does not have the admin role
         const userRoles = [];
         if (!userRoles.includes("admin")) {
           return res.status(403).json({ error: "Acceso denegado" });
@@ -151,12 +150,12 @@ describe("🔐 Pruebas de Seguridad - Autenticación", () => {
     });
 
     test("debe permitir acceso a usuarios con rol de admin", async () => {
-      // Mock del middleware requireAuth para esta prueba
+      // Mock requireAuth middleware for this test
       const appWithMockAuth = express();
       appWithMockAuth.use(express.json());
 
       appWithMockAuth.get("/api/admin", (req, res) => {
-        // Simular que el usuario tiene rol admin
+        // Simulate that the user has the admin role
         const userRoles = ["admin"];
         if (!userRoles.includes("admin")) {
           return res.status(403).json({ error: "Acceso denegado" });
@@ -186,7 +185,7 @@ describe("🔐 Pruebas de Seguridad - Autenticación", () => {
 */
   describe("Rate Limiting", () => {
     test("debe implementar protección contra ataques de fuerza bruta", async () => {
-      // Simular múltiples intentos de autenticación fallidos
+      // Simulate multiple failed authentication attempts
       const promises = [];
 
       for (let i = 0; i < 10; i++) {

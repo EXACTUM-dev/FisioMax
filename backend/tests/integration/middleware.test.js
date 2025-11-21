@@ -1,8 +1,8 @@
 /**
- * @fileoverview Tests that veryfy the functions of all middlewares
+ * @fileoverview Tests that verify the behavior of application middlewares
+ * @version 1.0.1
  * @author EXACTUM-dev
- * @version 1.0.0
- *
+ * @description Middleware integration tests (Helmet, CORS, compression, morgan, parsers)
  */
 
 import request from "supertest";
