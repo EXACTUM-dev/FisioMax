@@ -37,7 +37,8 @@ export async function createLoginErrorLog(req, res) {
     // Use request IP if not provided in body
     const finalIpOrigen = ipOrigen || getRequestIp(req);
     // Use User-Agent from header if not provided in body
-    const finalAgenteUsuario = agenteUsuario || req.headers["user-agent"] || null;
+    const finalAgenteUsuario =
+      agenteUsuario || req.headers["user-agent"] || null;
 
     const insertId = await insertLoginErrorLog({
       usuario,
@@ -50,11 +51,23 @@ export async function createLoginErrorLog(req, res) {
 
     return res.status(201).json({ success: true, id: insertId });
   } catch (error) {
-    return res.status(500).json({
+    const responsePayload = {
       success: false,
       message: "Failed to register login log",
       detail: error?.message,
-    });
+    };
+
+    if (process.env.NODE_ENV === "development") {
+      responsePayload.stack = error?.stack;
+      responsePayload.attempted = {
+        usuario: req.body?.usuario ?? null,
+        ipOrigen: req.body?.ipOrigen || getRequestIp(req),
+        agenteUsuario:
+          req.body?.agenteUsuario || req.headers["user-agent"] || null,
+        codigoError: req.body?.codigoError || null,
+      };
+    }
+
+    return res.status(500).json(responsePayload);
   }
 }
-
