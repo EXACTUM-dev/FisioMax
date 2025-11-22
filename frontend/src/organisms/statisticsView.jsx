@@ -251,7 +251,7 @@ export default function StatisticsView() {
                 const barHeight = ((item.value || 0) / yAxisDisplayMax) * maxBarHeight;
                 const color = colorScheme[index % colorScheme.length];
                 // Calculate bar width based on number of items, with min and max constraints
-                const barWidth = Math.max(25, Math.min(50, 600 / Math.max(data.length, 10)));
+                const barWidth = Math.max(20, Math.min(40, 800 / Math.max(data.length, 10)));
                 
                 return (
                   <div 
@@ -285,7 +285,7 @@ export default function StatisticsView() {
               const displayLabel = abbreviateLabels 
                 ? abbreviateStateName(item.label || "Sin etiqueta")
                 : (item.label || "Sin etiqueta");
-              const barWidth = Math.max(25, Math.min(50, 600 / Math.max(data.length, 10)));
+              const barWidth = Math.max(20, Math.min(40, 800 / Math.max(data.length, 10)));
               
               return (
                 <div 
