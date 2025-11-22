@@ -57,7 +57,6 @@ export async function getContentById(contentId) {
     if (error.message === "Content not found") {
       throw error;
     }
-    console.error("Database error in getContentById:", error);
     throw new Error("Database error");
   }
 }
@@ -165,7 +164,6 @@ export async function getAvailableContent(
       hasMore: offset + limit < total,
     };
   } catch (error) {
-    console.error("Database error in getAvailableContent:", error);
     throw new Error("Database error");
   }
 }
@@ -205,7 +203,6 @@ export async function createContent(contentData) {
 
     return result.insertId;
   } catch (error) {
-    console.error("Database error in createContent:", error);
     throw new Error("Database error");
   }
 }
@@ -219,7 +216,6 @@ export async function createContent(contentData) {
  */
 export async function assignContentToPrivileges(contentId, privilegeIds) {
   if (!privilegeIds || privilegeIds.length === 0) {
-    console.warn("No privileges to assign to content:", contentId);
     return;
   }
 
@@ -234,7 +230,137 @@ export async function assignContentToPrivileges(contentId, privilegeIds) {
       await db.query(query, [contentId, privilegeId]);
     }
   } catch (error) {
-    console.error("Database error in assignContentToPrivileges:", error);
+    throw new Error("Database error");
+  }
+}
+
+/**
+ * Updates content title and description
+ * @param {number} contentId - Content ID to update
+ * @param {Object} updateData - Data to update
+ * @param {string} updateData.nombre - New title
+ * @param {string} updateData.descripcion - New description
+ * @returns {Promise<Object>} Updated content data
+ * @throws {Error} If content not found or database error
+ */
+export async function updateContent(contentId, updateData) {
+  const { nombre, descripcion } = updateData;
+
+  // First check if content exists
+  const checkQuery = `
+    SELECT IDContenido, nombre, tipo
+    FROM contenido
+    WHERE IDContenido = ?
+      AND eliminado = 0
+      AND deletedAt IS NULL
+  `;
+
+  try {
+    const [existing] = await db.query(checkQuery, [contentId]);
+
+    if (existing.length === 0) {
+      throw new Error("Content not found");
+    }
+
+    const oldNombre = existing[0].nombre;
+    const contentType = existing[0].tipo;
+
+    // Verify it's an editable content type
+    if (!DISPLAYABLE_CONTENT_TYPES.includes(contentType)) {
+      throw new Error("Content type cannot be edited");
+    }
+
+    // Update main content
+    const updateQuery = `
+      UPDATE contenido 
+      SET nombre = ?, descripcion = ?
+      WHERE IDContenido = ?
+        AND eliminado = 0
+        AND deletedAt IS NULL
+    `;
+
+    const [updateResult] = await db.query(updateQuery, [nombre, descripcion, contentId]);
+
+    if (updateResult.affectedRows === 0) {
+      throw new Error("Content not found or already deleted");
+    }
+
+    // Also update thumbnail with same name if exists
+    const updateThumbnailQuery = `
+      UPDATE contenido 
+      SET nombre = ?, descripcion = ?
+      WHERE nombre = ?
+        AND tipo = 'imagen'
+        AND eliminado = 0
+        AND deletedAt IS NULL
+    `;
+
+    await db.query(updateThumbnailQuery, [nombre, `Miniatura de ${nombre}`, oldNombre]);
+
+    // Return updated content
+    const [updated] = await db.query(
+      `SELECT * FROM contenido WHERE IDContenido = ?`,
+      [contentId]
+    );
+
+    return updated[0];
+  } catch (error) {
+    if (error.message === "Content not found" || error.message === "Content type cannot be edited" || error.message === "Content not found or already deleted") {
+      throw error;
+    }
+    throw new Error("Database error");
+  }
+}
+
+/**
+ * Soft deletes content and returns S3 keys for physical deletion
+ * @param {number} contentId - Content ID to delete
+ * @returns {Promise<Object>} Object with mainKey and thumbnailKey
+ * @throws {Error} If content not found or database error
+ */
+export async function softDeleteContent(contentId) {
+  // Get content info including S3 keys
+  const selectQuery = `
+    SELECT 
+      c.nombre,
+      c.IDMultimedia as mainKey,
+      t.IDMultimedia as thumbnailKey
+    FROM contenido c
+    LEFT JOIN contenido t 
+      ON t.nombre = c.nombre 
+      AND t.tipo = 'imagen'
+      AND t.eliminado = 0
+      AND t.deletedAt IS NULL
+    WHERE c.IDContenido = ?
+      AND c.eliminado = 0
+      AND c.deletedAt IS NULL
+      AND c.tipo IN (?)
+    LIMIT 1
+  `;
+
+  try {
+    const [rows] = await db.query(selectQuery, [contentId, DISPLAYABLE_CONTENT_TYPES]);
+
+    if (rows.length === 0) {
+      throw new Error("Content not found");
+    }
+
+    const { nombre, mainKey, thumbnailKey } = rows[0];
+
+    // Soft delete all content with this name (main + thumbnail)
+    const updateQuery = `
+      UPDATE contenido 
+      SET eliminado = 1, deletedAt = NOW()
+      WHERE nombre = ?
+    `;
+
+    await db.query(updateQuery, [nombre]);
+
+    return { mainKey, thumbnailKey };
+  } catch (error) {
+    if (error.message === "Content not found") {
+      throw error;
+    }
     throw new Error("Database error");
   }
 }
