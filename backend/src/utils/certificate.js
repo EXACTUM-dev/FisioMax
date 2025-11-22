@@ -16,8 +16,12 @@ import fs from 'fs';
  * @param {DatosCertificado} datos - Object with certificate data
  * @returns {Promise<GeneratedCertificate>} Object with the generated PDF and metadata
  */
-async function createCertificate({ nombre, categoria, vigencia, numero }) {
+export async function createCertificate({ nombres, apellidoP, apellidoM, membresiaTipo, vigencia}) {
   // 1. Cargar plantilla
+  const nombreCompleto = [nombres, apellidoP, apellidoM]
+    .filter(Boolean) // Elimina valores null/undefined/vacíos
+    .join(' ')
+    .trim();
   const templateBytes = fs.readFileSync('./certificateTemplate.pdf');
   const pdfDoc = await PDFDocument.load(templateBytes);
 
@@ -28,7 +32,7 @@ async function createCertificate({ nombre, categoria, vigencia, numero }) {
   const page = pdfDoc.getPage(0);
 
   // 4. Dibujar textos en coordenadas exactas
-  page.drawText(nombre, {
+  page.drawText(nombreCompleto, {
     x: 140,
     y: 420,
     size: 32,
@@ -36,7 +40,7 @@ async function createCertificate({ nombre, categoria, vigencia, numero }) {
     color: rgb(0, 0, 0)
   });
 
-  page.drawText(categoria, {
+  page.drawText(membresiaTipo, {
     x: 140,
     y: 350,
     size: 24,
@@ -52,22 +56,7 @@ async function createCertificate({ nombre, categoria, vigencia, numero }) {
     color: rgb(0, 0, 0)
   });
 
-  page.drawText(`AFILIADO NO: ${numero}`, {
-    x: 120,
-    y: 110,
-    size: 18,
-    font,
-    color: rgb(0, 0, 0)
-  });
-
   // 5. Guardar PDF final
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(`./certificado_${nombre}.pdf`, pdfBytes);
 }
-
-generarCertificado({
-  nombre: "Mauricio Salas Hernández",
-  categoria: "LICENCIADO EN FORMACIÓN",
-  vigencia: "DICIEMBRE 2025",
-  numero: "000241"
-});

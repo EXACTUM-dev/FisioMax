@@ -5,7 +5,7 @@
  */
 
 import Payment from '../models/payment.model.js';
-import Content from '../models/content.controller.js';
+import {generateAndUploadCertificate} from '../controllers/content.controller.js';
 
 
 /**

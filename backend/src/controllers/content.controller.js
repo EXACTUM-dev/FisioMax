@@ -16,6 +16,7 @@ import {
 } from "../models/users.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
+import { createCertificate } from "../utils/certificate.js";
 import S3Service from "../services/s3Service.js";
 import { sanitizeContentInput } from "../utils/sanitization.js";
 import path from "path";
@@ -432,21 +433,23 @@ export async function presignUploadUrl(req, res) {
 export async function generateAndUploadCertificate(membershipId) {
   try {
     // Obtain membership data for the certificate
-    const membershipData = await Payment.getMembershipDetails(membershipId);
+    const membershipData = await getUsuarioByClerkId(membershipId);
 
     if (!membershipData) {
       console.error(`Membership ${membershipId} not found for certificate generation`);
       return { generated: false, error: 'Membership not found' };
     }
 
-    const { nombre, categoria, vigencia, numeroAfiliado } = membershipData;
+    const { nombres, apellidoP, apellidoM, membresiaTipo} = membershipData;
+    const vigencia = "Diciembre";
 
     // Generate the PDF
-    const pdfBytes = await generarCertificado({
-      nombre,
-      categoria,
-      vigencia,
-      numero: numeroAfiliado
+    const pdfBytes = await createCertificate({
+      nombres,
+      apellidoP,
+      apellidoM,
+      membresiaTipo,
+      vigencia
     });
 
     // Create a unique name for the file
