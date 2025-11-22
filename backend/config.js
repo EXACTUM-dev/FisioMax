@@ -89,6 +89,12 @@ const config = {
   encryption: {
     key: process.env.ENCRYPTION_KEY,
   },
+
+  // Mercado Pago configuration
+  mercadoPago: {
+    accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN,
+    publicKey: process.env.MERCADO_PAGO_PUBLIC_KEY,
+  },
 };
 
 // Validate critical environment variables

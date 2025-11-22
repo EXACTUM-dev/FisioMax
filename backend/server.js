@@ -118,6 +118,12 @@ app.use("/api/content", contentRoutes);
  */
 app.use("/api", homePageRoutes);
 
+/**
+ * Routes for payment processing with Mercado Pago.
+ */
+import paymentRoutes from "./src/routes/payment.routes.js";
+app.use("/api/payments", paymentRoutes);
+
 //-------------------------
 // ERROR HANDLING MIDDLEWARE
 // Order matters: JSON parsing errors -> Specific errors -> Generic errors -> 404

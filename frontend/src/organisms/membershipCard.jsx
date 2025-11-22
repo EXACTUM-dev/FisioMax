@@ -1,15 +1,28 @@
 /**
  * @fileoverview Membership card component for displaying membership information.
  * Shows registration date, expiration date, and membership plan.
- * @version 1.1.0
+ * @version 1.2.0
  * @author EXACTUM-dev
  */
 
 import React, { useState, useEffect } from "react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 import Button from "../atoms/button";
 import EditButton from "../atoms/editButton";
 import Dropdown from "../molecules/dropdown";
-import SuccessErrorModal from "./successErrorModal"; // Import success/error feedback modal
+import SuccessErrorModal from "./successErrorModal";
+import PaymentService from "../services/paymentService";
+
+// Membership prices in MXN (per year)
+const MEMBERSHIP_PRICES = {
+  'Estudiante/Pasante': 900,
+  'Licenciados en Formación': 1100,
+  'Especializados': 1500,
+  'Ordinaria': 1500, // Default/legacy type
+  'básica': 5,
+  'premium': 1100,
+  'empresarial': 1500,
+};
 
 /**
  * Displays user's membership information and payment button.
@@ -26,6 +39,8 @@ export default function MembershipCard({
   onSave,
   onEditChange,
 }) {
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     membershipType: "",
@@ -38,6 +53,7 @@ export default function MembershipCard({
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success"); // "success" | "error"
   const [modalMessage, setModalMessage] = useState("");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Initialize form data when data changes or entering edit mode
   useEffect(() => {
@@ -147,6 +163,32 @@ export default function MembershipCard({
     }));
   };
 
+  const handlePayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+      
+      const membershipType = data.membershipType || 'básica';
+      const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
+
+      // Create payment preference and redirect to Mercado Pago
+      await PaymentService.createPreferenceAndPay(
+        {
+          membershipType,
+          amount,
+        },
+        getToken
+      );
+    } catch (error) {
+      console.error('Error al iniciar pago:', error);
+      setModalType('error');
+      setModalMessage(
+        error?.message || 'No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.'
+      );
+      setShowModal(true);
+      setIsProcessingPayment(false);
+    }
+  };
+
   // Options for membership type dropdown
   const membershipTypeOptions = [
     { value: "", label: "Seleccionar plan" },
@@ -200,6 +242,16 @@ export default function MembershipCard({
               >
                 {paymentStatus}
               </span>
+            </div>
+
+            <div className="mt-4">
+                <Button
+                    size="sm"
+                    label={isProcessingPayment ? "Procesando..." : "Pagar membresía"}
+                    onClick={handlePayment}
+                    disabled={isProcessingPayment}
+                    className="cursor-pointer"
+                />
             </div>
           </div>
         </>
