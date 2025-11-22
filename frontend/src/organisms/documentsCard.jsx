@@ -171,7 +171,7 @@ export default function DocumentsCard({
       (formFiles.cedula && formFiles.cedula instanceof File) ||
       (formFiles.constancias && formFiles.constancias instanceof File) ||
       extraDocs.some((doc) => doc.file && doc.file instanceof File);
-    
+
     if (!hasFiles) {
       // No files selected, just close edit mode
       setIsEditing(false);
@@ -193,7 +193,7 @@ export default function DocumentsCard({
       // Create FormData with files
       const formData = new FormData();
       let fileCount = 0;
-      
+
       if (formFiles.titulo && formFiles.titulo instanceof File) {
         formData.append("titulo", formFiles.titulo);
         fileCount++;
