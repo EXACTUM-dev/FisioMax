@@ -19,7 +19,27 @@ jest.mock("@clerk/clerk-react", () => ({
       emailAddresses: [{ emailAddress: "test@example.com" }],
     },
   }),
+  useAuth: () => ({
+    getToken: async () => "test-token",
+  }),
 }));
 
 // Mock para variables de entorno
 global.process.env.VITE_CLERK_PUBLISHABLE_KEY = "test_key";
+
+// Provide a default global.fetch mock for tests that call APIs
+if (typeof global.fetch === 'undefined') {
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      json: async () => ({ success: true, data: { IDUsuario: 1, nombres: 'Test User' } }),
+    })
+  );
+}
+
+// Polyfill TextEncoder/TextDecoder for Jest/jsdom environment when missing
+if (typeof global.TextEncoder === "undefined") {
+  const { TextEncoder, TextDecoder } = require("util");
+  global.TextEncoder = TextEncoder;
+  global.TextDecoder = TextDecoder;
+}
