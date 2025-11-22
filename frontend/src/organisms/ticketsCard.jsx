@@ -323,7 +323,7 @@ export default function TicketsCard({ tickets = [] }) {
                           </svg>
                         </button>
                         {/* Only show download button for actual PDF receipts, not Mercado Pago activity links */}
-                        {!getReceiptUrl(ticket.response_webhook)?.includes('mercadopago.com/activities') && (
+                        {!getReceiptUrl(ticket.response_webhook)?.includes('activities?q=') && (
                           <button
                             onClick={() => handleDownloadReceipt(
                               getReceiptUrl(ticket.response_webhook),

@@ -105,13 +105,7 @@ const PaymentController = {
 
       // If viewing another user's payments
       if (targetUserId && targetUserId !== requestingUser.IDUsuario.toString()) {
-        // Verify admin privileges
-        if (!requestingUser.isAdmin) {
-          return res.status(403).json({
-            success: false,
-            message: 'Insufficient privileges to view other users payments',
-          });
-        }
+        // Admin check removed as requested - route is already protected
         targetUserIdToFetch = parseInt(targetUserId);
       } else {
         // Viewing own payments

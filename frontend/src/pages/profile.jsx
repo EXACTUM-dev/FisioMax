@@ -100,15 +100,16 @@ export default function ProfilePage() {
           : me;
         setUserProfile(profileData);
 
-        // Fetch payment tickets only for own profile (not when viewing others)
-        if (!userId) {
-          try {
-            const paymentsData = await PaymentService.getUserPayments(getToken);
-            setPaymentTickets(paymentsData.payments || []);
-          } catch (paymentErr) {
-            console.error("Error fetching payment tickets:", paymentErr);
-            // Don't block the page if payments fail, just log the error
-          }
+        // Fetch payment tickets for the displayed user
+        try {
+          // If userId is present (viewing other), pass it. Otherwise pass null (viewing self).
+          const targetUserId = userId || null;
+          const paymentsData = await PaymentService.getUserPayments(getToken, targetUserId);
+          setPaymentTickets(paymentsData.payments || []);
+        } catch (paymentErr) {
+          console.error("Error fetching payment tickets:", paymentErr);
+          // Don't block the page if payments fail, just log the error
+          setPaymentTickets([]);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
