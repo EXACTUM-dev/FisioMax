@@ -6,7 +6,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MembershipInfoModal from "../membershipInfoModal";
+import Button from "../../atoms/button";
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -15,24 +15,24 @@ export default function HeroSection() {
     <section className="bg-gray-50 py-20 px-4">
       <div className="max-w-6xl mx-auto text-center">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-          Impulsa tu práctica en piso pélvico con el apoyo de una comunidad
-          profesional.
+          Profesionalizando tu práctica clínica en el beneficio de tus pacientes
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          Formación constante, recursos actualizados y una red nacional de
-          especialistas reunidos en un solo lugar.
+          Pertenece a la primer sociedad creada por fisioterapeutas pélvicos del
+          país, con el objetivo de mejorar nuestra práctica profesional.
         </p>
         <div className="flex flex-col gap-2 justify-center items-center">
-          <button
+          <Button
             onClick={() => {
               navigate("/solicitud-membresia", {
                 state: { showInfoModal: true, fromOverview: true },
               });
             }}
-            className="bg-[#CAD00F] hover:bg-[#b8bd0d] text-gray-900 font-semibold px-8 py-3 rounded-md text-lg transition-colors"
+            variant="brand"
+            className="px-8 py-3 text-lg"
           >
             Únete a la SOMEFIPP
-          </button>
+          </Button>
           <a
             href="https://api.whatsapp.com/send/?phone=525611116465&text=%21Hola%21+%C2%BFEn+qu%C3%A9+podemos+ayudarte%3F&type=phone_number&app_absent=0"
             target="_blank"

@@ -8,6 +8,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import Modal from "./modal";
 import Button from "../atoms/button";
+import Dropdown from "./dropdown";
 import ConfirmationModal from "./confirmationModal";
 import SuccessErrorModal from "../organisms/successErrorModal";
 import { fetchWithClerk } from "../utils/api";
@@ -26,28 +27,13 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
   const { getToken } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const dropdownRef = useRef(null);
 
   // Success/Error modal states
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
-  // Handles closing the dropdown when clicking outside
-  useEffect(() => {
-    function handleClick(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-    }
-    if (dropdownOpen) {
-      document.addEventListener("click", handleClick);
-      return () => document.removeEventListener("click", handleClick);
-    }
-  }, [dropdownOpen]);
 
   // Determines the current user role
   const current =
@@ -68,10 +54,8 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
   };
 
   // Handle role selection in dropdown
-  const handleSelectRole = (role) => {
-    const roleName = role?.nombre || role?.name || role?.rol || role;
-    setSelectedRole(roleName);
-    setDropdownOpen(false);
+  const handleSelectRole = (e) => {
+    setSelectedRole(e.target.value);
   };
 
   // Handle confirm button
@@ -208,134 +192,17 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
 
           {/* Role selection dropdown */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Seleccionar Rol
-            </label>
-
-            <div className="relative" ref={dropdownRef}>
-              {/* Dropdown button */}
-              <button
-                type="button"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="
-                  w-full
-                  px-4 py-2.5
-                  rounded-lg 
-                  font-medium 
-                  text-sm
-                  transition-all 
-                  duration-200
-                  bg-white
-                  border border-slate-300
-                  text-slate-700 
-                  hover:border-slate-400
-                  hover:bg-slate-50
-                  shadow-sm
-                  focus:outline-none 
-                  focus:ring-2 
-                  focus:ring-brand/50 
-                  focus:border-brand
-                  flex items-center justify-between
-                "
-              >
-                <span className="truncate">
-                  {selectedRole || "Selecciona un rol"}
-                </span>
-                {/* Chevron icon */}
-                <svg
-                  className={`w-5 h-5 transition-transform flex-shrink-0 ml-2 ${
-                    dropdownOpen ? "rotate-180" : ""
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-
-              {/* Dropdown menu */}
-              {dropdownOpen && (
-                <div
-                  className="
-                  absolute 
-                  z-50 
-                  mt-2 
-                  w-full
-                  bg-white 
-                  rounded-lg 
-                  shadow-lg 
-                  border 
-                  border-slate-200
-                  max-h-60
-                  overflow-y-auto
-                  [&::-webkit-scrollbar]:w-2
-                  [&::-webkit-scrollbar-track]:bg-slate-100
-                  [&::-webkit-scrollbar-track]:rounded-lg
-                  [&::-webkit-scrollbar-thumb]:bg-slate-300
-                  [&::-webkit-scrollbar-thumb]:rounded-lg
-                  [&::-webkit-scrollbar-thumb]:hover:bg-slate-400
-                "
-                >
-                  {roles.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-slate-500 text-center">
-                      No hay roles disponibles
-                    </div>
-                  ) : (
-                    roles.map((role) => {
-                      const roleName =
-                        role?.nombre || role?.name || role?.rol || role;
-                      const isSelected = roleName === selectedRole;
-
-                      return (
-                        <button
-                          key={role?.id || role?.IDRol || roleName}
-                          type="button"
-                          onClick={() => handleSelectRole(role)}
-                          className={`
-                            w-full 
-                            text-left 
-                            px-4 
-                            py-2.5
-                            text-sm
-                            transition-colors
-                            hover:bg-slate-50
-                            ${
-                              isSelected
-                                ? "bg-[#CAD00F]/10 text-slate-900 font-medium"
-                                : "text-slate-700"
-                            }
-                            flex items-center justify-between
-                            first:rounded-t-lg
-                            last:rounded-b-lg
-                          `}
-                        >
-                          <span>{roleName}</span>
-                          {isSelected && (
-                            <svg
-                              className="w-4 h-4"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-            </div>
+            <Dropdown
+              name="role"
+              label="Seleccionar Rol"
+              value={selectedRole || ""}
+              onChange={handleSelectRole}
+              options={roles.map((role) => ({
+                value: role?.nombre || role?.name || role?.rol || role,
+                label: role?.nombre || role?.name || role?.rol || role,
+              }))}
+              placeholder="Selecciona un rol"
+            />
           </div>
 
           {/* Action buttons */}

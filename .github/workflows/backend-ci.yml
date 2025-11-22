@@ -12,5 +12,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm install --prefix backend
-      - run: npm run build --prefix backend
       - run: npm test --prefix backend

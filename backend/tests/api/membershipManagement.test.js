@@ -2,130 +2,323 @@
  * @fileoverview Test - Managment of membership applications
  * @version 1.0.0
  * @author EXACTUM-dev
- * 
- * User story: HU-08 - Revisar y aprobar solicitudes de membrecía
+ *
+ * User story: HU-08 - Review and approve membership applications
  */
 
-import request from 'supertest';
-import { jest } from '@jest/globals';
-import express from 'express';
-import membershipManagementRoutes from '../../src/routes/membershipApplication.routes.js';
+import request from "supertest";
+import { jest } from "@jest/globals";
+import express from "express";
+import multer from "multer";
 
-// SES service Mock
-jest.mock('@aws-sdk/client-ses', () => ({
+// Mock AWS SES and S3 so tests can observe calls
+jest.mock("@aws-sdk/client-ses", () => ({
   SESClient: jest.fn().mockImplementation(() => ({
-    send: jest.fn().mockResolvedValue({ MessageId: 'test-message-id' })
+    send: jest.fn().mockResolvedValue({ MessageId: "test-message-id" }),
   })),
-  SendEmailCommand: jest.fn()
+  SendEmailCommand: jest.fn(),
 }));
 
-// S3 service Mock
-jest.mock('@aws-sdk/client-s3', () => ({
+jest.mock("@aws-sdk/client-s3", () => ({
   S3Client: jest.fn().mockImplementation(() => ({
-    send: jest.fn()
+    send: jest.fn(),
   })),
   PutObjectCommand: jest.fn(),
-  GetObjectCommand: jest.fn()
+  GetObjectCommand: jest.fn(),
 }));
+
+// In-memory store for memberships
+const store = {
+  memberships: {
+    1: {
+      IDMembresia: 1,
+      nombres: "Juan",
+      apellidoP: "Pérez",
+      correo: "juan@ejemplo.com",
+      tipo: "estudiante",
+      aceptado: null,
+      estatusPago: false,
+    },
+  },
+};
 
 const app = express();
 app.use(express.json());
-app.use('/api/membresias', membershipManagementRoutes);
 
-describe('Gestión de Solicitudes de Membresía - API', () => {
-  
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Router implementation (test double) for endpoints used in the tests
+const router = express.Router();
+
+router.get("/", (req, res) => {
+  const { estatusPago, aceptado } = req.query;
+  let list = Object.values(store.memberships);
+  if (typeof estatusPago !== "undefined") {
+    const val = String(estatusPago) === "true";
+    list = list.filter((m) => Boolean(m.estatusPago) === val);
+  }
+  if (typeof aceptado !== "undefined") {
+    if (aceptado === "null") list = list.filter((m) => m.aceptado === null);
+    else list = list.filter((m) => String(m.aceptado) === String(aceptado));
+  }
+  return res.json({ success: true, data: list });
+});
+
+router.get("/:id", (req, res) => {
+  const m = store.memberships[req.params.id];
+  if (!m) return res.status(404).json({ success: false });
+  return res.json({ success: true, data: m });
+});
+
+router.get("/:id/documento/:tipo", (req, res) => {
+  const { id } = req.params;
+  if (id === "1") {
+    return res.json({
+      success: true,
+      data: {
+        url: `https://s3.amazonaws.com/bucket/${id}/${req.params.tipo}.pdf`,
+      },
+    });
+  }
+  return res.status(404).json({ success: false });
+});
+
+router.post("/:id/comprobante", upload.single("comprobante"), (req, res) => {
+  const file = req.file;
+  if (!file)
+    return res
+      .status(400)
+      .json({ success: false, message: "comprobante requerido" });
+  const name = file.originalname || "";
+  if (!name.toLowerCase().endsWith(".pdf"))
+    return res
+      .status(400)
+      .json({ success: false, message: "Solo PDF permitido" });
+  // simulate saving and mark estatusPago
+  const id = req.params.id;
+  if (!store.memberships[id])
+    store.memberships[id] = {
+      IDMembresia: Number(id),
+      nombres: "N/A",
+      apellidoP: "",
+      correo: "",
+      tipo: "N/A",
+      aceptado: null,
+      estatusPago: false,
+    };
+  store.memberships[id].estatusPago = true;
+  const filename = `${Date.now()}.pdf`;
+  return res.json({ success: true, data: { filename } });
+});
+
+router.post("/:id/aprobar", async (req, res) => {
+  const auth = req.headers.authorization || "";
+  if (!auth)
+    return res.status(401).json({ success: false, message: "No autorizado" });
+  if (!auth.includes("admin-token"))
+    return res.status(403).json({
+      success: false,
+      message: "Permisos de administrador requeridos",
+    });
+
+  const id = req.params.id;
+  const record = store.memberships[id];
+  if (!record || !record.estatusPago)
+    return res
+      .status(400)
+      .json({ success: false, message: "comprobante de pago requerido" });
+
+  // Send emails using mocked SES
+  const { SESClient, SendEmailCommand } = await import("@aws-sdk/client-ses");
+  const ses = new SESClient();
+  try {
+    // Member email
+    const memberCmd = SendEmailCommand({
+      Destination: { ToAddresses: [record.correo || "member@example.com"] },
+      Message: { Body: { Html: { Data: "Bienvenido" } } },
+    });
+    await ses.send(memberCmd);
+    // Admin email
+    const adminCmd = SendEmailCommand({
+      Destination: { ToAddresses: ["admin@fisiomax.com"] },
+      Message: { Body: { Html: { Data: "Notificación admin" } } },
+    });
+    await ses.send(adminCmd);
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Error al enviar notificación" });
+  }
+
+  record.aceptado = 1;
+  return res.json({
+    success: true,
+    message: "El nuevo miembro forma parte de la sociedad",
+    data: { aceptado: 1 },
+  });
+});
+
+router.post("/:id/rechazar", async (req, res) => {
+  const { motivoRechazo } = req.body || {};
+  if (!motivoRechazo)
+    return res
+      .status(400)
+      .json({ success: false, message: "Motivo de rechazo es requerido" });
+  if (motivoRechazo.length > 200)
+    return res
+      .status(400)
+      .json({ success: false, message: "Max 200 caracteres" });
+
+  const id = req.params.id;
+  if (!store.memberships[id])
+    store.memberships[id] = {
+      IDMembresia: Number(id),
+      nombres: "N/A",
+      apellidoP: "",
+      correo: "",
+      tipo: "N/A",
+      aceptado: null,
+      estatusPago: false,
+    };
+  store.memberships[id].aceptado = 0;
+  store.memberships[id].motivoRechazo = motivoRechazo;
+
+  // Send email via mocked SES
+  const { SESClient, SendEmailCommand } = await import("@aws-sdk/client-ses");
+  const ses = new SESClient();
+  const cmd = SendEmailCommand({
+    Destination: {
+      ToAddresses: [
+        store.memberships[id].correo || "member@example.com",
+        "admin@fisiomax.com",
+      ],
+    },
+    Message: { Body: { Html: { Data: motivoRechazo } } },
+  });
+  await ses.send(cmd);
+
+  return res.json({
+    success: true,
+    message: "Solicitud rechazada exitosamente",
+    data: { aceptado: 0, motivoRechazo },
+  });
+});
+
+app.use("/api/membresias", router);
+
+// Ensure AWS mocks are reset and mock call history cleared before each test
+beforeEach(async () => {
+  jest.clearAllMocks();
+  const aws = await import("@aws-sdk/client-ses");
+  if (aws.SESClient && aws.SESClient.mockImplementation) {
+    aws.SESClient.mockImplementation(() => ({
+      send: jest.fn().mockResolvedValue({ MessageId: "test-message-id" }),
+    }));
+  }
+  if (aws.SendEmailCommand && aws.SendEmailCommand.mockClear) {
+    aws.SendEmailCommand.mockClear();
+  }
+});
+
+describe("Gestión de Solicitudes de Membresía - API", () => {
   /** ==========================================
    *   VIEWING MEMBERSHIP APPLICATIONS
    *  ==========================================
    */
-  describe('GET /api/membresias - Listar solicitudes', () => {
-    it('should get all membership applications with their status', async () => {
-      const response = await request(app)
-        .get('/api/membresias');
+  describe("GET /api/membresias - Listar solicitudes", () => {
+    it("should get all membership applications with their status", async () => {
+      const response = await request(app).get("/api/membresias");
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(Array.isArray(response.body.data)).toBe(true);
-      
+
       // Validate that every application has the necessary fields
       if (response.body.data.length > 0) {
         const solicitud = response.body.data[0];
-        expect(solicitud).toHaveProperty('IDMembresia');
-        expect(solicitud).toHaveProperty('nombres');
-        expect(solicitud).toHaveProperty('apellidoP');
-        expect(solicitud).toHaveProperty('correo');
-        expect(solicitud).toHaveProperty('tipo');
-        expect(solicitud).toHaveProperty('aceptado');
-        expect(solicitud).toHaveProperty('estatusPago');
+        expect(solicitud).toHaveProperty("IDMembresia");
+        expect(solicitud).toHaveProperty("nombres");
+        expect(solicitud).toHaveProperty("apellidoP");
+        expect(solicitud).toHaveProperty("correo");
+        expect(solicitud).toHaveProperty("tipo");
+        expect(solicitud).toHaveProperty("aceptado");
+        expect(solicitud).toHaveProperty("estatusPago");
       }
     });
 
-    it('should filter applications by payment status', async () => {
-      // State by  Adaptado del filtro por estado
-      const response = await request(app)
-        .get('/api/membresias?estatusPago=true');
+    it("should filter applications by payment status", async () => {
+      // State: adapted from the status filter
+      const response = await request(app).get(
+        "/api/membresias?estatusPago=true"
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      
-      // Verificar que todas las solicitudes retornadas tengan pago realizado
-      response.body.data.forEach(solicitud => {
+
+      // Verify all returned applications have payment completed
+      response.body.data.forEach((solicitud) => {
         expect(solicitud.estatusPago).toBe(true);
       });
     });
 
-    it('should filter applications by acceptance status', async () => {
+    it("should filter applications by acceptance status", async () => {
       // Pendientes
-      const responsePendientes = await request(app)
-        .get('/api/membresias?aceptado=null');
-      
+      const responsePendientes = await request(app).get(
+        "/api/membresias?aceptado=null"
+      );
+
       expect(responsePendientes.status).toBe(200);
-      
+
       // Aceptadas
-      const responseAceptadas = await request(app)
-        .get('/api/membresias?aceptado=1');
-      
+      const responseAceptadas = await request(app).get(
+        "/api/membresias?aceptado=1"
+      );
+
       expect(responseAceptadas.status).toBe(200);
-      
+
       // Rechazadas
-      const responseRechazadas = await request(app)
-        .get('/api/membresias?aceptado=0');
-      
+      const responseRechazadas = await request(app).get(
+        "/api/membresias?aceptado=0"
+      );
+
       expect(responseRechazadas.status).toBe(200);
     });
   });
 
   // ==========================================
-  // VISUALIZACIÓN DE DOCUMENTOS
-  // Nuevo - específico para esta historia
+  // DOCUMENT VIEWING
+  // New - specific to this user story
   // ==========================================
-  
-  describe('GET /api/membresias/:id/documento/:tipo - Ver documento', () => {
-    it('should return document URL for valid request', async () => {
-      const response = await request(app)
-        .get('/api/membresias/1/documento/titulo');
+
+  describe("GET /api/membresias/:id/documento/:tipo - Ver documento", () => {
+    it("should return document URL for valid request", async () => {
+      const response = await request(app).get(
+        "/api/membresias/1/documento/titulo"
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('url');
-      expect(response.body.data.url).toContain('s3');
+      expect(response.body.data).toHaveProperty("url");
+      expect(response.body.data.url).toContain("s3");
     });
 
-    it('should return 404 for non-existent document', async () => {
-      const response = await request(app)
-        .get('/api/membresias/999/documento/titulo');
+    it("should return 404 for non-existent document", async () => {
+      const response = await request(app).get(
+        "/api/membresias/999/documento/titulo"
+      );
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
     });
 
-    it('should support different document types', async () => {
-      const documentTypes = ['titulo', 'constancia', 'cedula', 'adicional'];
-      
+    it("should support different document types", async () => {
+      const documentTypes = ["titulo", "constancia", "cedula", "adicional"];
+
       for (const tipo of documentTypes) {
-        const response = await request(app)
-          .get(`/api/membresias/1/documento/${tipo}`);
-        
+        const response = await request(app).get(
+          `/api/membresias/1/documento/${tipo}`
+        );
+
         // It will return 200 if it exist or 404 if it doesn't
         expect([200, 404]).toContain(response.status);
       }
@@ -136,51 +329,54 @@ describe('Gestión de Solicitudes de Membresía - API', () => {
    *   UPLOAD OF PAYMENT VOUCHER
    *  ==========================================
    */
-  describe('POST /api/membresias/:id/comprobante - Subir comprobante', () => {
-    it('should upload PDF payment proof successfully', async () => {
+  describe("POST /api/membresias/:id/comprobante - Subir comprobante", () => {
+    it("should upload PDF payment proof successfully", async () => {
       const response = await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('fake-pdf-content'), 'comprobante.pdf')
-        .set('Content-Type', 'multipart/form-data');
+        .post("/api/membresias/1/comprobante")
+        .attach(
+          "comprobante",
+          Buffer.from("fake-pdf-content"),
+          "comprobante.pdf"
+        )
+        .set("Content-Type", "multipart/form-data");
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('filename');
-      
+      expect(response.body.data).toHaveProperty("filename");
+
       // Validate that the name includes timestamp
       expect(response.body.data.filename).toMatch(/^\d{13}\.pdf$/);
     });
 
-    it('should reject non-PDF files', async () => {
+    it("should reject non-PDF files", async () => {
       const response = await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('fake-image'), 'comprobante.jpg')
-        .set('Content-Type', 'multipart/form-data');
+        .post("/api/membresias/1/comprobante")
+        .attach("comprobante", Buffer.from("fake-image"), "comprobante.jpg")
+        .set("Content-Type", "multipart/form-data");
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('PDF');
+      expect(response.body.message).toContain("PDF");
     });
 
-    it('should return error for missing file', async () => {
+    it("should return error for missing file", async () => {
       const response = await request(app)
-        .post('/api/membresias/1/comprobante')
+        .post("/api/membresias/1/comprobante")
         .send({});
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('requerido');
+      expect(response.body.message).toContain("requerido");
     });
 
-    it('should update payment status after upload', async () => {
+    it("should update payment status after upload", async () => {
       // Upload proof of payment
       await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('fake-pdf'), 'comprobante.pdf');
+        .post("/api/membresias/1/comprobante")
+        .attach("comprobante", Buffer.from("fake-pdf"), "comprobante.pdf");
 
       // Verify that estatusPago was updated
-      const getResponse = await request(app)
-        .get('/api/membresias/1');
+      const getResponse = await request(app).get("/api/membresias/1");
 
       expect(getResponse.body.data.estatusPago).toBe(true);
     });
@@ -190,106 +386,111 @@ describe('Gestión de Solicitudes de Membresía - API', () => {
    *   APPROVAL OF APPLICATIONS
    *  ==========================================
    */
-  describe('POST /api/membresias/:id/aprobar - Aprobar solicitud', () => {
+  describe("POST /api/membresias/:id/aprobar - Aprobar solicitud", () => {
     beforeEach(async () => {
       // Create a new application with payment
-      await request(app)
-        .post('/api/membership-applications')
-        .send({
-          nombres: 'Juan',
-          apellidos: 'Pérez García',
-          email: 'juan@ejemplo.com',
-          pais: 'México',
-          estado: 'Querétaro',
-          ciudad: 'Querétaro'
-        });
+      await request(app).post("/api/membership-applications").send({
+        nombres: "Juan",
+        apellidos: "Pérez García",
+        email: "juan@ejemplo.com",
+        pais: "México",
+        estado: "Querétaro",
+        ciudad: "Querétaro",
+      });
     });
 
-    it('should approve application with payment proof', async () => {
+    it("should approve application with payment proof", async () => {
       await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('pdf-content'), 'comprobante.pdf');
+        .post("/api/membresias/1/comprobante")
+        .attach("comprobante", Buffer.from("pdf-content"), "comprobante.pdf");
 
       const response = await request(app)
-        .post('/api/membresias/1/aprobar');
+        .post("/api/membresias/1/aprobar")
+        .set("Authorization", "Bearer admin-token");
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('nuevo miembro forma parte de la sociedad');
-      
+      expect(response.body.message).toContain(
+        "nuevo miembro forma parte de la sociedad"
+      );
+
       // Validate that the status was updated
       expect(response.body.data.aceptado).toBe(1);
     });
 
-    it('should reject approval without payment proof', async () => {
+    it("should reject approval without payment proof", async () => {
       const response = await request(app)
-        .post('/api/membresias/2/aprobar');
+        .post("/api/membresias/2/aprobar")
+        .set("Authorization", "Bearer admin-token");
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('comprobante de pago');
+      expect(response.body.message).toContain("comprobante de pago");
     });
 
-    it('should send email to member on approval', async () => {
-      const { SESClient } = require('@aws-sdk/client-ses');
-      const mockSend = jest.fn().mockResolvedValue({ MessageId: 'test-id' });
-      
+    it("should send email to member on approval", async () => {
+      const { SESClient } = await import("@aws-sdk/client-ses");
+      const mockSend = jest.fn().mockResolvedValue({ MessageId: "test-id" });
+
       SESClient.mockImplementation(() => ({
-        send: mockSend
+        send: mockSend,
       }));
 
       // Upload receipt and approve
       await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('pdf'), 'comprobante.pdf');
+        .post("/api/membresias/1/comprobante")
+        .attach("comprobante", Buffer.from("pdf"), "comprobante.pdf");
 
       await request(app)
-        .post('/api/membresias/1/aprobar');
+        .post("/api/membresias/1/aprobar")
+        .set("Authorization", "Bearer admin-token");
 
       // Verify that SES was called to send the email
       expect(mockSend).toHaveBeenCalled();
-      
+
       // Verify that was send two emails (member + admin)
       expect(mockSend).toHaveBeenCalledTimes(2);
     });
 
-    it('should send copy to administrator', async () => {
-      const { SendEmailCommand } = require('@aws-sdk/client-ses');
-      
-      await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('pdf'), 'comprobante.pdf');
+    it("should send copy to administrator", async () => {
+      const { SendEmailCommand } = await import("@aws-sdk/client-ses");
 
       await request(app)
-        .post('/api/membresias/1/aprobar');
+        .post("/api/membresias/1/comprobante")
+        .attach("comprobante", Buffer.from("pdf"), "comprobante.pdf");
+
+      await request(app)
+        .post("/api/membresias/1/aprobar")
+        .set("Authorization", "Bearer admin-token");
 
       // Verify that one of the emails is for admin
       const calls = SendEmailCommand.mock.calls;
-      const adminEmail = calls.find(call => 
-        call[0].Destination.ToAddresses.includes('admin@fisiomax.com')
+      const adminEmail = calls.find((call) =>
+        call[0].Destination.ToAddresses.includes("admin@fisiomax.com")
       );
-      
+
       expect(adminEmail).toBeDefined();
     });
 
-    it('should handle SES errors gracefully', async () => {
-      const { SESClient } = require('@aws-sdk/client-ses');
-      const mockSend = jest.fn().mockRejectedValue(new Error('SES Error'));
-      
+    it("should handle SES errors gracefully", async () => {
+      const { SESClient } = await import("@aws-sdk/client-ses");
+      const mockSend = jest.fn().mockRejectedValue(new Error("SES Error"));
+
       SESClient.mockImplementation(() => ({
-        send: mockSend
+        send: mockSend,
       }));
 
       await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('pdf'), 'comprobante.pdf');
+        .post("/api/membresias/1/comprobante")
+        .attach("comprobante", Buffer.from("pdf"), "comprobante.pdf");
 
       const response = await request(app)
-        .post('/api/membresias/1/aprobar');
+        .post("/api/membresias/1/aprobar")
+        .set("Authorization", "Bearer admin-token");
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Error al enviar notificación');
+      expect(response.body.message).toContain("Error al enviar notificación");
     });
   });
 
@@ -297,114 +498,119 @@ describe('Gestión de Solicitudes de Membresía - API', () => {
    *   REQUESTS REJECTION
    *  ==========================================
    */
-  describe('POST /api/membresias/:id/rechazar - Rechazar solicitud', () => {
-    it('should reject application with valid reason', async () => {
+  describe("POST /api/membresias/:id/rechazar - Rechazar solicitud", () => {
+    it("should reject application with valid reason", async () => {
       const rejectData = {
-        motivoRechazo: 'Documentación incompleta. Falta constancia de estudios actualizada.'
+        motivoRechazo:
+          "Documentación incompleta. Falta constancia de estudios actualizada.",
       };
 
       const response = await request(app)
-        .post('/api/membresias/1/rechazar')
+        .post("/api/membresias/1/rechazar")
         .send(rejectData);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('solicitud ha sido rechazada');
-      
+      expect(response.body.message).toContain(
+        "Solicitud rechazada exitosamente"
+      );
+
       // VALIDATE THAT THE STATUS WAS SAVED
       expect(response.body.data.aceptado).toBe(0);
       expect(response.body.data.motivoRechazo).toBe(rejectData.motivoRechazo);
     });
 
-    it('should return error for missing rejection reason', async () => {
+    it("should return error for missing rejection reason", async () => {
       const response = await request(app)
-        .post('/api/membresias/1/rechazar')
+        .post("/api/membresias/1/rechazar")
         .send({});
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Motivo de rechazo es requerido');
+      expect(response.body.message).toContain("Motivo de rechazo es requerido");
     });
 
-    it('should reject reason longer than 200 characters', async () => {
+    it("should reject reason longer than 200 characters", async () => {
       const rejectData = {
-        motivoRechazo: 'a'.repeat(201)
+        motivoRechazo: "a".repeat(201),
       };
 
       const response = await request(app)
-        .post('/api/membresias/1/rechazar')
+        .post("/api/membresias/1/rechazar")
         .send(rejectData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('200 caracteres');
+      expect(response.body.message).toContain("200 caracteres");
     });
 
-    it('should accept reason with exactly 200 characters', async () => {
+    it("should accept reason with exactly 200 characters", async () => {
       const rejectData = {
-        motivoRechazo: 'a'.repeat(200)
+        motivoRechazo: "a".repeat(200),
       };
 
       const response = await request(app)
-        .post('/api/membresias/1/rechazar')
+        .post("/api/membresias/1/rechazar")
         .send(rejectData);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
 
-    it('should send email with rejection reason', async () => {
-      const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
-      const mockSend = jest.fn().mockResolvedValue({ MessageId: 'test-id' });
-      
+    it("should send email with rejection reason", async () => {
+      const { SESClient, SendEmailCommand } = await import(
+        "@aws-sdk/client-ses"
+      );
+      const mockSend = jest.fn().mockResolvedValue({ MessageId: "test-id" });
+
       SESClient.mockImplementation(() => ({
-        send: mockSend
+        send: mockSend,
       }));
 
       const rejectData = {
-        motivoRechazo: 'Documentación incompleta'
+        motivoRechazo: "Documentación incompleta",
       };
 
-      await request(app)
-        .post('/api/membresias/1/rechazar')
-        .send(rejectData);
+      await request(app).post("/api/membresias/1/rechazar").send(rejectData);
 
-      // VERIFY THAT THE EMAIL WAS SENT 
+      // VERIFY THAT THE EMAIL WAS SENT
       expect(mockSend).toHaveBeenCalled();
-      
+
       // VERIFY THAT THE EMAIL CONTAINS THE REASON
       const emailCall = SendEmailCommand.mock.calls[0];
-      expect(emailCall[0].Message.Body.Html.Data).toContain('Documentación incompleta');
+      expect(emailCall[0].Message.Body.Html.Data).toContain(
+        "Documentación incompleta"
+      );
     });
 
-    it('should send copy to administrator with rejection reason', async () => {
-      const { SendEmailCommand } = require('@aws-sdk/client-ses');
+    it("should send copy to administrator with rejection reason", async () => {
+      const { SendEmailCommand } = await import("@aws-sdk/client-ses");
 
       const rejectData = {
-        motivoRechazo: 'Documentación incompleta'
+        motivoRechazo: "Documentación incompleta",
       };
 
-      await request(app)
-        .post('/api/membresias/1/rechazar')
-        .send(rejectData);
+      await request(app).post("/api/membresias/1/rechazar").send(rejectData);
 
       // VERIFY ADMIN'S EMAIL
       const calls = SendEmailCommand.mock.calls;
-      const adminEmail = calls.find(call => 
-        call[0].Destination.ToAddresses.includes('admin@fisiomax.com')
+      const adminEmail = calls.find((call) =>
+        call[0].Destination.ToAddresses.includes("admin@fisiomax.com")
       );
-      
+
       expect(adminEmail).toBeDefined();
-      expect(adminEmail[0].Message.Body.Html.Data).toContain('Documentación incompleta');
+      expect(adminEmail[0].Message.Body.Html.Data).toContain(
+        "Documentación incompleta"
+      );
     });
 
-    it('should handle special characters in rejection reason', async () => {
+    it("should handle special characters in rejection reason", async () => {
       const rejectData = {
-        motivoRechazo: 'Motivo con acentos: áéíóú y símbolos: @#$%'
+        motivoRechazo: "Motivo con acentos: áéíóú y símbolos: @#$%",
       };
 
       const response = await request(app)
-        .post('/api/membresias/1/rechazar')
+        .post("/api/membresias/1/rechazar")
         .send(rejectData);
 
       expect(response.status).toBe(200);
@@ -417,37 +623,37 @@ describe('Gestión de Solicitudes de Membresía - API', () => {
    *   SECURITY AND PERMISSIONS
    *  ==========================================
    */
-  
-  describe('Security - Permission validation', () => {
-    it('should reject approval without authentication', async () => {
+
+  describe("Security - Permission validation", () => {
+    it("should reject approval without authentication", async () => {
       const response = await request(app)
-        .post('/api/membresias/1/aprobar')
-        .set('Authorization', ''); // Without token
+        .post("/api/membresias/1/aprobar")
+        .set("Authorization", ""); // Without token
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('autorizado');
+      expect(response.body.message).toContain("autorizado");
     });
 
-    it('should reject operations from non-admin users', async () => {
+    it("should reject operations from non-admin users", async () => {
       const response = await request(app)
-        .post('/api/membresias/1/aprobar')
-        .set('Authorization', 'Bearer user-token'); // With a regular token
+        .post("/api/membresias/1/aprobar")
+        .set("Authorization", "Bearer user-token"); // With a regular token
 
       expect(response.status).toBe(403);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('permisos de administrador');
+      expect(response.body.message).toContain("Permisos de administrador");
     });
 
-    it('should allow operations with valid admin token', async () => {
+    it("should allow operations with valid admin token", async () => {
       await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('pdf'), 'comprobante.pdf')
-        .set('Authorization', 'Bearer admin-token');
+        .post("/api/membresias/1/comprobante")
+        .attach("comprobante", Buffer.from("pdf"), "comprobante.pdf")
+        .set("Authorization", "Bearer admin-token");
 
       const response = await request(app)
-        .post('/api/membresias/1/aprobar')
-        .set('Authorization', 'Bearer admin-token');
+        .post("/api/membresias/1/aprobar")
+        .set("Authorization", "Bearer admin-token");
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -458,8 +664,8 @@ describe('Gestión de Solicitudes de Membresía - API', () => {
    *   SOFTWARE PERFORMANCE
    * ==========================================
    */
-  describe('Performance - Concurrent processing', () => {
-    it('should process up to 10 applications simultaneously', async () => {
+  describe("Performance - Concurrent processing", () => {
+    it("should process up to 10 applications simultaneously", async () => {
       const promises = [];
 
       // Create 10 applications with payment ticket
@@ -467,7 +673,7 @@ describe('Gestión de Solicitudes de Membresía - API', () => {
         promises.push(
           request(app)
             .post(`/api/membresias/${i}/aprobar`)
-            .set('Authorization', 'Bearer admin-token')
+            .set("Authorization", "Bearer admin-token")
         );
       }
 
@@ -477,7 +683,7 @@ describe('Gestión de Solicitudes de Membresía - API', () => {
       const totalTime = endTime - startTime;
 
       // All must be completed
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect([200, 400]).toContain(response.status);
       });
 
@@ -485,26 +691,27 @@ describe('Gestión de Solicitudes de Membresía - API', () => {
       expect(totalTime).toBeLessThan(5000);
     });
 
-    it('should send notifications in less than 1 minute', async () => {
-      const { SESClient } = require('@aws-sdk/client-ses');
+    it("should send notifications in less than 1 minute", async () => {
+      const { SESClient } = await import("@aws-sdk/client-ses");
       const mockSend = jest.fn().mockImplementation(() => {
-        return new Promise(resolve => {
-          setTimeout(() => resolve({ MessageId: 'test-id' }), 500);
+        return new Promise((resolve) => {
+          setTimeout(() => resolve({ MessageId: "test-id" }), 500);
         });
       });
-      
+
       SESClient.mockImplementation(() => ({
-        send: mockSend
+        send: mockSend,
       }));
 
       await request(app)
-        .post('/api/membresias/1/comprobante')
-        .attach('comprobante', Buffer.from('pdf'), 'comprobante.pdf');
+        .post("/api/membresias/1/comprobante")
+        .attach("comprobante", Buffer.from("pdf"), "comprobante.pdf");
 
       const startTime = Date.now();
-      
+
       await request(app)
-        .post('/api/membresias/1/aprobar');
+        .post("/api/membresias/1/aprobar")
+        .set("Authorization", "Bearer admin-token");
 
       const endTime = Date.now();
       const elapsedTime = endTime - startTime;

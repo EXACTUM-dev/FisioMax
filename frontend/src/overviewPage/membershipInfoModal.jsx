@@ -94,7 +94,11 @@ export default function MembershipInfoModal({
           </div>
         </div>
         <div className="space-y-6">
-          <div className="flex items-start gap-4">
+          <div
+            className={`flex items-start gap-4 ${
+              highlightStep === 2 ? "opacity-60" : ""
+            }`}
+          >
             <FaRegFileAlt className="text-[#CAD00F] w-6 h-6 mt-1" />
             <div>
               <p className="font-semibold text-gray-800">
@@ -119,11 +123,29 @@ export default function MembershipInfoModal({
               </ul>
             </div>
           </div>
-          <div className="flex items-start gap-4 opacity-60">
-            <FaRegCheckCircle className="text-gray-400 w-6 h-6 mt-1" />
+          <div
+            className={`flex items-start gap-4 ${
+              highlightStep === 2 ? "" : "opacity-60"
+            }`}
+          >
+            <FaRegCheckCircle
+              className={`w-6 h-6 mt-1 ${
+                highlightStep === 2 ? "text-[#CAD00F]" : "text-gray-400"
+              }`}
+            />
             <div>
-              <p className="font-semibold text-gray-400">2. Validación</p>
-              <p className="text-gray-400 text-sm mt-1">
+              <p
+                className={`font-semibold ${
+                  highlightStep === 2 ? "text-gray-800" : "text-gray-400"
+                }`}
+              >
+                2. Validación
+              </p>
+              <p
+                className={`${
+                  highlightStep === 2 ? "text-gray-700" : "text-gray-400"
+                } text-sm mt-1`}
+              >
                 SOMEFIPP revisará y verificará tu información. Este proceso
                 puede tardar algunos días.
               </p>

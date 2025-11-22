@@ -7,6 +7,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
+import Button from "../../atoms/button";
 
 export default function PricingSection() {
   const navigate = useNavigate();
@@ -21,9 +22,8 @@ export default function PricingSection() {
         "Artículos semanales",
         "Sesiones mensuales",
         "Libros y materiales digitales",
-        "Podcasts especializados",
         "Contenido exclusivo en la plataforma",
-        "Acceso a congresos",
+        "Acceso a congresos con precio preferencial",
         "Publicaciones exclusivas",
         "Red de contactos",
       ],
@@ -35,7 +35,7 @@ export default function PricingSection() {
         "Para personas con título y cédula profesional, con menos de 120 horas de formación.",
       features: [
         "Todo lo anterior, más:",
-        "Derecho a voz en asambleas",
+        "Descuentos en formaciones especializadas en piso pélvico",
         "Oportunidad de participar en comités",
       ],
     },
@@ -46,7 +46,7 @@ export default function PricingSection() {
         "Para profesionistas con título, cédula y más de 120 horas de formación.",
       features: [
         "Todo lo anterior, más:",
-        "Posibilidad de ser ponente en eventos",
+        "Posibilidad de ser ponente en eventos y sesiones",
         "Aparición en el directorio público de especialistas",
       ],
     },
@@ -90,7 +90,7 @@ export default function PricingSection() {
                 <p className="text-gray-600 mb-6 text-sm mt-6">
                   {plan.description}
                 </p>
-                <button
+                <Button
                   onClick={() => {
                     navigate("/solicitud-membresia", {
                       state: {
@@ -100,10 +100,11 @@ export default function PricingSection() {
                       },
                     });
                   }}
-                  className="w-full py-3 rounded-md font-semibold transition-colors bg-gray-900 hover:bg-gray-800 text-white mt-auto"
+                  variant="gray"
+                  className="w-full py-3 font-semibold mt-auto"
                 >
                   Elegir plan
-                </button>
+                </Button>
               </div>
             </div>
           ))}

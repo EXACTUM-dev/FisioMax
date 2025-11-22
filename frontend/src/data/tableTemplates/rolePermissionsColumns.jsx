@@ -138,7 +138,7 @@ export function buildRolePermissionsColumns({
             <img
               src={trashIcon}
               alt="Eliminar"
-              className="w-5 h-5 object-contain opacity-80"
+              className="w-5 h-5 object-contain cursor-pointer opacity-80"
             />
           </button>
         );

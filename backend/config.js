@@ -47,6 +47,7 @@ const config = {
   auth: {
     jwtSecret: process.env.JWT_SECRET,
     sessionSecret: process.env.SESSION_SECRET,
+    sessionTimeout: 30 * 60 * 1000, // 30 minutes in milliseconds
   },
 
   // Clerk configuration
@@ -87,6 +88,12 @@ const config = {
   // Encryption configuration
   encryption: {
     key: process.env.ENCRYPTION_KEY,
+  },
+
+  // Mercado Pago configuration
+  mercadoPago: {
+    accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN,
+    publicKey: process.env.MERCADO_PAGO_PUBLIC_KEY,
   },
 };
 

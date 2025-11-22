@@ -133,12 +133,12 @@ export function buildUserRolesColumns({
               e.stopPropagation();
               onDelete?.(row);
             }}
-            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-red-50 transition-colors"
+            className="inline-flex items-center justify-center w-8 h-8 rounded cursor-pointer hover:bg-red-50 transition-colors"
           >
             <img
               src={trashIcon}
               alt="Eliminar"
-              className="w-5 h-5 cursor-pointer object-contain opacity-80 hover:opacity-100 transition-opacity"
+              className="w-5 h-5 cursor-pointer object-contain opacity-80 cursor-pointer hover:opacity-100 transition-opacity"
             />
           </button>
         </div>
