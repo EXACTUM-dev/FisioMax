@@ -200,7 +200,7 @@ export default function GridCarousel({
                     >
                       <button
                         onClick={(e) => handleMenuToggle(e, slide.id)}
-                        className="bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200"
+                        className="bg-white/90 hover:bg-white rounded-full p-2 shadow-lg cursor-pointer transition-all duration-200"
                         aria-label="Opciones"
                       >
                         <svg
@@ -219,7 +219,7 @@ export default function GridCarousel({
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
                           <button
                             onClick={(e) => handleEditClick(e, slide)}
-                            className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                            className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center cursor-pointer gap-2 text-gray-700"
                           >
                             <svg
                               className="w-4 h-4"
@@ -234,11 +234,11 @@ export default function GridCarousel({
                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                               />
                             </svg>
-                            Modificar
+                            Editar
                           </button>
                           <button
                             onClick={(e) => handleDeleteClick(e, slide)}
-                            className="w-full text-left px-4 py-3 hover:bg-red-50 flex items-center gap-2 text-red-600"
+                            className="w-full text-left px-4 py-3 hover:bg-red-50 flex items-center cursor-pointer gap-2 text-red-600"
                           >
                             <svg
                               className="w-4 h-4"
