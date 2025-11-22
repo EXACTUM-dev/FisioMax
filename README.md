@@ -63,21 +63,25 @@ FisioMax es una aplicación web diseñada para modernizar la interacción entre 
 
 ## Arquitectura
 
-El proyecto sigue una arquitectura cliente-servidor (Monorepo):
+El proyecto sigue una arquitectura **N-Tier de 3 Capas** (Presentación, Negocio y Datos), organizada en un monorepo:
+
+1.  **Capa de Presentación (Cliente)**: Frontend en React que interactúa con el usuario.
+2.  **Capa de Negocio (Servidor)**: API REST en Node.js/Express que procesa la lógica y reglas de negocio.
+3.  **Capa de Datos**: Base de datos MySQL para persistencia y almacenamiento.
 
 ```
 FisioMax/
-├── frontend/          # Aplicación React (Vite)
+├── frontend/          # Capa de Presentación (React + Vite)
 │   ├── src/
 │   │   ├── components/  # Componentes reutilizables
 │   │   ├── organisms/   # Componentes complejos de negocio
 │   │   ├── pages/       # Vistas principales
 │   │   └── services/    # Comunicación con API
 │   └── ...
-├── backend/           # API REST Node.js
+├── backend/           # Capa de Negocio (Node.js + Express)
 │   ├── src/
 │   │   ├── controllers/ # Lógica de negocio
-│   │   ├── models/      # Acceso a datos
+│   │   ├── models/      # Acceso a datos (MySQL)
 │   │   ├── routes/      # Definición de endpoints
 │   │   └── config/      # Configuración de servicios
 │   └── ...
@@ -142,7 +146,7 @@ VITE_API_URL=http://localhost:3000
 
 ---
 
-## ▶ Ejecución
+## Ejecución
 
 Para correr el proyecto en entorno de desarrollo, necesitarás dos terminales:
 
@@ -162,7 +166,7 @@ npm run dev
 
 ---
 
-## 🧪 Testing
+## Testing
 
 El proyecto cuenta con una suite de pruebas unitarias y de integración.
 
