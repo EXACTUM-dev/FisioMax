@@ -50,7 +50,6 @@ export async function show(req, res) {
     try {
       signedUrl = generateSignedUrl(s3Path);
     } catch (urlError) {
-      console.error("Error generando URL firmada:", urlError);
       return res.status(500).json({
         error: "url_generation_failed",
         message: "No se pudo cargar el contenido, intenta más tarde.",
@@ -62,7 +61,7 @@ export async function show(req, res) {
       try {
         thumbnailUrl = generateSignedUrl(content.thumbnailMultimedia);
       } catch (thumbError) {
-        console.error("Error generando URL de miniatura:", thumbError);
+        // Thumbnail generation failed, continue without it
       }
     }
 
@@ -81,8 +80,6 @@ export async function show(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error en el controlador del contenido:", error);
-
     if (error.message === "Content not found") {
       return res.status(404).json({
         error: "not_found",
@@ -135,7 +132,7 @@ export async function index(req, res) {
         try {
           thumbnailUrl = generateSignedUrl(item.thumbnailMultimedia);
         } catch (error) {
-          console.error("Error generando miniatura para:", item.IDContenido);
+          // Thumbnail generation failed, continue without it
         }
       }
 
@@ -158,8 +155,6 @@ export async function index(req, res) {
       limit,
     });
   } catch (error) {
-    console.error("Error en el controlador index:", error);
-
     if (error.message.includes("Invalid content type")) {
       return res.status(400).json({
         error: "invalid_type",
@@ -207,7 +202,6 @@ export async function upload(req, res) {
           roleIds = [roleIds];
         }
       } catch (parseError) {
-        console.error("Error parsing roles:", parseError);
         return res.status(400).json({
           success: false,
           message: "Formato de roles inválido",
@@ -245,7 +239,6 @@ export async function upload(req, res) {
     const validatedRoleIds = sanitized.roles;
 
     if (validatedRoleIds.length === 0) {
-      console.error("No valid role IDs found");
       return res.status(400).json({
         success: false,
         message: "Los roles seleccionados no son válidos",
@@ -305,7 +298,6 @@ export async function upload(req, res) {
         // Upload main file to S3
         finalS3Key = await S3Service.uploadFile(file, folder);
       } catch (uploadError) {
-        console.error("Error uploading file to S3:", uploadError);
         return res.status(500).json({
           success: false,
           message: "Error al subir el archivo a S3",
@@ -327,7 +319,6 @@ export async function upload(req, res) {
       // Assign content to all collected privileges in accede table
       await assignContentToPrivileges(contentId, allPrivilegeIds);
     } catch (dbError) {
-      console.error("Error creating content in database:", dbError);
       return res.status(500).json({
         success: false,
         message: "Error al guardar el contenido en la base de datos",
@@ -336,7 +327,6 @@ export async function upload(req, res) {
 
     // Upload thumbnail if provided
     let thumbnailId = null;
-    console.log(thumbnail);
     if (thumbnail && thumbnail.buffer) {
       try {
         const thumbnailKey = await S3Service.uploadFile(
@@ -354,7 +344,6 @@ export async function upload(req, res) {
         // Assign thumbnail to same privileges
         await assignContentToPrivileges(thumbnailId, allPrivilegeIds);
       } catch (thumbError) {
-        console.error("Error uploading thumbnail:", thumbError);
         // Continue even if thumbnail fails
       }
     }
@@ -370,7 +359,6 @@ export async function upload(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error in upload controller:", error);
     return res.status(500).json({
       success: false,
       message: "Error al procesar la solicitud",
@@ -414,7 +402,6 @@ export async function presignUploadUrl(req, res) {
       key: s3Key,
     });
   } catch (error) {
-    console.error("Error generating presigned URL:", error);
     return res.status(500).json({
       success: false,
       message: "No se pudo generar la URL de subida",
@@ -433,11 +420,6 @@ export async function editContent(req, res) {
     const { nombre, descripcion } = req.body;
     const clerkUserId = req.auth?.userId;
 
-    console.log("=== EDIT CONTENT REQUEST ===");
-    console.log("Content ID:", contentId);
-    console.log("Body:", { nombre, descripcion });
-    console.log("Clerk User ID:", clerkUserId);
-
     if (!contentId) {
       return res.status(400).json({
         success: false,
@@ -452,13 +434,21 @@ export async function editContent(req, res) {
       });
     }
 
-    // Verificar que el usuario es Admin (IDRol = 10)
+    // Verify user is Admin
     const { getUserByClerkId } = await import("../models/users.model.js");
+    const { findRoleById } = await import("../models/roles.model.js");
     const user = await getUserByClerkId(clerkUserId);
 
-    console.log("User from DB:", user ? { IDUsuario: user.IDUsuario, IDRol: user.IDRol } : null);
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message: "Usuario no encontrado.",
+      });
+    }
 
-    if (!user || user.IDRol !== 10) {
+    // Get role name to verify if user is admin
+    const role = await findRoleById(user.IDRol);
+    if (!role || role.nombre !== "Admin") {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para editar contenido. Solo los administradores pueden realizar esta acción.",
@@ -478,12 +468,8 @@ export async function editContent(req, res) {
       }
     );
 
-    console.log("Sanitized data:", sanitized);
-
     // Update content
     const updatedContent = await updateContent(contentId, sanitized);
-
-    console.log("Content updated successfully");
 
     return res.status(200).json({
       success: true,
@@ -491,8 +477,6 @@ export async function editContent(req, res) {
       data: updatedContent,
     });
   } catch (error) {
-    console.error("Error updating content:", error);
-
     if (error.message === "Content not found") {
       return res.status(404).json({
         success: false,
@@ -532,11 +516,21 @@ export async function deleteContent(req, res) {
       });
     }
 
-    // Verificar que el usuario es Admin (IDRol = 10)
+    // Verify user is Admin
     const { getUserByClerkId } = await import("../models/users.model.js");
+    const { findRoleById } = await import("../models/roles.model.js");
     const user = await getUserByClerkId(clerkUserId);
 
-    if (!user || user.IDRol !== 10) {
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message: "Usuario no encontrado.",
+      });
+    }
+
+    // Get role name to verify if user is admin
+    const role = await findRoleById(user.IDRol);
+    if (!role || role.nombre !== "Admin") {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para eliminar contenido. Solo los administradores pueden realizar esta acción.",
@@ -564,8 +558,6 @@ export async function deleteContent(req, res) {
       message: "Contenido eliminado exitosamente",
     });
   } catch (error) {
-    console.error("Error deleting content:", error);
-
     if (error.message === "Content not found") {
       return res.status(404).json({
         success: false,

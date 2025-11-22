@@ -1,6 +1,6 @@
 /**
  * @fileoverview Dedicated content page component (videos, articles, books, podcasts)
- * @version 0.1.0
+ * @version 0.2.0
  * @author EXACTUM-dev
  * @description Single reusable page component for displaying filtered content by type with grid layout
  */
@@ -96,8 +96,8 @@ export default function DedicatedContentPage() {
   const [editData, setEditData] = useState(null);
   const [editResult, setEditResult] = useState({ success: false, message: "" });
 
-  // Check if user is admin (roleId 10 = Admin)
-  const isAdmin = userData?.roleId === 10;
+  // Check if user is admin by role name (not hardcoded ID)
+  const isAdmin = userData?.role === "Admin";
 
   const limit = 12;
 
@@ -158,7 +158,6 @@ export default function DedicatedContentPage() {
         setHasMore(response.hasMore);
         setTotal(response.total);
       } catch (err) {
-        console.error("Error loading content:", err);
         setError("No se pudo cargar el contenido. Intenta más tarde.");
       } finally {
         setLoading(false);
@@ -232,7 +231,6 @@ export default function DedicatedContentPage() {
         message: "El contenido ha sido actualizado exitosamente",
       });
     } catch (error) {
-      console.error("Error updating content:", error);
       setEditResult({
         success: false,
         message: error.message || "No se pudo actualizar el contenido. Por favor, intenta de nuevo.",
@@ -273,7 +271,6 @@ export default function DedicatedContentPage() {
         message: "El contenido ha sido eliminado exitosamente",
       });
     } catch (error) {
-      console.error("Error deleting content:", error);
       setDeleteResult({
         success: false,
         message: error.message || "No se pudo eliminar el contenido. Por favor, intenta de nuevo.",
@@ -434,7 +431,7 @@ export default function DedicatedContentPage() {
         onConfirm={handleConfirmEdit}
         onCancel={() => {
           setShowEditConfirmModal(false);
-          setShowEditModal(true); // Volver al modal de edición
+          setShowEditModal(true); // Return to edit modal
         }}
       />
 

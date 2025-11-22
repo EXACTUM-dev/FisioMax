@@ -82,8 +82,6 @@ const uploadFields = (req, res, next) => {
 
   uploader(req, res, (err) => {
     if (err instanceof multer.MulterError) {
-      console.error("Multer error:", err);
-
       if (err.code === "LIMIT_FILE_SIZE") {
         return res.status(413).json({
           success: false,
@@ -114,7 +112,6 @@ const uploadFields = (req, res, next) => {
     }
 
     if (err) {
-      console.error("Upload error:", err);
       return res.status(400).json({
         success: false,
         message: err.message || "Error al procesar los archivos",

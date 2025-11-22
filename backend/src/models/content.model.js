@@ -57,7 +57,6 @@ export async function getContentById(contentId) {
     if (error.message === "Content not found") {
       throw error;
     }
-    console.error("Database error in getContentById:", error);
     throw new Error("Database error");
   }
 }
@@ -165,7 +164,6 @@ export async function getAvailableContent(
       hasMore: offset + limit < total,
     };
   } catch (error) {
-    console.error("Database error in getAvailableContent:", error);
     throw new Error("Database error");
   }
 }
@@ -205,7 +203,6 @@ export async function createContent(contentData) {
 
     return result.insertId;
   } catch (error) {
-    console.error("Database error in createContent:", error);
     throw new Error("Database error");
   }
 }
@@ -219,7 +216,6 @@ export async function createContent(contentData) {
  */
 export async function assignContentToPrivileges(contentId, privilegeIds) {
   if (!privilegeIds || privilegeIds.length === 0) {
-    console.warn("No privileges to assign to content:", contentId);
     return;
   }
 
@@ -234,7 +230,6 @@ export async function assignContentToPrivileges(contentId, privilegeIds) {
       await db.query(query, [contentId, privilegeId]);
     }
   } catch (error) {
-    console.error("Database error in assignContentToPrivileges:", error);
     throw new Error("Database error");
   }
 }
@@ -313,7 +308,6 @@ export async function updateContent(contentId, updateData) {
     if (error.message === "Content not found" || error.message === "Content type cannot be edited" || error.message === "Content not found or already deleted") {
       throw error;
     }
-    console.error("Database error in updateContent:", error);
     throw new Error("Database error");
   }
 }
@@ -367,7 +361,6 @@ export async function softDeleteContent(contentId) {
     if (error.message === "Content not found") {
       throw error;
     }
-    console.error("Database error in softDeleteContent:", error);
     throw new Error("Database error");
   }
 }
