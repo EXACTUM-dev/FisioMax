@@ -148,32 +148,6 @@ export default function TicketsCard({ tickets = [] }) {
   const [currentPage, setCurrentPage] = React.useState(0);
   const TICKETS_PER_PAGE = 2;
 
-  // Debug: Log tickets to see response_webhook data
-  React.useEffect(() => {
-    if (tickets.length > 0) {
-      console.log('=== TICKETS DEBUG ===');
-      console.log('Total tickets:', tickets.length);
-
-      tickets.forEach((ticket, index) => {
-        console.log(`\n--- Ticket ${index + 1} (Folio: ${ticket.folio}) ---`);
-        console.log('Has response_webhook:', !!ticket.response_webhook);
-        console.log('response_webhook type:', typeof ticket.response_webhook);
-
-        if (ticket.response_webhook) {
-          const url = getReceiptUrl(ticket.response_webhook);
-          console.log('✅ Receipt URL extracted:', url);
-          console.log('transaction_details:', ticket.response_webhook.transaction_details);
-          console.log('point_of_interaction:', ticket.response_webhook.point_of_interaction);
-        } else {
-          console.log('❌ No response_webhook data - buttons will NOT show');
-        }
-      });
-      console.log('=== END TICKETS DEBUG ===\n');
-    } else {
-      console.log('No tickets found');
-    }
-  }, [tickets]);
-
   // Calculate pagination
   const totalPages = Math.ceil(tickets.length / TICKETS_PER_PAGE);
   const startIndex = currentPage * TICKETS_PER_PAGE;
