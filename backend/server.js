@@ -26,6 +26,7 @@ import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
 import homePageRoutes from "./src/routes/homePage.route.js";
 import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
+import statisticsRoutes from "./src/routes/statistics.routes.js";
 
 // Initialize Express application
 const app = express();
@@ -107,6 +108,7 @@ app.use("/api/users", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/logs", loginLogsRoutes);
+app.use("/api/statistics", statisticsRoutes);
 /**
  * Routes for video content access.
  */
@@ -120,7 +122,7 @@ app.use("/api", homePageRoutes);
 
 /**
  * Routes for payment processing with Mercado Pago.
- */
+ *  */
 import paymentRoutes from "./src/routes/payment.routes.js";
 app.use("/api/payments", paymentRoutes);
 
