@@ -56,9 +56,10 @@ export default function HistoryCard({
 
   function handleChange(e) {
     const { name, value } = e.target;
-    // Only allow numbers
+    // Only allow numbers and limit to 11 characters
     const numericValue = value === "" ? "" : value.replace(/\D/g, "");
-    setForm((prev) => ({ ...prev, [name]: numericValue }));
+    const limitedValue = numericValue.length > 4 ? numericValue.slice(0, 4) : numericValue;
+    setForm((prev) => ({ ...prev, [name]: limitedValue }));
   }
 
   async function handleSave() {
@@ -111,7 +112,8 @@ export default function HistoryCard({
               value={form.horasServicio}
               onChange={handleChange}
               placeholder="0"
-              showCounter={false}
+              maxLength={4}
+              showCounter={true}
             />
           ) : (
             <>
