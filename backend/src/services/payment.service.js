@@ -5,6 +5,8 @@
  */
 
 import Payment from '../models/payment.model.js';
+import Content from '../models/content.controller.js';
+
 
 /**
  * Payment service for handling Mercado Pago integrations.
@@ -93,6 +95,14 @@ const PaymentService = {
         existingPayment.IDMembresia,
         membershipStatus
       );
+
+      let certificateResult = { generated: false };
+
+      /*if (paymentInfo.status === 'approved') {
+        certificateResult = await Content.generateAndUploadCertificate(
+          existingPayment.IDMembresia
+        );
+      } */
 
       return {
         success: true,
