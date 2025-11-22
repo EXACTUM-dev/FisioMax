@@ -80,18 +80,18 @@ export default function MembershipCard({
 
   const registeredAt = data.membershipRegisteredAt
     ? new Date(data.membershipRegisteredAt).toLocaleDateString("es-MX", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "—";
 
   const expiresAt = data.membershipExpiresAt
     ? new Date(data.membershipExpiresAt).toLocaleDateString("es-MX", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "—";
 
   const plan = data.membershipType || "No asignado";
@@ -149,7 +149,7 @@ export default function MembershipCard({
         setModalType("error");
         setModalMessage(
           error?.message ||
-            "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
+          "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
         );
         setShowModal(true);
       }
@@ -166,7 +166,7 @@ export default function MembershipCard({
   const handlePayment = async () => {
     try {
       setIsProcessingPayment(true);
-      
+
       const membershipType = data.membershipType || 'básica';
       const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
@@ -185,6 +185,7 @@ export default function MembershipCard({
         error?.message || 'No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.'
       );
       setShowModal(true);
+    } finally {
       setIsProcessingPayment(false);
     }
   };
@@ -232,26 +233,25 @@ export default function MembershipCard({
             <div className="flex justify-between">
               <span className="text-slate-500">Estatus de pago</span>
               <span
-                className={`font-medium capitalize ${
-                  paymentStatus === "Pagado"
+                className={`font-medium capitalize ${paymentStatus === "Pagado"
                     ? "text-green-600"
                     : paymentStatus === "Pendiente"
-                    ? "text-yellow-600"
-                    : "text-red-600"
-                }`}
+                      ? "text-yellow-600"
+                      : "text-red-600"
+                  }`}
               >
                 {paymentStatus}
               </span>
             </div>
 
             <div className="mt-4">
-                <Button
-                    size="sm"
-                    label={isProcessingPayment ? "Procesando..." : "Pagar membresía"}
-                    onClick={handlePayment}
-                    disabled={isProcessingPayment}
-                    className="cursor-pointer"
-                />
+              <Button
+                size="sm"
+                label={isProcessingPayment ? "Procesando..." : "Pagar membresía"}
+                onClick={handlePayment}
+                disabled={isProcessingPayment}
+                className="cursor-pointer"
+              />
             </div>
           </div>
         </>
