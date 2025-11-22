@@ -429,11 +429,23 @@ export async function presignUploadUrl(req, res) {
 export async function deleteContent(req, res) {
   try {
     const { contentId } = req.params;
+    const clerkUserId = req.auth?.userId;
 
     if (!contentId) {
       return res.status(400).json({
         success: false,
         message: "ID de contenido es requerido",
+      });
+    }
+
+    // Verificar que el usuario es Admin (IDRol = 10)
+    const { getUserByClerkId } = await import("../models/users.model.js");
+    const user = await getUserByClerkId(clerkUserId);
+
+    if (!user || user.IDRol !== 10) {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permisos para eliminar contenido. Solo los administradores pueden realizar esta acción.",
       });
     }
 

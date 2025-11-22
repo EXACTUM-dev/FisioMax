@@ -7,8 +7,9 @@
 
 import express from "express";
 import multer from "multer";
-import { requireAuth } from "../middlewares/clerkAuth.js";
-import { requireRole } from "../middlewares/requireRoles.js";
+import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
+import { requireDbUser } from "../middlewares/requireDbUser.js";
+import { authorize } from "../middlewares/rbacMiddleware.js";
 import * as contentController from "../controllers/content.controller.js";
 
 const router = express.Router();
@@ -155,6 +156,12 @@ router.get("/available", requireAuth, contentController.index);
 router.get("/:contentId", requireAuth, contentController.show);
 router.post("/upload", requireAuth, uploadFields, contentController.upload);
 router.post("/presign", requireAuth, contentController.presignUploadUrl);
-router.delete("/:contentId", requireAuth, requireRole("Admin"), contentController.deleteContent);
+router.delete(
+  "/:contentId",
+  requireAuth,
+  autoSyncClerkId,
+  requireDbUser,
+  contentController.deleteContent
+);
 
 export default router;

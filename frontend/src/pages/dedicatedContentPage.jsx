@@ -215,13 +215,13 @@ export default function DedicatedContentPage() {
 
       setDeleteResult({
         success: true,
-        message: "Contenido eliminado exitosamente",
+        message: "El contenido ha sido eliminado exitosamente",
       });
     } catch (error) {
       console.error("Error deleting content:", error);
       setDeleteResult({
         success: false,
-        message: error.message || "Error al eliminar el contenido",
+        message: error.message || "No se pudo eliminar el contenido. Por favor, intenta de nuevo.",
       });
     } finally {
       setContentToDelete(null);
@@ -375,9 +375,10 @@ export default function DedicatedContentPage() {
       {/* Result Modal */}
       <SuccessErrorModal
         open={showResultModal}
-        success={deleteResult.success}
-        title={deleteResult.success ? "¡Éxito!" : "Error"}
+        type={deleteResult.success ? "success" : "error"}
+        title={deleteResult.success ? "¡Contenido Eliminado!" : "Error al Eliminar"}
         message={deleteResult.message}
+        confirmLabel={deleteResult.success ? "Entendido" : "Cerrar"}
         onClose={() => setShowResultModal(false)}
       />
     </div>

@@ -85,8 +85,24 @@ export async function deleteContent(contentId, token) {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to delete content");
+    // Handle specific error codes with Spanish messages
+    if (response.status === 403) {
+      throw new Error("No tienes permisos para eliminar este contenido. Solo los administradores pueden realizar esta acción.");
+    }
+    if (response.status === 404) {
+      throw new Error("El contenido que intentas eliminar no existe.");
+    }
+    if (response.status === 401) {
+      throw new Error("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
+    }
+    
+    // Try to get error message from response
+    try {
+      const error = await response.json();
+      throw new Error(error.message || "Error al eliminar el contenido");
+    } catch (jsonError) {
+      throw new Error("Error al eliminar el contenido. Por favor, intenta de nuevo.");
+    }
   }
 
   return response.json();
