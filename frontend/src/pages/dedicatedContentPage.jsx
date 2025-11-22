@@ -21,10 +21,11 @@ import BackButton from "../atoms/backButton";
 import { Title2 } from "../atoms/typography";
 import ConfirmationModal from "../molecules/confirmationModal";
 import SuccessErrorModal from "../organisms/successErrorModal";
+import EditContentModal from "../molecules/editContentModal";
 
 // Services
 import { getDedicatedContent } from "../services/dedicatedContentServices";
-import { deleteContent } from "../services/contentServices";
+import { deleteContent, updateContent } from "../services/contentServices";
 
 /**
  * Content type configuration
@@ -87,6 +88,13 @@ export default function DedicatedContentPage() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [deleteResult, setDeleteResult] = useState({ success: false, message: "" });
   const [contentToDelete, setContentToDelete] = useState(null);
+
+  // Edit modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
+  const [contentToEdit, setContentToEdit] = useState(null);
+  const [editData, setEditData] = useState(null);
+  const [editResult, setEditResult] = useState({ success: false, message: "" });
 
   // Check if user is admin (roleId 10 = Admin)
   const isAdmin = userData?.roleId === 10;
@@ -182,11 +190,58 @@ export default function DedicatedContentPage() {
   };
 
   /**
-   * Handles edit action
+   * Handles edit action - shows edit modal
    */
   const handleEdit = (slide) => {
-    console.log("Editar contenido:", slide);
-    // TODO: Implementar edición
+    setContentToEdit(slide);
+    setShowEditModal(true);
+  };
+
+  /**
+   * Handles save from edit modal - shows confirmation
+   */
+  const handleSaveEdit = (updatedData) => {
+    setEditData(updatedData);
+    setShowEditModal(false);
+    setShowEditConfirmModal(true);
+  };
+
+  /**
+   * Confirms and executes edit
+   */
+  const handleConfirmEdit = async () => {
+    setShowEditConfirmModal(false);
+
+    if (!contentToEdit || !editData) return;
+
+    try {
+      const token = await getToken();
+      await updateContent(contentToEdit.id, editData, token);
+
+      // Update local state
+      setContent((prev) =>
+        prev.map((item) =>
+          item.id === contentToEdit.id
+            ? { ...item, title: editData.nombre, subtitle: editData.descripcion }
+            : item
+        )
+      );
+
+      setEditResult({
+        success: true,
+        message: "El contenido ha sido actualizado exitosamente",
+      });
+    } catch (error) {
+      console.error("Error updating content:", error);
+      setEditResult({
+        success: false,
+        message: error.message || "No se pudo actualizar el contenido. Por favor, intenta de nuevo.",
+      });
+    } finally {
+      setContentToEdit(null);
+      setEditData(null);
+      setShowResultModal(true);
+    }
   };
 
   /**
@@ -358,7 +413,32 @@ export default function DedicatedContentPage() {
         </div>
       </main>
 
-      {/* Confirmation Modal */}
+      {/* Edit Modal */}
+      <EditContentModal
+        open={showEditModal}
+        content={contentToEdit}
+        onSave={handleSaveEdit}
+        onCancel={() => {
+          setShowEditModal(false);
+          setContentToEdit(null);
+        }}
+      />
+
+      {/* Edit Confirmation Modal */}
+      <ConfirmationModal
+        open={showEditConfirmModal}
+        title="¿Guardar cambios?"
+        message="¿Estás seguro de que deseas guardar los cambios realizados al contenido?"
+        confirmLabel="Guardar"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmEdit}
+        onCancel={() => {
+          setShowEditConfirmModal(false);
+          setShowEditModal(true); // Volver al modal de edición
+        }}
+      />
+
+      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         open={showConfirmModal}
         title="¿Eliminar contenido?"
@@ -372,14 +452,22 @@ export default function DedicatedContentPage() {
         }}
       />
 
-      {/* Result Modal */}
+      {/* Result Modal (for both edit and delete) */}
       <SuccessErrorModal
         open={showResultModal}
-        type={deleteResult.success ? "success" : "error"}
-        title={deleteResult.success ? "¡Contenido Eliminado!" : "Error al Eliminar"}
-        message={deleteResult.message}
-        confirmLabel={deleteResult.success ? "Entendido" : "Cerrar"}
-        onClose={() => setShowResultModal(false)}
+        type={(editResult.success || deleteResult.success) ? "success" : "error"}
+        title={
+          editResult.message 
+            ? (editResult.success ? "¡Contenido Actualizado!" : "Error al Actualizar")
+            : (deleteResult.success ? "¡Contenido Eliminado!" : "Error al Eliminar")
+        }
+        message={editResult.message || deleteResult.message}
+        confirmLabel={(editResult.success || deleteResult.success) ? "Entendido" : "Cerrar"}
+        onClose={() => {
+          setShowResultModal(false);
+          setEditResult({ success: false, message: "" });
+          setDeleteResult({ success: false, message: "" });
+        }}
       />
     </div>
   );

@@ -156,6 +156,13 @@ router.get("/available", requireAuth, contentController.index);
 router.get("/:contentId", requireAuth, contentController.show);
 router.post("/upload", requireAuth, uploadFields, contentController.upload);
 router.post("/presign", requireAuth, contentController.presignUploadUrl);
+router.put(
+  "/:contentId",
+  requireAuth,
+  autoSyncClerkId,
+  requireDbUser,
+  contentController.editContent
+);
 router.delete(
   "/:contentId",
   requireAuth,

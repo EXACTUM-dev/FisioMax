@@ -240,6 +240,85 @@ export async function assignContentToPrivileges(contentId, privilegeIds) {
 }
 
 /**
+ * Updates content title and description
+ * @param {number} contentId - Content ID to update
+ * @param {Object} updateData - Data to update
+ * @param {string} updateData.nombre - New title
+ * @param {string} updateData.descripcion - New description
+ * @returns {Promise<Object>} Updated content data
+ * @throws {Error} If content not found or database error
+ */
+export async function updateContent(contentId, updateData) {
+  const { nombre, descripcion } = updateData;
+
+  // First check if content exists
+  const checkQuery = `
+    SELECT IDContenido, nombre, tipo
+    FROM contenido
+    WHERE IDContenido = ?
+      AND eliminado = 0
+      AND deletedAt IS NULL
+  `;
+
+  try {
+    const [existing] = await db.query(checkQuery, [contentId]);
+
+    if (existing.length === 0) {
+      throw new Error("Content not found");
+    }
+
+    const oldNombre = existing[0].nombre;
+    const contentType = existing[0].tipo;
+
+    // Verify it's an editable content type
+    if (!DISPLAYABLE_CONTENT_TYPES.includes(contentType)) {
+      throw new Error("Content type cannot be edited");
+    }
+
+    // Update main content
+    const updateQuery = `
+      UPDATE contenido 
+      SET nombre = ?, descripcion = ?
+      WHERE IDContenido = ?
+        AND eliminado = 0
+        AND deletedAt IS NULL
+    `;
+
+    const [updateResult] = await db.query(updateQuery, [nombre, descripcion, contentId]);
+
+    if (updateResult.affectedRows === 0) {
+      throw new Error("Content not found or already deleted");
+    }
+
+    // Also update thumbnail with same name if exists
+    const updateThumbnailQuery = `
+      UPDATE contenido 
+      SET nombre = ?, descripcion = ?
+      WHERE nombre = ?
+        AND tipo = 'imagen'
+        AND eliminado = 0
+        AND deletedAt IS NULL
+    `;
+
+    await db.query(updateThumbnailQuery, [nombre, `Miniatura de ${nombre}`, oldNombre]);
+
+    // Return updated content
+    const [updated] = await db.query(
+      `SELECT * FROM contenido WHERE IDContenido = ?`,
+      [contentId]
+    );
+
+    return updated[0];
+  } catch (error) {
+    if (error.message === "Content not found" || error.message === "Content type cannot be edited" || error.message === "Content not found or already deleted") {
+      throw error;
+    }
+    console.error("Database error in updateContent:", error);
+    throw new Error("Database error");
+  }
+}
+
+/**
  * Soft deletes content and returns S3 keys for physical deletion
  * @param {number} contentId - Content ID to delete
  * @returns {Promise<Object>} Object with mainKey and thumbnailKey

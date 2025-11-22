@@ -10,6 +10,7 @@ import {
   getContentById,
   createContent,
   assignContentToPrivileges,
+  updateContent,
   softDeleteContent,
 } from "../models/content.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
@@ -417,6 +418,99 @@ export async function presignUploadUrl(req, res) {
     return res.status(500).json({
       success: false,
       message: "No se pudo generar la URL de subida",
+    });
+  }
+}
+
+/**
+ * Updates content title and description
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function editContent(req, res) {
+  try {
+    const { contentId } = req.params;
+    const { nombre, descripcion } = req.body;
+    const clerkUserId = req.auth?.userId;
+
+    console.log("=== EDIT CONTENT REQUEST ===");
+    console.log("Content ID:", contentId);
+    console.log("Body:", { nombre, descripcion });
+    console.log("Clerk User ID:", clerkUserId);
+
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de contenido es requerido",
+      });
+    }
+
+    if (!nombre || !descripcion) {
+      return res.status(400).json({
+        success: false,
+        message: "Título y descripción son requeridos",
+      });
+    }
+
+    // Verificar que el usuario es Admin (IDRol = 10)
+    const { getUserByClerkId } = await import("../models/users.model.js");
+    const user = await getUserByClerkId(clerkUserId);
+
+    console.log("User from DB:", user ? { IDUsuario: user.IDUsuario, IDRol: user.IDRol } : null);
+
+    if (!user || user.IDRol !== 10) {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permisos para editar contenido. Solo los administradores pueden realizar esta acción.",
+      });
+    }
+
+    // Sanitize input
+    const sanitized = sanitizeContentInput(
+      { nombre, descripcion },
+      {
+        stringFields: ["nombre", "descripcion"],
+        requiredFields: ["nombre", "descripcion"],
+        maxLengths: {
+          nombre: 50,
+          descripcion: 500,
+        },
+      }
+    );
+
+    console.log("Sanitized data:", sanitized);
+
+    // Update content
+    const updatedContent = await updateContent(contentId, sanitized);
+
+    console.log("Content updated successfully");
+
+    return res.status(200).json({
+      success: true,
+      message: "Contenido actualizado exitosamente",
+      data: updatedContent,
+    });
+  } catch (error) {
+    console.error("Error updating content:", error);
+
+    if (error.message === "Content not found") {
+      return res.status(404).json({
+        success: false,
+        message: "El contenido no existe",
+      });
+    }
+
+    if (error.message === "Content type cannot be edited") {
+      return res.status(400).json({
+        success: false,
+        message: "Este tipo de contenido no puede ser editado",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar el contenido",
+      detail: error.message,
     });
   }
 }
