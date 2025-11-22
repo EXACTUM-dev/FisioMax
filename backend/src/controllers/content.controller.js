@@ -11,6 +11,9 @@ import {
   createContent,
   assignContentToPrivileges,
 } from "../models/content.model.js";
+import {
+  getUsuarioByClerkId
+} from "../models/users.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import S3Service from "../services/s3Service.js";
@@ -420,7 +423,6 @@ export async function presignUploadUrl(req, res) {
   }
 }
 
-
 /**
    * Generate and upload member certificate
    * @async
@@ -428,50 +430,49 @@ export async function presignUploadUrl(req, res) {
    * @returns {Promise<CertificateResult>} Result of the generation
    */
 export async function generateAndUploadCertificate(membershipId) {
-    try {
-      // Obtain membership data for the certificate
-      const membershipData = await Payment.getMembershipDetails(membershipId);
+  try {
+    // Obtain membership data for the certificate
+    const membershipData = await Payment.getMembershipDetails(membershipId);
 
-      if (!membershipData) {
-        console.error(`Membership ${membershipId} not found for certificate generation`);
-        return { generated: false, error: 'Membership not found' };
-      }
-
-      const { nombre, categoria, vigencia, numeroAfiliado } = membershipData;
-
-      // Generate the PDF
-      const pdfBytes = await generarCertificado({
-        nombre,
-        categoria,
-        vigencia,
-        numero: numeroAfiliado
-      });
-
-      // Create a unique name for the file
-      const timestamp = Date.now();
-      const sanitizedName = nombre.replace(/\s+/g, '_').toLowerCase();
-      const fileName = `certificado_${sanitizedName}_${timestamp}.pdf`;
-
-      // Upload to S3
-      const uploadResult = await uploadPdfToS3(pdfBytes, fileName);
-
-      // Update membership with certificate URL
-      await Payment.updateMembershipCertificate(membershipId, uploadResult.url);
-
-      // Send Email to member
-
-      console.log(`Certificate generated for membership ${membershipId}: ${uploadResult.url}`);
-
-      return {
-        generated: true,
-        url: uploadResult.url,
-        key: uploadResult.key
-      };
-
-    } catch (error) {
-      console.error(`Error generating certificate for membership ${membershipId}:`, error);
-      return { generated: false, error: error.message };
+    if (!membershipData) {
+      console.error(`Membership ${membershipId} not found for certificate generation`);
+      return { generated: false, error: 'Membership not found' };
     }
-  },
-};
+
+    const { nombre, categoria, vigencia, numeroAfiliado } = membershipData;
+
+    // Generate the PDF
+    const pdfBytes = await generarCertificado({
+      nombre,
+      categoria,
+      vigencia,
+      numero: numeroAfiliado
+    });
+
+    // Create a unique name for the file
+    const timestamp = Date.now();
+    const sanitizedName = nombre.replace(/\s+/g, '_').toLowerCase();
+    const fileName = `certificado_${sanitizedName}_${timestamp}.pdf`;
+
+    // Upload to S3
+    const uploadResult = await uploadPdfToS3(pdfBytes, fileName);
+
+    // Update membership with certificate URL
+    await Payment.updateMembershipCertificate(membershipId, uploadResult.url);
+
+    // Send Email to member
+
+    console.log(`Certificate generated for membership ${membershipId}: ${uploadResult.url}`);
+
+    return {
+      generated: true,
+      url: uploadResult.url,
+      key: uploadResult.key
+    };
+
+  } catch (error) {
+    console.error(`Error generating certificate for membership ${membershipId}:`, error);
+    return { generated: false, error: error.message };
+  }
+}
 
