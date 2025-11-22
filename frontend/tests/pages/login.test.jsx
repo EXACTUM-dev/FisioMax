@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Tests for the Login Page component
+ * @version 1.0.1
+ * @author EXACTUM-dev
+ */
+
 import { render, screen } from "@testing-library/react";
 import React from "react";
 // Mock the API config used by the app to avoid parsing `import.meta` in tests
