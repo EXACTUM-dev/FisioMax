@@ -5,7 +5,7 @@
  */
 
 import Payment from '../models/payment.model.js';
-import {generateAndUploadCertificate} from '../controllers/content.controller.js';
+import { generateAndUploadCertificate } from '../controllers/content.controller.js';
 
 
 /**
@@ -98,11 +98,11 @@ const PaymentService = {
 
       let certificateResult = { generated: false };
 
-      /*if (paymentInfo.status === 'approved') {
-        certificateResult = await Content.generateAndUploadCertificate(
+      if (paymentInfo.status === 'approved') {
+        certificateResult = await generateAndUploadCertificate(
           existingPayment.IDMembresia
         );
-      } */
+      }
 
       return {
         success: true,

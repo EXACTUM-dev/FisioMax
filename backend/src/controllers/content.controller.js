@@ -12,12 +12,14 @@ import {
   assignContentToPrivileges,
 } from "../models/content.model.js";
 import {
-  getUsuarioByClerkId
+  getUsuarioByClerkId,
+  updateUserCertificate
 } from "../models/users.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import { createCertificate } from "../utils/certificate.js";
 import S3Service from "../services/s3Service.js";
+import { sendBrevoEmail } from "../services/emailServices.js";
 import { sanitizeContentInput } from "../utils/sanitization.js";
 import path from "path";
 import crypto from "crypto";
@@ -441,7 +443,7 @@ export async function generateAndUploadCertificate(membershipId) {
     }
 
     const { nombres, apellidoP, apellidoM, membresiaTipo} = membershipData;
-    const vigencia = "Diciembre";
+    const vigencia = "2025";
 
     // Generate the PDF
     const pdfBytes = await createCertificate({
@@ -451,20 +453,23 @@ export async function generateAndUploadCertificate(membershipId) {
       membresiaTipo,
       vigencia
     });
-
+    const nombreCompleto = [nombres, apellidoP, apellidoM]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
     // Create a unique name for the file
     const timestamp = Date.now();
-    const sanitizedName = nombre.replace(/\s+/g, '_').toLowerCase();
-    const fileName = `certificado_${sanitizedName}_${timestamp}.pdf`;
+    const sanitizedName = nombreCompleto.replace(/\s+/g, '_').toLowerCase();
+    const fileName = "membresias";
 
     // Upload to S3
-    const uploadResult = await uploadPdfToS3(pdfBytes, fileName);
+    const uploadResult = await S3Service.uploadFile(pdfBytes, fileName);
 
-    // Update membership with certificate URL
-    await Payment.updateMembershipCertificate(membershipId, uploadResult.url);
+    //Update certificate
+    await updateUserCertificate(membershipId, uploadResult);
 
     // Send Email to member
-
+    await sendBrevoEmail(membershipData.correo, nombreCompleto, pdfBytes);
     console.log(`Certificate generated for membership ${membershipId}: ${uploadResult.url}`);
 
     return {

@@ -831,3 +831,37 @@ export async function reassignUserToSinRol(userId) {
     connection.release();
   }
 }
+
+/**
+ * Update the certificate URL in the user table
+ * @async
+ * @function updateUserCertificate
+ * @param {number} membershipId - Membership ID
+ * @param {Object} uploadResult - Result of the upgrade to S3
+ * @param {string} uploadResult.url - Certificate URL in S3
+ * @param {string} uploadResult.key - Object key in S3
+ * @returns {Promise<boolean>} True if it updated successfully
+ */
+export async function updateUserCertificate(membershipId, uploadResult) {
+  try {
+    const [result] = await pool.query(
+      `UPDATE usuario u
+       INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario
+       SET u.certificado = ?
+       WHERE m.IDMembresia = ?, u.eliminado = 0`,
+      [uploadResult.url, membershipId]
+    );
+
+    if (result.affectedRows === 0) {
+      console.warn(`No user found for membership ${membershipId}`);
+      return false;
+    }
+
+    console.log(`Certificate updated for membership ${membershipId}`);
+    return true;
+
+  } catch (error) {
+    console.error('Error updating user certificate:', error);
+    throw error;
+  }
+}

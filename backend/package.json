@@ -29,6 +29,7 @@
     "@aws-sdk/client-ses": "^3.896.0",
     "@aws-sdk/s3-request-presigner": "^3.908.0",
     "@clerk/clerk-sdk-node": "^4.13.23",
+    "@getbrevo/brevo": "^3.0.1",
     "aws-sdk": "^2.1692.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
