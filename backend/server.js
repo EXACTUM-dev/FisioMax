@@ -79,6 +79,16 @@ app.use(express.json());
  */
 app.use(express.urlencoded({ extended: true }));
 
+//-------------------------
+// SESSION TIMEOUT MIDDLEWARE
+//-------------------------
+/**
+ * Middleware to track user activity and enforce 30-minute inactivity timeout.
+ * Must be placed after authentication middleware (requireAuth) in protected routes.
+ * Applies globally to track all authenticated requests.
+ */
+app.use(sessionTimeoutMiddleware);
+
 /**
  * SES service configuration.
  */
