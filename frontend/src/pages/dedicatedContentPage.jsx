@@ -1,12 +1,13 @@
 /**
  * @fileoverview Dedicated content page component (videos, articles, books, podcasts)
- * @version 0.1.0
+ * @version 0.2.0
  * @author EXACTUM-dev
  * @description Single reusable page component for displaying filtered content by type with grid layout
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useUser, useAuth } from "@clerk/clerk-react";
+import { useUser as useClerkUser, useAuth } from "@clerk/clerk-react";
+import { useUser } from "../contexts/UserContext";
 import { useNavigate, useParams } from "react-router-dom";
 
 // Components
@@ -18,9 +19,13 @@ import AlertBanner from "../atoms/alertBanner";
 import Button from "../atoms/button";
 import BackButton from "../atoms/backButton";
 import { Title2 } from "../atoms/typography";
+import ConfirmationModal from "../molecules/confirmationModal";
+import SuccessErrorModal from "../organisms/successErrorModal";
+import EditContentModal from "../molecules/editContentModal";
 
 // Services
 import { getDedicatedContent } from "../services/dedicatedContentServices";
+import { deleteContent, updateContent } from "../services/contentServices";
 
 /**
  * Content type configuration
@@ -58,7 +63,8 @@ const CONTENT_CONFIG = {
  * @returns {React.Element}
  */
 export default function DedicatedContentPage() {
-  const { user, isLoaded } = useUser();
+  const { user: clerkUser } = useClerkUser();
+  const { userData, isLoading: isUserLoading } = useUser();
   const { getToken } = useAuth();
   const navigate = useNavigate();
   const { contentCategory } = useParams();
@@ -76,6 +82,22 @@ export default function DedicatedContentPage() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
+
+  // Delete modal states
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [deleteResult, setDeleteResult] = useState({ success: false, message: "" });
+  const [contentToDelete, setContentToDelete] = useState(null);
+
+  // Edit modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
+  const [contentToEdit, setContentToEdit] = useState(null);
+  const [editData, setEditData] = useState(null);
+  const [editResult, setEditResult] = useState({ success: false, message: "" });
+
+  // Check if user is admin by role name (not hardcoded ID)
+  const isAdmin = userData?.role === "Admin";
 
   const limit = 12;
 
@@ -136,7 +158,6 @@ export default function DedicatedContentPage() {
         setHasMore(response.hasMore);
         setTotal(response.total);
       } catch (err) {
-        console.error("Error loading content:", err);
         setError("No se pudo cargar el contenido. Intenta más tarde.");
       } finally {
         setLoading(false);
@@ -167,14 +188,107 @@ export default function DedicatedContentPage() {
     fetchContent(true);
   };
 
-  if (!isLoaded || !config) {
+  /**
+   * Handles edit action - shows edit modal
+   */
+  const handleEdit = (slide) => {
+    setContentToEdit(slide);
+    setShowEditModal(true);
+  };
+
+  /**
+   * Handles save from edit modal - shows confirmation
+   */
+  const handleSaveEdit = (updatedData) => {
+    setEditData(updatedData);
+    setShowEditModal(false);
+    setShowEditConfirmModal(true);
+  };
+
+  /**
+   * Confirms and executes edit
+   */
+  const handleConfirmEdit = async () => {
+    setShowEditConfirmModal(false);
+
+    if (!contentToEdit || !editData) return;
+
+    try {
+      const token = await getToken();
+      await updateContent(contentToEdit.id, editData, token);
+
+      // Update local state
+      setContent((prev) =>
+        prev.map((item) =>
+          item.id === contentToEdit.id
+            ? { ...item, title: editData.nombre, subtitle: editData.descripcion }
+            : item
+        )
+      );
+
+      setEditResult({
+        success: true,
+        message: "El contenido ha sido actualizado exitosamente",
+      });
+    } catch (error) {
+      setEditResult({
+        success: false,
+        message: error.message || "No se pudo actualizar el contenido. Por favor, intenta de nuevo.",
+      });
+    } finally {
+      setContentToEdit(null);
+      setEditData(null);
+      setShowResultModal(true);
+    }
+  };
+
+  /**
+   * Handles delete action - shows confirmation modal
+   */
+  const handleDelete = (slide) => {
+    setContentToDelete(slide);
+    setShowConfirmModal(true);
+  };
+
+  /**
+   * Confirms and executes deletion
+   */
+  const handleConfirmDelete = async () => {
+    setShowConfirmModal(false);
+
+    if (!contentToDelete) return;
+
+    try {
+      const token = await getToken();
+      await deleteContent(contentToDelete.id, token);
+
+      // Remove from local state
+      setContent((prev) => prev.filter((item) => item.id !== contentToDelete.id));
+      setTotal((prev) => prev - 1);
+
+      setDeleteResult({
+        success: true,
+        message: "El contenido ha sido eliminado exitosamente",
+      });
+    } catch (error) {
+      setDeleteResult({
+        success: false,
+        message: error.message || "No se pudo eliminar el contenido. Por favor, intenta de nuevo.",
+      });
+    } finally {
+      setContentToDelete(null);
+      setShowResultModal(true);
+    }
+  };
+
+  if (isUserLoading || !config) {
     return <Loading fullscreen message="Cargando..." />;
   }
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       <AppHeader
-        user={user}
+        user={clerkUser}
         showSearch={true}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -262,7 +376,12 @@ export default function DedicatedContentPage() {
                 </div>
               ) : (
                 <>
-                  <GridCarousel slides={content} />
+                  <GridCarousel 
+                    slides={content}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    showActions={isAdmin}
+                  />
 
                   {/* Load more button */}
                   {hasMore && (
@@ -290,6 +409,63 @@ export default function DedicatedContentPage() {
           )}
         </div>
       </main>
+
+      {/* Edit Modal */}
+      <EditContentModal
+        open={showEditModal}
+        content={contentToEdit}
+        onSave={handleSaveEdit}
+        onCancel={() => {
+          setShowEditModal(false);
+          setContentToEdit(null);
+        }}
+      />
+
+      {/* Edit Confirmation Modal */}
+      <ConfirmationModal
+        open={showEditConfirmModal}
+        title="¿Guardar cambios?"
+        message="¿Estás seguro de que deseas guardar los cambios realizados al contenido?"
+        confirmLabel="Guardar"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmEdit}
+        onCancel={() => {
+          setShowEditConfirmModal(false);
+          setShowEditModal(true); // Return to edit modal
+        }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        open={showConfirmModal}
+        title="¿Eliminar contenido?"
+        message={`¿Estás seguro de que deseas eliminar "${contentToDelete?.title}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirmModal(false);
+          setContentToDelete(null);
+        }}
+      />
+
+      {/* Result Modal (for both edit and delete) */}
+      <SuccessErrorModal
+        open={showResultModal}
+        type={(editResult.success || deleteResult.success) ? "success" : "error"}
+        title={
+          editResult.message 
+            ? (editResult.success ? "¡Contenido Actualizado!" : "Error al Actualizar")
+            : (deleteResult.success ? "¡Contenido Eliminado!" : "Error al Eliminar")
+        }
+        message={editResult.message || deleteResult.message}
+        confirmLabel={(editResult.success || deleteResult.success) ? "Entendido" : "Cerrar"}
+        onClose={() => {
+          setShowResultModal(false);
+          setEditResult({ success: false, message: "" });
+          setDeleteResult({ success: false, message: "" });
+        }}
+      />
     </div>
   );
 }
