@@ -156,6 +156,8 @@ export const PROFILE_VALIDATION_RULES = {
   // Professional Information
   licenciatura: [maxLength(100, "La licenciatura")],
 
+  membershipType: [required("El tipo de membresía es requerido")],
+
   // Social Media
   instagram: [maxLength(25, "Instagram")],
   linkedin: [maxLength(25, "LinkedIn")],
@@ -200,6 +202,7 @@ export const FIELD_LABELS = {
   numExterior: "Número exterior",
   numInterior: "Número interior",
   licenciatura: "Licenciatura",
+  membershipType: "Tipo de membresía",
   instagram: "Instagram",
   linkedin: "LinkedIn",
   facebook: "Facebook",
@@ -511,6 +514,7 @@ export const INITIAL_FORM_STATE = {
   colonia: "",
   codigoPostal: "",
   licenciatura: "",
+  membershipType: "",
   instagram: "",
   linkedin: "",
   facebook: "",

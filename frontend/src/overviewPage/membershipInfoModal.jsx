@@ -146,8 +146,7 @@ export default function MembershipInfoModal({
                   highlightStep === 2 ? "text-gray-700" : "text-gray-400"
                 } text-sm mt-1`}
               >
-                SOMEFIPP revisará y verificará tu información. Este proceso
-                puede tardar algunos días.
+                SOMEFIPP revisará y verificará tu información lo antes posible.
               </p>
             </div>
           </div>
