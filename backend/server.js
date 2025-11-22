@@ -20,6 +20,7 @@ import membershipApplicationRoutes from "./src/routes/membershipApplication.rout
 import { requireAuth } from "./src/middlewares/clerkAuth.js";
 import { requireDbUser } from "./src/middlewares/requireDbUser.js";
 import { autoSyncClerkId } from "./src/middlewares/clerkAuth.js";
+import { sessionTimeoutMiddleware } from "./src/middlewares/sessionTimeout.js";
 import usuariosRoutes from "./src/routes/users.routes.js";
 import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
@@ -108,6 +109,12 @@ app.use("/api/content", contentRoutes);
  * Routes for HomePage content (root path).
  */
 app.use("/api", homePageRoutes);
+
+/**
+ * Routes for payment processing with Mercado Pago.
+ *  */
+import paymentRoutes from "./src/routes/payment.routes.js";
+app.use("/api/payments", paymentRoutes);
 
 //-------------------------
 // ERROR HANDLING MIDDLEWARE

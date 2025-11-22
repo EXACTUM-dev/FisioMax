@@ -50,12 +50,12 @@ const abbreviateStateName = (stateName) => {
     "Badakhshan": "Badakh.",
   };
   
-  // Check if we have a specific abbreviation
+  /** Check if we have a specific abbreviation */
   if (abbreviations[stateName]) {
     return abbreviations[stateName];
   }
   
-  // If name is longer than 12 characters, try to abbreviate common words
+  /** If name is longer than 12 characters, try to abbreviate common words */
   if (stateName.length > 12) {
     return stateName
       .replace(/\bProvince\b/gi, "Prov.")
@@ -90,7 +90,10 @@ export default function StatisticsView() {
   const [exporting, setExporting] = useState(false);
 
   /**
-   * Fetches statistics data from the backend
+   * Fetches statistics data from the backend API.
+   * @async
+   * @function fetchStatistics
+   * @returns {Promise<void>}
    */
   const fetchStatistics = useCallback(async () => {
     try {
@@ -112,16 +115,15 @@ export default function StatisticsView() {
       
       const data = response?.data || response || {};
       
-      // Limitar a 5 elementos máximo por categoría (excepto residence que muestra todos)
       const limitData = (arr) => (arr || []).slice(0, 5);
       
       setStatistics({
-        residence: data.residence || [], // Mostrar todos los estados
+        residence: data.residence || [], 
         category: limitData(data.category),
         education: limitData(data.education),
       });
     } catch (err) {
-      console.error("Error al cargar estadísticas:", err);
+      console.error("Error loading statistics:", err);
     } finally {
       setLoading(false);
     }
@@ -132,7 +134,11 @@ export default function StatisticsView() {
   }, [fetchStatistics]);
 
   /**
-   * Handles PDF export
+   * Handles PDF export functionality.
+   * Downloads a PDF report with the current statistics data and date range.
+   * @async
+   * @function handleExportPDF
+   * @returns {Promise<void>}
    */
   const handleExportPDF = async () => {
     try {
@@ -150,7 +156,7 @@ export default function StatisticsView() {
       const queryString = params.toString();
       const url = `/api/statistics/memberships/export${queryString ? `?${queryString}` : ""}`;
       
-      // Use fetch directly for PDF blob response
+      /** Use fetch directly for PDF blob response */
       const headers = new Headers();
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
@@ -159,13 +165,13 @@ export default function StatisticsView() {
       const response = await fetch(url, { method: "GET", headers });
       
       if (!response.ok) {
-        throw new Error(`Error al exportar PDF: ${response.status} ${response.statusText}`);
+        throw new Error(`Error exporting PDF: ${response.status} ${response.statusText}`);
       }
 
-      // Get PDF as blob
+      /** Get PDF as blob */
       const blob = await response.blob();
       
-      // Create download link
+      /** Create download link */
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `reporte-membresias-${new Date().toISOString().split("T")[0]}.pdf`;
@@ -173,10 +179,10 @@ export default function StatisticsView() {
       link.click();
       document.body.removeChild(link);
       
-      // Clean up blob URL
+      /** Clean up blob URL */
       URL.revokeObjectURL(link.href);
     } catch (err) {
-      console.error("Error al exportar PDF:", err);
+      console.error("Error exporting PDF:", err);
       alert("Error al exportar el reporte. Por favor intente más tarde.");
     } finally {
       setExporting(false);
@@ -184,11 +190,12 @@ export default function StatisticsView() {
   };
 
   /**
-   * Renders a horizontal wide bar chart (for residence with many states)
+   * Renders a horizontal wide bar chart (for residence with many states).
    * @param {string} title - Chart title
-   * @param {Array} data - Chart data array
-   * @param {Array} colorScheme - Array of colors for bars
-   * @param {boolean} abbreviateLabels - Whether to abbreviate labels (for states)
+   * @param {Array<Object>} data - Chart data array with label and value properties
+   * @param {Array<string>} [colorScheme=["#D2B40D", "#296B00", "#E58E15", "#cad00f"]] - Array of colors for bars
+   * @param {boolean} [abbreviateLabels=false] - Whether to abbreviate labels (for states)
+   * @returns {JSX.Element} Horizontal bar chart component
    */
   const renderHorizontalBarChart = (title, data, colorScheme = ["#D2B40D", "#296B00", "#E58E15", "#cad00f"], abbreviateLabels = false) => {
     if (!data || data.length === 0) {
@@ -202,7 +209,7 @@ export default function StatisticsView() {
     const maxValue = Math.max(...data.map((d) => d.value || 0), 1);
     const yAxisDisplayMax = Math.max(Math.ceil(maxValue / 5) * 5, 5);
     
-    // Calculate Y-axis ticks
+    /** Calculate Y-axis ticks */
     const yAxisTicks = 5;
     const tickInterval = Math.ceil(yAxisDisplayMax / yAxisTicks);
     const yAxisLabels = [];
@@ -250,7 +257,7 @@ export default function StatisticsView() {
                 const maxBarHeight = chartHeight * 0.95;
                 const barHeight = ((item.value || 0) / yAxisDisplayMax) * maxBarHeight;
                 const color = colorScheme[index % colorScheme.length];
-                // Calculate bar width based on number of items, with min and max constraints
+                /** Calculate bar width based on number of items, with min and max constraints */
                 const barWidth = Math.max(20, Math.min(40, 800 / Math.max(data.length, 10)));
                 
                 return (
@@ -310,11 +317,12 @@ export default function StatisticsView() {
   };
 
   /**
-   * Renders a vertical bar chart with Y and X axes
+   * Renders a vertical bar chart with Y and X axes.
    * @param {string} title - Chart title
-   * @param {Array} data - Chart data array
-   * @param {Array} colorScheme - Array of colors for bars
-   * @param {boolean} abbreviateLabels - Whether to abbreviate labels (for states)
+   * @param {Array<Object>} data - Chart data array with label and value properties
+   * @param {Array<string>} [colorScheme=["#D2B40D", "#296B00", "#E58E15", "#cad00f"]] - Array of colors for bars
+   * @param {boolean} [abbreviateLabels=false] - Whether to abbreviate labels (for states)
+   * @returns {JSX.Element} Vertical bar chart component
    */
   const renderBarChart = (title, data, colorScheme = ["#D2B40D", "#296B00", "#E58E15", "#cad00f"], abbreviateLabels = false) => {
     if (!data || data.length === 0) {
@@ -327,11 +335,10 @@ export default function StatisticsView() {
 
     const maxValue = Math.max(...data.map((d) => d.value || 0), 1);
     
-    // Calcular el máximo dinámico para el eje Y basado en los datos reales
-    // Redondear hacia arriba al siguiente múltiplo de 5 para una escala más limpia
+    /** Calculate dynamic maximum for Y-axis based on actual data */
+    /** Round up to next multiple of 5 for cleaner scale */
     const yAxisDisplayMax = Math.max(Math.ceil(maxValue / 5) * 5, 5);
     
-    // Calculate Y-axis ticks (5 intervals) - basado en el máximo dinámico
     const yAxisTicks = 5;
     const tickInterval = Math.ceil(yAxisDisplayMax / yAxisTicks);
     const yAxisLabels = [];
@@ -375,11 +382,11 @@ export default function StatisticsView() {
             {/* Bars */}
             <div className="flex items-end justify-around gap-2 h-full px-2 pb-2">
               {data.map((item, index) => {
-                // Calcular altura en píxeles basándose en el máximo dinámico del eje Y
-                // La altura del contenedor es 360px, usamos ~95% para la barra más alta
-                const chartHeight = 360; // altura del contenedor en píxeles
-                const maxBarHeight = chartHeight * 0.95; // 95% del contenedor para la barra más alta
-                // Calcular altura proporcional: (valor / máximo del eje) * altura máxima de barra
+                /** Calculate height in pixels based on dynamic Y-axis maximum */
+                /** Container height is 360px, use ~95% for the tallest bar */
+                const chartHeight = 360; /** Container height in pixels */
+                const maxBarHeight = chartHeight * 0.95; /** 95% of container for tallest bar */
+                /** Calculate proportional height: (value / axis max) * max bar height */
                 const barHeight = ((item.value || 0) / yAxisDisplayMax) * maxBarHeight;
                 const color = colorScheme[index % colorScheme.length];
                 
@@ -426,7 +433,7 @@ export default function StatisticsView() {
                   <span 
                     className="text-gray-600 block break-words leading-tight px-1"
                     style={{ fontSize: abbreviateLabels ? "0.65rem" : "0.7rem" }}
-                    title={item.label || "Sin etiqueta"} // Show full name on hover
+                    title={item.label || "Sin etiqueta"}
                   >
                     {displayLabel}
                   </span>
@@ -515,7 +522,7 @@ export default function StatisticsView() {
           "Lugares de Residencia",
           statistics.residence,
           ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
-          true // Abbreviate state names
+          true /** Abbreviate state names */
         )}
         
         {/* Two square charts below - side by side */}
