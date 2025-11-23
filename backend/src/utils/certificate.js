@@ -7,6 +7,7 @@
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import fs from 'fs';
+import path from "path";
 
 
 /**
@@ -20,9 +21,9 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
   // 1. Cargar plantilla
   const nombreCompleto = [nombres, apellidoP, apellidoM]
     .filter(Boolean) // Elimina valores null/undefined/vacíos
-    .join(' ')
+    .join('_')
     .trim();
-  const templateBytes = fs.readFileSync('./certificateTemplate.pdf');
+  const templateBytes = fs.readFileSync('./src/utils/certificateTemplate.pdf');
   const pdfDoc = await PDFDocument.load(templateBytes);
 
   // 2. Elegir fuente
@@ -58,5 +59,9 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
 
   // 5. Guardar PDF final
   const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync(`./certificado_${nombre}.pdf`, pdfBytes);
+  return {
+    buffer: Buffer.from(pdfBytes),
+    filename: `certificado_${nombreCompleto}.pdf`,
+    mimeType: "application/pdf"
+  };
 }

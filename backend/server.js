@@ -123,9 +123,6 @@ app.use("/api", homePageRoutes);
  */
 import paymentRoutes from "./src/routes/payment.routes.js";
 app.use("/api/payments", paymentRoutes);
-import certificate from ".src/controllers/content.controller.js"
-app.post("/api/certificate", certificate.generateAndUploadCertificate("user_337pbccyGNX7WrxjJrGvhauJDcm"));
-
 //-------------------------
 // ERROR HANDLING MIDDLEWARE
 // Order matters: JSON parsing errors -> Specific errors -> Generic errors -> 404

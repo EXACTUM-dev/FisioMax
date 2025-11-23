@@ -7,7 +7,6 @@
 
 import nodemailer from "nodemailer";
 import Brevo from "@getbrevo/brevo";
-import fs from "fs/promises";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SES_SMTP_HOST,
@@ -45,75 +44,127 @@ apiInstance.setApiKey(
   process.env.BREVO_API_KEY
 );
 
+
+//Id for the templates in Brevo, contact the admin/ProductOwner to get the ids
+const TEMPLATE_IDS = {
+  BIENVENIDA: 1,
+  CONFIRMACION: 2,
+  RENOVACION: 3,
+  EVENTO: 4
+};
+
 /**
- * Send an email with Brevo
+ * Enviar email usando una plantilla de Brevo
  * @param {string} destinatario - Correo destino
- * @param {string} nombreMiembro - Nombre del nuevo miembro
- * @param {string} pdfPath - Ruta del PDF generado
+ * @param {string} nombreMiembro - Nombre del destinatario
+ * @param {number} templateId - ID de la plantilla en Brevo
+ * @param {Object} params - Variables dinámicas para la plantilla
+ * @param {Object} [attachment] - Archivo adjunto opcional
  */
-export async function sendBrevoEmail(destinatario, nombreMiembro, pdfPath) {
-  // Leer el PDF y convertir a base64
-  const pdfBuffer = fs.readFileSync(pdfPath);
-  const pdfBase64 = pdfBuffer.toString('base64');
+export async function sendBrevoEmailWithTemplate(
+  destinatario,
+  nombreMiembro,
+  templateId,
+  params = {},
+  attachment = null
+) {
+  const emailData = {
+    to: [{ email: destinatario, name: nombreMiembro }],
+    templateId: templateId,
+    params: {
+      NOMBRE: nombreMiembro,
+      ...params
+    }
+  };
+
+  // Agregar adjunto si existe
+  if (attachment) {
+    emailData.attachment = [{
+      content: attachment.buffer.toString('base64'),
+      name: attachment.filename
+    }];
+  }
+
+  try {
+    const response = await apiInstance.sendTransacEmail(emailData);
+    console.log('Email enviado con plantilla:', response);
+    return { success: true, messageId: response.messageId };
+  } catch (error) {
+    console.error('Error enviando email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Enviar email de bienvenida con certificado
+ */
+export async function sendWelcomeEmail(destinatario, nombreMiembro, pdfBytes) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.BIENVENIDA,
+    {
+      NOMBREMIEMBRO: nombreMiembro
+    },
+    {
+      buffer: pdfBytes.buffer,
+      filename: pdfBytes.filename || `Certificado_SOMEFIPP_${nombreMiembro.replace(/\s/g, '_')}.pdf`
+    }
+  );
+}
+
+/**
+ * Enviar recordatorio de renovación
+ */
+export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVencimiento) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.RENOVACION,
+    {
+      NOMBRE: nombreMiembro,
+      FECHA_VENCIMIENTO: fechaVencimiento
+    }
+  );
+}
+
+/**
+ * Enviar invitación a evento
+ */
+export async function sendEventInvitation(destinatario, nombreMiembro, eventoData) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.EVENTO,
+    {
+      NOMBRE: nombreMiembro,
+      EVENTO_NOMBRE: eventoData.nombre,
+      EVENTO_FECHA: eventoData.fecha,
+      EVENTO_LUGAR: eventoData.lugar,
+      EVENTO_URL: eventoData.urlRegistro
+    }
+  );
+}
+
+// Mantener función original para casos donde no uses plantilla
+export async function sendBrevoEmail(destinatario, nombreMiembro, pdfBytes) {
+  const pdfBase64 = pdfBytes.buffer.toString('base64');
 
   const emailData = {
-    sender: {
-      name: 'SOMEFIPP',
-      email: 'noreply@jaimelasticmax.dev'
-    },
-    to: [
-      {
-        email: destinatario,
-        name: nombreMiembro
-      }
-    ],
+    sender: { name: 'SOMEFIPP', email: 'noreply@jaimelasticmax.dev' },
+    to: [{ email: destinatario, name: nombreMiembro }],
     subject: 'Bienvenido a SOMEFIPP – Tu certificado de afiliación',
-    htmlContent: `
-      <p>Estimado <strong>${nombreMiembro}</strong>:</p>
-      
-      <p>Es un placer darte la más cordial bienvenida a la <strong>Sociedad Mexicana de Fisioterapia en Piso Pélvico (SOMEFIPP)</strong>. 
-      Estamos encantados de tenerte como parte de nuestra comunidad y esperamos que encuentres en nuestra sociedad un espacio valioso para el intercambio de conocimientos y el crecimiento profesional.</p>
-
-      <p>Como nuevo miembro, queremos brindarte información clave para que puedas aprovechar al máximo tu afiliación:</p>
-
-      <ol>
-        <li><strong>Recursos y Beneficios:</strong> Explora los recursos disponibles para nuestros miembros, que incluyen acceso a eventos exclusivos, material educativo y oportunidades de networking. Puedes encontrar más detalles en nuestra página web: 
-        <a href="https://www.somefipp.com" target="_blank">www.somefipp.com</a></li>
-        <br>
-
-        <li><strong>Próximos Eventos:</strong> Mantente al tanto de nuestros próximos eventos y actividades. Estamos comprometidos en ofrecer oportunidades de aprendizaje continuo. No dudes en participar y contribuir a la comunidad.</li>
-        <br>
-
-        <li><strong>Comunicación:</strong> Mantente conectado con nosotros a través de nuestras redes sociales y boletines informativos para recibir actualizaciones importantes, noticias del sector y oportunidades profesionales: <strong>@somefipp</strong></li>
-        <br>
-
-        <li><strong>Contacto:</strong> Si tienes alguna pregunta o necesitas asistencia, no dudes en ponerte en contacto con nuestro equipo a través de 
-        <a href="mailto:contacto@somefipp.com">contacto@somefipp.com</a></li>
-      </ol>
-
-      <p>Agradecemos tu participación y confianza en la <strong>Sociedad Mexicana de Fisioterapia en Piso Pélvico</strong>. Esperamos que tu experiencia con nosotros sea enriquecedora y beneficiosa para tu desarrollo profesional.</p>
-
-      <p>¡Bienvenido de nuevo! Y esperamos verte pronto en nuestros eventos.</p>
-
-      <p>Saludos cordiales,</p>
-
-      <p><strong>Artemio Cruz</strong><br>
-      Presidente SOMEFIPP</p>
-    `,
-    attachment: [
-      {
-        content: pdfBase64,
-        name: `Certificado_SOMEFIPP_${nombreMiembro.replace(/\s/g, '_')}.pdf`
-      }
-    ]
+    htmlContent: `<p>Estimado <strong>${nombreMiembro}</strong>:...</p>`,
+    attachment: [{
+      content: pdfBase64,
+      name: pdfBytes.filename || `Certificado_SOMEFIPP_${nombreMiembro.replace(/\s/g, '_')}.pdf`
+    }]
   };
 
   try {
     const response = await apiInstance.sendTransacEmail(emailData);
-    console.log('Email enviado:', response);
     return { success: true, messageId: response.messageId };
   } catch (error) {
-    console.error('Error enviando email:', error);
     return { success: false, error: error.message };
   }
 }

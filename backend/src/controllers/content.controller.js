@@ -19,7 +19,7 @@ import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
 import { createCertificate } from "../utils/certificate.js";
 import S3Service from "../services/s3Service.js";
-import { sendBrevoEmail } from "../services/emailServices.js";
+import { sendWelcomeEmail } from "../services/emailServices.js";
 import { sanitizeContentInput } from "../utils/sanitization.js";
 import path from "path";
 import crypto from "crypto";
@@ -434,18 +434,33 @@ export async function presignUploadUrl(req, res) {
    */
 export async function generateAndUploadCertificate(membershipId) {
   try {
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🎓 INICIO: Generación de certificado');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log(`📋 Membership ID recibido: ${membershipId}`);
+
     // Obtain membership data for the certificate
+    console.log('\n🔍 PASO 1: Obteniendo datos de membresía...');
     const membershipData = await getUsuarioByClerkId(membershipId);
 
     if (!membershipData) {
-      console.error(`Membership ${membershipId} not found for certificate generation`);
+      console.error(`❌ ERROR: Membership ${membershipId} no encontrada`);
       return { generated: false, error: 'Membership not found' };
     }
 
-    const { nombres, apellidoP, apellidoM, membresiaTipo} = membershipData;
+    console.log('✅ Datos de membresía obtenidos exitosamente');
+    console.log(`   - Nombres: ${membershipData.nombres}`);
+    console.log(`   - Apellido Paterno: ${membershipData.apellidoP}`);
+    console.log(`   - Apellido Materno: ${membershipData.apellidoM}`);
+    console.log(`   - Tipo de Membresía: ${membershipData.membresiaTipo}`);
+    console.log(`   - Correo: ${membershipData.correo}`);
+
+    const { nombres, apellidoP, apellidoM, membresiaTipo } = membershipData;
     const vigencia = "2025";
+    console.log(`   - Vigencia: ${vigencia}`);
 
     // Generate the PDF
+    console.log('\n📄 PASO 2: Generando PDF del certificado...');
     const pdfBytes = await createCertificate({
       nombres,
       apellidoP,
@@ -453,33 +468,75 @@ export async function generateAndUploadCertificate(membershipId) {
       membresiaTipo,
       vigencia
     });
+    console.log('✅ PDF generado exitosamente');
+    console.log(`   - Nombre del archivo: ${pdfBytes.filename}`);
+    console.log(`   - Tipo MIME: ${pdfBytes.mimeType}`);
+    console.log(`   - Tamaño del buffer: ${pdfBytes.buffer.length} bytes`);
+
     const nombreCompleto = [nombres, apellidoP, apellidoM]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    console.log(`   - Nombre completo: ${nombreCompleto}`);
+
     // Create a unique name for the file
     const timestamp = Date.now();
     const sanitizedName = nombreCompleto.replace(/\s+/g, '_').toLowerCase();
     const fileName = "membresias";
+    console.log(`   - Timestamp: ${timestamp}`);
+    console.log(`   - Nombre sanitizado: ${sanitizedName}`);
+    console.log(`   - Carpeta S3: ${fileName}`);
+
+    const fileForS3 = {
+      originalname: pdfBytes.filename,
+      mimetype: pdfBytes.mimeType,
+      buffer: pdfBytes.buffer
+    };
 
     // Upload to S3
-    const uploadResult = await S3Service.uploadFile(pdfBytes, fileName);
+    console.log('\n☁️  PASO 3: Subiendo certificado a S3...');
+    console.log(`   - Archivo original: ${fileForS3.originalname}`);
+    console.log(`   - MIME type: ${fileForS3.mimetype}`);
+    const uploadResult = await S3Service.uploadFile(fileForS3, fileName);
+    console.log('✅ Certificado subido a S3 exitosamente');
+    console.log(`   - URL: ${uploadResult}`);
 
     //Update certificate
+    console.log('\n💾 PASO 4: Actualizando certificado en la base de datos...');
+    console.log(`   - Membership ID: ${membershipId}`);
+    console.log(`   - URL del certificado: ${uploadResult}`);
     await updateUserCertificate(membershipId, uploadResult);
+    console.log('✅ Base de datos actualizada exitosamente');
 
     // Send Email to member
-    await sendBrevoEmail(membershipData.correo, nombreCompleto, pdfBytes);
-    console.log(`Certificate generated for membership ${membershipId}: ${uploadResult.url}`);
+    console.log('\n📧 PASO 5: Enviando email al miembro...');
+    console.log(`   - Destinatario: ${membershipData.correo}`);
+    console.log(`   - Nombre completo: ${nombreCompleto}`);
+    await sendWelcomeEmail(membershipData.correo, nombreCompleto, pdfBytes);
+    console.log('✅ Email enviado exitosamente');
+
+    console.log('\n═══════════════════════════════════════════════════════');
+    console.log('🎉 ÉXITO: Certificado generado completamente');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log(`📊 Resumen:`);
+    console.log(`   - Membership ID: ${membershipId}`);
+    console.log(`   - URL del certificado: ${uploadResult}`);
+    console.log('═══════════════════════════════════════════════════════\n');
 
     return {
       generated: true,
-      url: uploadResult.url,
-      key: uploadResult.key
+      url: uploadResult,
+      key: uploadResult
     };
 
   } catch (error) {
-    console.error(`Error generating certificate for membership ${membershipId}:`, error);
+    console.log('\n═══════════════════════════════════════════════════════');
+    console.error('❌ ERROR CRÍTICO en generación de certificado');
+    console.log('═══════════════════════════════════════════════════════');
+    console.error(`   - Membership ID: ${membershipId}`);
+    console.error(`   - Mensaje de error: ${error.message}`);
+    console.error(`   - Stack trace:`, error.stack);
+    console.log('═══════════════════════════════════════════════════════\n');
     return { generated: false, error: error.message };
   }
 }

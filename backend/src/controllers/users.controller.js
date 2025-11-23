@@ -13,6 +13,7 @@ import {
   reassignUserToSinRol,
   updateUserById,
 } from "../models/users.model.js";
+import {generateAndUploadCertificate} from "../controllers/content.controller.js";
 import S3Service from "../services/s3Service.js";
 import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
 
@@ -57,7 +58,8 @@ export async function getCurrentUserProfile(req, res) {
         error: "Usuario no autenticado",
       });
     }
-
+    const certificate = await generateAndUploadCertificate("user_337pbccyGNX7WrxjJrGvhauJDcm");
+    console.log("Control 1");
     const user = await getUsuarioByClerkId(clerkId);
 
     if (!user) {

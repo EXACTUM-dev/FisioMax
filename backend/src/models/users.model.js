@@ -297,9 +297,9 @@ export async function getUserById(userId) {
       [userId]
     );
     if (rows.length === 0) return null;
-    
+
     const user = decryptUserData(rows[0]);
-    
+
     // Get additional documents from separate table
     try {
       const [docRows] = await dbPool.query(
@@ -320,7 +320,7 @@ export async function getUserById(userId) {
       );
       user.documentosadicionales = [];
     }
-    
+
     return user;
   } catch (error) {
     console.error("Error al consultar usuario por ID:", error);
@@ -842,22 +842,22 @@ export async function reassignUserToSinRol(userId) {
  * @param {string} uploadResult.key - Object key in S3
  * @returns {Promise<boolean>} True if it updated successfully
  */
-export async function updateUserCertificate(membershipId, uploadResult) {
+export async function updateUserCertificate(clerkID, uploadResult) {
   try {
-    const [result] = await pool.query(
+    const [result] = await dbPool.query(
       `UPDATE usuario u
        INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario
-       SET u.certificado = ?
-       WHERE m.IDMembresia = ?, u.eliminado = 0`,
-      [uploadResult.url, membershipId]
+       SET m.certificado = ?
+       WHERE u.clerkID = ? AND u.eliminado = 0`,
+      [uploadResult, clerkID]
     );
 
     if (result.affectedRows === 0) {
-      console.warn(`No user found for membership ${membershipId}`);
+      console.warn(`No user found for clerkID ${clerkID}`);
       return false;
     }
 
-    console.log(`Certificate updated for membership ${membershipId}`);
+    console.log(`Certificate updated for clerkID ${clerkID}`);
     return true;
 
   } catch (error) {
