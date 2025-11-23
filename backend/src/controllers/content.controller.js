@@ -16,6 +16,7 @@ import {
 import {
   getUsuarioByClerkId,
   getUserById,
+  getUserByMembershipId,
   updateUserCertificate
 } from "../models/users.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
@@ -417,6 +418,169 @@ export async function presignUploadUrl(req, res) {
 }
 
 /**
+ * Updates content title and description
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function editContent(req, res) {
+  try {
+    const { contentId } = req.params;
+    const { nombre, descripcion } = req.body;
+    const clerkUserId = req.auth?.userId;
+
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de contenido es requerido",
+      });
+    }
+
+    if (!nombre || !descripcion) {
+      return res.status(400).json({
+        success: false,
+        message: "Título y descripción son requeridos",
+      });
+    }
+
+    // Verify user is Admin
+    const { getUserByClerkId } = await import("../models/users.model.js");
+    const { findRoleById } = await import("../models/roles.model.js");
+    const user = await getUserByClerkId(clerkUserId);
+
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message: "Usuario no encontrado.",
+      });
+    }
+
+    // Get role name to verify if user is admin
+    const role = await findRoleById(user.IDRol);
+    if (!role || role.nombre !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permisos para editar contenido. Solo los administradores pueden realizar esta acción.",
+      });
+    }
+
+    // Sanitize input
+    const sanitized = sanitizeContentInput(
+      { nombre, descripcion },
+      {
+        stringFields: ["nombre", "descripcion"],
+        requiredFields: ["nombre", "descripcion"],
+        maxLengths: {
+          nombre: 50,
+          descripcion: 500,
+        },
+      }
+    );
+
+    // Update content
+    const updatedContent = await updateContent(contentId, sanitized);
+
+    return res.status(200).json({
+      success: true,
+      message: "Contenido actualizado exitosamente",
+      data: updatedContent,
+    });
+  } catch (error) {
+    if (error.message === "Content not found") {
+      return res.status(404).json({
+        success: false,
+        message: "El contenido no existe",
+      });
+    }
+
+    if (error.message === "Content type cannot be edited") {
+      return res.status(400).json({
+        success: false,
+        message: "Este tipo de contenido no puede ser editado",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar el contenido",
+      detail: error.message,
+    });
+  }
+}
+
+/**
+ * Deletes content (soft delete in DB + physical delete in S3)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export async function deleteContent(req, res) {
+  try {
+    const { contentId } = req.params;
+    const clerkUserId = req.auth?.userId;
+
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de contenido es requerido",
+      });
+    }
+
+    // Verify user is Admin
+    const { getUserByClerkId } = await import("../models/users.model.js");
+    const { findRoleById } = await import("../models/roles.model.js");
+    const user = await getUserByClerkId(clerkUserId);
+
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message: "Usuario no encontrado.",
+      });
+    }
+
+    // Get role name to verify if user is admin
+    const role = await findRoleById(user.IDRol);
+    if (!role || role.nombre !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permisos para eliminar contenido. Solo los administradores pueden realizar esta acción.",
+      });
+    }
+
+    // Soft delete in database and get S3 keys
+    const { mainKey, thumbnailKey } = await softDeleteContent(contentId);
+
+    // Delete files from S3 in parallel
+    const deletePromises = [];
+
+    if (mainKey) {
+      deletePromises.push(S3Service.deleteFile(mainKey));
+    }
+
+    if (thumbnailKey) {
+      deletePromises.push(S3Service.deleteFile(thumbnailKey));
+    }
+
+    await Promise.all(deletePromises);
+
+    return res.status(200).json({
+      success: true,
+      message: "Contenido eliminado exitosamente",
+    });
+  } catch (error) {
+    if (error.message === "Content not found") {
+      return res.status(404).json({
+        success: false,
+        message: "El contenido no existe",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Error al eliminar el contenido",
+    });
+  }
+}
+
+/**
    * Generate and upload member certificate
    * @async
    * @param {number} membershipId - ID of the membership
@@ -431,7 +595,7 @@ export async function generateAndUploadCertificate(membershipId) {
 
     // Obtain membership data for the certificate
     console.log('\n🔍 PASO 1: Obteniendo datos de membresía...');
-    const membershipData = await getUserById(membershipId);
+    const membershipData = await getUserByMembershipId(membershipId);
 
     if (!membershipData) {
       console.error(`❌ ERROR: Membership ${membershipId} no encontrada`);
