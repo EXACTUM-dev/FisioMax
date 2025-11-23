@@ -29,6 +29,7 @@ import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
  */
 export const createMembershipApplication = async (req, res) => {
   try {
+    // (debug logs removed)
     // Sanitize input data
     const sanitized = sanitizeContentInput(req.body, {
       stringFields: [
@@ -38,6 +39,7 @@ export const createMembershipApplication = async (req, res) => {
         "professionalPhone",
         "whatsappPhone",
         "birthDate",
+        "membershipType",
         "country",
         "state",
         "city",
@@ -85,6 +87,12 @@ export const createMembershipApplication = async (req, res) => {
 
     // Sanitize email
     sanitized.email = sanitizeEmail(req.body.email);
+    // Ensure numeric hours field is normalized and available on sanitized
+    if (req.body.membershipHoursFormation !== undefined) {
+      sanitized.membershipHoursFormation = Number(
+        req.body.membershipHoursFormation
+      );
+    }
     if (!sanitized.email) {
       return res.status(400).json({
         success: false,
@@ -167,11 +175,20 @@ export const createMembershipApplication = async (req, res) => {
         certificates: certificatesUrl,
         extra: extraDocsUrls,
       },
+      membershipType: sanitized.membershipType || null,
+      membershipHoursFormation:
+        sanitized.membershipHoursFormation !== undefined
+          ? sanitized.membershipHoursFormation
+          : null,
     };
+
+    // applicationData prepared
 
     // Send data to archive model
     const application = new MembershipApplication(applicationData);
     await application.save();
+
+    // saved detail verification removed (debug)
 
     // Create template for the email when the application is sended
     const adminEmails = ["doculili08@gmail.com"];

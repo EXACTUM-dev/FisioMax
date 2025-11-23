@@ -84,10 +84,6 @@ function MembershipModalContent({
       const first = focusableElements[0];
       const last = focusableElements[focusableElements.length - 1];
 
-      // Focus the first element
-      first?.focus();
-
-      // Function to catch the navigation with Tab
       const handleKeyDown = (e) => {
         if (e.key === "Tab") {
           if (e.shiftKey) {
@@ -115,23 +111,24 @@ function MembershipModalContent({
     setPdfUrl(null);
   };
 
-  const downloadDocument = async (url, key) => {
-    if (!url) return;
+  const downloadDocument = async (url, filename = "document.pdf") => {
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const filename = key ? key.split("/").pop() : "document.pdf";
-      const blobUrl = URL.createObjectURL(blob);
+      const token = await getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await fetch(url, { headers });
+      if (!response.ok) throw new Error("Network response was not ok");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = filename;
+      a.download = filename || "document.pdf";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000 * 10);
+      window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error("Error descargando documento:", err);
+      // Fallback: abrir en nueva pestaña si la descarga falla
       window.open(url, "_blank", "noopener");
     }
   };
@@ -153,6 +150,30 @@ function MembershipModalContent({
     documentos = [],
   } = solicitud;
 
+  const fechaNacimientoRaw =
+    solicitud?.birthDate ||
+    solicitud?.fechaNacimiento ||
+    solicitud?.__raw?.birthDate ||
+    solicitud?.__raw?.fechaNacimiento ||
+    null;
+
+  const formatDate = (d) => {
+    if (!d) return null;
+    try {
+      const dt = new Date(d);
+      if (Number.isNaN(dt.getTime())) return String(d);
+      return dt.toLocaleDateString("es-MX", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+    } catch {
+      return String(d);
+    }
+  };
+
+  const fechaNacimiento = formatDate(fechaNacimientoRaw);
+
   const getMembershipId = () => {
     return (
       solicitud?.IDMembresia ||
@@ -161,6 +182,9 @@ function MembershipModalContent({
       solicitud?.__raw?.IDMembresia
     );
   };
+  // Use canonical field names from the membership application flow
+  const tipoMembresia = solicitud?.membershipType ?? null;
+  const horasFormacion = solicitud?.membershipHoursFormation ?? null;
 
   const handleConfirmApprove = async () => {
     setShowConfirmModal(false);
@@ -301,9 +325,26 @@ function MembershipModalContent({
                 rows={2}
                 readOnly
               />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <FieldBox
                 label="Licenciatura"
                 value={licenciatura || "No se envió"}
+                readOnly
+              />
+              <FieldBox
+                label="Fecha de nacimiento"
+                value={fechaNacimiento || "No se envió"}
+                readOnly
+              />
+              <FieldBox
+                label="Tipo de membresía"
+                value={tipoMembresia || "No especificado"}
+                readOnly
+              />
+              <FieldBox
+                label="Horas de formación"
+                value={horasFormacion ? `${horasFormacion} hrs` : "No se envió"}
                 readOnly
               />
             </div>
@@ -349,7 +390,12 @@ function MembershipModalContent({
                           type="button"
                           title={row.url ? "Ver documento" : "Sin archivo"}
                           onClick={() =>
-                            row.url && window.open(row.url, "_blank", "noopener,noreferrer")
+                            row.url &&
+                            window.open(
+                              row.url,
+                              "_blank",
+                              "noopener,noreferrer"
+                            )
                           }
                           disabled={!row.url}
                           className="text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"

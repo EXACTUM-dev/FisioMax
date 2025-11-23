@@ -141,6 +141,12 @@ class MembershipApplication {
     this.facebook = data.facebook?.trim() || null;
     this.website = data.website?.trim() || null;
     this.documents = data.documents || {};
+    this.membershipType = data.membershipType?.trim() || null;
+    this.membershipHoursFormation =
+      data.membershipHoursFormation !== undefined &&
+      data.membershipHoursFormation !== null
+        ? Number(data.membershipHoursFormation)
+        : null;
     this.id = null;
   }
 
@@ -256,7 +262,15 @@ class MembershipApplication {
       const [mres] = await conn.query(
         `INSERT INTO membresia (IDUsuario, tipo, fechaVencimiento, constanciaPago, certificado, horasFormacion, aceptado, estatusPago, createdAt)
          VALUES (?, ?, CURDATE(), ?, ?, ?, ?, ?, NOW())`,
-        [userId, "pendiente", "", "", 0, null, "pendiente"]
+        [
+          userId,
+          this.membershipType || "pendiente",
+          "",
+          "",
+          this.membershipHoursFormation || 0,
+          null,
+          "pendiente",
+        ]
       );
       this.IDMembresia = mres?.insertId || null;
 
@@ -282,7 +296,7 @@ export const getMembershipApplications = async () => {
   const conn = await db.getConnection();
   try {
     const query = `
-      SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, u.IDUsuario, 
+      SELECT m.IDMembresia, m.tipo, m.horasFormacion as horasFormacion, m.aceptado, m.estatusPago, u.IDUsuario, 
       u.nombres, u.apellidoP, u.correo, u.createdAt as createdAt
       FROM membresia m
       JOIN usuario u ON m.IDUsuario = u.IDUsuario
@@ -290,7 +304,13 @@ export const getMembershipApplications = async () => {
     `;
 
     const [rows] = await conn.execute(query);
-    return decryptApplicationsData(rows);
+    const decrypted = decryptApplicationsData(rows);
+    // Expose consistent field names for frontend
+    return decrypted.map((r) => ({
+      ...r,
+      membershipType: r.tipo || null,
+      membershipHoursFormation: r.horasFormacion ?? null,
+    }));
   } catch (error) {
     console.error("Error en getMembershipApplications:", error);
     throw error;
@@ -323,7 +343,7 @@ export const getMembershipApplicationById = async (id) => {
   const conn = await db.getConnection();
   try {
     const query = `
-      SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, m.IDUsuario, u.*
+      SELECT m.IDMembresia, m.tipo, m.horasFormacion as horasFormacion, m.aceptado, m.estatusPago, m.IDUsuario, u.*
       FROM membresia m
       JOIN usuario u ON m.IDUsuario = u.IDUsuario
       WHERE m.IDMembresia = ? AND m.deletedAt IS NULL
@@ -412,6 +432,7 @@ export const getMembershipApplicationById = async (id) => {
     const mapped = {
       IDMembresia: row.IDMembresia,
       tipo: row.tipo,
+      membershipType: row.tipo,
       aceptado: row.aceptado,
       estatusPago: row.estatusPago,
       IDUsuario: row.IDUsuario,
@@ -440,6 +461,7 @@ export const getMembershipApplicationById = async (id) => {
       instagram: row.instagram || null,
       linkedin: row.linkedin || null,
       documentos,
+      membershipHoursFormation: row.horasFormacion || null,
       __raw: row,
     };
 
