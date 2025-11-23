@@ -40,14 +40,14 @@ const PaymentService = {
 
       if (!existingPayment) {
         console.log(`Payment with folio ${paymentId} not found in database. Attempting to create from webhook data...`);
-        
+
         // Try to extract membership ID from metadata or external_reference
         const externalReference = paymentInfo.external_reference;
         const metadata = paymentInfo.metadata;
-        
+
         // Attempt to find membership ID from metadata or external reference
         let membershipId = metadata?.membership_id || metadata?.IDMembresia;
-        
+
         if (!membershipId && externalReference) {
           // Try parsing external_reference as JSON if it contains membership info
           try {
@@ -61,8 +61,8 @@ const PaymentService = {
 
         if (!membershipId) {
           console.warn(`Cannot create payment record: no membership ID found in payment ${paymentId}`);
-          return { 
-            success: false, 
+          return {
+            success: false,
             message: 'Payment not found in database and no membership ID in webhook data',
             info: 'Payment may need to be manually linked to a membership'
           };

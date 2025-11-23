@@ -15,6 +15,7 @@ import {
 } from "../models/content.model.js";
 import {
   getUsuarioByClerkId,
+  getUserById,
   updateUserCertificate
 } from "../models/users.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
@@ -430,7 +431,7 @@ export async function generateAndUploadCertificate(membershipId) {
 
     // Obtain membership data for the certificate
     console.log('\n🔍 PASO 1: Obteniendo datos de membresía...');
-    const membershipData = await getUsuarioByClerkId(membershipId);
+    const membershipData = await getUserById(membershipId);
 
     if (!membershipData) {
       console.error(`❌ ERROR: Membership ${membershipId} no encontrada`);

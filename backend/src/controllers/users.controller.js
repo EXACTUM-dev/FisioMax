@@ -58,8 +58,8 @@ export async function getCurrentUserProfile(req, res) {
         error: "Usuario no autenticado",
       });
     }
-    const certificate = await generateAndUploadCertificate("user_337pbccyGNX7WrxjJrGvhauJDcm");
-    console.log("Control 1");
+    const certificate = await generateAndUploadCertificate(1019);
+
     const user = await getUsuarioByClerkId(clerkId);
 
     if (!user) {
