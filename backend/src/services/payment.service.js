@@ -98,7 +98,14 @@ const PaymentService = {
 
       let certificateResult = { generated: false };
 
+      // If payment is approved, update expiration date and generate certificate
       if (paymentInfo.status === 'approved') {
+        // Update membership expiration date to one year from now
+        await Payment.updateMembershipExpirationDate(
+          existingPayment.IDMembresia
+        );
+
+        // Generate certificate with the updated expiration date
         certificateResult = await generateAndUploadCertificate(
           existingPayment.IDMembresia
         );

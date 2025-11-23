@@ -609,8 +609,19 @@ export async function generateAndUploadCertificate(membershipId) {
     console.log(`   - Tipo de Membresía: ${membershipData.membresiaTipo}`);
     console.log(`   - Correo: ${membershipData.correo}`);
 
-    const { nombres, apellidoP, apellidoM, membresiaTipo } = membershipData;
-    const vigencia = "2025";
+    const { nombres, apellidoP, apellidoM, membresiaTipo, membresiaFechaVencimiento } = membershipData;
+
+    // Format fechaVencimiento to "Mes Año" format (e.g., "Diciembre 2025")
+    const mesesEspanol = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    const fechaVencimiento = new Date(membresiaFechaVencimiento);
+    const mes = mesesEspanol[fechaVencimiento.getMonth()];
+    const año = fechaVencimiento.getFullYear();
+    const vigencia = `${mes} ${año}`;
+
     console.log(`   - Vigencia: ${vigencia}`);
 
     // Generate the PDF
