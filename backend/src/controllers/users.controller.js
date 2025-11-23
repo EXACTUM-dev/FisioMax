@@ -13,7 +13,7 @@ import {
   reassignUserToSinRol,
   updateUserById,
 } from "../models/users.model.js";
-import {generateAndUploadCertificate} from "../controllers/content.controller.js";
+import { generateAndUploadCertificate } from "../controllers/content.controller.js";
 import S3Service from "../services/s3Service.js";
 import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
 
@@ -80,16 +80,16 @@ export async function getCurrentUserProfile(req, res) {
     const documentosadicionalesUrls =
       user.documentosadicionales && user.documentosadicionales.length > 0
         ? await Promise.all(
-            user.documentosadicionales.map(async (doc) => {
-              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
-              return {
-                id: doc.IDDocumento,
-                nombre: doc.nombreArchivo,
-                url: url,
-                createdAt: doc.createdAt,
-              };
-            })
-          )
+          user.documentosadicionales.map(async (doc) => {
+            const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+            return {
+              id: doc.IDDocumento,
+              nombre: doc.nombreArchivo,
+              url: url,
+              createdAt: doc.createdAt,
+            };
+          })
+        )
         : [];
 
     const transformedUser = {
@@ -185,16 +185,16 @@ export async function getUserProfileById(req, res) {
     const documentosadicionalesUrls =
       user.documentosadicionales && user.documentosadicionales.length > 0
         ? await Promise.all(
-            user.documentosadicionales.map(async (doc) => {
-              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
-              return {
-                id: doc.IDDocumento,
-                nombre: doc.nombreArchivo,
-                url: url,
-                createdAt: doc.createdAt,
-              };
-            })
-          )
+          user.documentosadicionales.map(async (doc) => {
+            const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+            return {
+              id: doc.IDDocumento,
+              nombre: doc.nombreArchivo,
+              url: url,
+              createdAt: doc.createdAt,
+            };
+          })
+        )
         : [];
 
     const transformedUser = {
@@ -641,7 +641,7 @@ export async function updateUserDocuments(req, res) {
     let updated = currentUser;
     if (hasMainDocs) {
       updated = await updateUserById(userId, updateData);
-      
+
       if (!updated) {
         return res
           .status(404)
@@ -660,16 +660,16 @@ export async function updateUserDocuments(req, res) {
     const documentosadicionalesUrls =
       updated.documentosadicionales && updated.documentosadicionales.length > 0
         ? await Promise.all(
-            updated.documentosadicionales.map(async (doc) => {
-              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
-              return {
-                id: doc.IDDocumento,
-                nombre: doc.nombreArchivo,
-                url: url,
-                createdAt: doc.createdAt,
-              };
-            })
-          )
+          updated.documentosadicionales.map(async (doc) => {
+            const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+            return {
+              id: doc.IDDocumento,
+              nombre: doc.nombreArchivo,
+              url: url,
+              createdAt: doc.createdAt,
+            };
+          })
+        )
         : [];
 
     const transformedUser = {
@@ -709,6 +709,63 @@ export async function updateUserDocuments(req, res) {
     return res.status(500).json({
       success: false,
       error: "Error al actualizar los documentos",
+      message: error.message,
+    });
+  }
+}
+
+/**
+ * Get user's membership certificate with presigned URL
+ * @param {!Object} req - Express request object with params.userId
+ * @param {!Object} res - Express response object
+ * @return {!Promise<void>} Sends JSON response with certificate URL or error
+ */
+export async function getUserCertificate(req, res) {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de usuario requerido",
+      });
+    }
+
+    // Get user data including certificate
+    const user = await getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Usuario no encontrado",
+      });
+    }
+
+    // Check if user has a certificate
+    if (!user.certificado) {
+      return res.status(404).json({
+        success: false,
+        error: "El usuario no tiene un certificado generado",
+        certificado: null,
+      });
+    }
+
+    // Generate presigned URL for the certificate
+    const certificateUrl = await S3Service.getPresignedUrl(user.certificado);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        certificado: certificateUrl,
+        IDUsuario: user.IDUsuario,
+        nombreCompleto: `${user.nombres} ${user.apellidoP} ${user.apellidoM || ''}`.trim(),
+      },
+    });
+  } catch (error) {
+    console.error("Error obteniendo certificado del usuario:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error al obtener el certificado",
       message: error.message,
     });
   }

@@ -49,8 +49,9 @@ apiInstance.setApiKey(
 const TEMPLATE_IDS = {
   BIENVENIDA: 1,
   CONFIRMACION: 2,
-  RENOVACION: 3,
-  EVENTO: 4
+  RECHAZO: 3,
+  EVENTO: 4,
+  RENOVACION: 5
 };
 
 /**
@@ -104,7 +105,7 @@ export async function sendWelcomeEmail(destinatario, nombreMiembro, pdfBytes) {
     nombreMiembro,
     TEMPLATE_IDS.BIENVENIDA,
     {
-      NOMBREMIEMBRO: nombreMiembro
+      NOMBRE_MIEMBRO: nombreMiembro
     },
     {
       buffer: pdfBytes.buffer,
@@ -144,27 +145,4 @@ export async function sendEventInvitation(destinatario, nombreMiembro, eventoDat
       EVENTO_URL: eventoData.urlRegistro
     }
   );
-}
-
-// Mantener función original para casos donde no uses plantilla
-export async function sendBrevoEmail(destinatario, nombreMiembro, pdfBytes) {
-  const pdfBase64 = pdfBytes.buffer.toString('base64');
-
-  const emailData = {
-    sender: { name: 'SOMEFIPP', email: 'noreply@jaimelasticmax.dev' },
-    to: [{ email: destinatario, name: nombreMiembro }],
-    subject: 'Bienvenido a SOMEFIPP – Tu certificado de afiliación',
-    htmlContent: `<p>Estimado <strong>${nombreMiembro}</strong>:...</p>`,
-    attachment: [{
-      content: pdfBase64,
-      name: pdfBytes.filename || `Certificado_SOMEFIPP_${nombreMiembro.replace(/\s/g, '_')}.pdf`
-    }]
-  };
-
-  try {
-    const response = await apiInstance.sendTransacEmail(emailData);
-    return { success: true, messageId: response.messageId };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
 }

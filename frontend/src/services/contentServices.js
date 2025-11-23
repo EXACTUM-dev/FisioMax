@@ -71,20 +71,12 @@ export async function getAvailableContent(
 
 /**
  * Attempts to fetch a membership certificate URL for a given user.
- * Tries a few possible backend endpoints and response shapes to be resilient.
  * @param {string|number} userId - Database user ID to fetch the certificate for
  * @param {string} token - Clerk auth token
  * @returns {Promise<string|null>} Presigned URL to the certificate PDF or null
  */
 export async function getMembershipCertificate(userId, token) {
   if (!userId) return null;
-
-  const endpoints = [
-    // possible endpoints (some may not exist depending on backend)
-    `${API_URL}/membresias/${userId}`,
-    `${API_URL}/membership-applications/${userId}`,
-    `${API_URL}/api/membresias/${userId}`,
-  ];
 
   const headers = {
     "Content-Type": "application/json",
@@ -94,42 +86,27 @@ export async function getMembershipCertificate(userId, token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  for (const url of endpoints) {
-    try {
-      const resp = await fetch(url, { method: "GET", headers });
-      if (!resp.ok) continue;
-      const body = await resp.json();
+  try {
+    const resp = await fetch(`${API_URL}/users/certificate/${userId}`, {
+      method: "GET",
+      headers
+    });
 
-      // Different backends may return the payload under `data` or as the body directly
-      const payload = body.data || body || {};
-
-      // Common places where certificate URL might be stored
-      const candidates = [];
-      if (payload.certificado) candidates.push(payload.certificado);
-      if (payload.certificate) candidates.push(payload.certificate);
-      if (payload.__raw && payload.__raw.certificado)
-        candidates.push(payload.__raw.certificado);
-      // documentos array may include the certificate as one of the docs
-      if (Array.isArray(payload.documentos)) {
-        for (const d of payload.documentos) {
-          if (
-            d.id === "certificado" ||
-            /certifica/i.test(d.label || d.nombre || "")
-          ) {
-            if (d.url) candidates.push(d.url);
-            if (d.key) candidates.push(d.key);
-          }
-        }
-      }
-
-      // Try first truthy candidate
-      const found = candidates.find(Boolean) || null;
-      if (found) return found;
-    } catch (err) {
-      // ignore and try next
-      // console.debug(`Certificate fetch failed for ${url}:`, err.message);
+    if (!resp.ok) {
+      console.warn(`Certificate not found for user ${userId}`);
+      return null;
     }
-  }
 
-  return null;
+    const body = await resp.json();
+
+    // Extract certificate URL from response
+    if (body.success && body.data && body.data.certificado) {
+      return body.data.certificado;
+    }
+
+    return null;
+  } catch (err) {
+    console.error(`Error fetching certificate for user ${userId}:`, err.message);
+    return null;
+  }
 }

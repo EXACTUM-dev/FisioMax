@@ -280,7 +280,8 @@ export async function getUserById(userId) {
         m.createdAt as membresiaCreatedAt,
         m.horasFormacion as membresiaHorasFormacion,
         m.aceptado as membresiaAceptado,
-        m.estatusPago as membresiaEstatusPago
+        m.estatusPago as membresiaEstatusPago,
+        m.certificado as certificado
       FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
