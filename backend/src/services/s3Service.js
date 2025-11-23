@@ -36,7 +36,6 @@ class S3Service {
       // Return the S3 key instead of the presigned URL
       return key;
     } catch (error) {
-      console.error("Error subiendo archivo a S3:", error);
       throw new Error("Error al subir archivo a S3");
     }
   }
@@ -66,7 +65,6 @@ class S3Service {
 
       return url;
     } catch (error) {
-      console.error("Error generando URL presignada:", error);
       return null;
     }
   }
@@ -86,7 +84,6 @@ class S3Service {
       );
       return await Promise.all(urlPromises);
     } catch (error) {
-      console.error("Error generando URLs presignadas:", error);
       return [];
     }
   }
@@ -115,7 +112,6 @@ class S3Service {
       await s3.send(new DeleteObjectCommand(params));
       return true;
     } catch (error) {
-      console.error("Error eliminando archivo de S3:", error);
       return false;
     }
   }

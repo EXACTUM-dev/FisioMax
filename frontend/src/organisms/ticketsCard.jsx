@@ -104,39 +104,7 @@ const getReceiptUrl = (webhookData) => {
   return null;
 };
 
-/**
- * Downloads the receipt PDF by fetching and creating a blob.
- * @param {string} url - Receipt URL.
- * @param {string} filename - Suggested filename for download.
- * @return {Promise<void>}
- */
-const handleDownloadReceipt = async (url, filename) => {
-  if (!url) return;
 
-  try {
-    // Fetch the file as a blob
-    const response = await fetch(url);
-    const blob = await response.blob();
-
-    // Create a temporary URL for the blob
-    const blobUrl = window.URL.createObjectURL(blob);
-
-    // Create a temporary link and trigger download
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-
-    // Cleanup
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    console.error('Error descargando comprobante:', error);
-    // Fallback: open in new tab
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-};
 
 /**
  * Displays user's payment tickets in a card layout with pagination.
@@ -147,32 +115,6 @@ const handleDownloadReceipt = async (url, filename) => {
 export default function TicketsCard({ tickets = [] }) {
   const [currentPage, setCurrentPage] = React.useState(0);
   const TICKETS_PER_PAGE = 2;
-
-  // Debug: Log tickets to see response_webhook data
-  React.useEffect(() => {
-    if (tickets.length > 0) {
-      console.log('=== TICKETS DEBUG ===');
-      console.log('Total tickets:', tickets.length);
-
-      tickets.forEach((ticket, index) => {
-        console.log(`\n--- Ticket ${index + 1} (Folio: ${ticket.folio}) ---`);
-        console.log('Has response_webhook:', !!ticket.response_webhook);
-        console.log('response_webhook type:', typeof ticket.response_webhook);
-
-        if (ticket.response_webhook) {
-          const url = getReceiptUrl(ticket.response_webhook);
-          console.log('✅ Receipt URL extracted:', url);
-          console.log('transaction_details:', ticket.response_webhook.transaction_details);
-          console.log('point_of_interaction:', ticket.response_webhook.point_of_interaction);
-        } else {
-          console.log('❌ No response_webhook data - buttons will NOT show');
-        }
-      });
-      console.log('=== END TICKETS DEBUG ===\n');
-    } else {
-      console.log('No tickets found');
-    }
-  }, [tickets]);
 
   // Calculate pagination
   const totalPages = Math.ceil(tickets.length / TICKETS_PER_PAGE);
@@ -325,10 +267,7 @@ export default function TicketsCard({ tickets = [] }) {
                         {/* Only show download button for actual PDF receipts, not Mercado Pago activity links */}
                         {!getReceiptUrl(ticket.response_webhook)?.includes('activities?q=') && (
                           <button
-                            onClick={() => handleDownloadReceipt(
-                              getReceiptUrl(ticket.response_webhook),
-                              `comprobante_${ticket.folio}.pdf`
-                            )}
+                            onClick={() => window.open(getReceiptUrl(ticket.response_webhook), '_blank', 'noopener,noreferrer')}
                             className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
                             title="Descargar comprobante"
                           >

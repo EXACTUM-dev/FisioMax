@@ -10,6 +10,8 @@ import {
   getContentById,
   createContent,
   assignContentToPrivileges,
+  updateContent,
+  softDeleteContent,
 } from "../models/content.model.js";
 import {
   getUsuarioByClerkId,
@@ -54,7 +56,6 @@ export async function show(req, res) {
     try {
       signedUrl = generateSignedUrl(s3Path);
     } catch (urlError) {
-      console.error("Error generando URL firmada:", urlError);
       return res.status(500).json({
         error: "url_generation_failed",
         message: "No se pudo cargar el contenido, intenta más tarde.",
@@ -66,7 +67,7 @@ export async function show(req, res) {
       try {
         thumbnailUrl = generateSignedUrl(content.thumbnailMultimedia);
       } catch (thumbError) {
-        console.error("Error generando URL de miniatura:", thumbError);
+        // Thumbnail generation failed, continue without it
       }
     }
 
@@ -85,8 +86,6 @@ export async function show(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error en el controlador del contenido:", error);
-
     if (error.message === "Content not found") {
       return res.status(404).json({
         error: "not_found",
@@ -139,7 +138,7 @@ export async function index(req, res) {
         try {
           thumbnailUrl = generateSignedUrl(item.thumbnailMultimedia);
         } catch (error) {
-          console.error("Error generando miniatura para:", item.IDContenido);
+          // Thumbnail generation failed, continue without it
         }
       }
 
@@ -162,8 +161,6 @@ export async function index(req, res) {
       limit,
     });
   } catch (error) {
-    console.error("Error en el controlador index:", error);
-
     if (error.message.includes("Invalid content type")) {
       return res.status(400).json({
         error: "invalid_type",
@@ -211,7 +208,6 @@ export async function upload(req, res) {
           roleIds = [roleIds];
         }
       } catch (parseError) {
-        console.error("Error parsing roles:", parseError);
         return res.status(400).json({
           success: false,
           message: "Formato de roles inválido",
@@ -249,7 +245,6 @@ export async function upload(req, res) {
     const validatedRoleIds = sanitized.roles;
 
     if (validatedRoleIds.length === 0) {
-      console.error("No valid role IDs found");
       return res.status(400).json({
         success: false,
         message: "Los roles seleccionados no son válidos",
@@ -309,7 +304,6 @@ export async function upload(req, res) {
         // Upload main file to S3
         finalS3Key = await S3Service.uploadFile(file, folder);
       } catch (uploadError) {
-        console.error("Error uploading file to S3:", uploadError);
         return res.status(500).json({
           success: false,
           message: "Error al subir el archivo a S3",
@@ -331,7 +325,6 @@ export async function upload(req, res) {
       // Assign content to all collected privileges in accede table
       await assignContentToPrivileges(contentId, allPrivilegeIds);
     } catch (dbError) {
-      console.error("Error creating content in database:", dbError);
       return res.status(500).json({
         success: false,
         message: "Error al guardar el contenido en la base de datos",
@@ -340,7 +333,6 @@ export async function upload(req, res) {
 
     // Upload thumbnail if provided
     let thumbnailId = null;
-    console.log(thumbnail);
     if (thumbnail && thumbnail.buffer) {
       try {
         const thumbnailKey = await S3Service.uploadFile(
@@ -358,7 +350,6 @@ export async function upload(req, res) {
         // Assign thumbnail to same privileges
         await assignContentToPrivileges(thumbnailId, allPrivilegeIds);
       } catch (thumbError) {
-        console.error("Error uploading thumbnail:", thumbError);
         // Continue even if thumbnail fails
       }
     }
@@ -374,7 +365,6 @@ export async function upload(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error in upload controller:", error);
     return res.status(500).json({
       success: false,
       message: "Error al procesar la solicitud",
@@ -418,7 +408,6 @@ export async function presignUploadUrl(req, res) {
       key: s3Key,
     });
   } catch (error) {
-    console.error("Error generating presigned URL:", error);
     return res.status(500).json({
       success: false,
       message: "No se pudo generar la URL de subida",
