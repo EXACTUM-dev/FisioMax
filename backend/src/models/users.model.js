@@ -177,7 +177,8 @@ export async function getUserByClerkId(clerkId) {
         m.createdAt as membresiaCreatedAt,
         m.horasFormacion as membresiaHorasFormacion,
         m.aceptado as membresiaAceptado,
-        m.estatusPago as membresiaEstatusPago
+        m.estatusPago as membresiaEstatusPago,
+        m.noAfiliado as membresiaNoAfiliado
       FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
@@ -281,7 +282,8 @@ export async function getUserById(userId) {
         m.horasFormacion as membresiaHorasFormacion,
         m.aceptado as membresiaAceptado,
         m.estatusPago as membresiaEstatusPago,
-        m.certificado as certificado
+        m.certificado as certificado,
+        m.noAfiliado as membresiaNoAfiliado
       FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
@@ -377,7 +379,8 @@ export async function getUserByMembershipId(membershipId) {
         m.horasFormacion as membresiaHorasFormacion,
         m.aceptado as membresiaAceptado,
         m.estatusPago as membresiaEstatusPago,
-        m.certificado as certificado
+        m.certificado as certificado,
+        m.noAfiliado as membresiaNoAfiliado
       FROM membresia m
       INNER JOIN usuario u ON m.IDUsuario = u.IDUsuario
         AND u.deletedAt IS NULL 
@@ -660,6 +663,7 @@ export async function updateUserById(userId, updateData) {
       "membershipExpiresAt",
       "membershipPaymentStatus",
       "membershipHoursFormation",
+      "membershipNoAfiliado",
     ];
 
     // Normalize email if present
@@ -710,6 +714,7 @@ export async function updateUserById(userId, updateData) {
         else if (field === "membershipExpiresAt") dbField = "fechaVencimiento";
         else if (field === "membershipPaymentStatus") dbField = "estatusPago";
         else if (field === "membershipHoursFormation") dbField = "horasFormacion";
+        else if (field === "membershipNoAfiliado") dbField = "noAfiliado";
 
         membershipSetClauses.push(`${dbField} = ?`);
         // Convert to number for horasFormacion if it's a string

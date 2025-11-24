@@ -418,9 +418,8 @@ export const getMembershipApplicationById = async (id) => {
       nombres: row.nombres,
       apellidoP: row.apellidoP,
       apellidoM: row.apellidoM || null,
-      nombreCompleto: `${row.nombres} ${row.apellidoP} ${
-        row.apellidoM || ""
-      }`.trim(),
+      nombreCompleto: `${row.nombres} ${row.apellidoP} ${row.apellidoM || ""
+        }`.trim(),
       nombre: `${row.nombres} ${row.apellidoP} ${row.apellidoM || ""}`.trim(),
       ubicacion: ubicacionStr || null,
       correo: row.correo,
@@ -459,13 +458,13 @@ export const getMembershipApplicationById = async (id) => {
  * @returns {Promise<Object|null>} Updated application detail (decrypted) or null if not found
  * @throws {Error} When database operation fails
  */
-export const approveMembershipApplicationById = async (id) => {
+export const approveMembershipApplicationById = async (id, noAfiliado) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
     await conn.execute(
-      `UPDATE membresia SET aceptado = 1 WHERE IDMembresia = ? AND deletedAt IS NULL`,
-      [id]
+      `UPDATE membresia SET aceptado = 1, noAfiliado = ? WHERE IDMembresia = ? AND deletedAt IS NULL`,
+      [noAfiliado, id]
     );
 
     await conn.commit();
@@ -521,5 +520,25 @@ export async function denyMembershipApplication(razonRechazo, id) {
     conn.release();
   }
 }
+
+/**
+ * Get the maximum noAfiliado from the database.
+ * @async
+ * @returns {Promise<number>} The maximum noAfiliado found, or 0 if none.
+ */
+export const getMaxNoAfiliado = async () => {
+  const conn = await db.getConnection();
+  try {
+    const [rows] = await conn.execute(
+      `SELECT MAX(CAST(noAfiliado AS UNSIGNED)) as maxNoAfiliado FROM membresia WHERE deletedAt IS NULL`
+    );
+    return rows[0]?.maxNoAfiliado || 0;
+  } catch (error) {
+    console.error("Error getting max noAfiliado:", error);
+    throw error;
+  } finally {
+    conn.release();
+  }
+};
 
 export default MembershipApplication;

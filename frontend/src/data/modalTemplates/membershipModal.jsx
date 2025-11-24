@@ -36,7 +36,10 @@ function MembershipModalContent({
   const [showRejectedModal, setShowRejectedModal] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
+
   const [isProcessing, setIsProcessing] = useState(false);
+  const [noAfiliado, setNoAfiliado] = useState("");
+  const [maxNoAfiliado, setMaxNoAfiliado] = useState(0);
 
   const { getToken } = useAuth();
 
@@ -110,6 +113,29 @@ function MembershipModalContent({
     }
   }, [open]);
 
+  useEffect(() => {
+    const fetchMaxNoAfiliado = async () => {
+      if (open) {
+        try {
+          const token = await getToken();
+          const response = await fetchWithClerk(
+            "/api/membership-applications/max-no-afiliado",
+            { method: "GET" },
+            token
+          );
+          if (response?.success) {
+            const nextVal = (parseInt(response.data, 10) || 0) + 1;
+            setMaxNoAfiliado(response.data);
+            setNoAfiliado(nextVal.toString());
+          }
+        } catch (error) {
+          console.error("Error fetching max noAfiliado:", error);
+        }
+      }
+    };
+    fetchMaxNoAfiliado();
+  }, [open, getToken]);
+
   const closePdfModal = () => {
     setPdfModalOpen(false);
     setPdfUrl(null);
@@ -149,7 +175,9 @@ function MembershipModalContent({
     linkedin,
     paginaWeb,
     ubicacion,
+
     licenciatura,
+    fechaNacimiento,
     documentos = [],
   } = solicitud;
 
@@ -176,7 +204,13 @@ function MembershipModalContent({
 
       const response = await fetchWithClerk(
         `/api/membership-applications/${id}/aprobar`,
-        { method: "POST" },
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ noAfiliado }),
+        },
         token
       );
 
@@ -269,6 +303,19 @@ function MembershipModalContent({
               <FieldBox
                 label="Teléfono"
                 value={telefonoWhatsapp || telefono || "No se envió"}
+                readOnly
+              />
+              <FieldBox
+                label="Fecha de Nacimiento"
+                value={
+                  fechaNacimiento
+                    ? new Date(fechaNacimiento).toLocaleDateString("es-MX", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                    : "No se envió"
+                }
                 readOnly
               />
               <FieldBox
@@ -462,6 +509,15 @@ function MembershipModalContent({
             ¿Estás seguro de que deseas aceptar a <strong>{displayName}</strong>
             ? Esta acción no se puede deshacer.
           </p>
+          <div className="mb-6 text-left">
+            <FieldBox
+              label="Número de Afiliado"
+              value={noAfiliado}
+              onChange={(e) => setNoAfiliado(e.target.value)}
+              placeholder="Ingrese el número de afiliado"
+              maxLength={6}
+            />
+          </div>
           <div className="flex justify-center gap-3">
             <Button
               label="Cancelar"

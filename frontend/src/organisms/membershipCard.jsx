@@ -12,6 +12,7 @@ import EditButton from "../atoms/editButton";
 import Dropdown from "../molecules/dropdown";
 import SuccessErrorModal from "./successErrorModal";
 import PaymentService from "../services/paymentService";
+import FormField from "../molecules/form";
 
 // Membership prices in MXN (per year)
 const MEMBERSHIP_PRICES = {
@@ -47,6 +48,7 @@ export default function MembershipCard({
     membershipRegisteredAt: "",
     membershipExpiresAt: "",
     membershipPaymentStatus: "",
+    membershipNoAfiliado: "",
   });
 
   // Local state for success/error feedback modal
@@ -67,6 +69,7 @@ export default function MembershipCard({
           ? data.membershipExpiresAt.split("T")[0]
           : "",
         membershipPaymentStatus: data.membershipPaymentStatus || "Pendiente",
+        membershipNoAfiliado: data.membershipNoAfiliado || "",
       });
     }
   }, [data, isEditing]);
@@ -114,6 +117,7 @@ export default function MembershipCard({
         ? data.membershipExpiresAt.split("T")[0]
         : "",
       membershipPaymentStatus: data.membershipPaymentStatus || "Pendiente",
+      membershipNoAfiliado: data.membershipNoAfiliado || "",
     });
   };
 
@@ -130,6 +134,7 @@ export default function MembershipCard({
             ? new Date(formData.membershipExpiresAt).toISOString()
             : null,
           membershipPaymentStatus: formData.membershipPaymentStatus,
+          membershipNoAfiliado: formData.membershipNoAfiliado,
         };
 
         await onSave(dataToSave);
@@ -231,13 +236,18 @@ export default function MembershipCard({
             </div>
 
             <div className="flex justify-between">
+              <span className="text-slate-500">Afiliado NO</span>
+              <span className="font-medium">{data.membershipNoAfiliado || "—"}</span>
+            </div>
+
+            <div className="flex justify-between">
               <span className="text-slate-500">Estatus de pago</span>
               <span
                 className={`font-medium capitalize ${paymentStatus === "Pagado"
-                    ? "text-green-600"
-                    : paymentStatus === "Pendiente"
-                      ? "text-yellow-600"
-                      : "text-red-600"
+                  ? "text-green-600"
+                  : paymentStatus === "Pendiente"
+                    ? "text-yellow-600"
+                    : "text-red-600"
                   }`}
               >
                 {paymentStatus}
@@ -306,6 +316,18 @@ export default function MembershipCard({
             </div>
 
             <div>
+              <FormField
+                label="Afiliado NO"
+                name="membershipNoAfiliado"
+                required
+                value={formData.membershipNoAfiliado}
+                onChange={(e) => handleChange("membershipNoAfiliado", e.target.value)}
+                placeholder="Número de afiliado"
+                maxLength={6}
+              />
+            </div>
+
+            <div>
               <Dropdown
                 name="membershipPaymentStatus"
                 label="Estatus de pago"
@@ -319,11 +341,11 @@ export default function MembershipCard({
             </div>
           </div>
 
-          <div className="mt-4 flex justify-end gap-3">
+          < div classNam e="mt-4 flex  justify-end gap-3">
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              size=" sm"
               onClick={handleCancel}
               className="cursor-pointer"
             >
@@ -332,9 +354,10 @@ export default function MembershipCard({
             <Button
               type="button"
               variant="brand"
-              size="sm"
-              onClick={handleSave}
+              size=" sm"
+              o nClick={handleSave}
               className="cursor-pointer"
+
             >
               Guardar
             </Button>
@@ -343,7 +366,7 @@ export default function MembershipCard({
       )}
 
       {/* Success/Error modal to confirm whether save was successful or failed */}
-      <SuccessErrorModal
+      < SuccessErrorModal
         open={showModal}
         onClose={() => setShowModal(false)}
         type={modalType}

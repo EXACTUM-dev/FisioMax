@@ -129,6 +129,7 @@ export async function getCurrentUserProfile(req, res) {
       membershipHoursFormation: user.membresiaHorasFormacion || null,
       membershipStatus: user.membresiaAceptado,
       membershipPaymentStatus: user.membresiaEstatusPago || null,
+      membershipNoAfiliado: user.membresiaNoAfiliado || null,
     };
 
     res.status(200).json({
@@ -234,6 +235,7 @@ export async function getUserProfileById(req, res) {
       membershipHoursFormation: user.membresiaHorasFormacion || null,
       membershipStatus: user.membresiaAceptado,
       membershipPaymentStatus: user.membresiaEstatusPago || null,
+      membershipNoAfiliado: user.membresiaNoAfiliado || null,
     };
 
     res.status(200).json({
@@ -371,6 +373,7 @@ export async function updateUser(req, res) {
         "paginaWeb",
         "membershipType",
         "membershipPaymentStatus",
+        "membershipNoAfiliado",
       ],
       maxLengths: {
         nombres: 60,
@@ -393,6 +396,7 @@ export async function updateUser(req, res) {
         paginaWeb: 255,
         membershipType: 50,
         membershipPaymentStatus: 50,
+        membershipNoAfiliado: 50,
       },
     });
 
@@ -475,6 +479,7 @@ export async function updateUser(req, res) {
       membershipHoursFormation: updated.membresiaHorasFormacion || null,
       membershipStatus: updated.membresiaAceptado,
       membershipPaymentStatus: updated.membresiaEstatusPago || null,
+      membershipNoAfiliado: updated.membresiaNoAfiliado || null,
     };
 
     return res.status(200).json({ success: true, data: transformedUser });
