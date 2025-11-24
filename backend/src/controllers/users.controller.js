@@ -60,7 +60,6 @@ export async function getCurrentUserProfile(req, res) {
     }
 
     const user = await getUsuarioByClerkId(clerkId);
-    const certificate = await generateAndUploadCertificate(2006);
 
     if (!user) {
       return res.status(404).json({
