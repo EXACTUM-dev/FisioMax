@@ -489,6 +489,49 @@ export const approveMembershipApplicationById = async (id, noAfiliado) => {
       [noAfiliado, id]
     );
 
+    // Get membership type and user ID
+    const [membershipRows] = await conn.execute(
+      `SELECT tipo, IDUsuario FROM membresia WHERE IDMembresia = ?`,
+      [id]
+    );
+
+    if (membershipRows.length > 0) {
+      const { tipo, IDUsuario } = membershipRows[0];
+      
+      // Try to find a role that matches the membership type (case-insensitive)
+      const [roleRows] = await conn.execute(
+        `SELECT IDRol FROM rol WHERE nombre LIKE ? AND deletedAt IS NULL`,
+        [tipo]
+      );
+
+      if (roleRows.length > 0) {
+        const roleId = roleRows[0].IDRol;
+
+        // Check if user already has a role
+        const [userRoleRows] = await conn.execute(
+          `SELECT * FROM usuariorol WHERE IDUsuario = ? AND deletedAt IS NULL`,
+          [IDUsuario]
+        );
+
+        if (userRoleRows.length > 0) {
+          // Update existing role
+          await conn.execute(
+            `UPDATE usuariorol SET IDRol = ? WHERE IDUsuario = ?`,
+            [roleId, IDUsuario]
+          );
+        } else {
+          // Insert new role
+          await conn.execute(
+            `INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)`,
+            [IDUsuario, roleId]
+          );
+        }
+      } else {
+        // Fallback: Do nothing (keep current role or no role)
+        console.warn(`No matching role found for membership type '${tipo}'. User role unchanged.`);
+      }
+    }
+
     await conn.commit();
 
     // Re-use existing getter to return the full mapped detail (decrypted)

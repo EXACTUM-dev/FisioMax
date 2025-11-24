@@ -174,7 +174,6 @@ function MembershipModalContent({
     ubicacion,
 
     licenciatura,
-    fechaNacimiento,
     documentos = [],
   } = solicitud;
 
