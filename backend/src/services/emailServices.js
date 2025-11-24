@@ -6,6 +6,7 @@
  */
 
 import nodemailer from "nodemailer";
+import Brevo from "@getbrevo/brevo";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SES_SMTP_HOST,
@@ -35,3 +36,113 @@ export const sendEmail = async ({ to, subject, html }) => {
     console.error("Error enviando correo:", error);
   }
 };
+
+// Configurar API
+const apiInstance = new Brevo.TransactionalEmailsApi();
+apiInstance.setApiKey(
+  Brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
+
+
+//Id for the templates in Brevo, contact the admin/ProductOwner to get the ids
+const TEMPLATE_IDS = {
+  BIENVENIDA: 1,
+  CONFIRMACION: 2,
+  RECHAZO: 3,
+  EVENTO: 4,
+  RENOVACION: 5
+};
+
+/**
+ * Enviar email usando una plantilla de Brevo
+ * @param {string} destinatario - Correo destino
+ * @param {string} nombreMiembro - Nombre del destinatario
+ * @param {number} templateId - ID de la plantilla en Brevo
+ * @param {Object} params - Variables dinámicas para la plantilla
+ * @param {Object} [attachment] - Archivo adjunto opcional
+ */
+export async function sendBrevoEmailWithTemplate(
+  destinatario,
+  nombreMiembro,
+  templateId,
+  params = {},
+  attachment = null
+) {
+  const emailData = {
+    to: [{ email: destinatario, name: nombreMiembro }],
+    templateId: templateId,
+    params: {
+      NOMBRE: nombreMiembro,
+      ...params
+    }
+  };
+
+  // Agregar adjunto si existe
+  if (attachment) {
+    emailData.attachment = [{
+      content: attachment.buffer.toString('base64'),
+      name: attachment.filename
+    }];
+  }
+
+  try {
+    const response = await apiInstance.sendTransacEmail(emailData);
+    console.log('Email enviado con plantilla:', response);
+    return { success: true, messageId: response.messageId };
+  } catch (error) {
+    console.error('Error enviando email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Enviar email de bienvenida con certificado
+ */
+export async function sendWelcomeEmail(destinatario, nombreMiembro, pdfBytes) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.BIENVENIDA,
+    {
+      NOMBRE_MIEMBRO: nombreMiembro
+    },
+    {
+      buffer: pdfBytes.buffer,
+      filename: pdfBytes.filename || `Certificado_SOMEFIPP_${nombreMiembro.replace(/\s/g, '_')}.pdf`
+    }
+  );
+}
+
+/**
+ * Enviar recordatorio de renovación
+ */
+export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVencimiento) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.RENOVACION,
+    {
+      NOMBRE: nombreMiembro,
+      FECHA_VENCIMIENTO: fechaVencimiento
+    }
+  );
+}
+
+/**
+ * Enviar invitación a evento
+ */
+export async function sendEventInvitation(destinatario, nombreMiembro, eventoData) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.EVENTO,
+    {
+      NOMBRE: nombreMiembro,
+      EVENTO_NOMBRE: eventoData.nombre,
+      EVENTO_FECHA: eventoData.fecha,
+      EVENTO_LUGAR: eventoData.lugar,
+      EVENTO_URL: eventoData.urlRegistro
+    }
+  );
+}

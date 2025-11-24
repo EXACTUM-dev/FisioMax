@@ -124,7 +124,7 @@ export default function ProfileFormSection({
       const dataRes = await res.json();
       setStates(
         dataRes.data?.states?.map((s) => ({ value: s.name, label: s.name })) ||
-          []
+        []
       );
     } catch (err) {
       console.error("Error fetching states:", err);

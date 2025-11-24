@@ -5,6 +5,8 @@
  */
 
 import Payment from '../models/payment.model.js';
+import { generateAndUploadCertificate } from '../controllers/content.controller.js';
+
 
 /**
  * Payment service for handling Mercado Pago integrations.
@@ -38,14 +40,14 @@ const PaymentService = {
 
       if (!existingPayment) {
         console.log(`Payment with folio ${paymentId} not found in database. Attempting to create from webhook data...`);
-        
+
         // Try to extract membership ID from metadata or external_reference
         const externalReference = paymentInfo.external_reference;
         const metadata = paymentInfo.metadata;
-        
+
         // Attempt to find membership ID from metadata or external reference
         let membershipId = metadata?.membership_id || metadata?.IDMembresia;
-        
+
         if (!membershipId && externalReference) {
           // Try parsing external_reference as JSON if it contains membership info
           try {
@@ -59,8 +61,8 @@ const PaymentService = {
 
         if (!membershipId) {
           console.warn(`Cannot create payment record: no membership ID found in payment ${paymentId}`);
-          return { 
-            success: false, 
+          return {
+            success: false,
             message: 'Payment not found in database and no membership ID in webhook data',
             info: 'Payment may need to be manually linked to a membership'
           };
@@ -93,6 +95,21 @@ const PaymentService = {
         existingPayment.IDMembresia,
         membershipStatus
       );
+
+      let certificateResult = { generated: false };
+
+      // If payment is approved, update expiration date and generate certificate
+      if (paymentInfo.status === 'approved') {
+        // Update membership expiration date to one year from now
+        await Payment.updateMembershipExpirationDate(
+          existingPayment.IDMembresia
+        );
+
+        // Generate certificate with the updated expiration date
+        certificateResult = await generateAndUploadCertificate(
+          existingPayment.IDMembresia
+        );
+      }
 
       return {
         success: true,

@@ -16,6 +16,7 @@ import MembershipApplication, {
   getMembershipApplicationById,
   approveMembershipApplicationById,
   denyMembershipApplication,
+  getMaxNoAfiliado,
 } from "../models/membershipApplication.model.js";
 import { sendEmail } from "../services/emailServices.js";
 import S3Service from "../services/s3Service.js";
@@ -200,9 +201,8 @@ export const createMembershipApplication = async (req, res) => {
           html: `
               <h1>¡Atención!</h1>
               <p>Se ha registrado una nueva solicitud de membresía.</p>
-              <p><strong>Nombre:</strong> ${sanitized.firstName || ""} ${
-            sanitized.lastName || ""
-          } ${sanitized.middleName || ""}</p>
+              <p><strong>Nombre:</strong> ${sanitized.firstName || ""} ${sanitized.lastName || ""
+            } ${sanitized.middleName || ""}</p>
               <p><strong>Email:</strong> ${sanitized.email || ""}</p>
             `,
         });
@@ -307,8 +307,9 @@ export const getMembershipById = async (req, res) => {
 export const approveMembership = async (req, res) => {
   try {
     const { id } = req.params;
+    const { noAfiliado } = req.body;
 
-    const updated = await approveMembershipApplicationById(id);
+    const updated = await approveMembershipApplicationById(id, noAfiliado);
     if (!updated)
       return res.status(404).json({
         success: false,
@@ -364,3 +365,25 @@ export async function denyMembership(req, res) {
     });
   }
 }
+
+/**
+ * Get the maximum noAfiliado
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
+export const getMaxNoAfiliadoController = async (req, res) => {
+  try {
+    const maxNoAfiliado = await getMaxNoAfiliado();
+    res.json({
+      success: true,
+      data: maxNoAfiliado,
+    });
+  } catch (error) {
+    console.error("Error en getMaxNoAfiliadoController:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+      error: error.message,
+    });
+  }
+};

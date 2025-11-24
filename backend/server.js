@@ -125,7 +125,6 @@ app.use("/api", homePageRoutes);
  *  */
 import paymentRoutes from "./src/routes/payment.routes.js";
 app.use("/api/payments", paymentRoutes);
-
 //-------------------------
 // ERROR HANDLING MIDDLEWARE
 // Order matters: JSON parsing errors -> Specific errors -> Generic errors -> 404
