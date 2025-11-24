@@ -341,11 +341,11 @@ export default function MembershipCard({
             </div>
           </div>
 
-          < div classNam e="mt-4 flex  justify-end gap-3">
+          <div className="mt-4 flex justify-end gap-3">
             <Button
               type="button"
               variant="outline"
-              size=" sm"
+              size="sm"
               onClick={handleCancel}
               className="cursor-pointer"
             >
@@ -354,10 +354,9 @@ export default function MembershipCard({
             <Button
               type="button"
               variant="brand"
-              size=" sm"
-              o nClick={handleSave}
+              size="sm"
+              onClick={handleSave}
               className="cursor-pointer"
-
             >
               Guardar
             </Button>
