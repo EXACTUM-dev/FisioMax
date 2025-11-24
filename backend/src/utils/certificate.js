@@ -61,12 +61,9 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
   let customFont;
   try {
     const fontPath = path.join(__dirname, 'fonts', 'LibreBaskerville-Regular.ttf');
-    console.log('📁 Loading font...');
     const fontBytes = fs.readFileSync(fontPath);
     customFont = await pdfDoc.embedFont(fontBytes);
-    console.log('✅ Font loaded');
   } catch (error) {
-    console.warn('⚠️  Using Helvetica Bold');
     customFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   }
 
@@ -81,8 +78,6 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
   const nombreWidth = customFont.widthOfTextAtSize(nombreCompleto, nombreSize);
 
   if (nombreWidth <= maxTextWidth) {
-    // 1 line
-    console.log(`📏 Name: 1 line - ${nombreSize}pt`);
     page.drawText(nombreCompleto, {
       x: (width - nombreWidth) / 2,
       y: 380,
@@ -100,16 +95,10 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
     const w2 = customFont.widthOfTextAtSize(l2, s2);
 
     if (w1 <= maxTextWidth && w2 <= maxTextWidth) {
-      // 2 lines
       const sp = Math.max(s1, s2) * 1.2;
-      console.log(`📏 Name: 2 lines`);
-      console.log(`   L1: "${l1}" - ${s1}pt`);
-      console.log(`   L2: "${l2}" - ${s2}pt`);
       page.drawText(l1, { x: (width - w1) / 2, y: 395, size: s1, font: customFont, color: customColor });
       page.drawText(l2, { x: (width - w2) / 2, y: 395 - sp, size: s2, font: customFont, color: customColor });
     } else {
-      // 3 lines
-      console.log(`📏 Name: 3 lines`);
       const ln1 = nombres.toUpperCase();
       const ln2 = apellidoP ? apellidoP.toUpperCase() : '';
       const ln3 = apellidoM ? apellidoM.toUpperCase() : '';
@@ -124,10 +113,6 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
 
       const spacing = Math.max(sz1, sz2, sz3) * 1.15;
 
-      console.log(`   L1: "${ln1}" - ${sz1}pt`);
-      if (ln2) console.log(`   L2: "${ln2}" - ${sz2}pt`);
-      if (ln3) console.log(`   L3: "${ln3}" - ${sz3}pt`);
-
       page.drawText(ln1, { x: (width - wd1) / 2, y: 405, size: sz1, font: customFont, color: customColor });
       if (ln2) page.drawText(ln2, { x: (width - wd2) / 2, y: 405 - spacing, size: sz2, font: customFont, color: customColor });
       if (ln3) page.drawText(ln3, { x: (width - wd3) / 2, y: 405 - (spacing * 2), size: sz3, font: customFont, color: customColor });
@@ -140,7 +125,6 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
   const tipoWidth = customFont.widthOfTextAtSize(membresiaTipoUpper, tipoSize);
 
   if (tipoWidth <= maxTextWidth) {
-    console.log(`📏 Type: 1 line - ${tipoSize}pt`);
     page.drawText(membresiaTipoUpper, {
       x: (width - tipoWidth) / 2,
       y: 230,
@@ -149,7 +133,6 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
       color: customColor
     });
   } else {
-    console.log(`📏 Type: 2 lines`);
     const palabras = membresiaTipoUpper.split(' ');
     let corte = Math.floor(palabras.length / 2);
 
@@ -169,16 +152,11 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
     const tw2 = customFont.widthOfTextAtSize(tl2, ts2);
     const tsp = Math.max(ts1, ts2) * 1.2;
 
-    console.log(`   L1: "${tl1}" - ${ts1}pt`);
-    console.log(`   L2: "${tl2}" - ${ts2}pt`);
-
     page.drawText(tl1, { x: (width - tw1) / 2, y: 240, size: ts1, font: customFont, color: customColor });
     page.drawText(tl2, { x: (width - tw2) / 2, y: 240 - tsp, size: ts2, font: customFont, color: customColor });
   }
 
   // === AFFILIATE NUMBER ===
-  console.log(`📏 Affiliate No: ${membresiaNoAfiliado}`);
-  // The number appears to the right of the "AFILIADO NO:" text that is in the template
   if (membresiaNoAfiliado) {
     const afiliadoText = `${membresiaNoAfiliado}`;
     const afiliadoSize = 16;
