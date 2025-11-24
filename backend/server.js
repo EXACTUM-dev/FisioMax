@@ -28,6 +28,7 @@ import homePageRoutes from "./src/routes/homePage.route.js";
 import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
 import notificationRoutes from './src/routes/notifications.routes.js';
 import { startNotificationsCron } from './src/services/notificationCronJob.js';
+import { startCleanupCron } from './src/services/cleanNotificationsCronJobs.js';
 
 // Initialize Express application
 const app = express();
@@ -129,6 +130,7 @@ app.use('/api/notifications', notificationRoutes);
  * Start Cron Job
  */
 startNotificationsCron();
+startCleanupCron();
 
 // Start server
 const PORT = process.env.PORT || 5000;

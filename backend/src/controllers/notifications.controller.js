@@ -5,6 +5,7 @@
  */
 
 import NotificationModel from '../models/notifications.model.js';
+import { getUserByClerkId } from '../models/users.model.js'; 
 
 class NotificationController {
   /**
@@ -161,7 +162,60 @@ class NotificationController {
         details: `Tu membresía vence el día ${formattedDate}`,
         subtext: 'Recuerda que puedes renovarla desde "Mi perfil"'
     };
+  }
+
+ /**
+   * Mark notification as read 
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   * @return {Promise<void>}
+   */
+  static async markAsRead(req, res) {
+    try {
+      const { id: notificationID } = req.params;
+    
+
+      if (!req.auth || !req.auth.userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'No autenticado'
+        });
+      }
+
+      const user = await getUserByClerkId(req.auth.userId);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Usuario no encontrado'
+        });
+      }
+
+      const mysqlUserId = user.IDUsuario;
+      const result = await NotificationModel.markAsRead(notificationID, mysqlUserId);
+
+
+      if (!result.success) {
+        return res.status(404).json({
+          success: false,
+          error: 'Notificación no encontrada o no pertenece al usuario'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Notificación marcada como leída',
+        affectedRows: result.affectedRows
+      });
+    } catch (error) {
+      console.error('Error en markAsRead:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Error al marcar notificación como leída',
+        details: error.message
+      });
     }
+  }
 }
 
 export default NotificationController;

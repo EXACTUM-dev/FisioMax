@@ -205,20 +205,23 @@ const NotificationBell = () => {
     try {
       const token = await getToken();
       
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/notifications/${notificationID}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ esRevisada: 1 })
-        }
-      );
+      const url = `${import.meta.env.VITE_API_URL}/notifications/${notificationID}`;
+      
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ esRevisada: 1 })
+      });
+      
+      const data = await response.json();
 
       if (response.ok) {
         setNotifications(prev => prev.filter(n => n.notificationID !== notificationID));
+      } else {
+        console.error('Error en respuesta:', data);
       }
     } catch (error) {
       console.error('Error marking as read:', error);

@@ -102,4 +102,30 @@ export async function existsNotificationToday(userID, daysRemaining) {
   }
 }
 
-export default { getByUser, create, existsNotificationToday, };
+/**
+ * Mark notification as read
+ * @param {number} notificationID - Notification ID
+ * @param {number} userID - User ID
+ * @returns {Promise<Object>} Result of the operation.
+ */
+export async function markAsRead(notificationID, userID) {
+  try {
+    const query = `
+      UPDATE notificaciones
+      SET esRevisada = 1, readAt = NOW()
+      WHERE IDnotificacion = ?
+        AND IDusuario = ?
+    `;
+
+    const [result] = await dbPool.query(query, [notificationID, userID]);
+    
+    return {
+      success: result.affectedRows > 0,
+      affectedRows: result.affectedRows
+    };
+  } catch (error) {
+    throw new Error(`Error al marcar como leída: ${error.message}`);
+  }
+}
+
+export default { getByUser, create, existsNotificationToday, markAsRead };

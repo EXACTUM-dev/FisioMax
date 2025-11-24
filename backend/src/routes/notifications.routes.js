@@ -21,7 +21,7 @@ router.get( '/', requireAuth, NotificationController.getPendingNotifications );
  * @desc    Mark notification as read
  * @access  Private
  */
-router.patch( '/:id', requireAuth, NotificationController.markAsRead );
+router.patch('/:id', requireAuth, NotificationController.markAsRead );
 
 /**
  * @route   POST /api/notifications/test-job
