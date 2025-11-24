@@ -1,6 +1,6 @@
 /**
  * @fileoverview Custom PDF Certificate Generator
- * @version 0.4.0
+ * @version 0.4.1
  * @author EXACTUM-dev
  * @description Certificate generator with auto-sizing and multi-line support (up to 3 lines for names)
  */
@@ -25,7 +25,7 @@ function calculateOptimalFontSize(text, font, maxWidth, maxSize = 29, minSize = 
   return fontSize;
 }
 
-export async function createCertificate({ nombres, apellidoP, apellidoM, membresiaTipo, vigencia, noAfiliado }) {
+export async function createCertificate({ nombres, apellidoP, apellidoM, membresiaTipo, vigencia, membresiaNoAfiliado }) {
   const nombreCompleto = [nombres, apellidoP, apellidoM].filter(Boolean).join(' ').trim().toUpperCase();
 
   const templatePath = path.join(__dirname, 'certificateTemplate.pdf');
@@ -152,13 +152,15 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
   }
 
   // === AFILIADO NO ===
-  if (noAfiliado) {
-    const afiliadoText = `${noAfiliado}`;
+  console.log(`📏 Afiliado No: ${membresiaNoAfiliado}`);
+  // El número aparece a la derecha del texto "AA FILI A DO NO:" que está en el template
+  if (membresiaNoAfiliado) {
+    const afiliadoText = `${membresiaNoAfiliado}`;
     const afiliadoSize = 16;
-    const afiliadoWidth = customFont.widthOfTextAtSize(afiliadoText, afiliadoSize);
+    // Posición X fija a la derecha del texto preimpreso
     page.drawText(afiliadoText, {
-      x: (width - afiliadoWidth) / 2,
-      y: 175,
+      x: 770,
+      y: 18,
       size: afiliadoSize,
       font: customFont,
       color: customColor
