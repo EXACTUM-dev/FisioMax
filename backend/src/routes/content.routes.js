@@ -7,7 +7,9 @@
 
 import express from "express";
 import multer from "multer";
-import { requireAuth } from "../middlewares/clerkAuth.js";
+import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
+import { requireDbUser } from "../middlewares/requireDbUser.js";
+import { authorize } from "../middlewares/rbacMiddleware.js";
 import * as contentController from "../controllers/content.controller.js";
 
 const router = express.Router();
@@ -80,8 +82,6 @@ const uploadFields = (req, res, next) => {
 
   uploader(req, res, (err) => {
     if (err instanceof multer.MulterError) {
-      console.error("Multer error:", err);
-
       if (err.code === "LIMIT_FILE_SIZE") {
         return res.status(413).json({
           success: false,
@@ -112,7 +112,6 @@ const uploadFields = (req, res, next) => {
     }
 
     if (err) {
-      console.error("Upload error:", err);
       return res.status(400).json({
         success: false,
         message: err.message || "Error al procesar los archivos",
@@ -154,5 +153,19 @@ router.get("/available", requireAuth, contentController.index);
 router.get("/:contentId", requireAuth, contentController.show);
 router.post("/upload", requireAuth, uploadFields, contentController.upload);
 router.post("/presign", requireAuth, contentController.presignUploadUrl);
+router.put(
+  "/:contentId",
+  requireAuth,
+  autoSyncClerkId,
+  requireDbUser,
+  contentController.editContent
+);
+router.delete(
+  "/:contentId",
+  requireAuth,
+  autoSyncClerkId,
+  requireDbUser,
+  contentController.deleteContent
+);
 
 export default router;

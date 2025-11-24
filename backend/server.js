@@ -29,6 +29,7 @@ import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
 import notificationRoutes from './src/routes/notifications.routes.js';
 import { startNotificationsCron } from './src/services/notificationCronJob.js';
 import { startCleanupCron } from './src/services/cleanNotificationsCronJobs.js';
+import statisticsRoutes from "./src/routes/statistics.routes.js";
 
 // Initialize Express application
 const app = express();
@@ -110,6 +111,7 @@ app.use("/api/users", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/logs", loginLogsRoutes);
+app.use("/api/statistics", statisticsRoutes);
 /**
  * Routes for video content access.
  */
@@ -138,6 +140,12 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Cron Jobs iniciados');
 });
+
+/**
+ * Routes for payment processing with Mercado Pago.
+ *  */
+import paymentRoutes from "./src/routes/payment.routes.js";
+app.use("/api/payments", paymentRoutes);
 
 //-------------------------
 // ERROR HANDLING MIDDLEWARE

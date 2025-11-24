@@ -44,6 +44,7 @@
     "mysql2": "^3.15.3",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.9",
+    "pdfkit": "^0.17.2",
     "svix": "^1.80.0"
   },
   "devDependencies": {

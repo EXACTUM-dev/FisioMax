@@ -14,27 +14,70 @@ import { buildApiUrl, API_CONFIG } from "../config/api";
  * @returns {Promise<void>}
  */
 export async function sendLoginErrorLog(payload) {
+  // Simple in-memory dedupe to avoid sending duplicate logs from the client
+  // within a short time window (e.g. widget may trigger multiple events).
+  // Keyed by JSON signature of usuario+codigoError+mensajeError.
+  if (typeof window !== "undefined") {
+    if (!window.__loginLogDedupe) {
+      window.__loginLogDedupe = new Map();
+    }
+    const dedupeMap = window.__loginLogDedupe;
+    try {
+      const sigObj = {
+        usuario: payload?.usuario || null,
+        codigoError: payload?.codigoError || null,
+        mensajeError: (payload?.mensajeError || "").slice(0, 200),
+      };
+      const sig = JSON.stringify(sigObj);
+      const now = Date.now();
+      // purge old entries
+      for (const [k, ts] of dedupeMap.entries()) {
+        if (now - ts > 5000) dedupeMap.delete(k);
+      }
+      if (dedupeMap.has(sig)) {
+        // duplicate within 5s, skip sending
+        return;
+      }
+      dedupeMap.set(sig, now);
+    } catch (e) {
+      // if dedupe fails, continue and try sending
+    }
+  }
   try {
-    const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.LOGS_LOGIN_ERRORS), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        agenteUsuario: navigator.userAgent,
-        ...payload,
-      }),
-    });
+    const response = await fetch(
+      buildApiUrl(API_CONFIG.ENDPOINTS.LOGS_LOGIN_ERRORS),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          agenteUsuario: navigator.userAgent,
+          ...payload,
+        }),
+      }
+    );
 
     // Check if the request was successful
     if (!response.ok) {
       let errorData = {};
       try {
         errorData = await response.json();
-      } catch {
-        // If response is not JSON, use empty object
+      } catch (err) {
+        // If response is not JSON, capture text
+        try {
+          errorData = { text: await response.text() };
+        } catch (_) {
+          errorData = { statusText: response.statusText };
+        }
       }
-    
+
+      // Log the server error response for debugging
+      console.error(
+        "Failed to send login error log. Server responded:",
+        response.status,
+        errorData
+      );
       return;
     }
 
@@ -53,4 +96,3 @@ export async function sendLoginErrorLog(payload) {
     console.error("Failed to send login error log:", error);
   }
 }
-

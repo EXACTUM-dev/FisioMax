@@ -28,6 +28,7 @@ import ConfirmationModal from "../molecules/confirmationModal";
 // Organisms
 import DataSwitchContainer from "../organisms/dataSwitchContainer";
 import DataTable from "../organisms/dataTable";
+import StatisticsView from "../organisms/statisticsView";
 import buildUserRolesColumns from "../data/tableTemplates/userRolesColumns";
 import buildMembershipColumns from "../data/tableTemplates/membershipColumns";
 import { fetchWithClerk } from "../utils/api";
@@ -522,6 +523,12 @@ export default function Panel() {
                 type: "table",
                 columns: userColumns,
                 rows: mappedUserRows,
+              },
+              {
+                key: "estadisticas",
+                label: "Estadísticas",
+                searchEnabled: false,
+                render: () => <StatisticsView />,
               },
             ]}
           />
