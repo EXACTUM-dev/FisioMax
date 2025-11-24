@@ -25,7 +25,7 @@ function calculateOptimalFontSize(text, font, maxWidth, maxSize = 29, minSize = 
   return fontSize;
 }
 
-export async function createCertificate({ nombres, apellidoP, apellidoM, membresiaTipo, vigencia }) {
+export async function createCertificate({ nombres, apellidoP, apellidoM, membresiaTipo, vigencia, noAfiliado }) {
   const nombreCompleto = [nombres, apellidoP, apellidoM].filter(Boolean).join(' ').trim().toUpperCase();
 
   const templatePath = path.join(__dirname, 'certificateTemplate.pdf');
@@ -149,6 +149,20 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
 
     page.drawText(tl1, { x: (width - tw1) / 2, y: 240, size: ts1, font: customFont, color: customColor });
     page.drawText(tl2, { x: (width - tw2) / 2, y: 240 - tsp, size: ts2, font: customFont, color: customColor });
+  }
+
+  // === AFILIADO NO ===
+  if (noAfiliado) {
+    const afiliadoText = `${noAfiliado}`;
+    const afiliadoSize = 16;
+    const afiliadoWidth = customFont.widthOfTextAtSize(afiliadoText, afiliadoSize);
+    page.drawText(afiliadoText, {
+      x: (width - afiliadoWidth) / 2,
+      y: 175,
+      size: afiliadoSize,
+      font: customFont,
+      color: customColor
+    });
   }
 
   // === VIGENCIA ===

@@ -609,7 +609,7 @@ export async function generateAndUploadCertificate(membershipId) {
     console.log(`   - Tipo de Membresía: ${membershipData.membresiaTipo}`);
     console.log(`   - Correo: ${membershipData.correo}`);
 
-    const { nombres, apellidoP, apellidoM, membresiaTipo, membresiaFechaVencimiento } = membershipData;
+    const { nombres, apellidoP, apellidoM, membresiaTipo, membresiaFechaVencimiento, noAfiliado } = membershipData;
 
     // Format fechaVencimiento to "Mes Año" format (e.g., "Diciembre 2025")
     const mesesEspanol = [
@@ -623,6 +623,7 @@ export async function generateAndUploadCertificate(membershipId) {
     const vigencia = `${mes} ${año}`;
 
     console.log(`   - Vigencia: ${vigencia}`);
+    console.log(`   - No. Afiliado: ${noAfiliado || 'N/A'}`);
 
     // Generate the PDF
     console.log('\n📄 PASO 2: Generando PDF del certificado...');
@@ -631,7 +632,8 @@ export async function generateAndUploadCertificate(membershipId) {
       apellidoP,
       apellidoM,
       membresiaTipo,
-      vigencia
+      vigencia,
+      noAfiliado
     });
     console.log('✅ PDF generado exitosamente');
     console.log(`   - Nombre del archivo: ${pdfBytes.filename}`);
