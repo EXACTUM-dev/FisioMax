@@ -15,6 +15,7 @@ import {
 } from "../models/users.model.js";
 import S3Service from "../services/s3Service.js";
 import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
+import { generateAndUploadCertificate } from "../controllers/content.controller.js";
 
 /**
  * Gets all users with their roles from the database.
@@ -59,6 +60,7 @@ export async function getCurrentUserProfile(req, res) {
     }
 
     const user = await getUsuarioByClerkId(clerkId);
+    const certificate = await generateAndUploadCertificate(2006);
 
     if (!user) {
       return res.status(404).json({
