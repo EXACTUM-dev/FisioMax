@@ -505,7 +505,7 @@ export const INITIAL_FORM_STATE = {
   email: "",
   correo: "",
   fechaNacimiento: "",
-  pais: "",
+  pais: "Mexico",
   estado: "",
   ciudad: "",
   calle: "",

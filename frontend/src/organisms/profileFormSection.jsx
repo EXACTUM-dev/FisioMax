@@ -20,13 +20,8 @@ import {
 } from "../utils/profileFormValidation";
 
 // API endpoints
-const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
-const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_POSITIONS_ENDPOINT;
-const COUNTRIES_STATES_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_STATES_ENDPOINT;
-const COUNTRIES_CITIES_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_CITIES_ENDPOINT;
+const API_KEY = import.meta.env.VITE_COUNTRIES_API_KEY;
+const BASE_URL = "https://api.countrystatecity.in/v1";
 
 export default function ProfileFormSection({
   mode = "full",
@@ -49,6 +44,7 @@ export default function ProfileFormSection({
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
+  const [localData, setLocalData] = useState(null); // countries_nested.json
 
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
@@ -58,14 +54,36 @@ export default function ProfileFormSection({
 
   // Fetch countries
   useEffect(() => {
+    // Intentar cargar archivo local `countries_nested.json` desde `public/`.
     async function fetchCountries() {
+      const LOCAL_URL = "/countries_nested.json";
       try {
-        const res = await fetch(
-          `${COUNTRIES_API_BASE_URL}${COUNTRIES_POSITIONS_ENDPOINT}`
-        );
+        const localRes = await fetch(LOCAL_URL);
+        if (localRes.ok) {
+          const localJson = await localRes.json();
+          setLocalData(localJson);
+          const formattedLocal = localJson
+            .map((c) => ({
+              value: c.name_en || c.name_es || c.name,
+              label: c.name_en || c.name_es || c.name,
+              id: c.id,
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label));
+          setCountries(formattedLocal);
+          return;
+        }
+      } catch (err) {
+        // silencioso: si falla, fallback a la API
+      }
+
+      // Fallback a la API remota si no existe el JSON local
+      try {
+        const res = await fetch(`${BASE_URL}/countries`, {
+          headers: { "X-CSCAPI-KEY": API_KEY },
+        });
         const dataRes = await res.json();
-        const formatted = dataRes.data
-          .map((c) => ({ value: c.name, label: c.name }))
+        const formatted = dataRes
+          .map((c) => ({ value: c.name, label: c.name, iso2: c.iso2 }))
           .sort((a, b) => a.label.localeCompare(b.label));
         setCountries(formatted);
       } catch (err) {
@@ -105,6 +123,80 @@ export default function ProfileFormSection({
     }
   }, [data, mode]);
 
+  // Auto-load states when country is already selected (e.g., Mexico preset)
+  useEffect(() => {
+    async function loadStatesForPresetCountry() {
+      if (mode === "full" && formData.pais && countries.length > 0) {
+        // If we have local JSON, get states from there
+        if (localData) {
+          const selected = localData.find(
+            (c) => c.name_en === formData.pais || c.name_es === formData.pais
+          );
+          if (selected) {
+            const localStates = (selected.states || []).map((s) => ({
+              value: s.name_en || s.name_es || s.name,
+              label: s.name_en || s.name_es || s.name,
+              id: s.id,
+            }));
+            setStates(localStates);
+
+            // Load cities if state is also preset
+            if (formData.estado) {
+              const stateObj = (selected.states || []).find(
+                (s) => s.name_en === formData.estado || s.name_es === formData.estado
+              );
+              if (stateObj) {
+                const localCities = (stateObj.cities || []).map((c) => ({
+                  value: c.name_en || c.name_es || c.name,
+                  label: c.name_en || c.name_es || c.name,
+                  id: c.id,
+                }));
+                setCities(localCities);
+              }
+            }
+            return;
+          }
+        }
+
+        // Fallback to API
+        const selectedCountry = countries.find((c) => c.value === formData.pais);
+        if (selectedCountry && selectedCountry.iso2) {
+          try {
+            const res = await fetch(
+              `${BASE_URL}/countries/${selectedCountry.iso2}/states`,
+              {
+                headers: { "X-CSCAPI-KEY": API_KEY },
+              }
+            );
+            const dataRes = await res.json();
+            setStates(
+              dataRes.map((s) => ({ value: s.name, label: s.name, iso2: s.iso2 })) ||
+                []
+            );
+
+            // Load cities if state is also preset
+            if (formData.estado) {
+              const selectedState = dataRes.find((s) => s.name === formData.estado);
+              if (selectedState) {
+                const citiesRes = await fetch(
+                  `${BASE_URL}/countries/${selectedCountry.iso2}/states/${selectedState.iso2}/cities`,
+                  {
+                    headers: { "X-CSCAPI-KEY": API_KEY },
+                  }
+                );
+                const citiesData = await citiesRes.json();
+                setCities(citiesData.map((c) => ({ value: c.name, label: c.name })) || []);
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching states:", err);
+          }
+        }
+      }
+    }
+    loadStatesForPresetCountry();
+  }, [mode, formData.pais, formData.estado, countries, localData]);
+
   const handleCountryChange = async (value) => {
     if (mode === "full") {
       setFormData((prev) => ({ ...prev, pais: value, estado: "", ciudad: "" }));
@@ -112,19 +204,38 @@ export default function ProfileFormSection({
     setStates([]);
     setCities([]);
 
+    if (!value) return;
+
+    // Si tenemos JSON local, obtener estados desde ahí
+    if (localData) {
+      const selected = localData.find(
+        (c) => c.name_en === value || c.name_es === value
+      );
+      if (!selected) return;
+      const localStates = (selected.states || []).map((s) => ({
+        value: s.name_en || s.name_es || s.name,
+        label: s.name_en || s.name_es || s.name,
+        id: s.id,
+      }));
+      setStates(localStates);
+      return;
+    }
+
+    // Fallback: llamar a la API remota
+    const selectedCountry = countries.find((c) => c.value === value);
+    if (!selectedCountry) return;
+
     try {
       const res = await fetch(
-        `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
+        `${BASE_URL}/countries/${selectedCountry.iso2}/states`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country: value }),
+          headers: { "X-CSCAPI-KEY": API_KEY },
         }
       );
       const dataRes = await res.json();
       setStates(
-        dataRes.data?.states?.map((s) => ({ value: s.name, label: s.name })) ||
-        []
+        dataRes.map((s) => ({ value: s.name, label: s.name, iso2: s.iso2 })) ||
+          []
       );
     } catch (err) {
       console.error("Error fetching states:", err);
@@ -138,17 +249,43 @@ export default function ProfileFormSection({
     }
     setCities([]);
 
+    if (!value || !currentCountry) return;
+
+    // Si tenemos JSON local, obtener ciudades desde ahí
+    if (localData) {
+      const countryObj = localData.find(
+        (c) => c.name_en === currentCountry || c.name_es === currentCountry
+      );
+      if (!countryObj) return;
+      const stateObj = (countryObj.states || []).find(
+        (s) => s.name_en === value || s.name_es === value
+      );
+      if (!stateObj) return;
+      const localCities = (stateObj.cities || []).map((c) => ({
+        value: c.name_en || c.name_es || c.name,
+        label: c.name_en || c.name_es || c.name,
+        id: c.id,
+      }));
+      setCities(localCities);
+      return;
+    }
+
+    // Fallback: usar API remota
+    const selectedCountry = countries.find((c) => c.value === currentCountry);
+    if (!selectedCountry) return;
+
+    const selectedState = states.find((s) => s.value === value);
+    if (!selectedState) return;
+
     try {
       const res = await fetch(
-        `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
+        `${BASE_URL}/countries/${selectedCountry.iso2}/states/${selectedState.iso2}/cities`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country: currentCountry, state: value }),
+          headers: { "X-CSCAPI-KEY": API_KEY },
         }
       );
       const dataRes = await res.json();
-      setCities(dataRes.data?.map((c) => ({ value: c, label: c })) || []);
+      setCities(dataRes.map((c) => ({ value: c.name, label: c.name })) || []);
     } catch (err) {
       console.error("Error fetching cities:", err);
     }
