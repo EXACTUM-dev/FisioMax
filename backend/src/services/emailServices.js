@@ -1,7 +1,7 @@
 /**
  * @fileoverview Email service using Amazon SES 
  * @author EXACTUM-dev
- * @version 1.0.0
+ * @version 2.0.0
  * @describe Inlcudes basic SES configuration
  */
 
@@ -19,10 +19,13 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * Send an email to admin
- * @param {object} to - admin email 
- * @param {object} subject - Propouse of the email
- * @param {object} html - templete of the email 
+ * Sends an email using Amazon SES SMTP transport
+ * @param {Object} options - Email options
+ * @param {string} options.to - Recipient email address
+ * @param {string} options.subject - Email subject line
+ * @param {string} options.html - HTML content of the email
+ * @returns {Promise<void>}
+ * @throws {Error} Logs error to console if email sending fails
  */
 export const sendEmail = async ({ to, subject, html }) => {
   try {
@@ -37,7 +40,7 @@ export const sendEmail = async ({ to, subject, html }) => {
   }
 };
 
-// Configurar API
+// Configure Brevo API instance
 const apiInstance = new Brevo.TransactionalEmailsApi();
 apiInstance.setApiKey(
   Brevo.TransactionalEmailsApiApiKeys.apiKey,
@@ -45,7 +48,7 @@ apiInstance.setApiKey(
 );
 
 
-//Id for the templates in Brevo, contact the admin/ProductOwner to get the ids
+// Template IDs for Brevo email templates - contact admin/ProductOwner to get the IDs
 const TEMPLATE_IDS = {
   BIENVENIDA: 1,
   CONFIRMACION: 2,
@@ -55,12 +58,15 @@ const TEMPLATE_IDS = {
 };
 
 /**
- * Enviar email usando una plantilla de Brevo
- * @param {string} destinatario - Correo destino
- * @param {string} nombreMiembro - Nombre del destinatario
- * @param {number} templateId - ID de la plantilla en Brevo
- * @param {Object} params - Variables dinámicas para la plantilla
- * @param {Object} [attachment] - Archivo adjunto opcional
+ * Sends an email using a Brevo template
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Recipient's name
+ * @param {number} templateId - Brevo template ID
+ * @param {Object} [params={}] - Dynamic variables for the template
+ * @param {Object|null} [attachment=null] - Optional file attachment
+ * @param {Buffer} attachment.buffer - File buffer content
+ * @param {string} attachment.filename - Name of the attached file
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status and message ID or error
  */
 export async function sendBrevoEmailWithTemplate(
   destinatario,
@@ -78,7 +84,7 @@ export async function sendBrevoEmailWithTemplate(
     }
   };
 
-  // Agregar adjunto si existe
+  // Add attachment if it exists
   if (attachment) {
     emailData.attachment = [{
       content: attachment.buffer.toString('base64'),
@@ -97,7 +103,13 @@ export async function sendBrevoEmailWithTemplate(
 }
 
 /**
- * Enviar email de bienvenida con certificado
+ * Sends a welcome email with certificate attachment
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {Object} pdfBytes - PDF certificate data
+ * @param {Buffer} pdfBytes.buffer - PDF file buffer
+ * @param {string} [pdfBytes.filename] - Optional custom filename for the PDF
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
  */
 export async function sendWelcomeEmail(destinatario, nombreMiembro, pdfBytes) {
   return sendBrevoEmailWithTemplate(
@@ -115,7 +127,11 @@ export async function sendWelcomeEmail(destinatario, nombreMiembro, pdfBytes) {
 }
 
 /**
- * Enviar recordatorio de renovación
+ * Sends a membership renewal reminder email
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {string} fechaVencimiento - Expiration date for the membership
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
  */
 export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVencimiento) {
   return sendBrevoEmailWithTemplate(
@@ -130,7 +146,15 @@ export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVenc
 }
 
 /**
- * Enviar invitación a evento
+ * Sends an event invitation email
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {Object} eventoData - Event information
+ * @param {string} eventoData.nombre - Event name
+ * @param {string} eventoData.fecha - Event date
+ * @param {string} eventoData.lugar - Event location
+ * @param {string} eventoData.urlRegistro - Registration URL for the event
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
  */
 export async function sendEventInvitation(destinatario, nombreMiembro, eventoData) {
   return sendBrevoEmailWithTemplate(

@@ -14,6 +14,15 @@ import fontkit from '@pdf-lib/fontkit';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Calculates the optimal font size for text to fit within a maximum width
+ * @param {string} text - The text to measure
+ * @param {Object} font - PDF-lib font object
+ * @param {number} maxWidth - Maximum width in points that the text should occupy
+ * @param {number} [maxSize=29] - Maximum font size in points
+ * @param {number} [minSize=14] - Minimum font size in points
+ * @returns {number} Optimal font size in points that fits the text within maxWidth
+ */
 function calculateOptimalFontSize(text, font, maxWidth, maxSize = 29, minSize = 14) {
   let fontSize = maxSize;
   let textWidth = font.widthOfTextAtSize(text, fontSize);
@@ -25,6 +34,22 @@ function calculateOptimalFontSize(text, font, maxWidth, maxSize = 29, minSize = 
   return fontSize;
 }
 
+/**
+ * Creates a PDF certificate with member information
+ * Supports automatic text sizing and multi-line layout (up to 3 lines for names)
+ * @param {Object} params - Certificate parameters
+ * @param {string} params.nombres - Member's first name(s)
+ * @param {string} params.apellidoP - Member's paternal last name
+ * @param {string} params.apellidoM - Member's maternal last name
+ * @param {string} params.membresiaTipo - Type of membership
+ * @param {string} params.vigencia - Validity period of the membership
+ * @param {string} params.membresiaNoAfiliado - Membership affiliate number
+ * @returns {Promise<{buffer: Buffer, filename: string, mimeType: string}>} PDF certificate data
+ * @returns {Buffer} return.buffer - PDF file as a buffer
+ * @returns {string} return.filename - Generated filename for the certificate
+ * @returns {string} return.mimeType - MIME type (always "application/pdf")
+ * @throws {Error} If template file is not found or PDF generation fails
+ */
 export async function createCertificate({ nombres, apellidoP, apellidoM, membresiaTipo, vigencia, membresiaNoAfiliado }) {
   const nombreCompleto = [nombres, apellidoP, apellidoM].filter(Boolean).join(' ').trim().toUpperCase();
 
@@ -36,12 +61,12 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
   let customFont;
   try {
     const fontPath = path.join(__dirname, 'fonts', 'LibreBaskerville-Regular.ttf');
-    console.log('📁 Cargando fuente...');
+    console.log('📁 Loading font...');
     const fontBytes = fs.readFileSync(fontPath);
     customFont = await pdfDoc.embedFont(fontBytes);
-    console.log('✅ Fuente cargada');
+    console.log('✅ Font loaded');
   } catch (error) {
-    console.warn('⚠️  Usando Helvetica Bold');
+    console.warn('⚠️  Using Helvetica Bold');
     customFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   }
 
@@ -51,13 +76,13 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
   const customColor = rgb(77 / 255, 78 / 255, 77 / 255);
   const maxTextWidth = width * 0.8;
 
-  // === NOMBRE (1, 2 o 3 líneas) ===
+  // === NAME (1, 2 or 3 lines) ===
   const nombreSize = calculateOptimalFontSize(nombreCompleto, customFont, maxTextWidth, 29, 14);
   const nombreWidth = customFont.widthOfTextAtSize(nombreCompleto, nombreSize);
 
   if (nombreWidth <= maxTextWidth) {
-    // 1 línea
-    console.log(`📏 Nombre: 1 línea - ${nombreSize}pt`);
+    // 1 line
+    console.log(`📏 Name: 1 line - ${nombreSize}pt`);
     page.drawText(nombreCompleto, {
       x: (width - nombreWidth) / 2,
       y: 380,
@@ -66,7 +91,7 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
       color: customColor
     });
   } else {
-    // Intentar 2 líneas
+    // Try 2 lines
     const l1 = nombres.toUpperCase();
     const l2 = [apellidoP, apellidoM].filter(Boolean).join(' ').toUpperCase();
     const s1 = calculateOptimalFontSize(l1, customFont, maxTextWidth, 29, 14);
@@ -75,16 +100,16 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
     const w2 = customFont.widthOfTextAtSize(l2, s2);
 
     if (w1 <= maxTextWidth && w2 <= maxTextWidth) {
-      // 2 líneas
+      // 2 lines
       const sp = Math.max(s1, s2) * 1.2;
-      console.log(`📏 Nombre: 2 líneas`);
+      console.log(`📏 Name: 2 lines`);
       console.log(`   L1: "${l1}" - ${s1}pt`);
       console.log(`   L2: "${l2}" - ${s2}pt`);
       page.drawText(l1, { x: (width - w1) / 2, y: 395, size: s1, font: customFont, color: customColor });
       page.drawText(l2, { x: (width - w2) / 2, y: 395 - sp, size: s2, font: customFont, color: customColor });
     } else {
-      // 3 líneas
-      console.log(`📏 Nombre: 3 líneas`);
+      // 3 lines
+      console.log(`📏 Name: 3 lines`);
       const ln1 = nombres.toUpperCase();
       const ln2 = apellidoP ? apellidoP.toUpperCase() : '';
       const ln3 = apellidoM ? apellidoM.toUpperCase() : '';
@@ -109,13 +134,13 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
     }
   }
 
-  // === TIPO MEMBRESÍA (1 o 2 líneas) ===
+  // === MEMBERSHIP TYPE (1 or 2 lines) ===
   const membresiaTipoUpper = membresiaTipo.toUpperCase();
   const tipoSize = calculateOptimalFontSize(membresiaTipoUpper, customFont, maxTextWidth, 29, 14);
   const tipoWidth = customFont.widthOfTextAtSize(membresiaTipoUpper, tipoSize);
 
   if (tipoWidth <= maxTextWidth) {
-    console.log(`📏 Tipo: 1 línea - ${tipoSize}pt`);
+    console.log(`📏 Type: 1 line - ${tipoSize}pt`);
     page.drawText(membresiaTipoUpper, {
       x: (width - tipoWidth) / 2,
       y: 230,
@@ -124,7 +149,7 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
       color: customColor
     });
   } else {
-    console.log(`📏 Tipo: 2 líneas`);
+    console.log(`📏 Type: 2 lines`);
     const palabras = membresiaTipoUpper.split(' ');
     let corte = Math.floor(palabras.length / 2);
 
@@ -151,13 +176,13 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
     page.drawText(tl2, { x: (width - tw2) / 2, y: 240 - tsp, size: ts2, font: customFont, color: customColor });
   }
 
-  // === AFILIADO NO ===
-  console.log(`📏 Afiliado No: ${membresiaNoAfiliado}`);
-  // El número aparece a la derecha del texto "AA FILI A DO NO:" que está en el template
+  // === AFFILIATE NUMBER ===
+  console.log(`📏 Affiliate No: ${membresiaNoAfiliado}`);
+  // The number appears to the right of the "AFILIADO NO:" text that is in the template
   if (membresiaNoAfiliado) {
     const afiliadoText = `${membresiaNoAfiliado}`;
     const afiliadoSize = 16;
-    // Posición X fija a la derecha del texto preimpreso
+    // Fixed X position to the right of the preprinted text
     page.drawText(afiliadoText, {
       x: 770,
       y: 18,
@@ -167,7 +192,7 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
     });
   }
 
-  // === VIGENCIA ===
+  // === VALIDITY PERIOD ===
   const vigenciaText = `VIGENCIA ${vigencia}`;
   const vigenciaSize = 16;
   const vigenciaWidth = standardFont.widthOfTextAtSize(vigenciaText, vigenciaSize);
