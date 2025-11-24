@@ -7,7 +7,8 @@
 
 import React, { useState } from "react";
 import { UserButton } from "@clerk/clerk-react";
-import SearchBar from "./searchBar";
+import SearchBar from "../molecules/searchBar";
+import NotificationBell from "../molecules/notificationBell.jsx";
 
 /**
  * AppHeader component with optional expandable search functionality
@@ -82,6 +83,10 @@ export default function AppHeader({
               />
             )}
           </div>
+
+          {/* notification's button */}
+          <NotificationBell />
+
         </div>
       </div>
     </header>

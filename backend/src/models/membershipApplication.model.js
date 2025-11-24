@@ -7,6 +7,7 @@
  */
 
 import S3Service from "../services/s3Service.js";
+import { dbPool } from '../../config.js';
 import db from "../../database/db.js";
 import { encryptFields, decryptFields } from "../services/encryptionService.js";
 
@@ -519,6 +520,44 @@ export async function denyMembershipApplication(razonRechazo, id) {
     throw error;
   } finally {
     conn.release();
+  }
+}
+
+/**
+ * Get expired memberships.
+ * @async
+ * @param {string} daysArray - Days to send notifications
+ * @returns {Promise<Object|null>} Query result or null if not found
+ * @throws {Error} When database operation fails
+ */
+export async function getExpiringMemberships(daysArray = [30, 15, 7, 3, 1]) {
+  try {
+    const placeholders = daysArray.map(() => '?').join(',');
+    
+    const query = `
+      SELECT 
+        m.IDMembresia,
+        m.IDUsuario,
+        m.fechaVencimiento,
+        m.estatusPago,
+        m.tipo,
+        DATEDIFF(m.fechaVencimiento, NOW()) as daysRemaining,
+        u.nombres,
+        u.apellidoP,
+        u.correo
+      FROM membresia m
+      INNER JOIN Usuario u ON m.IDUsuario = u.IDUsuario
+      WHERE m.aceptado = 1
+        AND m.estatusPago = 'Pagado'
+        AND m.deletedAt IS NULL
+        AND DATEDIFF(m.fechaVencimiento, NOW()) IN (${placeholders})
+      ORDER BY daysRemaining ASC
+    `;
+
+    const [memberships] = await dbPool.query(query, daysArray);
+    return memberships;
+  } catch (error) {
+    throw new Error(`Error al obtener membresías: ${error.message}`);
   }
 }
 

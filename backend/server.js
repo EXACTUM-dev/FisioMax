@@ -26,6 +26,8 @@ import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
 import homePageRoutes from "./src/routes/homePage.route.js";
 import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
+import notificationRoutes from './src/routes/notifications.routes.js';
+import { startNotificationsCron } from './src/services/notificationCronJob.js';
 
 // Initialize Express application
 const app = express();
@@ -117,6 +119,23 @@ app.use("/api/content", contentRoutes);
  * Routes for HomePage content (root path).
  */
 app.use("/api", homePageRoutes);
+
+/**  
+ * Routes for notifications.
+ */
+app.use('/api/notifications', notificationRoutes);
+
+/** 
+ * Start Cron Job
+ */
+startNotificationsCron();
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log('Cron Jobs iniciados');
+});
 
 //-------------------------
 // ERROR HANDLING MIDDLEWARE
