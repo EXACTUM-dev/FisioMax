@@ -136,7 +136,6 @@ export const createMembershipApplication = async (req, res) => {
         extraDocs.map((file) => S3Service.uploadFile(file, "documentos-extra"))
       );
     } else {
-      console.warn("AWS S3 not configured. Files will not be uploaded.");
       // Store file names instead of URLs for development
       if (req.files?.professionalId?.[0]) {
         professionalIdUrl = req.files.professionalId[0].originalname;
@@ -207,7 +206,11 @@ export const createMembershipApplication = async (req, res) => {
             `,
         });
       } catch (err) {
-        console.error(`Error sending email to ${email}:`, err.message);
+        return res.status(500).json({
+          success: false,
+          message: "Error al enviar correo electrónico",
+          error: err.message,
+        });
       }
     });
 

@@ -1,8 +1,8 @@
 /**
- * @fileoverview Content API service for multimedia content requests
+ * @fileoverview React component for displaying a user's membership certificate.
  * @version 0.1.0
  * @author EXACTUM-dev
- * @description Handles API calls for multimedia content (videos and articles)
+ * @description Displays a membership certificate for a user, with options to view or download the certificate.
  */
 
 import React from "react";
@@ -128,9 +128,8 @@ export default function CertificateCard({ userId }) {
           <button
             onClick={() => handleViewDocument(certificateUrl)}
             disabled={!certificateUrl}
-            className={`text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${
-              !certificateUrl ? "opacity-40 pointer-events-none" : ""
-            }`}
+            className={`text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${!certificateUrl ? "opacity-40 pointer-events-none" : ""
+              }`}
             title="Ver documento"
           >
             <svg
@@ -162,9 +161,8 @@ export default function CertificateCard({ userId }) {
               )
             }
             disabled={!certificateUrl}
-            className={`text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${
-              !certificateUrl ? "opacity-40 pointer-events-none" : ""
-            }`}
+            className={`text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${!certificateUrl ? "opacity-40 pointer-events-none" : ""
+              }`}
             title="Descargar documento"
           >
             <svg

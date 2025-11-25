@@ -81,18 +81,18 @@ export default function MembershipCard({
 
   const registeredAt = data.membershipRegisteredAt
     ? new Date(data.membershipRegisteredAt).toLocaleDateString("es-MX", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "—";
 
   const expiresAt = data.membershipExpiresAt
     ? new Date(data.membershipExpiresAt).toLocaleDateString("es-MX", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "—";
 
   const plan = data.membershipType || "No asignado";
@@ -152,7 +152,7 @@ export default function MembershipCard({
         setModalType("error");
         setModalMessage(
           error?.message ||
-            "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
+          "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
         );
         setShowModal(true);
       }
@@ -186,7 +186,7 @@ export default function MembershipCard({
       setModalType("error");
       setModalMessage(
         error?.message ||
-          "No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo."
+        "No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo."
       );
       setShowModal(true);
     } finally {
@@ -368,7 +368,7 @@ export default function MembershipCard({
       )}
 
       {/* Success/Error modal to confirm whether save was successful or failed */}
-      < SuccessErrorModal
+      <SuccessErrorModal
         open={showModal}
         onClose={() => setShowModal(false)}
         type={modalType}

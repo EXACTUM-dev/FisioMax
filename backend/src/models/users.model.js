@@ -939,9 +939,7 @@ export async function reassignUserToSinRol(userId) {
  * @async
  * @function updateUserCertificate
  * @param {number} membershipId - Membership ID
- * @param {Object} uploadResult - Result of the upgrade to S3
- * @param {string} uploadResult.url - Certificate URL in S3
- * @param {string} uploadResult.key - Object key in S3
+ * @param {string} uploadResult - Certificate URL in S3
  * @returns {Promise<boolean>} True if it updated successfully
  */
 export async function updateUserCertificate(membershipId, uploadResult) {
