@@ -1,5 +1,5 @@
 /**
- * @fileoverview Full Profile Form for Membership Application
+ * @fileoverview Full Profile Form for Membership Application and Profile Update
  * @version 0.1.0
  * @author EXACTUM-dev
  */
