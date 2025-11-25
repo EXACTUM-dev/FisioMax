@@ -4,6 +4,16 @@ import "@testing-library/jest-dom";
 // Fix para React 19
 global.React = React;
 
+// Mock para import.meta.env (Vite environment variables)
+global.import = {
+  meta: {
+    env: {
+      VITE_API_URL: process.env.VITE_API_URL || "http://localhost:3000/api",
+      VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY || "test_key",
+    },
+  },
+};
+
 // Mock para Clerk Authentication
 jest.mock("@clerk/clerk-react", () => ({
   SignedIn: ({ children }) => <div data-testid="signed-in">{children}</div>,
