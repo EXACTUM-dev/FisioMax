@@ -126,7 +126,7 @@ export default function AddressCard({
           .sort((a, b) => a.label.localeCompare(b.label));
         setCountries(formatted);
       } catch (err) {
-        console.error("Error fetching countries:", err);
+        setError("Error al cargar paises. Por favor intente más tarde.");
       }
     }
     fetchCountries();
@@ -210,7 +210,7 @@ export default function AddressCard({
             }
           }
         } catch (err) {
-          console.error("Error fetching location data:", err);
+          setError("Error al cargar datos de ubicación. Por favor intente más tarde.");
         }
       }
 
@@ -281,7 +281,7 @@ export default function AddressCard({
         })) || [];
       setStates(formattedStates.sort((a, b) => a.label.localeCompare(b.label)));
     } catch (err) {
-      console.error("Error fetching states:", err);
+      setError("Error al cargar estados. Por favor intente más tarde.");
       setStates([]);
     }
   };
@@ -337,7 +337,7 @@ export default function AddressCard({
         data.map((c) => ({ value: c.name, label: c.name })) || [];
       setCities(formattedCities.sort((a, b) => a.label.localeCompare(b.label)));
     } catch (err) {
-      console.error("Error fetching cities:", err);
+      setError("Error al cargar ciudades. Por favor intente más tarde.");
       setCities([]);
     }
   };
@@ -397,7 +397,7 @@ export default function AddressCard({
       setModalMessage("La dirección se ha actualizado exitosamente.");
       setShowModal(true);
     } catch (error) {
-      console.error("Error saving address:", error);
+      setError("Error al guardar la dirección. Por favor intente más tarde.");
       // Show error modal
       setModalType("error");
       setModalMessage(

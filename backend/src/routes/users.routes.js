@@ -50,13 +50,6 @@ const uploadDocuments = (req, res, next) => {
   ]);
 
   uploader(req, res, (err) => {
-    if (err) {
-      console.log('=== MULTER ERROR ===');
-      console.log('Error:', err);
-      console.log('Error code:', err.code);
-      console.log('Field:', err.field);
-      console.log('Files received:', req.files ? Object.keys(req.files) : 'none');
-    }
     next(err);
   });
 };

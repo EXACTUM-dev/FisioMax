@@ -188,8 +188,7 @@ export async function getMembershipCertificate(userId, token) {
 
     return null;
   } catch (err) {
-    console.error(`Error fetching certificate for user ${userId}:`, err.message);
-    return null;
+    throw err;
   }
 }
 

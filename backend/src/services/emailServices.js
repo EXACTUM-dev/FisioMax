@@ -36,7 +36,7 @@ export const sendEmail = async ({ to, subject, html }) => {
       html
     });
   } catch (error) {
-    console.error("Error enviando correo:", error);
+    throw error;
   }
 };
 
@@ -94,10 +94,8 @@ export async function sendBrevoEmailWithTemplate(
 
   try {
     const response = await apiInstance.sendTransacEmail(emailData);
-    console.log('Email enviado con plantilla:', response);
     return { success: true, messageId: response.messageId };
   } catch (error) {
-    console.error('Error enviando email:', error);
     return { success: false, error: error.message };
   }
 }

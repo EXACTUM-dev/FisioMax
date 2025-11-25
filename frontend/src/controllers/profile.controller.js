@@ -33,7 +33,6 @@ export async function getCurrentUserProfile(clerkToken) {
       throw new Error(response.error || "Error al obtener el perfil");
     }
   } catch (error) {
-    console.error("Error fetching user profile:", error);
     throw error;
   }
 }
@@ -66,7 +65,6 @@ export async function getUserProfileById(userId, clerkToken) {
       );
     }
   } catch (error) {
-    console.error("Error fetching user profile by ID:", error);
     throw error;
   }
 }
@@ -152,7 +150,6 @@ export async function updateUserById(userId, payload, clerkToken) {
       throw new Error(response.error || "No se pudo actualizar el usuario");
     }
   } catch (error) {
-    console.error("Error updating user:", error);
     throw error;
   }
 }
@@ -198,7 +195,6 @@ export async function updateUserDocuments(userId, formData, clerkToken) {
       );
     }
   } catch (error) {
-    console.error("Error updating user documents:", error);
     throw error;
   }
 }
@@ -231,7 +227,6 @@ export async function updateUserOwnById(userId, payload, clerkToken) {
       throw new Error(response.error || "No se pudo actualizar el usuario");
     }
   } catch (error) {
-    console.error("Error updating user:", error);
     throw error;
   }
 }

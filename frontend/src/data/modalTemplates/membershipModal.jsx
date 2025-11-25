@@ -153,7 +153,6 @@ function MembershipModalContent({
       a.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error("Error descargando documento:", err);
       // Fallback: abrir en nueva pestaña si la descarga falla
       window.open(url, "_blank", "noopener");
     }
@@ -247,7 +246,6 @@ function MembershipModalContent({
         throw new Error(response?.message || "Error al aprobar solicitud");
       }
     } catch (err) {
-      console.error("Error aprobando solicitud:", err);
       window.alert(`No se pudo aprobar la solicitud: ${err.message}`);
     } finally {
       setIsProcessing(false);
@@ -290,7 +288,6 @@ function MembershipModalContent({
         throw new Error(response?.message || "Error al rechazar solicitud");
       }
     } catch (err) {
-      console.error("Error rechazando solicitud:", err);
       window.alert(`No se pudo rechazar la solicitud: ${err.message}`);
     } finally {
       setIsProcessing(false);

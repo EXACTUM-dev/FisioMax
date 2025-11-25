@@ -176,7 +176,6 @@ function RoleModalContent({
         selectedPrivileges
       );
     } catch (error) {
-      console.error("Error in onConfirm:", error);
     } finally {
       setIsProcessing(false);
     }

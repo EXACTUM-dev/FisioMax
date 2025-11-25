@@ -144,7 +144,7 @@ class MembershipApplication {
     this.membershipType = data.membershipType?.trim() || null;
     this.membershipHoursFormation =
       data.membershipHoursFormation !== undefined &&
-      data.membershipHoursFormation !== null
+        data.membershipHoursFormation !== null
         ? Number(data.membershipHoursFormation)
         : null;
     this.id = null;
@@ -312,7 +312,6 @@ export const getMembershipApplications = async () => {
       membershipHoursFormation: r.horasFormacion ?? null,
     }));
   } catch (error) {
-    console.error("Error en getMembershipApplications:", error);
     throw error;
   } finally {
     conn.release();
@@ -466,7 +465,6 @@ export const getMembershipApplicationById = async (id) => {
 
     return mapped;
   } catch (error) {
-    console.error("Error en getMembershipApplicationById:", error);
     throw error;
   } finally {
     conn.release();
@@ -497,7 +495,7 @@ export const approveMembershipApplicationById = async (id, noAfiliado) => {
 
     if (membershipRows.length > 0) {
       const { tipo, IDUsuario } = membershipRows[0];
-      
+
       // Try to find a role that matches the membership type (case-insensitive)
       const [roleRows] = await conn.execute(
         `SELECT IDRol FROM rol WHERE nombre LIKE ? AND deletedAt IS NULL`,
@@ -539,7 +537,6 @@ export const approveMembershipApplicationById = async (id, noAfiliado) => {
     return detail;
   } catch (error) {
     await conn.rollback();
-    console.error("Error approving membership application:", error);
     throw error;
   } finally {
     conn.release();
@@ -579,7 +576,6 @@ export async function denyMembershipApplication(razonRechazo, id) {
     return result;
   } catch (error) {
     await conn.rollback();
-    console.error("Error en denyMembershipApplication:", error);
     throw error;
   } finally {
     conn.release();
@@ -599,7 +595,6 @@ export const getMaxNoAfiliado = async () => {
     );
     return rows[0]?.maxNoAfiliado || 0;
   } catch (error) {
-    console.error("Error getting max noAfiliado:", error);
     throw error;
   } finally {
     conn.release();

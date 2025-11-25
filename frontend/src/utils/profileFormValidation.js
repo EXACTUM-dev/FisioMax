@@ -328,7 +328,6 @@ export function formatDateForInput(dateString) {
 
     return `${year}-${month}-${day}`;
   } catch (error) {
-    console.error("Error formatting date for input:", error);
     return "";
   }
 }

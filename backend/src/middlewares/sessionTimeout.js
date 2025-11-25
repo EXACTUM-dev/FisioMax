@@ -60,8 +60,6 @@ export const sessionTimeoutMiddleware = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Error in sessionTimeoutMiddleware:', error);
-    // Don't block the request due to tracking errors
     next();
   }
 };

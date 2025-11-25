@@ -33,7 +33,7 @@ const formatDate = (dateString) => {
  */
 const abbreviateStateName = (stateName) => {
   if (!stateName) return stateName;
-  
+
   const abbreviations = {
     "Baja California Sur": "BCS",
     "Baja California": "BC",
@@ -49,12 +49,12 @@ const abbreviateStateName = (stateName) => {
     "Plateaux Department": "Plateaux",
     "Badakhshan": "Badakh.",
   };
-  
+
   /** Check if we have a specific abbreviation */
   if (abbreviations[stateName]) {
     return abbreviations[stateName];
   }
-  
+
   /** If name is longer than 12 characters, try to abbreviate common words */
   if (stateName.length > 12) {
     return stateName
@@ -66,7 +66,7 @@ const abbreviateStateName = (stateName) => {
       .replace(/\bEast\b/gi, "E.")
       .replace(/\bWest\b/gi, "W.");
   }
-  
+
   return stateName;
 };
 
@@ -100,7 +100,7 @@ export default function StatisticsView() {
       setLoading(true);
       const token = await getToken();
       const params = new URLSearchParams();
-      
+
       if (dateRange.startDate) {
         params.append("startDate", dateRange.startDate);
       }
@@ -110,20 +110,20 @@ export default function StatisticsView() {
 
       const queryString = params.toString();
       const url = `/api/statistics/memberships${queryString ? `?${queryString}` : ""}`;
-      
+
       const response = await fetchWithClerk(url, { method: "GET" }, token);
-      
+
       const data = response?.data || response || {};
-      
+
       const limitData = (arr) => (arr || []).slice(0, 5);
-      
+
       setStatistics({
-        residence: data.residence || [], 
+        residence: data.residence || [],
         category: limitData(data.category),
         education: limitData(data.education),
       });
     } catch (err) {
-      console.error("Error loading statistics:", err);
+      setError("Error al cargar estadísticas. Por favor intente más tarde.");
     } finally {
       setLoading(false);
     }
@@ -145,7 +145,7 @@ export default function StatisticsView() {
       setExporting(true);
       const token = await getToken();
       const params = new URLSearchParams();
-      
+
       if (dateRange.startDate) {
         params.append("startDate", dateRange.startDate);
       }
@@ -155,7 +155,7 @@ export default function StatisticsView() {
 
       const queryString = params.toString();
       const url = `/api/statistics/memberships/export${queryString ? `?${queryString}` : ""}`;
-      
+
       /** Use fetch directly for PDF blob response */
       const headers = new Headers();
       if (token) {
@@ -163,14 +163,14 @@ export default function StatisticsView() {
       }
 
       const response = await fetch(url, { method: "GET", headers });
-      
+
       if (!response.ok) {
         throw new Error(`Error exporting PDF: ${response.status} ${response.statusText}`);
       }
 
       /** Get PDF as blob */
       const blob = await response.blob();
-      
+
       /** Create download link */
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
@@ -178,12 +178,11 @@ export default function StatisticsView() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       /** Clean up blob URL */
       URL.revokeObjectURL(link.href);
     } catch (err) {
-      console.error("Error exporting PDF:", err);
-      alert("Error al exportar el reporte. Por favor intente más tarde.");
+      setError("Error al exportar el reporte. Por favor intente más tarde.");
     } finally {
       setExporting(false);
     }
@@ -208,7 +207,7 @@ export default function StatisticsView() {
 
     const maxValue = Math.max(...data.map((d) => d.value || 0), 1);
     const yAxisDisplayMax = Math.max(Math.ceil(maxValue / 5) * 5, 5);
-    
+
     /** Calculate Y-axis ticks */
     const yAxisTicks = 5;
     const tickInterval = Math.ceil(yAxisDisplayMax / yAxisTicks);
@@ -230,7 +229,7 @@ export default function StatisticsView() {
                 <span className="text-xs text-gray-600 font-medium">
                   {tick}
                 </span>
-                <div 
+                <div
                   className="absolute right-0 top-1/2 w-2 h-px bg-gray-300 transform -translate-y-1/2 translate-x-full"
                   style={{ marginRight: "-8px" }}
                 />
@@ -243,8 +242,8 @@ export default function StatisticsView() {
             {/* Y-axis grid lines */}
             <div className="absolute inset-0 flex flex-col justify-between">
               {yAxisLabels.map((tick, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="w-full border-t border-gray-200"
                 />
               ))}
@@ -259,15 +258,15 @@ export default function StatisticsView() {
                 const color = colorScheme[index % colorScheme.length];
                 /** Calculate bar width based on number of items, with min and max constraints */
                 const barWidth = Math.max(20, Math.min(40, 800 / Math.max(data.length, 10)));
-                
+
                 return (
-                  <div 
-                    key={item.label || index} 
+                  <div
+                    key={item.label || index}
                     className="flex flex-col items-center relative group flex-shrink-0"
                     style={{ width: `${barWidth}px` }}
                   >
                     {/* Bar */}
-                    <div 
+                    <div
                       className="w-full rounded-t transition-all duration-500 relative"
                       style={{
                         height: `${barHeight}px`,
@@ -289,18 +288,18 @@ export default function StatisticsView() {
           {/* X-axis labels - scrollable */}
           <div className="ml-10 mr-4 mt-2 flex justify-start gap-1.5 px-2 overflow-x-auto">
             {data.map((item, index) => {
-              const displayLabel = abbreviateLabels 
+              const displayLabel = abbreviateLabels
                 ? abbreviateStateName(item.label || "Sin etiqueta")
                 : (item.label || "Sin etiqueta");
               const barWidth = Math.max(20, Math.min(40, 800 / Math.max(data.length, 10)));
-              
+
               return (
-                <div 
+                <div
                   key={index}
                   className="text-center flex-shrink-0"
                   style={{ width: `${barWidth}px` }}
                 >
-                  <span 
+                  <span
                     className="text-gray-600 block break-words leading-tight px-1"
                     style={{ fontSize: abbreviateLabels ? "0.6rem" : "0.65rem" }}
                     title={item.label || "Sin etiqueta"}
@@ -334,11 +333,11 @@ export default function StatisticsView() {
     }
 
     const maxValue = Math.max(...data.map((d) => d.value || 0), 1);
-    
+
     /** Calculate dynamic maximum for Y-axis based on actual data */
     /** Round up to next multiple of 5 for cleaner scale */
     const yAxisDisplayMax = Math.max(Math.ceil(maxValue / 5) * 5, 5);
-    
+
     const yAxisTicks = 5;
     const tickInterval = Math.ceil(yAxisDisplayMax / yAxisTicks);
     const yAxisLabels = [];
@@ -359,7 +358,7 @@ export default function StatisticsView() {
                 <span className="text-xs text-gray-600 font-medium">
                   {tick}
                 </span>
-                <div 
+                <div
                   className="absolute right-0 top-1/2 w-2 h-px bg-gray-300 transform -translate-y-1/2 translate-x-full"
                   style={{ marginRight: "-8px" }}
                 />
@@ -372,8 +371,8 @@ export default function StatisticsView() {
             {/* Y-axis grid lines */}
             <div className="absolute inset-0 flex flex-col justify-between">
               {yAxisLabels.map((tick, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="w-full border-t border-gray-200"
                 />
               ))}
@@ -389,15 +388,15 @@ export default function StatisticsView() {
                 /** Calculate proportional height: (value / axis max) * max bar height */
                 const barHeight = ((item.value || 0) / yAxisDisplayMax) * maxBarHeight;
                 const color = colorScheme[index % colorScheme.length];
-                
+
                 return (
-                  <div 
-                    key={item.label || index} 
+                  <div
+                    key={item.label || index}
                     className="flex flex-col items-center flex-1 relative group"
                     style={{ maxWidth: "120px" }}
                   >
                     {/* Bar */}
-                    <div 
+                    <div
                       className="w-full rounded-t transition-all duration-500 relative"
                       style={{
                         height: `${barHeight}px`,
@@ -420,17 +419,17 @@ export default function StatisticsView() {
           {/* X-axis labels */}
           <div className="ml-10 mr-4 mt-2 flex justify-around gap-1 px-2">
             {data.map((item, index) => {
-              const displayLabel = abbreviateLabels 
+              const displayLabel = abbreviateLabels
                 ? abbreviateStateName(item.label || "Sin etiqueta")
                 : (item.label || "Sin etiqueta");
-              
+
               return (
-                <div 
+                <div
                   key={index}
                   className="flex-1 text-center min-w-0"
                   style={{ maxWidth: "120px" }}
                 >
-                  <span 
+                  <span
                     className="text-gray-600 block break-words leading-tight px-1"
                     style={{ fontSize: abbreviateLabels ? "0.65rem" : "0.7rem" }}
                     title={item.label || "Sin etiqueta"}
@@ -507,10 +506,10 @@ export default function StatisticsView() {
             {dateRange.startDate && dateRange.endDate
               ? `Mostrando datos del ${formatDate(dateRange.startDate)} al ${formatDate(dateRange.endDate)}`
               : dateRange.startDate
-              ? `Mostrando datos desde el ${formatDate(dateRange.startDate)}`
-              : dateRange.endDate
-              ? `Mostrando datos hasta el ${formatDate(dateRange.endDate)}`
-              : "Mostrando todos los datos disponibles"}
+                ? `Mostrando datos desde el ${formatDate(dateRange.startDate)}`
+                : dateRange.endDate
+                  ? `Mostrando datos hasta el ${formatDate(dateRange.endDate)}`
+                  : "Mostrando todos los datos disponibles"}
           </p>
         </div>
       )}
@@ -524,7 +523,7 @@ export default function StatisticsView() {
           ["#D2B40D", "#296B00", "#E58E15", "#cad00f"],
           true /** Abbreviate state names */
         )}
-        
+
         {/* Two square charts below - side by side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {renderBarChart(

@@ -145,7 +145,7 @@ export default function MembershipCard({
         );
         setShowModal(true);
       } catch (error) {
-        console.error("Error al guardar cambios de membresía:", error);
+        setError("Error al guardar cambios de membresía. Por favor intente más tarde.");
         // Keep in edit mode on error
 
         // Show error feedback modal
@@ -182,7 +182,6 @@ export default function MembershipCard({
         getToken
       );
     } catch (error) {
-      console.error("Error al iniciar pago:", error);
       setModalType("error");
       setModalMessage(
         error?.message ||

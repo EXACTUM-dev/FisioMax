@@ -77,12 +77,12 @@ export default function HistoryCard({
       );
       setShowModal(true);
     } catch (error) {
-      console.error("Error saving history:", error);
+      setError("Error al guardar las horas de formación. Por favor intente más tarde.");
       // Show error modal
       setModalType("error");
       setModalMessage(
         error.message ||
-          "Error al guardar las horas de formación. Por favor, intente nuevamente."
+        "Error al guardar las horas de formación. Por favor, intente nuevamente."
       );
       setShowModal(true);
     }

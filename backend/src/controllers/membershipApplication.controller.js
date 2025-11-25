@@ -225,8 +225,6 @@ export const createMembershipApplication = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error creating application:", error);
-
     if (
       error.code === "ER_DUP_ENTRY" ||
       error.message.includes("Duplicate entry")
@@ -268,7 +266,6 @@ export const getMemberships = async (req, res) => {
       data: membershipApplication,
     });
   } catch (error) {
-    console.error("Error en getMemberships:", error);
     res.status(500).json({
       success: false,
       error: "Error interno del servidor",
@@ -293,7 +290,6 @@ export const getMembershipById = async (req, res) => {
     }
     res.json({ success: true, data: detail });
   } catch (error) {
-    console.error("Error en getMembershipById:", error);
     res.status(500).json({
       success: false,
       message: "Error interno del servidor",
@@ -325,7 +321,6 @@ export const approveMembership = async (req, res) => {
       data: updated,
     });
   } catch (err) {
-    console.error("Error aprobando solicitud:", err);
     return res.status(500).json({
       success: false,
       message: "Error interno del servidor",
@@ -360,7 +355,6 @@ export async function denyMembership(req, res) {
       id: id,
     });
   } catch (error) {
-    console.error("Error al rechazar solicitud:", error);
     res.status(500).json({
       success: false,
       error: "Error interno del servidor al rechazar la solicitud",
@@ -382,7 +376,6 @@ export const getMaxNoAfiliadoController = async (req, res) => {
       data: maxNoAfiliado,
     });
   } catch (error) {
-    console.error("Error en getMaxNoAfiliadoController:", error);
     res.status(500).json({
       success: false,
       message: "Error interno del servidor",

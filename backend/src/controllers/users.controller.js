@@ -32,7 +32,6 @@ export async function getAllUsers(req, res) {
       data: users,
     });
   } catch (error) {
-    console.error("Error obteniendo usuarios:", error);
     res.status(500).json({
       success: false,
       error: "Error al obtener los usuarios",
@@ -138,7 +137,6 @@ export async function getCurrentUserProfile(req, res) {
       data: transformedUser,
     });
   } catch (error) {
-    console.error("Error obteniendo perfil del usuario:", error);
     res.status(500).json({
       success: false,
       error: "Error al obtener el perfil del usuario",
@@ -244,7 +242,6 @@ export async function getUserProfileById(req, res) {
       data: transformedUser,
     });
   } catch (error) {
-    console.error("Error obteniendo perfil del usuario por ID:", error);
     res.status(500).json({
       success: false,
       error: "Error al obtener el perfil del usuario",
@@ -323,7 +320,6 @@ export async function deleteUser(req, res) {
       message: `El usuario \"${userToDelete.nombres} ${userToDelete.apellidoP} ${userToDelete.apellidoM}\" fue eliminado con éxito.`,
     });
   } catch (error) {
-    console.error("Error al eliminar usuario:", error);
     res.status(500).json({
       success: false,
       message: "Error interno del servidor.",
@@ -485,7 +481,6 @@ export async function updateUser(req, res) {
 
     return res.status(200).json({ success: true, data: transformedUser });
   } catch (error) {
-    console.error("Error actualizando usuario:", error);
     return res.status(500).json({
       success: false,
       error: "Error al actualizar el usuario",
@@ -709,7 +704,6 @@ export async function updateUserDocuments(req, res) {
 
     return res.status(200).json({ success: true, data: transformedUser });
   } catch (error) {
-    console.error("Error actualizando documentos del usuario:", error);
     return res.status(500).json({
       success: false,
       error: "Error al actualizar los documentos",
@@ -766,7 +760,6 @@ export async function getUserCertificate(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error obteniendo certificado del usuario:", error);
     return res.status(500).json({
       success: false,
       error: "Error al obtener el certificado",

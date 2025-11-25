@@ -591,7 +591,6 @@ export async function generateAndUploadCertificate(membershipId) {
     const membershipData = await getUserByMembershipId(membershipId);
 
     if (!membershipData) {
-      console.error(`❌ ERROR: Membership ${membershipId} no encontrada`);
       return { generated: false, error: 'Membership not found' };
     }
 
@@ -650,10 +649,6 @@ export async function generateAndUploadCertificate(membershipId) {
     };
 
   } catch (error) {
-    console.error('ERROR CRÍTICO en generación de certificado');
-    console.error(`   - Membership ID: ${membershipId}`);
-    console.error(`   - Mensaje de error: ${error.message}`);
-    console.error(`   - Stack trace:`, error.stack);
     return { generated: false, error: error.message };
   }
 }

@@ -72,7 +72,6 @@ export default function LoginPage() {
         }
       } catch (err) {
         // Do not break the UI if handling fails
-        console.error("Error handling Clerk listener event:", err);
       }
     });
 
@@ -90,7 +89,7 @@ export default function LoginPage() {
             error: event?.error,
           },
         });
-      } catch {}
+      } catch { }
     };
 
     const onUnhandledRejection = (ev) => {
@@ -103,7 +102,7 @@ export default function LoginPage() {
             "Unhandled promise rejection",
           detalles: { reason: ev?.reason },
         });
-      } catch {}
+      } catch { }
     };
 
     window.addEventListener("error", onWindowError);
@@ -163,7 +162,7 @@ export default function LoginPage() {
       if (hash.includes("mode=")) {
         navigate(location.pathname || "/login", { replace: true });
       }
-    } catch (err) {}
+    } catch (err) { }
   }, [location, navigate]);
 
   // Display loading state while authentication status is being determined

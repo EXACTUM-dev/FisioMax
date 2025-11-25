@@ -93,7 +93,6 @@ export async function getUsuarios() {
     );
     return decryptUsersData(rows);
   } catch (error) {
-    console.error("Error al consultar la base de datos:", error);
     throw error;
   }
 }
@@ -115,7 +114,6 @@ export async function getMembershipUserStateById(userId) {
     );
     return rows[0] ?? null;
   } catch (error) {
-    console.error("Error al consultar la base de datos:", error);
     throw error;
   }
 }
@@ -223,7 +221,6 @@ export async function getUserByClerkId(clerkId) {
 
     return user;
   } catch (error) {
-    console.error("Error al obtener usuario por Clerk ID:", error);
     throw error;
   }
 }
@@ -326,7 +323,6 @@ export async function getUserById(userId) {
 
     return user;
   } catch (error) {
-    console.error("Error al consultar usuario por ID:", error);
     throw error;
   }
 }
@@ -423,7 +419,6 @@ export async function getUserByMembershipId(membershipId) {
 
     return user;
   } catch (error) {
-    console.error("Error al consultar usuario por Membership ID:", error);
     throw error;
   }
 }
@@ -552,7 +547,6 @@ export async function getUserByEmail(email) {
 
     return rows.length > 0 ? decryptUserData(rows[0]) : null;
   } catch (error) {
-    console.error("Error al consultar usuario por email:", error);
     throw error;
   }
 }
@@ -577,7 +571,6 @@ export async function updateUserClerkId(userId, clerkID) {
     );
     return result.affectedRows > 0;
   } catch (error) {
-    console.error("Error al actualizar clerkID del usuario:", error);
     throw error;
   }
 }
@@ -746,7 +739,6 @@ export async function updateUserById(userId, updateData) {
     return updatedUser;
   } catch (error) {
     await connection.rollback();
-    console.error("Error actualizando usuario:", error);
     throw error;
   } finally {
     connection.release();
@@ -854,7 +846,6 @@ export async function createUserWithClerkId(userData) {
     return await getUserById(IDUsuario);
   } catch (error) {
     await connection.rollback();
-    console.error("Error al crear usuario con clerkID:", error);
     throw error;
   } finally {
     connection.release();
@@ -927,7 +918,6 @@ export async function reassignUserToSinRol(userId) {
     return true;
   } catch (error) {
     await connection.rollback();
-    console.error("Error al reasignar usuario a SinRol:", error);
     throw error;
   } finally {
     connection.release();
@@ -957,11 +947,9 @@ export async function updateUserCertificate(membershipId, uploadResult) {
       return false;
     }
 
-    console.log(`Certificate updated for membershipId ${membershipId}`);
     return true;
 
   } catch (error) {
-    console.error('Error updating user certificate:', error);
     throw error;
   }
 }

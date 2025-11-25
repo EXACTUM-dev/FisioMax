@@ -20,7 +20,6 @@ export async function findRoleById(id) {
     );
     return rows.length > 0 ? rows[0] : null;
   } catch (error) {
-    console.error("Error de base de datos en findRoleById:", error);
     throw error;
   }
 }
@@ -52,7 +51,6 @@ export async function getAllRolesFromDB() {
     );
     return rows;
   } catch (error) {
-    console.error("Error de base de datos en getAllRolesFromDB:", error);
     throw error;
   }
 }
@@ -71,7 +69,6 @@ export async function updateRoleById(id, { name, description }) {
     );
     return result;
   } catch (error) {
-    console.error("Error de base de datos en updateRoleById:", error);
     throw error;
   }
 }
@@ -110,7 +107,6 @@ export async function updateRolePrivileges(roleId, privileges) {
     await connection.commit();
   } catch (error) {
     await connection.rollback();
-    console.error("Error de base de datos en updateRolePrivileges:", error);
     throw error;
   } finally {
     connection.release();
@@ -138,7 +134,6 @@ export async function getUserRole(userId) {
     );
     return rows.length > 0 ? rows[0] : null;
   } catch (error) {
-    console.error("Error de base de datos en getUserRole:", error);
     throw error;
   }
 }
@@ -184,7 +179,6 @@ export async function assignRoleToUser(userId, roleId) {
     return { success: true };
   } catch (error) {
     await connection.rollback();
-    console.error("Error de base de datos en assignRoleToUser:", error);
     throw error;
   } finally {
     connection.release();
@@ -224,7 +218,6 @@ export async function createRoleWithPrivileges(
     return { id: roleId, name, description };
   } catch (error) {
     await connection.rollback();
-    console.error("Database error in createRoleWithPrivileges:", error);
     throw error;
   } finally {
     connection.release();
@@ -248,7 +241,6 @@ export async function findUsersByRole(roleId) {
     );
     return rows;
   } catch (error) {
-    console.error("Error de base de datos en findUsersByRole:", error);
     throw error;
   }
 }
@@ -270,7 +262,6 @@ export async function findRoleByName(name) {
     );
     return rows.length > 0 ? rows[0] : null;
   } catch (error) {
-    console.error("Error de base de datos en findRoleByName:", error);
     throw error;
   }
 }
@@ -291,10 +282,6 @@ export async function markRolePrivilegesDeleted(roleId) {
     );
     return { affectedRows: result.affectedRows };
   } catch (error) {
-    console.error(
-      "Error de base de datos en markRolePrivilegesDeleted:",
-      error
-    );
     throw error;
   }
 }
@@ -316,7 +303,6 @@ export async function markRoleDeleted(roleId) {
     );
     return { affectedRows: result.affectedRows };
   } catch (error) {
-    console.error("Error de base de datos en markRoleDeleted:", error);
     throw error;
   }
 }
@@ -345,7 +331,6 @@ export async function reassignUsersToRole(oldRoleId, newRoleId) {
     return { success: true, affected: result.affectedRows };
   } catch (error) {
     await connection.rollback();
-    console.error("Error de base de datos en reassignUsersToRole:", error);
     throw error;
   } finally {
     connection.release();
@@ -370,7 +355,6 @@ export async function getPrivilegeIdsByRole(roleId) {
     );
     return rows.map((row) => row.IDPrivilegio);
   } catch (error) {
-    console.error("Error de base de datos en getPrivilegeIdsByRole:", error);
     throw error;
   }
 }

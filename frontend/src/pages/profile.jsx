@@ -111,12 +111,10 @@ export default function ProfilePage() {
           );
           setPaymentTickets(paymentsData.payments || []);
         } catch (paymentErr) {
-          console.error("Error fetching payment tickets:", paymentErr);
           // Don't block the page if payments fail, just log the error
           setPaymentTickets([]);
         }
       } catch (err) {
-        console.error("Error fetching profile:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -199,7 +197,6 @@ export default function ProfilePage() {
         }
       }
     } catch (err) {
-      console.error("Error actualizando usuario:", err);
       setError(err.message || "Error al actualizar el usuario");
       // Re-throw error so components can catch it and show modals
       throw err;

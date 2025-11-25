@@ -124,16 +124,15 @@ export default function Panel() {
             : r.paymentStatus ?? null,
         IDUsuario: r.IDUsuario || r.userId || null,
         nombre:
-          `${r.nombres || r.nombre || ""} ${r.apellidoP || ""} ${
-            r.apellidoM || ""
-          }`.trim() || "Sin nombre",
+          `${r.nombres || r.nombre || ""} ${r.apellidoP || ""} ${r.apellidoM || ""
+            }`.trim() || "Sin nombre",
         estado:
           typeof r.aceptado !== "undefined"
             ? r.aceptado === 1
               ? "Aprobado"
               : r.aceptado === 0
-              ? "Rechazado"
-              : "Pendiente"
+                ? "Rechazado"
+                : "Pendiente"
             : r.status || "Pendiente",
         fecha: r.createdAt || r.created_at || r.fecha || null,
         __raw: r,
@@ -141,7 +140,6 @@ export default function Panel() {
 
       setMembershipRows(mapped);
     } catch (err) {
-      console.error("Error de carga de solicitudes:", err);
       setError("Error de carga de solicitudes. Por favor intente más tarde.");
     } finally {
       setLoadingMemberships(false);
@@ -244,7 +242,6 @@ export default function Panel() {
           : rolesResponse?.data || [];
         setRoleRows(extractedRoles);
       } catch (err) {
-        console.error("Error al cargar roles:", err);
         setError("Error al cargar roles. Por favor intente más tarde.");
       } finally {
         if (alive) setLoadingRoles(false);
@@ -329,7 +326,7 @@ export default function Panel() {
           setModalOpen(true);
         }
       } catch (err) {
-        console.error("Error loading role details:", err);
+        setError(err.message || "Error al cargar los detalles del rol");
       }
     },
     [getToken]
@@ -344,9 +341,8 @@ export default function Panel() {
     return userRows
       .filter((userRow) => userRow.clerkID !== user?.id) // Exclude only the current user
       .map((user) => {
-        const nombreCompleto = `${user.nombres || ""} ${user.apellidoP || ""} ${
-          user.apellidoM || ""
-        }`.trim();
+        const nombreCompleto = `${user.nombres || ""} ${user.apellidoP || ""} ${user.apellidoM || ""
+          }`.trim();
 
         const roleName =
           user.rol ||
@@ -406,7 +402,7 @@ export default function Panel() {
             setUserToDelete(row);
             setDeleteConfirmOpen(true);
           } catch (err) {
-            console.error("Error al preparar eliminación de usuario:", err);
+            setError(err.message || "Error al preparar eliminación del usuario");
             alert(
               err?.message || "No se pudo preparar la eliminación del usuario."
             );
@@ -702,7 +698,7 @@ export default function Panel() {
             // Show success modal
             setSuccessModalOpen(true);
           } catch (err) {
-            console.error("Error al eliminar usuario:", err);
+            setError(err.message || "Error al eliminar el usuario");
           }
         }}
         onCancel={() => setDeleteConfirmOpen(false)}

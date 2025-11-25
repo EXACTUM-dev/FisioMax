@@ -98,7 +98,6 @@ export default function RolesPage() {
       setCreatePrivileges(mappedPrivileges);
       setCreateModalOpen(true);
     } catch (err) {
-      console.error("Error loading create role data:", err);
       setModalType("error");
       setModalMessage(
         "No se pudieron cargar los privilegios. Intente nuevamente."
@@ -127,13 +126,6 @@ export default function RolesPage() {
       setModalMessage("El rol ha sido creado exitosamente.");
       setShowModal(true);
     } catch (err) {
-      console.error("Error creating role:", err);
-      console.error("Error details:", {
-        code: err.code,
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message
-      });
 
       // Check for duplicate name error (multiple ways)
       const isDuplicate =
@@ -228,7 +220,6 @@ export default function RolesPage() {
       setEditingPrivileges(mappedPrivileges);
       setModalOpen(true);
     } catch (err) {
-      console.error("Error loading role for edit:", err);
       setModalType("error");
       setModalMessage(
         "No se pudo cargar el rol para editar. Intente nuevamente."

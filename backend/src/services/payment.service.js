@@ -39,7 +39,6 @@ const PaymentService = {
       let existingPayment = await Payment.findByFolio(paymentId.toString());
 
       if (!existingPayment) {
-        console.log(`Payment with folio ${paymentId} not found in database. Attempting to create from webhook data...`);
 
         // Try to extract membership ID from metadata or external_reference
         const externalReference = paymentInfo.external_reference;
@@ -77,7 +76,6 @@ const PaymentService = {
           response_webhook: paymentInfo,
         });
 
-        console.log(`Created payment record from webhook: ${paymentId} for membership ${membershipId}`);
       } else {
         // Update existing payment record with webhook data
         await Payment.update(paymentId.toString(), {
@@ -118,7 +116,6 @@ const PaymentService = {
         membershipStatus,
       };
     } catch (error) {
-      console.error('Error processing webhook:', error);
       throw error;
     }
   },
@@ -146,16 +143,14 @@ const PaymentService = {
       );
 
       if (!response.ok) {
-        console.error(
+        throw new Error(
           `Mercado Pago API error: ${response.status} ${response.statusText}`
         );
-        return null;
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching payment from Mercado Pago:', error);
-      return null;
+      throw error;
     }
   },
 
@@ -170,11 +165,9 @@ const PaymentService = {
    */
   async createPaymentPreference(preferenceData) {
     try {
-      console.log('[Payment Service] Creating preference with data:', preferenceData);
       const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
 
       if (!accessToken) {
-        console.error('[Payment Service] MERCADO_PAGO_ACCESS_TOKEN not configured');
         throw new Error('MERCADO_PAGO_ACCESS_TOKEN not configured');
       }
 
@@ -213,9 +206,6 @@ const PaymentService = {
         preference.auto_return = 'approved';
       }
 
-      console.log('[Payment Service] Preference object:', JSON.stringify(preference, null, 2));
-      console.log('[Payment Service] Calling Mercado Pago API...');
-
       const response = await fetch(
         'https://api.mercadopago.com/checkout/preferences',
         {
@@ -228,26 +218,18 @@ const PaymentService = {
         }
       );
 
-      console.log('[Payment Service] Mercado Pago response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('[Payment Service] Mercado Pago preference creation error:', errorData);
         throw new Error(`Mercado Pago API error: ${JSON.stringify(errorData)}`);
       }
 
       const result = await response.json();
-      console.log('[Payment Service] Preference created successfully:', {
-        id: result.id,
-        init_point: result.init_point ? 'present' : 'missing',
-      });
 
       return {
         id: result.id,
         init_point: result.init_point,
       };
     } catch (error) {
-      console.error('[Payment Service] Error creating payment preference:', error);
       throw error;
     }
   },
@@ -280,7 +262,6 @@ const PaymentService = {
     try {
       return await Payment.create(paymentData);
     } catch (error) {
-      console.error('Error creating payment:', error);
       throw error;
     }
   },
@@ -300,7 +281,6 @@ const PaymentService = {
         ),
       };
     } catch (error) {
-      console.error('Error getting user payment status:', error);
       throw error;
     }
   },

@@ -37,7 +37,6 @@ const PaymentService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating payment:', error);
       throw error;
     }
   },
@@ -65,7 +64,6 @@ const PaymentService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error getting payment status:', error);
       throw error;
     }
   },
@@ -99,7 +97,6 @@ const PaymentService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error getting user payments:', error);
       throw error;
     }
   },
@@ -156,7 +153,6 @@ const PaymentService = {
       // Redirect to Mercado Pago checkout
       window.location.href = result.preference.init_point;
     } catch (error) {
-      console.error('Error creating payment preference:', error);
       throw error;
     }
   },
@@ -172,7 +168,6 @@ const PaymentService = {
     try {
       return JSON.parse(data);
     } catch (error) {
-      console.error('Error parsing pending payment:', error);
       return null;
     }
   },

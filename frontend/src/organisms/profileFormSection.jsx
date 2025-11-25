@@ -87,7 +87,7 @@ export default function ProfileFormSection({
           .sort((a, b) => a.label.localeCompare(b.label));
         setCountries(formatted);
       } catch (err) {
-        console.error("Error fetching countries:", err);
+        setError("Error al cargar paises. Por favor intente más tarde.");
       }
     }
     fetchCountries();
@@ -171,7 +171,7 @@ export default function ProfileFormSection({
             const dataRes = await res.json();
             setStates(
               dataRes.map((s) => ({ value: s.name, label: s.name, iso2: s.iso2 })) ||
-                []
+              []
             );
 
             // Load cities if state is also preset
@@ -189,7 +189,7 @@ export default function ProfileFormSection({
               }
             }
           } catch (err) {
-            console.error("Error fetching states:", err);
+            setError("Error al cargar estados. Por favor intente más tarde.");
           }
         }
       }
@@ -235,10 +235,10 @@ export default function ProfileFormSection({
       const dataRes = await res.json();
       setStates(
         dataRes.map((s) => ({ value: s.name, label: s.name, iso2: s.iso2 })) ||
-          []
+        []
       );
     } catch (err) {
-      console.error("Error fetching states:", err);
+      setError("Error al cargar estados. Por favor intente más tarde.");
     }
   };
 
@@ -287,7 +287,7 @@ export default function ProfileFormSection({
       const dataRes = await res.json();
       setCities(dataRes.map((c) => ({ value: c.name, label: c.name })) || []);
     } catch (err) {
-      console.error("Error fetching cities:", err);
+      setError("Error al cargar ciudades. Por favor intente más tarde.");
     }
   };
 

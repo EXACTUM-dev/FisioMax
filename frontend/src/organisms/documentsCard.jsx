@@ -62,7 +62,7 @@ export default function DocumentsCard({
   const hasFile = (v) => !!v;
 
   // Debug: Log data to see what we're receiving
-  useEffect(() => {}, [data]);
+  useEffect(() => { }, [data]);
 
   // Reset form when data changes
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function DocumentsCard({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      console.error("Error descargando documento:", error);
+      setError("Error al descargar el documento. Por favor intente más tarde.");
       // Fallback: open in new tab
       window.open(url, "_blank", "noopener,noreferrer");
     }
@@ -161,7 +161,7 @@ export default function DocumentsCard({
 
   async function handleSave() {
     if (!onSave || !userId) {
-      console.error("onSave or userId is required");
+      setError("onSave or userId is required");
       return;
     }
 
@@ -244,12 +244,12 @@ export default function DocumentsCard({
       setModalMessage("Los documentos se han actualizado exitosamente.");
       setShowModal(true);
     } catch (error) {
-      console.error("Error saving documents:", error);
+      setError("Error al guardar los documentos. Por favor intente más tarde.");
       // Show error modal
       setModalType("error");
       setModalMessage(
         error.message ||
-          "Error desconocido al guardar los documentos. Por favor, intente nuevamente."
+        "Error desconocido al guardar los documentos. Por favor, intente nuevamente."
       );
       setShowModal(true);
     } finally {
@@ -391,9 +391,8 @@ export default function DocumentsCard({
                   key={index}
                   className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0"
                 >
-                  <span className="text-slate-600">{`Documento adicional ${
-                    index + 1
-                  }`}</span>
+                  <span className="text-slate-600">{`Documento adicional ${index + 1
+                    }`}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-green-600 font-medium">
                       Cargado

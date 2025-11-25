@@ -45,7 +45,7 @@ export default function MediaPlayer({
       if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
         if (media.paused) {
           media.play().catch((err) => {
-            console.error("Error playing media:", err);
+            onError(err);
           });
         } else {
           media.pause();

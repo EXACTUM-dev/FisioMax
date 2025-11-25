@@ -53,7 +53,6 @@ export const getMembershipStatistics = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error al obtener estadísticas de membresías:", error);
     res.status(500).json({
       success: false,
       error: "Error interno del servidor",
@@ -110,12 +109,12 @@ export const exportMembershipStatistics = async (req, res) => {
 
     // Create PDF document
     const doc = new PDFDocument({ margin: 50 });
-    
+
     // Set response headers
     const filename = `reporte-membresias-${new Date().toISOString().split("T")[0]}.pdf`;
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    
+
     // Pipe PDF to response
     doc.pipe(res);
 
@@ -160,26 +159,26 @@ export const exportMembershipStatistics = async (req, res) => {
       const pageHeight = 792;
       const margin = 50;
       const availableWidth = pageWidth - (margin * 2);
-      
+
       // Calculate space needed
       const titleHeight = 20;
       const topSpacing = 10;
       const bottomSpacing = 50;
       const chartHeight = 250; // Fixed height for horizontal chart
       const totalSpaceNeeded = titleHeight + topSpacing + chartHeight + bottomSpacing;
-      
+
       // Check if we need a new page
       const currentY = doc.y;
       const availableSpace = pageHeight - currentY - margin - 30;
-      
+
       if (availableSpace < totalSpaceNeeded) {
         doc.addPage();
       }
-      
+
       // Title
       doc.fontSize(14).font("Helvetica-Bold").text(title, { align: "center" });
       doc.moveDown(0.5);
-      
+
       if (!data || data.length === 0) {
         doc.fontSize(11).font("Helvetica").fillColor("gray").text("No hay datos disponibles", { align: "center" });
         doc.fillColor("black");
@@ -223,18 +222,18 @@ export const exportMembershipStatistics = async (req, res) => {
       for (let i = 0; i <= numGridLines; i++) {
         const value = (yAxisMax / numGridLines) * i;
         const y = chartY + chartHeightFinal - labelHeight - valueLabelHeight - chartPadding - (availableHeight * (i / numGridLines));
-        
+
         // Grid line
         doc.moveTo(chartX + yAxisLabelWidth, y)
           .lineTo(chartX + chartWidth - chartPadding, y)
           .strokeColor("#d0d0d0")
           .lineWidth(0.8)
           .stroke();
-        
+
         // Y-axis label
-        doc.text(Math.round(value).toString(), chartX + 5, y - 5, { 
-          width: yAxisLabelWidth - 10, 
-          align: "right" 
+        doc.text(Math.round(value).toString(), chartX + 5, y - 5, {
+          width: yAxisLabelWidth - 10,
+          align: "right"
         });
       }
       doc.fillColor("black");
@@ -249,7 +248,7 @@ export const exportMembershipStatistics = async (req, res) => {
         // Bar color
         const color = colors[index % colors.length];
         const rgb = hexToRgb(color);
-        
+
         // Draw bar
         doc.fillColor(`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
         doc.strokeColor("#333333").lineWidth(0.8);
@@ -262,9 +261,9 @@ export const exportMembershipStatistics = async (req, res) => {
           doc.fontSize(8).font("Helvetica-Bold").fillColor("black");
           const valueTextY = barY - 15;
           if (valueTextY > chartY + 5) {
-            doc.text(String(barValue), barX, valueTextY, { 
-              width: barWidth, 
-              align: "center" 
+            doc.text(String(barValue), barX, valueTextY, {
+              width: barWidth,
+              align: "center"
             });
           }
         }
@@ -273,12 +272,12 @@ export const exportMembershipStatistics = async (req, res) => {
         doc.fontSize(7).font("Helvetica").fillColor("black");
         const labelText = (item.label || "Sin especificar");
         const maxLabelLength = Math.floor(barWidth / 4); // Adjust based on bar width
-        const displayLabel = labelText.length > maxLabelLength 
+        const displayLabel = labelText.length > maxLabelLength
           ? labelText.substring(0, maxLabelLength - 3) + "..."
           : labelText;
-        doc.text(displayLabel, barX, chartY + chartHeightFinal - labelHeight + 5, { 
-          width: barWidth, 
-          align: "center" 
+        doc.text(displayLabel, barX, chartY + chartHeightFinal - labelHeight + 5, {
+          width: barWidth,
+          align: "center"
         });
       });
 
@@ -305,7 +304,7 @@ export const exportMembershipStatistics = async (req, res) => {
       const pageHeight = 792;
       const margin = 50;
       const availableWidth = pageWidth - (margin * 2);
-      
+
       // Calculate space needed for the chart
       // Title: ~20 points, spacing: ~10 points, chart: variable, bottom spacing: ~50 points
       const titleHeight = 20;
@@ -313,20 +312,20 @@ export const exportMembershipStatistics = async (req, res) => {
       const bottomSpacing = 50; // Extra space for safety
       const estimatedChartSize = Math.min(availableWidth * 0.70, 380);
       const totalSpaceNeeded = titleHeight + topSpacing + estimatedChartSize + bottomSpacing;
-      
+
       // Check if we need a new page
       // Consider both top and bottom margins (50 each) plus safety margin
       const currentY = doc.y;
       const availableSpace = pageHeight - currentY - margin - 30; // 30 points safety margin
-      
+
       if (availableSpace < totalSpaceNeeded) {
         doc.addPage();
       }
-      
+
       // Title
       doc.fontSize(14).font("Helvetica-Bold").text(title, { align: "center" });
       doc.moveDown(0.5);
-      
+
       if (!data || data.length === 0) {
         doc.fontSize(11).font("Helvetica").fillColor("gray").text("No hay datos disponibles", { align: "center" });
         doc.fillColor("black");
@@ -342,7 +341,7 @@ export const exportMembershipStatistics = async (req, res) => {
       // Use remaining space on page, considering bottom margin and safety margin
       const spaceAfterTitle = pageHeight - doc.y - margin - 30; // 30 points safety margin
       const maxChartSize = Math.min(spaceAfterTitle - 20, availableWidth * 0.70, 380); // 20 points extra padding
-      
+
       // Make chart square and perfectly centered
       // Adjust size to fit in available space
       const chartSize = maxChartSize;
@@ -377,18 +376,18 @@ export const exportMembershipStatistics = async (req, res) => {
       for (let i = 0; i <= numGridLines; i++) {
         const value = (yAxisMax / numGridLines) * i;
         const y = chartY + chartHeight - labelHeight - valueLabelHeight - chartPadding - (availableHeight * (i / numGridLines));
-        
+
         // Grid line (horizontal)
         doc.moveTo(chartX + yAxisLabelWidth, y)
           .lineTo(chartX + chartWidth - chartPadding, y)
           .strokeColor("#d0d0d0")
           .lineWidth(0.8)
           .stroke();
-        
+
         // Y-axis label (right aligned)
-        doc.text(Math.round(value).toString(), chartX + 5, y - 6, { 
-          width: yAxisLabelWidth - 10, 
-          align: "right" 
+        doc.text(Math.round(value).toString(), chartX + 5, y - 6, {
+          width: yAxisLabelWidth - 10,
+          align: "right"
         });
       }
       doc.fillColor("black");
@@ -403,13 +402,13 @@ export const exportMembershipStatistics = async (req, res) => {
         // Bar color
         const color = colors[index % colors.length];
         const rgb = hexToRgb(color);
-        
+
         // Set fill and stroke colors, then draw rectangle with both
         doc.fillColor(`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
         doc.strokeColor("#333333").lineWidth(0.8); // Dark gray border instead of black for better visibility
         doc.rect(barX, barY, barWidth, barHeight);
         doc.fillAndStroke(); // Use fillAndStroke to preserve colors
-        
+
         // Reset fill color to black for text
         doc.fillColor("black");
 
@@ -418,9 +417,9 @@ export const exportMembershipStatistics = async (req, res) => {
           doc.fontSize(10).font("Helvetica-Bold").fillColor("black");
           const valueTextY = barY - 18;
           if (valueTextY > chartY + 10) {
-            doc.text(String(barValue), barX, valueTextY, { 
-              width: barWidth, 
-              align: "center" 
+            doc.text(String(barValue), barX, valueTextY, {
+              width: barWidth,
+              align: "center"
             });
           }
         }
@@ -429,12 +428,12 @@ export const exportMembershipStatistics = async (req, res) => {
         doc.fontSize(9).font("Helvetica").fillColor("black");
         const labelText = (item.label || "Sin especificar");
         const maxLabelLength = 18;
-        const displayLabel = labelText.length > maxLabelLength 
+        const displayLabel = labelText.length > maxLabelLength
           ? labelText.substring(0, maxLabelLength - 3) + "..."
           : labelText;
-        doc.text(displayLabel, barX, chartY + chartHeight - labelHeight + 8, { 
-          width: barWidth, 
-          align: "center" 
+        doc.text(displayLabel, barX, chartY + chartHeight - labelHeight + 8, {
+          width: barWidth,
+          align: "center"
         });
       });
 
@@ -457,10 +456,10 @@ export const exportMembershipStatistics = async (req, res) => {
     // Add bar charts with colors
     // Each chart will automatically check for space and create new page if needed
     const colors = ["#D2B40D", "#296B00", "#E58E15", "#cad00f", "#8B4513"];
-    
+
     // Horizontal wide chart for residence (all states)
     addHorizontalBarChart("Lugares de Residencia", residence, doc, colors);
-    
+
     // Square charts for category and education
     addBarChart("Categoría de Membresía", category, doc, colors);
     addBarChart("Grado de Estudios", education, doc, colors);
@@ -468,11 +467,10 @@ export const exportMembershipStatistics = async (req, res) => {
     // Footer
     doc.moveDown(2);
     doc.fontSize(8).fillColor("gray").text("Sociedad Mexicana de Fisioterapia en Piso Pélvico", { align: "center" });
-    
+
     // Finalize PDF
     doc.end();
   } catch (error) {
-    console.error("Error al exportar estadísticas de membresías:", error);
     res.status(500).json({
       success: false,
       error: "Error interno del servidor",

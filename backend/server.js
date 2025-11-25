@@ -207,8 +207,6 @@ app.use(secureErrorHandler);
  * Fallback error handler for any remaining errors
  */
 app.use((error, req, res, next) => {
-  console.error("Error no manejado:", error);
-
   res.status(error.status || 500).json({
     success: false,
     message: error.message || "Error interno del servidor",

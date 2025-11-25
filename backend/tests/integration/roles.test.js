@@ -100,6 +100,15 @@ describe("createRoleWithPrivileges (unit)", () => {
     const dbError = new Error("DB failure");
     mockConnection.query.mockRejectedValueOnce(dbError);
 
+    // Debugging: ensure mocks are wired
+    // eslint-disable-next-line no-console
+    console.log(
+      "DBG dbPool.getConnection has mock:",
+      !!dbPool.getConnection?.mock
+    );
+    // eslint-disable-next-line no-console
+    console.log("DBG dbPool.query has mock:", !!dbPool.query?.mock);
+
     await expect(
       createRoleWithPrivileges(roleData, privileges)
     ).rejects.toThrow("DB failure");
