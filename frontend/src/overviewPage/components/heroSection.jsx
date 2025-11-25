@@ -43,18 +43,20 @@ export default function HeroSection() {
           </a>
         </div>
 
-        {/* Video Placeholder */}
+        {/* Video */}
         <div className="mt-10 max-w-4xl mx-auto">
-          <div className="relative bg-linear-to-br from-[#CAD00F]/20 to-[#CAD00F]/5 rounded-2xl shadow-xl overflow-hidden aspect-video flex items-center justify-center">
-            <button className="w-20 h-20 bg-[#CAD00F] rounded-full flex items-center justify-center hover:bg-[#b8bd0d] transition-colors shadow-lg">
-              <svg
-                className="w-10 h-10 text-gray-900 ml-1"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
+          <div className="relative rounded-2xl shadow-xl overflow-hidden aspect-video">
+            <video
+              className="w-full h-full object-cover"
+              controls 
+              controlsList="nodownload"
+              autoPlay
+              muted
+              playsInline
+            >
+              <source src="/SOMEFIPP.mp4" type="video/mp4" />
+              Tu navegador no soporta el elemento de video.
+            </video>
           </div>
         </div>
       </div>

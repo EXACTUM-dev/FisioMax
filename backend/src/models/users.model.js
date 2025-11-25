@@ -93,7 +93,6 @@ export async function getUsuarios() {
     );
     return decryptUsersData(rows);
   } catch (error) {
-    console.error("Error al consultar la base de datos:", error);
     throw error;
   }
 }
@@ -115,7 +114,6 @@ export async function getMembershipUserStateById(userId) {
     );
     return rows[0] ?? null;
   } catch (error) {
-    console.error("Error al consultar la base de datos:", error);
     throw error;
   }
 }
@@ -177,7 +175,8 @@ export async function getUserByClerkId(clerkId) {
         m.createdAt as membresiaCreatedAt,
         m.horasFormacion as membresiaHorasFormacion,
         m.aceptado as membresiaAceptado,
-        m.estatusPago as membresiaEstatusPago
+        m.estatusPago as membresiaEstatusPago,
+        m.noAfiliado as membresiaNoAfiliado
       FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
@@ -222,7 +221,6 @@ export async function getUserByClerkId(clerkId) {
 
     return user;
   } catch (error) {
-    console.error("Error al obtener usuario por Clerk ID:", error);
     throw error;
   }
 }
@@ -280,7 +278,9 @@ export async function getUserById(userId) {
         m.createdAt as membresiaCreatedAt,
         m.horasFormacion as membresiaHorasFormacion,
         m.aceptado as membresiaAceptado,
-        m.estatusPago as membresiaEstatusPago
+        m.estatusPago as membresiaEstatusPago,
+        m.certificado as certificado,
+        m.noAfiliado as membresiaNoAfiliado
       FROM usuario u
       LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
         AND ur.deletedAt IS NULL 
@@ -297,9 +297,9 @@ export async function getUserById(userId) {
       [userId]
     );
     if (rows.length === 0) return null;
-    
+
     const user = decryptUserData(rows[0]);
-    
+
     // Get additional documents from separate table
     try {
       const [docRows] = await dbPool.query(
@@ -320,10 +320,105 @@ export async function getUserById(userId) {
       );
       user.documentosadicionales = [];
     }
-    
+
     return user;
   } catch (error) {
-    console.error("Error al consultar usuario por ID:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get a user by their membership ID (IDMembresia).
+ * Returns decrypted sensitive fields.
+ * @async
+ * @param {string|number} membershipId - The membership ID
+ * @returns {Promise<Object|null>} User object with role and membership information (decrypted) or null if not found
+ * @throws {Error} When database query fails
+ */
+export async function getUserByMembershipId(membershipId) {
+  try {
+    const [rows] = await dbPool.query(
+      `SELECT 
+        u.IDUsuario,
+        u.clerkID,
+        u.nombres, 
+        u.apellidoP, 
+        u.apellidoM,
+        u.foto,
+        u.correo,
+        u.telefonoProfesional,
+        u.telefonoWhatsapp,
+        u.fechaNacimiento,
+        u.cedula,
+        u.titulo,
+        u.constancias,
+        u.licenciatura,
+        u.pais,
+        u.estado,
+        u.ciudad,
+        u.numExterior,
+        u.calle,
+        u.numInterior,
+        u.colonia,
+        u.codigoPostal,
+        u.instagram,
+        u.linkedin,
+        u.facebook,
+        u.paginaWeb,
+        r.IDRol,
+        r.nombre as rolNombre,
+        r.descripcion as rolDescripcion,
+        m.IDMembresia,
+        m.tipo as membresiaTipo,
+        m.fechaVencimiento as membresiaFechaVencimiento,
+        m.createdAt as membresiaCreatedAt,
+        m.horasFormacion as membresiaHorasFormacion,
+        m.aceptado as membresiaAceptado,
+        m.estatusPago as membresiaEstatusPago,
+        m.certificado as certificado,
+        m.noAfiliado as membresiaNoAfiliado
+      FROM membresia m
+      INNER JOIN usuario u ON m.IDUsuario = u.IDUsuario
+        AND u.deletedAt IS NULL 
+        AND u.eliminado = 0
+      LEFT JOIN usuariorol ur ON u.IDUsuario = ur.IDUsuario 
+        AND ur.deletedAt IS NULL 
+        AND ur.eliminado = 0
+      LEFT JOIN rol r ON ur.IDRol = r.IDRol 
+        AND r.deletedAt IS NULL 
+        AND r.eliminado = 0
+      WHERE m.IDMembresia = ? 
+        AND m.deletedAt IS NULL
+      LIMIT 1`,
+      [membershipId]
+    );
+    if (rows.length === 0) return null;
+
+    const user = decryptUserData(rows[0]);
+
+    // Get additional documents from separate table
+    try {
+      const [docRows] = await dbPool.query(
+        `SELECT 
+          IDDocumento,
+          nombreArchivo,
+          urlArchivo,
+          createdAt
+        FROM documentosadicionales
+        WHERE IDUsuario = ?`,
+        [user.IDUsuario]
+      );
+      user.documentosadicionales = docRows;
+    } catch (docError) {
+      console.warn(
+        "documentosadicionales table not found or error:",
+        docError.message
+      );
+      user.documentosadicionales = [];
+    }
+
+    return user;
+  } catch (error) {
     throw error;
   }
 }
@@ -452,7 +547,6 @@ export async function getUserByEmail(email) {
 
     return rows.length > 0 ? decryptUserData(rows[0]) : null;
   } catch (error) {
-    console.error("Error al consultar usuario por email:", error);
     throw error;
   }
 }
@@ -477,7 +571,6 @@ export async function updateUserClerkId(userId, clerkID) {
     );
     return result.affectedRows > 0;
   } catch (error) {
-    console.error("Error al actualizar clerkID del usuario:", error);
     throw error;
   }
 }
@@ -563,6 +656,7 @@ export async function updateUserById(userId, updateData) {
       "membershipExpiresAt",
       "membershipPaymentStatus",
       "membershipHoursFormation",
+      "membershipNoAfiliado",
     ];
 
     // Normalize email if present
@@ -613,6 +707,7 @@ export async function updateUserById(userId, updateData) {
         else if (field === "membershipExpiresAt") dbField = "fechaVencimiento";
         else if (field === "membershipPaymentStatus") dbField = "estatusPago";
         else if (field === "membershipHoursFormation") dbField = "horasFormacion";
+        else if (field === "membershipNoAfiliado") dbField = "noAfiliado";
 
         membershipSetClauses.push(`${dbField} = ?`);
         // Convert to number for horasFormacion if it's a string
@@ -644,7 +739,6 @@ export async function updateUserById(userId, updateData) {
     return updatedUser;
   } catch (error) {
     await connection.rollback();
-    console.error("Error actualizando usuario:", error);
     throw error;
   } finally {
     connection.release();
@@ -752,7 +846,6 @@ export async function createUserWithClerkId(userData) {
     return await getUserById(IDUsuario);
   } catch (error) {
     await connection.rollback();
-    console.error("Error al crear usuario con clerkID:", error);
     throw error;
   } finally {
     connection.release();
@@ -825,9 +918,38 @@ export async function reassignUserToSinRol(userId) {
     return true;
   } catch (error) {
     await connection.rollback();
-    console.error("Error al reasignar usuario a SinRol:", error);
     throw error;
   } finally {
     connection.release();
+  }
+}
+
+/**
+ * Update the certificate URL in the user table
+ * @async
+ * @function updateUserCertificate
+ * @param {number} membershipId - Membership ID
+ * @param {string} uploadResult - Certificate URL in S3
+ * @returns {Promise<boolean>} True if it updated successfully
+ */
+export async function updateUserCertificate(membershipId, uploadResult) {
+  try {
+    const [result] = await dbPool.query(
+      `UPDATE usuario u
+       INNER JOIN membresia m ON u.IDUsuario = m.IDUsuario
+       SET m.certificado = ?
+       WHERE m.IDMembresia = ? AND u.eliminado = 0`,
+      [uploadResult, membershipId]
+    );
+
+    if (result.affectedRows === 0) {
+      console.warn(`No user found for membershipId ${membershipId}`);
+      return false;
+    }
+
+    return true;
+
+  } catch (error) {
+    throw error;
   }
 }
