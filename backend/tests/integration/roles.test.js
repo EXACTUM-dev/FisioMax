@@ -41,17 +41,6 @@ describe("createRoleWithPrivileges (unit)", () => {
       .mockResolvedValueOnce([{ affectedRows: 1 }])
       .mockResolvedValueOnce([{ affectedRows: 1 }]);
 
-    // Debugging: ensure mocks are wired
-    // eslint-disable-next-line no-console
-    console.log(
-      "DBG dbPool.getConnection has mock:",
-      !!dbPool.getConnection?.mock
-    );
-    // eslint-disable-next-line no-console
-    console.log("DBG dbPool.query has mock:", !!dbPool.query?.mock);
-    // eslint-disable-next-line no-console
-    console.log("DBG mockConnection keys:", Object.keys(mockConnection));
-
     const result = await createRoleWithPrivileges(roleData, privileges);
 
     // Transactions: accept either a transactional flow via connection methods
@@ -84,14 +73,6 @@ describe("createRoleWithPrivileges (unit)", () => {
 
     mockConnection.query.mockResolvedValueOnce([{ insertId: 99 }]);
 
-    // Debugging: ensure mocks are wired
-    // eslint-disable-next-line no-console
-    console.log(
-      "DBG dbPool.getConnection has mock:",
-      !!dbPool.getConnection?.mock
-    );
-    // eslint-disable-next-line no-console
-    console.log("DBG dbPool.query has mock:", !!dbPool.query?.mock);
     const result = await createRoleWithPrivileges(roleData, []);
 
     if (mockConnection.beginTransaction.mock.calls.length === 0) {
@@ -118,15 +99,6 @@ describe("createRoleWithPrivileges (unit)", () => {
 
     const dbError = new Error("DB failure");
     mockConnection.query.mockRejectedValueOnce(dbError);
-
-    // Debugging: ensure mocks are wired
-    // eslint-disable-next-line no-console
-    console.log(
-      "DBG dbPool.getConnection has mock:",
-      !!dbPool.getConnection?.mock
-    );
-    // eslint-disable-next-line no-console
-    console.log("DBG dbPool.query has mock:", !!dbPool.query?.mock);
 
     await expect(
       createRoleWithPrivileges(roleData, privileges)

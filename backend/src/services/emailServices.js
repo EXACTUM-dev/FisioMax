@@ -2,7 +2,7 @@
  * @fileoverview Email service using Amazon SES 
  * @author EXACTUM-dev
  * @version 2.0.0
- * @describe Inlcudes basic SES configuration
+ * @describe Includes basic SES configuration
  */
 
 import nodemailer from "nodemailer";

@@ -30,6 +30,7 @@ import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
  */
 export const createMembershipApplication = async (req, res) => {
   try {
+    // (debug logs removed)
     // Sanitize input data
     const sanitized = sanitizeContentInput(req.body, {
       stringFields: [
@@ -39,6 +40,7 @@ export const createMembershipApplication = async (req, res) => {
         "professionalPhone",
         "whatsappPhone",
         "birthDate",
+        "membershipType",
         "country",
         "state",
         "city",
@@ -86,6 +88,12 @@ export const createMembershipApplication = async (req, res) => {
 
     // Sanitize email
     sanitized.email = sanitizeEmail(req.body.email);
+    // Ensure numeric hours field is normalized and available on sanitized
+    if (req.body.membershipHoursFormation !== undefined) {
+      sanitized.membershipHoursFormation = Number(
+        req.body.membershipHoursFormation
+      );
+    }
     if (!sanitized.email) {
       return res.status(400).json({
         success: false,
@@ -128,7 +136,6 @@ export const createMembershipApplication = async (req, res) => {
         extraDocs.map((file) => S3Service.uploadFile(file, "documentos-extra"))
       );
     } else {
-      console.warn("AWS S3 not configured. Files will not be uploaded.");
       // Store file names instead of URLs for development
       if (req.files?.professionalId?.[0]) {
         professionalIdUrl = req.files.professionalId[0].originalname;
@@ -168,11 +175,20 @@ export const createMembershipApplication = async (req, res) => {
         certificates: certificatesUrl,
         extra: extraDocsUrls,
       },
+      membershipType: sanitized.membershipType || null,
+      membershipHoursFormation:
+        sanitized.membershipHoursFormation !== undefined
+          ? sanitized.membershipHoursFormation
+          : null,
     };
+
+    // applicationData prepared
 
     // Send data to archive model
     const application = new MembershipApplication(applicationData);
     await application.save();
+
+    // saved detail verification removed (debug)
 
     // Create template for the email when the application is sended
     const adminEmails = ["doculili08@gmail.com"];
@@ -190,7 +206,11 @@ export const createMembershipApplication = async (req, res) => {
             `,
         });
       } catch (err) {
-        console.error(`Error sending email to ${email}:`, err.message);
+        return res.status(500).json({
+          success: false,
+          message: "Error al enviar correo electrónico",
+          error: err.message,
+        });
       }
     });
 
