@@ -79,11 +79,19 @@ export default function CertificateCard({ userId }) {
         <h3 className="text-lg font-semibold">Certificados de afiliación</h3>
       </div>
 
-      <div className="h-56 md:h-44 w-full rounded-md flex items-center justify-center bg-[#FAFAFA] border border-slate-100">
+      <div className="h-56 md:h-44 w-full rounded-md flex items-center justify-center bg-[#FAFAFA] border border-slate-100 overflow-hidden">
         {loading ? (
           <div className="text-center text-gray-500">Cargando...</div>
+        ) : certificateUrl ? (
+          // Show PDF preview when certificate exists
+          <iframe
+            src={certificateUrl}
+            title="Certificado de afiliación"
+            className="w-full h-full border-0"
+            style={{ background: "#f3f4f6" }}
+          />
         ) : (
-          // Always show the same message regardless of certificate status
+          // Show message when no certificate exists
           <div className="text-center text-gray-500">
             <svg
               xmlns="http://www.w3.org/2000/svg"
