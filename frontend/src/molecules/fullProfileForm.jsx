@@ -1,10 +1,10 @@
 /**
- * @fileoverview Full Profile Form for Membership Application
+ * @fileoverview Full Profile Form for Membership Application and Profile Update
  * @version 0.1.0
  * @author EXACTUM-dev
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FormField from "./form";
 import Dropdown from "./dropdown";
 import CareerDropdown from "./careerDropdown";
@@ -26,11 +26,28 @@ export default function FullProfileForm({
 }) {
   const [showInfoFormation, setShowInfoFormation] = useState(false);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const wrapper = document.getElementById("membership-select-wrapper");
+      if (!wrapper) return;
+      const manual = wrapper.querySelector(".manual-req");
+      const candidates = wrapper.querySelectorAll("span, small, i, label");
+      candidates.forEach((node) => {
+        if (node === manual) return;
+        if (node.textContent && node.textContent.trim() === "*") {
+          node.style.display = "none";
+        }
+      });
+    }, 60); // small delay so Dropdown internal markup exists
+    return () => clearTimeout(timer);
+  }, []);
+
   const membershipOptions = [
-    { value: "", label: "Selecciona el tipo de membresía" },
-    { value: "Estudiante/Pasante", label: "Estudiante/Pasante" },
-    { value: "Licenciados en Formación", label: "Licenciados en Formación" },
-    { value: "Especializados", label: "Especializados" },
+    { value: "Estudiante", label: "Estudiante" },
+    { value: "Licenciado en Formación", label: "Licenciado en Formación" },
+    { value: "Licenciado Especializado", label: "Licenciado Especializado" },
+    { value: "Fisioterapeuta Extranjero", label: "Fisioterapeuta Extranjero" },
+    { value: "Personal de la Salud", label: "Personal de la Salud" },
   ];
   return (
     <>
@@ -234,16 +251,49 @@ export default function FullProfileForm({
         />
       </div>
       <div className="pt-10 mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Dropdown
-          label="Tipo de membresía"
-          name="membershipType"
-          required
-          value={formData.membershipType}
-          onChange={onChange}
-          options={membershipOptions}
-          error={errors.membershipType}
-          placeholder="Selecciona el tipo de membresía"
-        />
+        <div id="membership-select-wrapper" className="relative">
+          <label className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            Tipo de membresía
+            {/* info button (opens overview#pricing in same tab) */}
+            <button
+              type="button"
+              title="Ver planes y precios"
+              onClick={() => {
+                window.open("/overview#pricing", "_blank");
+              }}
+              className="text-[#CAD00F] hover:text-[#b8bd0d] focus:outline-none cursor-pointer"
+              aria-label="Ver planes y precios"
+            >
+              <AiOutlineInfoCircle size={18} />
+            </button>
+            {/* keep a single visible asterisk inline */}
+            <span className="manual-req text-red-500 ml-1" aria-hidden="true">
+              *
+            </span>
+          </label>
+
+          {/* invisible native input to guarantee browser `required` constraint
+              (no name so it won't be included in form submission) */}
+          <input
+            aria-hidden="true"
+            tabIndex={-1}
+            required
+            readOnly
+            value={formData.membershipType || ""}
+            className="absolute w-0 h-0 opacity-0 pointer-events-none"
+          />
+
+          <Dropdown
+            label={null}
+            name="membershipType"
+            required
+            value={formData.membershipType}
+            onChange={onChange}
+            options={membershipOptions}
+            error={errors.membershipType}
+            placeholder="Selecciona el tipo de membresía"
+          />
+        </div>
         <div className="relative">
           <label className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
             Horas de formación
@@ -255,7 +305,8 @@ export default function FullProfileForm({
             >
               <AiOutlineInfoCircle size={20} />
             </button>
-            {formData.membershipType === "Especializados" && (
+            {/* Require hours only for the "Licenciado Especializado" membership */}
+            {formData.membershipType === "Licenciado Especializado" && (
               <span className="text-red-500 ml-1">*</span>
             )}
           </label>
@@ -263,22 +314,31 @@ export default function FullProfileForm({
             type="number"
             name="membershipHoursFormation"
             value={formData.membershipHoursFormation}
-            onChange={onChange}
+            onChange={(e) => {
+              // enforce max 4 characters (digits). keep numeric input but prevent longer values.
+              if (String(e.target.value).length > 4) {
+                e.target.value = String(e.target.value).slice(0, 4);
+              }
+              onChange(e);
+            }}
             className="w-full border border-gray-300 bg-white rounded-md px-3 py-2  -mt-1 focus:outline-none focus:ring-2 focus:ring-[#CAD00F] transition"
             min="0"
+            max="9999"
             placeholder="Ejemplo: 120"
-            required={formData.membershipType === "Especializados"}
+            required={formData.membershipType === "Licenciado Especializado"}
           />
           {showInfoFormation && (
             <div className="absolute z-10 left-0 mt-2 w-72 bg-white border border-[#CAD00F] rounded shadow-lg p-4 text-sm text-gray-700">
               Justifica tus horas de formación en piso pélvico con certificados.
-              Para especialistas, es necesario mínimo tener 120 horas.
+              Para licenciados especializados, es necesario mínimo tener 120
+              horas.
             </div>
           )}
-          {formData.membershipType === "Especializados" &&
+          {formData.membershipType === "Licenciado Especializado" &&
             Number(formData.membershipHoursFormation) < 120 && (
               <p className="text-xs text-red-500 mt-2">
-                Para especialistas, debes tener al menos 120 horas de formación.
+                Para licenciados especializados, debes tener al menos 120 horas
+                de formación.
               </p>
             )}
         </div>

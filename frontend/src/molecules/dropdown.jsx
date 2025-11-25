@@ -19,15 +19,15 @@ import React, { useState, useRef, useEffect } from "react";
  * @returns {JSX.Element} Dropdown component.
  */
 
-export default function Dropdown({ 
-  name, 
-  label, 
-  required = false, 
-  value, 
-  onChange, 
-  options = [], 
+export default function Dropdown({
+  name,
+  label,
+  required = false,
+  value,
+  onChange,
+  options = [],
   placeholder = "Selecciona una opción",
-  error 
+  error,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -44,14 +44,13 @@ export default function Dropdown({
     const handleKeyDown = (event) => {
       // Detect key "esc"
       if (event.key === "Escape") {
-
         // Keep the focus on the main button
         const active = document.activeElement;
         if (!containerRef.current?.contains(active)) return;
 
         setIsOpen(false);
         buttonRef.current?.focus();
-          }
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -68,37 +67,44 @@ export default function Dropdown({
     setIsOpen(false);
   };
 
-  const selectedOption = options.find(option => option.value === value);
+  const selectedOption = options.find((option) => option.value === value);
 
   return (
     <div className="w-full" ref={containerRef}>
       <label className="text-sm font-semibold text-gray-700 mb-1 block">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      
+
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           ref={buttonRef}
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full px-3 py-2 text-left border rounded focus:outline-none cursor-pointer focus:ring-2 focus:ring-[#CAD00F] transition-colors ${
-            error 
-              ? "border-red-300 bg-red-50" 
+            error
+              ? "border-red-300 bg-red-50"
               : "border-gray-300 hover:border-gray-400"
           }`}
         >
-          <span className={`${selectedOption ? "text-gray-900" : "text-gray-500"}`}>
+          <span
+            className={`${selectedOption ? "text-gray-900" : "text-gray-500"}`}
+          >
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <svg 
+          <svg
             className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 transition-transform ${
               isOpen ? "rotate-180" : ""
-            }`} 
-            fill="none" 
-            stroke="currentColor" 
+            }`}
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </button>
 
@@ -117,7 +123,9 @@ export default function Dropdown({
                   }
                 }}
                 className={`w-full px-3 py-2 text-left cursor-pointer hover:bg-gray-100 transition-colors ${
-                  option.value === value ? "bg-[#CAD00F]/10 text-gray-900 font-medium" : "text-gray-900"
+                  option.value === value
+                    ? "bg-[#CAD00F]/10 text-gray-900 font-medium"
+                    : "text-gray-900"
                 }`}
               >
                 {option.label}
@@ -126,7 +134,7 @@ export default function Dropdown({
           </div>
         )}
       </div>
-      
+
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
