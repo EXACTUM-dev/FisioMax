@@ -1,8 +1,8 @@
 # FisioMax
 
-![Status](https://img.shields.io/badge/Status-MVP-success)
+![Status](https://img.shields.io/badge/Status-MBI-success)
 ![License](https://img.shields.io/badge/License-ISC-blue)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue)
+![Version](https://img.shields.io/badge/Version-1.1.0-blue)
 
 Plataforma integral para la gestión de contenido fisioterapéutico y membresías de usuarios.
 
