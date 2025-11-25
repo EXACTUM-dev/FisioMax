@@ -82,28 +82,18 @@ export default function CertificateCard({ userId }) {
       <div className="h-56 md:h-44 w-full rounded-md flex items-center justify-center bg-[#FAFAFA] border border-slate-100">
         {loading ? (
           <div className="text-center text-gray-500">Cargando...</div>
-        ) : error ? (
-          <div className="text-sm text-red-600">{error}</div>
-        ) : certificateUrl ? (
-          // If the URL looks like an image, show image thumbnail, otherwise embed PDF object
-          /\.(jpg|jpeg|png|webp|gif)$/i.test(certificateUrl) ? (
-            <img
-              src={certificateUrl}
-              alt="Certificado"
-              className="max-h-44 object-contain"
-            />
-          ) : (
-            <object
-              data={certificateUrl}
-              type="application/pdf"
-              className="w-full h-full"
-            >
-              <div className="text-center text-gray-600">
-                No se puede mostrar el certificado.
-              </div>
-            </object>
-          )
+        ) : certificateUrl && /\.(jpg|jpeg|png|webp|gif)$/i.test(certificateUrl) ? (
+          // Only show image if it's a valid image URL
+          <img
+            src={certificateUrl}
+            alt="Certificado"
+            className="max-h-44 object-contain"
+          />
         ) : (
+          // Show the same "no certificates" message for all other cases:
+          // - No certificate URL
+          // - Error fetching certificate
+          // - PDF that can't be displayed
           <div className="text-center text-gray-500">
             <svg
               xmlns="http://www.w3.org/2000/svg"
