@@ -419,9 +419,8 @@ export const getMembershipApplicationById = async (id) => {
       nombres: row.nombres,
       apellidoP: row.apellidoP,
       apellidoM: row.apellidoM || null,
-      nombreCompleto: `${row.nombres} ${row.apellidoP} ${
-        row.apellidoM || ""
-      }`.trim(),
+      nombreCompleto: `${row.nombres} ${row.apellidoP} ${row.apellidoM || ""
+        }`.trim(),
       nombre: `${row.nombres} ${row.apellidoP} ${row.apellidoM || ""}`.trim(),
       ubicacion: ubicacionStr || null,
       correo: row.correo,
@@ -533,7 +532,7 @@ export async function denyMembershipApplication(razonRechazo, id) {
 export async function getExpiringMemberships(daysArray = [30, 15, 7, 3, 1]) {
   try {
     const placeholders = daysArray.map(() => '?').join(',');
-    
+
     const query = `
       SELECT 
         m.IDMembresia,
@@ -544,7 +543,8 @@ export async function getExpiringMemberships(daysArray = [30, 15, 7, 3, 1]) {
         DATEDIFF(m.fechaVencimiento, NOW()) as daysRemaining,
         u.nombres,
         u.apellidoP,
-        u.correo
+        u.correo,
+        u.clerkID as clerk_user_id
       FROM membresia m
       INNER JOIN Usuario u ON m.IDUsuario = u.IDUsuario
       WHERE m.aceptado = 1

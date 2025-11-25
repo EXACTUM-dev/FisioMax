@@ -15,13 +15,12 @@ import PaymentService from "../services/paymentService";
 
 // Membership prices in MXN (per year)
 const MEMBERSHIP_PRICES = {
-  'Estudiante/Pasante': 900,
-  'Licenciados en Formación': 1100,
-  'Especializados': 1500,
-  'Ordinaria': 1500, // Default/legacy type
+  'Estudiante': 900,
+  'Licenciado en Formación': 1100,
+  'Licenciado Especializado': 1500,
+  'Fisioterapeuta Extranjero': 1100,
   'básica': 5,
-  'premium': 1100,
-  'empresarial': 1500,
+  'Personal de la salud': 1100,
 };
 
 /**
@@ -80,18 +79,18 @@ export default function MembershipCard({
 
   const registeredAt = data.membershipRegisteredAt
     ? new Date(data.membershipRegisteredAt).toLocaleDateString("es-MX", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "—";
 
   const expiresAt = data.membershipExpiresAt
     ? new Date(data.membershipExpiresAt).toLocaleDateString("es-MX", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "—";
 
   const plan = data.membershipType || "No asignado";
@@ -149,7 +148,7 @@ export default function MembershipCard({
         setModalType("error");
         setModalMessage(
           error?.message ||
-            "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
+          "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
         );
         setShowModal(true);
       }
@@ -166,7 +165,7 @@ export default function MembershipCard({
   const handlePayment = async () => {
     try {
       setIsProcessingPayment(true);
-      
+
       const membershipType = data.membershipType || 'básica';
       const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
@@ -192,9 +191,12 @@ export default function MembershipCard({
   // Options for membership type dropdown
   const membershipTypeOptions = [
     { value: "", label: "Seleccionar plan" },
+    { value: "Estudiante", label: "Estudiante" },
     { value: "básica", label: "Básica" },
-    { value: "premium", label: "Premium" },
-    { value: "empresarial", label: "Empresarial" },
+    { value: "Licenciado en Formación", label: "Licenciado en Formación" },
+    { value: "Licenciado Especializado", label: "Licenciado Especializado" },
+    { value: "Fisioterapeuta Extranjero", label: "Fisioterapeuta Extranjero" },
+    { value: "Personal de la salud", label: "Personal de la salud" },
   ];
 
   // Options for payment status dropdown
@@ -232,26 +234,25 @@ export default function MembershipCard({
             <div className="flex justify-between">
               <span className="text-slate-500">Estatus de pago</span>
               <span
-                className={`font-medium capitalize ${
-                  paymentStatus === "Pagado"
-                    ? "text-green-600"
-                    : paymentStatus === "Pendiente"
+                className={`font-medium capitalize ${paymentStatus === "Pagado"
+                  ? "text-green-600"
+                  : paymentStatus === "Pendiente"
                     ? "text-yellow-600"
                     : "text-red-600"
-                }`}
+                  }`}
               >
                 {paymentStatus}
               </span>
             </div>
 
             <div className="mt-4">
-                <Button
-                    size="sm"
-                    label={isProcessingPayment ? "Procesando..." : "Pagar membresía"}
-                    onClick={handlePayment}
-                    disabled={isProcessingPayment}
-                    className="cursor-pointer"
-                />
+              <Button
+                size="sm"
+                label={isProcessingPayment ? "Procesando..." : "Pagar membresía"}
+                onClick={handlePayment}
+                disabled={isProcessingPayment}
+                className="cursor-pointer"
+              />
             </div>
           </div>
         </>
