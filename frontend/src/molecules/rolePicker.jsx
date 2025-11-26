@@ -125,10 +125,9 @@ export default function RolePicker({ row, roles = [], onSelect, displayName }) {
         throw new Error(response?.error || "Error al actualizar el rol");
       }
     } catch (error) {
-      console.error("Error updating user role:", error);
       setErrorMessage(
         error.message ||
-          "Error al actualizar el rol. Por favor, intenta nuevamente."
+        "Error al actualizar el rol. Por favor, intenta nuevamente."
       );
       setErrorModalOpen(true);
       setSelectedRole(current);

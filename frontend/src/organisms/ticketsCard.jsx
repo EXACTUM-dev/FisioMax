@@ -104,39 +104,7 @@ const getReceiptUrl = (webhookData) => {
   return null;
 };
 
-/**
- * Downloads the receipt PDF by fetching and creating a blob.
- * @param {string} url - Receipt URL.
- * @param {string} filename - Suggested filename for download.
- * @return {Promise<void>}
- */
-const handleDownloadReceipt = async (url, filename) => {
-  if (!url) return;
 
-  try {
-    // Fetch the file as a blob
-    const response = await fetch(url);
-    const blob = await response.blob();
-
-    // Create a temporary URL for the blob
-    const blobUrl = window.URL.createObjectURL(blob);
-
-    // Create a temporary link and trigger download
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-
-    // Cleanup
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    console.error('Error descargando comprobante:', error);
-    // Fallback: open in new tab
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-};
 
 /**
  * Displays user's payment tickets in a card layout with pagination.
@@ -299,10 +267,7 @@ export default function TicketsCard({ tickets = [] }) {
                         {/* Only show download button for actual PDF receipts, not Mercado Pago activity links */}
                         {!getReceiptUrl(ticket.response_webhook)?.includes('activities?q=') && (
                           <button
-                            onClick={() => handleDownloadReceipt(
-                              getReceiptUrl(ticket.response_webhook),
-                              `comprobante_${ticket.folio}.pdf`
-                            )}
+                            onClick={() => window.open(getReceiptUrl(ticket.response_webhook), '_blank', 'noopener,noreferrer')}
                             className="text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer"
                             title="Descargar comprobante"
                           >

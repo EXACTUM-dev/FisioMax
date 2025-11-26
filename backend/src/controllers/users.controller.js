@@ -15,6 +15,7 @@ import {
 } from "../models/users.model.js";
 import S3Service from "../services/s3Service.js";
 import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
+import { generateAndUploadCertificate } from "../controllers/content.controller.js";
 
 /**
  * Gets all users with their roles from the database.
@@ -31,7 +32,6 @@ export async function getAllUsers(req, res) {
       data: users,
     });
   } catch (error) {
-    console.error("Error obteniendo usuarios:", error);
     res.status(500).json({
       success: false,
       error: "Error al obtener los usuarios",
@@ -78,16 +78,16 @@ export async function getCurrentUserProfile(req, res) {
     const documentosadicionalesUrls =
       user.documentosadicionales && user.documentosadicionales.length > 0
         ? await Promise.all(
-            user.documentosadicionales.map(async (doc) => {
-              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
-              return {
-                id: doc.IDDocumento,
-                nombre: doc.nombreArchivo,
-                url: url,
-                createdAt: doc.createdAt,
-              };
-            })
-          )
+          user.documentosadicionales.map(async (doc) => {
+            const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+            return {
+              id: doc.IDDocumento,
+              nombre: doc.nombreArchivo,
+              url: url,
+              createdAt: doc.createdAt,
+            };
+          })
+        )
         : [];
 
     const transformedUser = {
@@ -129,6 +129,7 @@ export async function getCurrentUserProfile(req, res) {
       membershipHoursFormation: user.membresiaHorasFormacion || null,
       membershipStatus: user.membresiaAceptado,
       membershipPaymentStatus: user.membresiaEstatusPago || null,
+      membershipNoAfiliado: user.membresiaNoAfiliado || null,
     };
 
     res.status(200).json({
@@ -136,7 +137,6 @@ export async function getCurrentUserProfile(req, res) {
       data: transformedUser,
     });
   } catch (error) {
-    console.error("Error obteniendo perfil del usuario:", error);
     res.status(500).json({
       success: false,
       error: "Error al obtener el perfil del usuario",
@@ -183,16 +183,16 @@ export async function getUserProfileById(req, res) {
     const documentosadicionalesUrls =
       user.documentosadicionales && user.documentosadicionales.length > 0
         ? await Promise.all(
-            user.documentosadicionales.map(async (doc) => {
-              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
-              return {
-                id: doc.IDDocumento,
-                nombre: doc.nombreArchivo,
-                url: url,
-                createdAt: doc.createdAt,
-              };
-            })
-          )
+          user.documentosadicionales.map(async (doc) => {
+            const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+            return {
+              id: doc.IDDocumento,
+              nombre: doc.nombreArchivo,
+              url: url,
+              createdAt: doc.createdAt,
+            };
+          })
+        )
         : [];
 
     const transformedUser = {
@@ -234,6 +234,7 @@ export async function getUserProfileById(req, res) {
       membershipHoursFormation: user.membresiaHorasFormacion || null,
       membershipStatus: user.membresiaAceptado,
       membershipPaymentStatus: user.membresiaEstatusPago || null,
+      membershipNoAfiliado: user.membresiaNoAfiliado || null,
     };
 
     res.status(200).json({
@@ -241,7 +242,6 @@ export async function getUserProfileById(req, res) {
       data: transformedUser,
     });
   } catch (error) {
-    console.error("Error obteniendo perfil del usuario por ID:", error);
     res.status(500).json({
       success: false,
       error: "Error al obtener el perfil del usuario",
@@ -320,7 +320,6 @@ export async function deleteUser(req, res) {
       message: `El usuario \"${userToDelete.nombres} ${userToDelete.apellidoP} ${userToDelete.apellidoM}\" fue eliminado con éxito.`,
     });
   } catch (error) {
-    console.error("Error al eliminar usuario:", error);
     res.status(500).json({
       success: false,
       message: "Error interno del servidor.",
@@ -371,6 +370,7 @@ export async function updateUser(req, res) {
         "paginaWeb",
         "membershipType",
         "membershipPaymentStatus",
+        "membershipNoAfiliado",
       ],
       maxLengths: {
         nombres: 60,
@@ -393,6 +393,7 @@ export async function updateUser(req, res) {
         paginaWeb: 255,
         membershipType: 50,
         membershipPaymentStatus: 50,
+        membershipNoAfiliado: 50,
       },
     });
 
@@ -475,11 +476,11 @@ export async function updateUser(req, res) {
       membershipHoursFormation: updated.membresiaHorasFormacion || null,
       membershipStatus: updated.membresiaAceptado,
       membershipPaymentStatus: updated.membresiaEstatusPago || null,
+      membershipNoAfiliado: updated.membresiaNoAfiliado || null,
     };
 
     return res.status(200).json({ success: true, data: transformedUser });
   } catch (error) {
-    console.error("Error actualizando usuario:", error);
     return res.status(500).json({
       success: false,
       error: "Error al actualizar el usuario",
@@ -639,7 +640,7 @@ export async function updateUserDocuments(req, res) {
     let updated = currentUser;
     if (hasMainDocs) {
       updated = await updateUserById(userId, updateData);
-      
+
       if (!updated) {
         return res
           .status(404)
@@ -658,16 +659,16 @@ export async function updateUserDocuments(req, res) {
     const documentosadicionalesUrls =
       updated.documentosadicionales && updated.documentosadicionales.length > 0
         ? await Promise.all(
-            updated.documentosadicionales.map(async (doc) => {
-              const url = await S3Service.getPresignedUrl(doc.urlArchivo);
-              return {
-                id: doc.IDDocumento,
-                nombre: doc.nombreArchivo,
-                url: url,
-                createdAt: doc.createdAt,
-              };
-            })
-          )
+          updated.documentosadicionales.map(async (doc) => {
+            const url = await S3Service.getPresignedUrl(doc.urlArchivo);
+            return {
+              id: doc.IDDocumento,
+              nombre: doc.nombreArchivo,
+              url: url,
+              createdAt: doc.createdAt,
+            };
+          })
+        )
         : [];
 
     const transformedUser = {
@@ -703,10 +704,65 @@ export async function updateUserDocuments(req, res) {
 
     return res.status(200).json({ success: true, data: transformedUser });
   } catch (error) {
-    console.error("Error actualizando documentos del usuario:", error);
     return res.status(500).json({
       success: false,
       error: "Error al actualizar los documentos",
+      message: error.message,
+    });
+  }
+}
+
+/**
+ * Get user's membership certificate with presigned URL
+ * @param {!Object} req - Express request object with params.userId
+ * @param {!Object} res - Express response object
+ * @return {!Promise<void>} Sends JSON response with certificate URL or error
+ */
+export async function getUserCertificate(req, res) {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de usuario requerido",
+      });
+    }
+
+    // Get user data including certificate
+    const user = await getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Usuario no encontrado",
+      });
+    }
+
+    // Check if user has a certificate
+    if (!user.certificado) {
+      return res.status(404).json({
+        success: false,
+        error: "El usuario no tiene un certificado generado",
+        certificado: null,
+      });
+    }
+
+    // Generate presigned URL for the certificate
+    const certificateUrl = await S3Service.getPresignedUrl(user.certificado);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        certificado: certificateUrl,
+        IDUsuario: user.IDUsuario,
+        nombreCompleto: `${user.nombres} ${user.apellidoP} ${user.apellidoM || ''}`.trim(),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: "Error al obtener el certificado",
       message: error.message,
     });
   }

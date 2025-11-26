@@ -126,6 +126,20 @@ export default function Sidebar({ current = "home", onNavigate }) {
     return baseLinks;
   }, [userRole]);
 
+  const mobileLinks = useMemo(() => {
+    if (userRole !== "Admin") {
+      const profileLink = links.find((l) => l.key === "profile");
+      const homeLink = links.find((l) => l.key === "home");
+      const logout = links.find((l) => l.key === "logout");
+      return [profileLink, homeLink, logout].filter(Boolean);
+    }
+    return links;
+  }, [links, userRole]);
+
+  // Tailwind grid columns for mobile bar: support 3 or 4 columns
+  const mobileGridClass =
+    mobileLinks.length === 3 ? "grid-cols-3" : "grid-cols-4";
+
   // Map keys to routes handled here
   const routeMap = useMemo(
     () => ({
@@ -222,13 +236,13 @@ export default function Sidebar({ current = "home", onNavigate }) {
       {/* Mobile version: bottom bar */}
       <nav
         className="
-          md:hidden fixed bottom-0 left-0 right-0 z-40
-          bg-[#F5F5F5] border-t border-slate-200
-          px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)]
-        "
+    md:hidden fixed bottom-0 left-0 right-0 z-40
+    bg-[#F5F5F5] border-t border-slate-200
+    px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)]
+  "
       >
-        <ul className="grid grid-cols-4 gap-2">
-          {links.map((l) => {
+        <ul className={`grid ${mobileGridClass} gap-2`}>
+          {mobileLinks.map((l) => {
             const isActive = active === l.key;
             return (
               <li key={l.key} className="relative">

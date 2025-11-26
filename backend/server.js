@@ -146,7 +146,6 @@ app.listen(PORT, () => {
  *  */
 import paymentRoutes from "./src/routes/payment.routes.js";
 app.use("/api/payments", paymentRoutes);
-
 //-------------------------
 // ERROR HANDLING MIDDLEWARE
 // Order matters: JSON parsing errors -> Specific errors -> Generic errors -> 404
@@ -229,8 +228,6 @@ app.use(secureErrorHandler);
  * Fallback error handler for any remaining errors
  */
 app.use((error, req, res, next) => {
-  console.error("Error no manejado:", error);
-
   res.status(error.status || 500).json({
     success: false,
     message: error.message || "Error interno del servidor",

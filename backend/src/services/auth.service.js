@@ -4,9 +4,9 @@
  * @version 2.0.0
  * @author EXACTUM-dev
  */
-import {clerkClient} from '@clerk/clerk-sdk-node';
+import { clerkClient } from '@clerk/clerk-sdk-node';
 import config from '../../config.js';
-import {getUserByClerkId, getMembershipUserStateById} from '../models/users.model.js';
+import { getUserByClerkId, getMembershipUserStateById } from '../models/users.model.js';
 
 /**
  * Gets complete user information combining Clerk and DB data.
@@ -49,9 +49,9 @@ export async function getUserById(clerkUserId) {
       id: dbUser?.IDUsuario || null,
       clerkID: clerkUserId,
       email:
-          clerkUser.emailAddresses?.[0]?.emailAddress ||
-          dbUser?.correo ||
-          null,
+        clerkUser.emailAddresses?.[0]?.emailAddress ||
+        dbUser?.correo ||
+        null,
       firstName: clerkUser.firstName || dbUser?.nombres || null,
       lastName: clerkUser.lastName || dbUser?.apellidoP || null,
       imageUrl: clerkUser.imageUrl || dbUser?.foto || null,
@@ -65,7 +65,6 @@ export async function getUserById(clerkUserId) {
       membershipPaymentStatus: dbUser?.membresiaEstatusPago || null,
     };
   } catch (err) {
-    console.error('auth.service.getUserById error:', err?.message || err);
     throw err;
   }
 }
@@ -84,7 +83,6 @@ export async function userExistsInDB(clerkUserId) {
     const dbUser = await getUserByClerkId(clerkUserId);
     return !!dbUser;
   } catch (err) {
-    console.error('auth.service.userExistsInDB error:', err?.message || err);
     return false;
   }
 }

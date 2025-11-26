@@ -19,7 +19,7 @@ export default function PaymentReturn() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { getToken } = useAuth();
-  
+
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [error, setError] = useState(null);
@@ -30,7 +30,7 @@ export default function PaymentReturn() {
         // Get payment_id from URL parameters
         const paymentId = searchParams.get('payment_id');
         const status = searchParams.get('status');
-        
+
         if (!paymentId) {
           setError('No se encontró información del pago');
           setLoading(false);
@@ -40,13 +40,12 @@ export default function PaymentReturn() {
         // Query payment status from backend
         const result = await PaymentService.getPaymentStatus(paymentId, getToken);
         setPaymentStatus(result);
-        
+
         // Clear pending payment from session storage
         PaymentService.clearPendingPayment();
-        
+
         setLoading(false);
       } catch (err) {
-        console.error('Error checking payment status:', err);
         setError('No se pudo verificar el estado del pago');
         setLoading(false);
       }

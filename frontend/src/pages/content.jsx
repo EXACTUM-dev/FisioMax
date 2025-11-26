@@ -84,8 +84,6 @@ export default function ContentPage() {
         setContentData(content);
         setShowDescription(false);
       } catch (err) {
-        console.error("Error cargando contenido:", err);
-
         if (err.message.includes("membresía ha vencido")) {
           setError(
             "Tu membresía ha vencido. Por favor, renueva tu suscripción para acceder a este contenido."
@@ -203,7 +201,6 @@ export default function ContentPage() {
   };
 
   const handleContentError = (err) => {
-    console.error("Error al mostrar o reproducir el contenido:", err);
     setError("Error al mostrar o reproducir el contenido.");
     setErrorType("error");
   };

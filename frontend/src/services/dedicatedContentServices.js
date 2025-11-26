@@ -50,7 +50,6 @@ export async function getDedicatedContent(
       currentOffset: offset,
     };
   } catch (error) {
-    console.error(`Error fetching ${contentType} content:`, error);
     throw error;
   }
 }
@@ -78,7 +77,6 @@ export async function searchDedicatedContent(token, contentType, searchTerm) {
 
     return response.content || [];
   } catch (error) {
-    console.error(`Error searching ${contentType}:`, error);
     throw error;
   }
 }

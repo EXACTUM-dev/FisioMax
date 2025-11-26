@@ -30,7 +30,6 @@ export const authorize = (requiredPrivileges = []) => {
           return next();
         }
       } catch (err) {
-        console.error("Error verificando usuario propio en RBAC:", err);
       }
     }
 
@@ -45,7 +44,6 @@ export const authorize = (requiredPrivileges = []) => {
       }
       next();
     } catch (err) {
-      console.error(err);
       res.status(500).json({ message: "Error verificando permisos" });
     }
   };

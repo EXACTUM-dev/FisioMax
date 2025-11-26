@@ -44,7 +44,6 @@ export function generateSignedUrl(multimediaId, expirationMinutes = 60) {
 
     return signedUrl;
   } catch (error) {
-    console.error("Error generating signed URL:", error);
     throw new Error("Failed to generate signed URL");
   }
 }
