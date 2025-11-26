@@ -58,6 +58,12 @@ export const CONTENT_FILE_RESTRICTIONS = {
     label: "MP4, MOV, WEBM",
     maxSize: 5 * 1024 * 1024 * 1024, // 5GB
   },
+  Descuento: {
+    accept: ".png,.jpg,.jpeg,image/png,image/jpeg,image/jpg",
+    types: ["image/png", "image/jpeg", "image/jpg"],
+    label: "PNG, JPG, JPEG",
+    maxSize: 20 * 1024 * 1024, // 20MB
+  },
 };
 
 /**
@@ -93,6 +99,7 @@ export const CONTENT_TYPE_OPTIONS = [
   { value: "Video", label: "Video" },
   { value: "Podcast", label: "Podcast" },
   { value: "Libro", label: "Libro" },
+  { value: "Descuento", label: "Descuento" },
 ];
 
 /**

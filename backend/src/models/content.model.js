@@ -11,7 +11,7 @@ import db from "../../database/db.js";
  * Valid content types that can be displayed
  * @constant {string[]}
  */
-const DISPLAYABLE_CONTENT_TYPES = ["video", "articulo", "podcast", "libro"];
+const DISPLAYABLE_CONTENT_TYPES = ["video", "articulo", "podcast", "libro", "descuento"];
 
 /**
  * Gets a specific content by ID with its thumbnail
@@ -173,9 +173,11 @@ export async function getAvailableContent(
  * @param {Object} contentData - Content data to insert
  * @param {string} contentData.nombre - Content name
  * @param {string} contentData.descripcion - Content description
- * @param {string} contentData.tipo - Content type (video, articulo, imagen, podcast, documento)
+ * @param {string} contentData.tipo - Content type (video, articulo, imagen, podcast, documento, descuento)
  * @param {string} contentData.IDMultimedia - S3 key for the multimedia file
- * @param {string} [contentData.tipoMembresia] - Membership type (Básico, Estándar, Premium)
+ * @param {string} [contentData.tipoMembresia] - Membership type
+ * @param {string} [contentData.fechaInicio] - Start date for discounts (YYYY-MM-DD)
+ * @param {string} [contentData.fechaFin] - End date for discounts (YYYY-MM-DD)
  * @returns {Promise<number>} Inserted content ID
  * @throws {Error} If database error
  */
@@ -187,9 +189,11 @@ export async function createContent(contentData) {
       tipo,
       IDMultimedia,
       tipoMembresia,
+      fechaInicio,
+      fechaFin,
       eliminado,
       createdAt
-    ) VALUES (?, ?, ?, ?, ?, 0, NOW())
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW())
   `;
 
   try {
@@ -199,6 +203,8 @@ export async function createContent(contentData) {
       contentData.tipo,
       contentData.IDMultimedia,
       contentData.tipoMembresia || null,
+      contentData.fechaInicio || null,
+      contentData.fechaFin || null,
     ]);
 
     return result.insertId;

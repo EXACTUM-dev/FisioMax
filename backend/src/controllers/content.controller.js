@@ -195,7 +195,7 @@ export async function upload(req, res) {
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
 
-    if (!file && !filekey) {
+    if (tipo !== "Descuento" && !file && !filekey) {
       return res.status(400).json({
         success: false,
         message: "Debes proporcionar un archivo o un s3Key previamente firmado."
@@ -218,7 +218,7 @@ export async function upload(req, res) {
     }
 
     // Validate and sanitize input using the generic sanitization utility
-    const allowedTypes = ["Video", "Articulo", "Podcast", "Libro"];
+    const allowedTypes = ["Video", "Articulo", "Podcast", "Libro", "Descuento"];
 
     let sanitized;
     try {
@@ -341,6 +341,12 @@ export async function upload(req, res) {
           thumbnail,
           `${folder}/thumbnails`
         );
+        // For discounts, use thumbnail as main content
+    if (sanitized.tipo === "Descuento" && !finalS3Key) {
+      finalS3Key = thumbnailKey;
+      // Update the main content with thumbnail key
+      await updateContent(contentId, { IDMultimedia: thumbnailKey });
+    }
         thumbnailId = await createContent({
           nombre: sanitized.nombre,
           descripcion: `Miniatura de ${sanitized.nombre}`,

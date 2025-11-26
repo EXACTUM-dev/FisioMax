@@ -9,6 +9,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { getHomePageContent, searchContent } from "../services/homePage";
+import { getActiveDiscounts } from "../services/discountService";;
 
 // Atoms
 import Button from "../atoms/button";
@@ -37,6 +38,7 @@ export default function HomePage() {
   const [videos, setVideos] = useState([]);
   const [articles, setArticles] = useState([]);
   const [books, setBooks] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
   const [podcasts, setPodcasts] = useState([]);
   const [searchResults, setSearchResults] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -106,6 +108,8 @@ export default function HomePage() {
     try {
       const token = await getToken();
       const data = await getHomePageContent(token);
+      const discountsData = await getActiveDiscounts(token);
+      setDiscounts(discountsData);
 
       // Transform data to carousel format
       setRecentVideos(transformToCarouselFormat(data.recentVideos || []));
@@ -382,6 +386,15 @@ export default function HomePage() {
                 </div>
                 <Carousel slides={podcasts} variant="row" />
               </>
+            )}
+            {/* Active Discounts Carousel */}
+            {discounts.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center justify-between mb-6">
+                  <Title2>Descuentos Activos</Title2>
+                </div>
+                <Carousel items={discounts} />
+              </section>
             )}
 
             {/* Show message if no content at all */}

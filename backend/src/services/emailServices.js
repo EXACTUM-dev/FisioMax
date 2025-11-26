@@ -181,3 +181,38 @@ export async function sendEventInvitation(destinatario, nombreMiembro, eventoDat
     }
   );
 }
+
+/**
+ * Sends a discount notification email
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {string} nombreDescuento - Discount name
+ * @param {string} descripcion - Discount description
+ * @param {string} fechaFin - Expiration date (YYYY-MM-DD)
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object
+ */
+export async function sendDiscountNotification(
+  destinatario,
+  nombreMiembro,
+  nombreDescuento,
+  descripcion,
+  fechaFin
+) {
+  // Format date to readable Spanish format
+  const fecha = new Date(fechaFin);
+  const options = { year: "numeric", month: "long", day: "numeric" };
+  const fechaFormateada = fecha.toLocaleDateString("es-MX", options);
+
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.EVENTO,
+    {
+      NOMBRE_MIEMBRO: nombreMiembro,
+      DESCUENTO_NOMBRE: nombreDescuento,
+      DESCUENTO_DESCRIPCION: descripcion,
+      FECHA_EXPIRACION: fechaFormateada,
+      LINK_DESCUENTO: `${process.env.FRONTEND_URL}/content`,
+    }
+  );
+}

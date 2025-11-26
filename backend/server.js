@@ -128,24 +128,6 @@ app.use("/api", homePageRoutes);
  */
 app.use('/api/notifications', notificationRoutes);
 
-/** 
- * Start Cron Job
- */
-startNotificationsCron();
-startCleanupCron();
-
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Cron Jobs iniciados');
-});
-
-/**
- * Routes for payment processing with Mercado Pago.
- *  */
-import paymentRoutes from "./src/routes/payment.routes.js";
-app.use("/api/payments", paymentRoutes);
 //-------------------------
 // ERROR HANDLING MIDDLEWARE
 // Order matters: JSON parsing errors -> Specific errors -> Generic errors -> 404

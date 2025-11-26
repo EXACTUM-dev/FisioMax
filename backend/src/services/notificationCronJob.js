@@ -13,6 +13,9 @@ import NotificationController from '../controllers/notifications.controller.js';
 import { sendRenewalReminder } from './emailServices.js';
 import { decryptFields } from './encryptionService.js';
 import PaymentService from './payment.service.js';
+import { getDiscountsStartingToday, getExpiredDiscounts } from '../models/discount.model.js';
+import { sendDiscountNotification } from './emailServices.js';
+import { softDeleteContent } from '../models/content.model.js';
 
 /**
  * Sensitive fields that need to be decrypted
@@ -181,6 +184,8 @@ function startNotificationsCron() {
     console.log(`[${new Date().toISOString()}] Ejecutando Cron Job`);
     console.log('='.repeat(50));
     checkExpiringMemberships();
+    checkAndNotifyNewDiscounts();
+    deleteExpiredDiscounts();
   }, {
     timezone: "America/Mexico_City"
   });
@@ -189,4 +194,121 @@ function startNotificationsCron() {
   console.log(`Programado: ${scheduleExpression} `);
 }
 
-export { startNotificationsCron, checkExpiringMemberships };
+
+/**
+ * Check for new discounts and send notifications to eligible members
+ * @async
+ * @returns {Promise<void>}
+ */
+async function checkAndNotifyNewDiscounts() {
+  try {
+    console.log('[Discount Notifications] Checking for new discounts...');
+    
+    const discounts = await getDiscountsStartingToday();
+    
+    if (discounts.length === 0) {
+      console.log('[Discount Notifications] No new discounts starting today');
+      return;
+    }
+    
+    console.log(`[Discount Notifications] Found ${discounts.length} discount(s)`);
+    
+    let emailsSent = 0;
+    let emailsFailed = 0;
+    
+    for (const discount of discounts) {
+      const { IDContenido, nombre, descripcion, tipoMembresia, fechaFin } = discount;
+      
+      try {
+        const query = `
+          SELECT u.IDUsuario, u.correo, u.nombres, u.apellidoP, u.apellidoM
+          FROM usuario u
+          WHERE u.membresiaTipo = ?
+            AND u.membresiaEstadoPago = 'Pagado'
+            AND u.eliminado = 0
+            AND u.deletedAt IS NULL
+        `;
+        
+        const db = (await import('../../database/db.js')).default;
+        const [users] = await db.query(query, [tipoMembresia]);
+        
+        for (const user of users) {
+          try {
+            const decryptedData = decryptFields(user, SENSITIVE_FIELDS);
+            const nombreCompleto = `${decryptedData.nombres} ${decryptedData.apellidoP}`.trim();
+            
+            const emailResult = await sendDiscountNotification(
+              decryptedData.correo,
+              nombreCompleto,
+              nombre,
+              descripcion,
+              fechaFin
+            );
+            
+            if (emailResult.success) {
+              emailsSent++;
+              
+              // Create notification in database
+              await NotificationModel.create({
+                userID: user.IDUsuario,
+                type: 'discount',
+                priority: 'medium',
+                message: `Nuevo descuento disponible: ${nombre}`,
+                metadata: {
+                  discountId: IDContenido,
+                  discountName: nombre,
+                  expiresAt: fechaFin,
+                }
+              });
+            } else {
+              emailsFailed++;
+            }
+          } catch (userError) {
+            console.error(`Error sending to user ${user.IDUsuario}:`, userError.message);
+            emailsFailed++;
+          }
+        }
+      } catch (discountError) {
+        console.error(`Error processing discount ${IDContenido}:`, discountError.message);
+      }
+    }
+    
+    console.log(`[Discount Notifications] Sent: ${emailsSent}, Failed: ${emailsFailed}`);
+  } catch (error) {
+    console.error('[Discount Notifications] Error:', error);
+  }
+}
+
+/**
+ * Delete expired discounts
+ * @async
+ * @returns {Promise<void>}
+ */
+async function deleteExpiredDiscounts() {
+  try {
+    console.log('[Discount Cleanup] Checking for expired discounts...');
+    
+    const expiredIds = await getExpiredDiscounts();
+    
+    if (expiredIds.length === 0) {
+      console.log('[Discount Cleanup] No expired discounts to delete');
+      return;
+    }
+    
+    console.log(`[Discount Cleanup] Deleting ${expiredIds.length} expired discount(s)`);
+    
+    for (const contentId of expiredIds) {
+      try {
+        await softDeleteContent(contentId);
+        console.log(`   ✓ Deleted discount ID: ${contentId}`);
+      } catch (error) {
+        console.error(`   ✗ Error deleting discount ${contentId}:`, error.message);
+      }
+    }
+  } catch (error) {
+    console.error('[Discount Cleanup] Error:', error);
+  }
+}
+
+
+export { startNotificationsCron, checkExpiringMemberships, checkAndNotifyNewDiscounts, deleteExpiredDiscounts };

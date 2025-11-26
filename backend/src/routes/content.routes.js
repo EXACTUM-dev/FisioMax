@@ -10,6 +10,7 @@ import multer from "multer";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
 import { authorize } from "../middlewares/rbacMiddleware.js";
+import { getActiveDiscountsController } from "../controllers/discount.controller.js";
 import * as contentController from "../controllers/content.controller.js";
 
 const router = express.Router();
@@ -148,6 +149,7 @@ const uploadFields = (req, res, next) => {
 };
 
 // Protected routes - require Clerk authentication
+router.get("/discounts/active", getActiveDiscountsController); // Get active discounts
 router.get("/", requireAuth, contentController.index);
 router.get("/available", requireAuth, contentController.index);
 router.get("/:contentId", requireAuth, contentController.show);

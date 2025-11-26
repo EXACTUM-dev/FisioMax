@@ -53,7 +53,10 @@ export default function UploadMultimedia() {
     nombre: "",
     descripcion: "",
     tipo: "Articulo",
+    fechaInicio: "", 
+    fechaFin: "",     
   });
+  
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
@@ -187,7 +190,7 @@ export default function UploadMultimedia() {
       descripcion: formData.descripcion,
       tipo: formData.tipo,
       roles: selectedRoles,
-      file: selectedFile,
+      file: formData.tipo === "Descuento" ? { name: "dummy.jpg", type: "image/jpeg", size: 1024 } : selectedFile,
       thumbnail: selectedThumbnail,
     });
 
@@ -212,8 +215,12 @@ export default function UploadMultimedia() {
       uploadData.append("descripcion", formData.descripcion.trim());
       uploadData.append("tipo", formData.tipo);
       uploadData.append("roles", JSON.stringify(selectedRoles));
-
-      const presignRes = await fetch(
+      if (formData.tipo === "Descuento") {
+        uploadData.append("fechaInicio", formData.fechaInicio);
+        uploadData.append("fechaFin", formData.fechaFin);
+      }
+      if (formData.tipo !== "Descuento") {
+        const presignRes = await fetch(
         `${import.meta.env.VITE_API_URL}/content/presign`,
         {
           method: "POST",
@@ -251,7 +258,9 @@ export default function UploadMultimedia() {
       } else {
         uploadData.append("filekey", mainFileKey);
       }
-
+  }else {
+    uploadData.append("filekey", "discount-placeholder");
+  }
       // Add thumbnail if selected
       if (selectedThumbnail) {
         uploadData.append("thumbnail", selectedThumbnail);
@@ -276,6 +285,8 @@ export default function UploadMultimedia() {
           nombre: "",
           descripcion: "",
           tipo: "Articulo",
+          fechaInicio: "",
+          fechaFin: "", 
         });
         setSelectedFile(null);
         setSelectedThumbnail(null);
@@ -447,26 +458,56 @@ export default function UploadMultimedia() {
                   )}
                 </div>
               </div>
+              {/* Date fields for discounts */}
+              {formData.tipo === "Descuento" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <FormField
+                    label="Fecha de inicio"
+                    name="fechaInicio"
+                    type="date"
+                    value={formData.fechaInicio}
+                    onChange={handleInputChange}
+                    required
+                    error={errors.fechaInicio}
+                  />
+                  <FormField
+                    label="Fecha de fin"
+                    name="fechaFin"
+                    type="date"
+                    value={formData.fechaFin}
+                    onChange={handleInputChange}
+                    required
+                    error={errors.fechaFin}
+                  />
+                </div>
+              )}
 
               {/* Main content file upload area with dynamic restrictions */}
-              <div className="mb-8">
-                <FileUpload
-                  name="file"
-                  label="Archivo del contenido"
-                  limitation={`${currentFileRestrictions.label} hasta ${maxSizeDisplay}`}
-                  required={true}
-                  accept={currentFileRestrictions.accept}
-                  value={selectedFile}
-                  onChange={(e) => handleFileChange(e, "content")}
-                  error={errors.file}
-                />
-              </div>
+              {formData.tipo !== "Descuento" && (
+                <div className="mb-8">
+                  <FileUpload
+                    name="file"
+                    label="Archivo del contenido"
+                    limitation={`${currentFileRestrictions.label} hasta ${maxSizeDisplay}`}
+                    required={true}
+                    accept={currentFileRestrictions.accept}
+                    value={selectedFile}
+                    onChange={(e) => handleFileChange(e, "content")}
+                    error={errors.file}
+                  />
+                </div>
+              )}
 
               <div className="mb-8">
                 <FileUpload
                   name="thumbnail"
-                  label="Miniatura del contenido"
+                  label={
+                    formData.tipo === "Descuento"
+                      ? "Imagen del descuento"
+                      : "Miniatura del contenido"
+                  }
                   limitation="PNG, JPG hasta 20MB"
+                  required={formData.tipo === "Descuento"}
                   accept="image/png,image/jpeg,image/jpg"
                   value={selectedThumbnail}
                   onChange={(e) => handleFileChange(e, "thumbnail")}
@@ -483,6 +524,8 @@ export default function UploadMultimedia() {
                       nombre: "",
                       descripcion: "",
                       tipo: "Articulo",
+                      fechaInicio: "",
+                      fechaFin: "",
                     });
                     setSelectedFile(null);
                     setSelectedThumbnail(null);
