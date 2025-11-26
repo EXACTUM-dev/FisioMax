@@ -7,13 +7,12 @@
 
 import { cleanupOldNotifications } from '../../src/services/cleanNotificationsCronJobs.js';
 
-console.log('Ejecutando prueba de limpieza...\n');
+describe('Cleanup Old Notifications', () => {
+  it('should delete old read notifications', async () => {
 
-try {
-  await cleanupOldNotifications();
-  console.log('\nPrueba completada!');
-} catch (error) {
-  console.error('Error:', error);
-}
 
-process.exit(0);
+    await expect(cleanupOldNotifications()).resolves.not.toThrow();
+
+
+  });
+});

@@ -7,12 +7,12 @@
 
 import { checkExpiringMemberships } from '../../src/services/notificationCronJob.js';
 
-console.log('Ejecutando prueba del Cron Job...\n');
+
 
 // Verify memberships expiring and sending notifications
 try {
   await checkExpiringMemberships();
-  console.log('\nPrueba completada.');
+
 } catch (error) {
   console.error('Error:', error);
 }
