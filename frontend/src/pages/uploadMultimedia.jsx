@@ -218,6 +218,7 @@ export default function UploadMultimedia() {
       if (formData.tipo === "Descuento") {
         uploadData.append("fechaInicio", formData.fechaInicio);
         uploadData.append("fechaFin", formData.fechaFin);
+        uploadData.append("filekey", "discount-placeholder");
       }
       if (formData.tipo !== "Descuento") {
         const presignRes = await fetch(

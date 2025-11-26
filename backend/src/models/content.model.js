@@ -209,7 +209,8 @@ export async function createContent(contentData) {
 
     return result.insertId;
   } catch (error) {
-    throw new Error("Database error");
+    console.error("Error detallado en createContent:", error);
+    throw error;
   }
 }
 

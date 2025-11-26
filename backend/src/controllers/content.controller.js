@@ -321,15 +321,17 @@ export async function upload(req, res) {
         descripcion: sanitized.descripcion || "",
         tipo: sanitized.tipo.toLowerCase(),
         IDMultimedia: finalS3Key,
-        tipoMembresia: roleNames.join(", "), // Store all role names
+        tipoMembresia: roleNames.join(", "),
       });
-
+      
       // Assign content to all collected privileges in accede table
       await assignContentToPrivileges(contentId, allPrivilegeIds);
     } catch (dbError) {
+      console.error("Database error details:", dbError);
       return res.status(500).json({
         success: false,
         message: "Error al guardar el contenido en la base de datos",
+        detail: dbError.message
       });
     }
 
@@ -342,11 +344,11 @@ export async function upload(req, res) {
           `${folder}/thumbnails`
         );
         // For discounts, use thumbnail as main content
-    if (sanitized.tipo === "Descuento" && !finalS3Key) {
-      finalS3Key = thumbnailKey;
-      // Update the main content with thumbnail key
-      await updateContent(contentId, { IDMultimedia: thumbnailKey });
-    }
+        if (sanitized.tipo === "Descuento" && finalS3Key === "discount-placeholder") {
+          finalS3Key = thumbnailKey;
+          // Update the main content with thumbnail key
+          await updateContent(contentId, { IDMultimedia: thumbnailKey });
+        }
         thumbnailId = await createContent({
           nombre: sanitized.nombre,
           descripcion: `Miniatura de ${sanitized.nombre}`,
@@ -359,6 +361,7 @@ export async function upload(req, res) {
         await assignContentToPrivileges(thumbnailId, allPrivilegeIds);
       } catch (thumbError) {
         // Continue even if thumbnail fails
+        console.error("Thumbnail error:", thumbError);
       }
     }
 
@@ -373,6 +376,7 @@ export async function upload(req, res) {
       },
     });
   } catch (error) {
+    console.error("General upload error:", error);
     return res.status(500).json({
       success: false,
       message: "Error al procesar la solicitud",
