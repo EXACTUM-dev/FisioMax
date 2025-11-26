@@ -26,6 +26,7 @@ import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
 import homePageRoutes from "./src/routes/homePage.route.js";
 import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
+import statisticsRoutes from "./src/routes/statistics.routes.js";
 
 // Initialize Express application
 const app = express();
@@ -107,6 +108,7 @@ app.use("/api/users", usuariosRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/logs", loginLogsRoutes);
+app.use("/api/statistics", statisticsRoutes);
 /**
  * Routes for video content access.
  */
@@ -118,6 +120,11 @@ app.use("/api/content", contentRoutes);
  */
 app.use("/api", homePageRoutes);
 
+/**
+ * Routes for payment processing with Mercado Pago.
+ *  */
+import paymentRoutes from "./src/routes/payment.routes.js";
+app.use("/api/payments", paymentRoutes);
 //-------------------------
 // ERROR HANDLING MIDDLEWARE
 // Order matters: JSON parsing errors -> Specific errors -> Generic errors -> 404
@@ -200,8 +207,6 @@ app.use(secureErrorHandler);
  * Fallback error handler for any remaining errors
  */
 app.use((error, req, res, next) => {
-  console.error("Error no manejado:", error);
-
   res.status(error.status || 500).json({
     success: false,
     message: error.message || "Error interno del servidor",

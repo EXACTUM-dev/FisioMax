@@ -1,16 +1,29 @@
 /**
  * @fileoverview Membership card component for displaying membership information.
  * Shows registration date, expiration date, and membership plan.
- * @version 1.1.0
+ * @version 1.2.0
  * @author EXACTUM-dev
  */
 
 import React, { useState, useEffect } from "react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 import Button from "../atoms/button";
 import EditButton from "../atoms/editButton";
 import Dropdown from "../molecules/dropdown";
-import SuccessErrorModal from "./successErrorModal"; // Import success/error feedback modal
+import SuccessErrorModal from "./successErrorModal";
+import Modal from "../molecules/modal";
+import PaymentService from "../services/paymentService";
+import FormField from "../molecules/form";
 
+// Membership prices in MXN (per year)
+const MEMBERSHIP_PRICES = {
+  Estudiante: 900,
+  "Licenciado en Formación": 1100,
+  "Licenciado Especializado": 1500,
+  "Fisioterapeuta Extranjero": 1800,
+  "Personal de la Salud": 1300,
+  básica: 5,
+};
 /**
  * Displays user's membership information and payment button.
  * @param {!Object} props - Component props.
@@ -26,22 +39,34 @@ export default function MembershipCard({
   onSave,
   onEditChange,
 }) {
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    membershipType: "",
-    membershipRegisteredAt: "",
-    membershipExpiresAt: "",
-    membershipPaymentStatus: "",
-  });
+  const [formData, setFormData] = useState(() => ({
+    membershipType: data?.membershipType || "",
+    membershipRegisteredAt: data?.membershipRegisteredAt
+      ? data.membershipRegisteredAt.split("T")[0]
+      : "",
+    membershipExpiresAt: data?.membershipExpiresAt
+      ? data.membershipExpiresAt.split("T")[0]
+      : "",
+    membershipPaymentStatus: data?.membershipPaymentStatus || "Pendiente",
+    membershipNoAfiliado: data?.membershipNoAfiliado ? String(data.membershipNoAfiliado) : "",
+  }));
 
   // Local state for success/error feedback modal
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success"); // "success" | "error"
   const [modalMessage, setModalMessage] = useState("");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Validation modal state
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
 
   // Initialize form data when data changes or entering edit mode
   useEffect(() => {
-    if (data && isEditing) {
+    if (data) {
       setFormData({
         membershipType: data.membershipType || "",
         membershipRegisteredAt: data.membershipRegisteredAt
@@ -51,9 +76,10 @@ export default function MembershipCard({
           ? data.membershipExpiresAt.split("T")[0]
           : "",
         membershipPaymentStatus: data.membershipPaymentStatus || "Pendiente",
+        membershipNoAfiliado: data.membershipNoAfiliado ? String(data.membershipNoAfiliado) : "",
       });
     }
-  }, [data, isEditing]);
+  }, [data]);
 
   // Notify parent component of edit state
   useEffect(() => {
@@ -64,18 +90,18 @@ export default function MembershipCard({
 
   const registeredAt = data.membershipRegisteredAt
     ? new Date(data.membershipRegisteredAt).toLocaleDateString("es-MX", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "—";
 
   const expiresAt = data.membershipExpiresAt
     ? new Date(data.membershipExpiresAt).toLocaleDateString("es-MX", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "—";
 
   const plan = data.membershipType || "No asignado";
@@ -98,11 +124,25 @@ export default function MembershipCard({
         ? data.membershipExpiresAt.split("T")[0]
         : "",
       membershipPaymentStatus: data.membershipPaymentStatus || "Pendiente",
+      membershipNoAfiliado: data.membershipNoAfiliado ? String(data.membershipNoAfiliado) : "",
     });
   };
 
   const handleSave = async () => {
     if (onSave) {
+      // Validate required fields
+      const missingFields = [];
+
+      if (!formData.membershipNoAfiliado || formData.membershipNoAfiliado.trim() === "") {
+        missingFields.push("Afiliado No");
+      }
+
+      if (missingFields.length > 0) {
+        setValidationErrors(missingFields);
+        setShowValidationModal(true);
+        return;
+      }
+
       try {
         // Format the date to ISO string if it exists
         const dataToSave = {
@@ -114,6 +154,7 @@ export default function MembershipCard({
             ? new Date(formData.membershipExpiresAt).toISOString()
             : null,
           membershipPaymentStatus: formData.membershipPaymentStatus,
+          membershipNoAfiliado: formData.membershipNoAfiliado,
         };
 
         await onSave(dataToSave);
@@ -126,14 +167,14 @@ export default function MembershipCard({
         );
         setShowModal(true);
       } catch (error) {
-        console.error("Error al guardar cambios de membresía:", error);
+        setError("Error al guardar cambios de membresía. Por favor intente más tarde.");
         // Keep in edit mode on error
 
         // Show error feedback modal
         setModalType("error");
         setModalMessage(
           error?.message ||
-            "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
+          "Ocurrió un error al actualizar la información de la membresía. Por favor, inténtalo de nuevo."
         );
         setShowModal(true);
       }
@@ -147,12 +188,41 @@ export default function MembershipCard({
     }));
   };
 
+  const handlePayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      const membershipType = data.membershipType || "básica";
+      const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
+
+      // Create payment preference and redirect to Mercado Pago
+      await PaymentService.createPreferenceAndPay(
+        {
+          membershipType,
+          amount,
+        },
+        getToken
+      );
+    } catch (error) {
+      setModalType("error");
+      setModalMessage(
+        error?.message ||
+        "No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo."
+      );
+      setShowModal(true);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   // Options for membership type dropdown
   const membershipTypeOptions = [
-    { value: "", label: "Seleccionar plan" },
+    { value: "Estudiante", label: "Estudiante" },
+    { value: "Licenciado en Formación", label: "Licenciado en Formación" },
+    { value: "Licenciado Especializado", label: "Licenciado Especializado" },
+    { value: "Fisioterapeuta Extranjero", label: "Fisioterapeuta Extranjero" },
+    { value: "Personal de la Salud", label: "Personal de la Salud" },
     { value: "básica", label: "Básica" },
-    { value: "premium", label: "Premium" },
-    { value: "empresarial", label: "Empresarial" },
   ];
 
   // Options for payment status dropdown
@@ -188,18 +258,34 @@ export default function MembershipCard({
             </div>
 
             <div className="flex justify-between">
+              <span className="text-slate-500">Afiliado NO</span>
+              <span className="font-medium">{data.membershipNoAfiliado || "—"}</span>
+            </div>
+
+            <div className="flex justify-between">
               <span className="text-slate-500">Estatus de pago</span>
               <span
-                className={`font-medium capitalize ${
-                  paymentStatus === "Pagado"
-                    ? "text-green-600"
-                    : paymentStatus === "Pendiente"
+                className={`font-medium capitalize ${paymentStatus === "Pagado"
+                  ? "text-green-600"
+                  : paymentStatus === "Pendiente"
                     ? "text-yellow-600"
                     : "text-red-600"
-                }`}
+                  }`}
               >
                 {paymentStatus}
               </span>
+            </div>
+
+            <div className="mt-4">
+              <Button
+                size="sm"
+                label={
+                  isProcessingPayment ? "Procesando..." : "Pagar membresía"
+                }
+                onClick={handlePayment}
+                disabled={isProcessingPayment}
+                className="cursor-pointer"
+              />
             </div>
           </div>
         </>
@@ -254,6 +340,18 @@ export default function MembershipCard({
             </div>
 
             <div>
+              <FormField
+                label="Afiliado NO"
+                name="membershipNoAfiliado"
+                required
+                value={formData.membershipNoAfiliado}
+                onChange={(e) => handleChange("membershipNoAfiliado", e.target.value)}
+                placeholder="Número de afiliado"
+                maxLength={6}
+              />
+            </div>
+
+            <div>
               <Dropdown
                 name="membershipPaymentStatus"
                 label="Estatus de pago"
@@ -302,6 +400,56 @@ export default function MembershipCard({
             : "Error en la operación"
         }
       />
+
+      {/* Validation Modal for Required Fields */}
+      <Modal
+        open={showValidationModal}
+        onClose={() => setShowValidationModal(false)}
+        size="md"
+        position="center"
+      >
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
+            <svg
+              className="h-16 w-16 text-orange-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Campos requeridos faltantes
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Por favor completa los siguientes campos obligatorios antes de
+            guardar:
+          </p>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <ul className="text-left text-gray-700 space-y-2">
+              {validationErrors.map((field, index) => (
+                <li key={index} className="flex items-center">
+                  <span className="text-orange-500 mr-2">•</span>
+                  {field}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Button
+            variant="brand"
+            onClick={() => setShowValidationModal(false)}
+            className="w-full"
+          >
+            Entendido
+          </Button>
+        </div>
+      </Modal>
     </aside>
   );
 }

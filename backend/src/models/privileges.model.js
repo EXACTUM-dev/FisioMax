@@ -22,7 +22,6 @@ export async function getRolePrivileges(roleId) {
     );
     return rows;
   } catch (error) {
-    console.error("Error de base de datos en getRolePrivileges:", error);
     throw error;
   }
 }
@@ -39,7 +38,6 @@ export async function getAllPrivileges() {
     );
     return rows;
   } catch (error) {
-    console.error("Error de base de datos en getAllPrivileges:", error);
     throw error;
   }
 }

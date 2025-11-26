@@ -23,6 +23,7 @@ import ProfileFormSection from "../organisms/profileFormSection";
 import AddressCard from "../organisms/addressCard";
 import MembershipCard from "../organisms/membershipCard";
 import TicketsCard from "../organisms/ticketsCard";
+import CertificateCard from "../organisms/certificateCard";
 import DocumentsCard from "../organisms/documentsCard";
 import HistoryCard from "../organisms/historyCard";
 
@@ -33,6 +34,9 @@ import {
   updateUserById,
   updateUserOwnById,
 } from "../controllers/profile.controller";
+
+// Services
+import PaymentService from "../services/paymentService";
 
 // Hooks
 import { useDbUser } from "../hooks/useDbUser";
@@ -50,6 +54,7 @@ export default function ProfilePage() {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [paymentTickets, setPaymentTickets] = useState([]);
   const isNavigatingRef = useRef(false);
 
   const { user, isLoaded } = useUser();
@@ -95,8 +100,21 @@ export default function ProfilePage() {
           ? await getUserProfileById(userId, token)
           : me;
         setUserProfile(profileData);
+
+        // Fetch payment tickets for the displayed user
+        try {
+          // If userId is present (viewing other), pass it. Otherwise pass null (viewing self).
+          const targetUserId = userId || null;
+          const paymentsData = await PaymentService.getUserPayments(
+            getToken,
+            targetUserId
+          );
+          setPaymentTickets(paymentsData.payments || []);
+        } catch (paymentErr) {
+          // Don't block the page if payments fail, just log the error
+          setPaymentTickets([]);
+        }
       } catch (err) {
-        console.error("Error fetching profile:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -179,7 +197,6 @@ export default function ProfilePage() {
         }
       }
     } catch (err) {
-      console.error("Error actualizando usuario:", err);
       setError(err.message || "Error al actualizar el usuario");
       // Re-throw error so components can catch it and show modals
       throw err;
@@ -285,7 +302,8 @@ export default function ProfilePage() {
                   onSave={handleSaveEdits}
                   onEditChange={setIsEditing}
                 />
-                <TicketsCard tickets={[]} />
+                <TicketsCard tickets={paymentTickets} />
+                <CertificateCard userId={effectiveUserId} />
               </div>
             </div>
           </div>

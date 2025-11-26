@@ -78,7 +78,6 @@ export function UserProvider({ children }) {
           error: null,
         });
       } catch (err) {
-        console.error('Error verificando usuario en BD:', err);
         setState({
           isLoading: false,
           existsInDB: false,

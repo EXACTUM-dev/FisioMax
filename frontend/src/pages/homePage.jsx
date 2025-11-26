@@ -114,7 +114,6 @@ export default function HomePage() {
       setBooks(transformToCarouselFormat(data.books || []));
       setPodcasts(transformToCarouselFormat(data.podcasts || []));
     } catch (err) {
-      console.error("Error loading home content:", err);
       setError("No se pudo cargar el contenido. Por favor, intenta más tarde.");
     } finally {
       setLoading(false);
@@ -152,7 +151,6 @@ export default function HomePage() {
         });
       }
     } catch (err) {
-      console.error("Error searching content:", err);
       setError("Error al buscar contenido. Intenta nuevamente.");
       setSearchResults(null);
     } finally {

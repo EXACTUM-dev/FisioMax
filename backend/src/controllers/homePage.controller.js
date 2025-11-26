@@ -42,7 +42,6 @@ function getThumbnailUrl(thumbnailMultimedia) {
   try {
     return generateSignedUrl(thumbnailMultimedia);
   } catch (error) {
-    console.error("Error generating thumbnail URL:", error);
     return null;
   }
 }
@@ -83,8 +82,6 @@ export async function getHomeContent(req, res) {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error("Error in getHomeContent controller:", error);
-
     if (error.message === "Database error") {
       return res.status(500).json({
         error: "database_error",
@@ -125,8 +122,6 @@ export async function search(req, res) {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error("Error in search controller:", error);
-
     if (error.message === "Database error") {
       return res.status(500).json({
         error: "database_error",

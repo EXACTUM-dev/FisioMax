@@ -14,10 +14,12 @@ const benefitData = [
     title: "Biblioteca Digital",
     desc: "Explora una vasta biblioteca de guías y recursos exclusivos.",
     image: (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="w-full h-full flex items-center justify-center">
+        <img
+          src="/FISIOMAX.png"
+          alt="FisioMax 3"
+          className="w-full h-full object-cover rounded-lg"
+        />
       </div>
     ),
   },
@@ -27,9 +29,12 @@ const benefitData = [
     title: "Artículos Exclusivos",
     desc: "Accede a investigaciones y artículos de vanguardia en fisioterapia de piso pélvico.",
     image: (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="w-full h-full flex items-center justify-center">
+        <img
+          src="/FISIOMAX2.png"
+          alt="FisioMax 2"
+          className="w-full h-full object-cover rounded-lg"
+        />
       </div>
     ),
   },
@@ -108,7 +113,7 @@ export default function BenefitsSection() {
 
             <div className="flex items-center justify-center">
               <div
-                className="w-full h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden flex items-center justify-center p-6"
+                className="w-full h-64 md:h-80 lg:h-100 rounded-lg overflow-hidden flex items-center justify-center p-6"
                 role="img"
                 aria-label={benefitData[selected].title}
               >

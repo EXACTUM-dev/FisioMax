@@ -30,16 +30,16 @@ export const getProfile = async (req, res) => {
         // getUserById now returns combined data from Clerk + DB
         const userData = await getUserById(userId);
         const userPrivileges = await getUserRolesAndPermissions(userId);
-        
+
         if (!userData.exists) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 error: 'Usuario no registrado en la base de datos',
                 message: 'Su cuenta de Clerk existe pero no está vinculada a la base de datos. Contacte al administrador.',
                 clerkData: userData.clerkData // Include Clerk data for debugging
             });
         }
 
-        return res.json({ 
+        return res.json({
             success: true,
             user: {
                 // Consolidated data
@@ -61,10 +61,9 @@ export const getProfile = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('auth.controller.getProfile error:', error);
-        return res.status(500).json({ 
-            error: 'Error al obtener perfil', 
-            detail: error?.message 
+        return res.status(500).json({
+            error: 'Error al obtener perfil',
+            detail: error?.message
         });
     }
 };
