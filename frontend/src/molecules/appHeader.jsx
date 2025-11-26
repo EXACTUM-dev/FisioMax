@@ -7,7 +7,8 @@
 
 import React, { useState } from "react";
 import { UserButton } from "@clerk/clerk-react";
-import SearchBar from "./searchBar";
+import SearchBar from "../molecules/searchBar";
+import NotificationBell from "../molecules/notificationBell.jsx";
 
 /**
  * AppHeader component with optional expandable search functionality
@@ -82,6 +83,10 @@ export default function AppHeader({
               />
             )}
           </div>
+
+          {/* notification's button */}
+          <NotificationBell />
+
         </div>
       </div>
     </header>
@@ -107,7 +112,7 @@ export default function AppHeader({
           </span>
         </div>
         {/* Right: search icon */}
-        <div className="flex items-center justify-end min-w-0">
+        <div className="flex items-center justify-end min-w-0 gap-2">
           {showSearch && !mobileSearchOpen && (
             <button
               onClick={() => setMobileSearchOpen(true)}
@@ -126,6 +131,8 @@ export default function AppHeader({
               </svg>
             </button>
           )}
+          {/* notification's button */}
+          <NotificationBell />
         </div>
       </div>
       {/* Mobile search overlay */}
@@ -133,7 +140,6 @@ export default function AppHeader({
         <div className="absolute inset-0 bg-white flex items-center px-3 z-40">
           <SearchBar
             value={searchValue}
-            onChange={onSearchChange}
             placeholder={searchPlaceholder}
             expandable={false}
             onKeyDown={handleSearchKeyDown}
@@ -158,6 +164,7 @@ export default function AppHeader({
           </button>
         </div>
       )}
+
     </header>
   );
 

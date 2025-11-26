@@ -26,6 +26,9 @@ import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
 import homePageRoutes from "./src/routes/homePage.route.js";
 import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
+import notificationRoutes from './src/routes/notifications.routes.js';
+import { startNotificationsCron } from './src/services/notificationCronJob.js';
+import { startCleanupCron } from './src/services/cleanNotificationsCronJobs.js';
 import statisticsRoutes from "./src/routes/statistics.routes.js";
 
 // Initialize Express application
@@ -119,6 +122,24 @@ app.use("/api/content", contentRoutes);
  * Routes for HomePage content (root path).
  */
 app.use("/api", homePageRoutes);
+
+/**  
+ * Routes for notifications.
+ */
+app.use('/api/notifications', notificationRoutes);
+
+/** 
+ * Start Cron Job
+ */
+startNotificationsCron();
+startCleanupCron();
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log('Cron Jobs iniciados');
+});
 
 /**
  * Routes for payment processing with Mercado Pago.
