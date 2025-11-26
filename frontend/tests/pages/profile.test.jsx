@@ -67,10 +67,24 @@ jest.mock("../../src/organisms/ticketsCard", () => ({
   },
 }));
 
+jest.mock("../../src/organisms/certificateCard", () => ({
+  __esModule: true,
+  default: function MockCertificateCard() {
+    return <aside data-testid="mock-certificate-card">Certificate</aside>;
+  },
+}));
+
 jest.mock("../../src/organisms/documentsCard", () => ({
   __esModule: true,
   default: function MockDocumentsCard() {
     return <section data-testid="mock-documents-card">Docs</section>;
+  },
+}));
+
+jest.mock("../../src/organisms/historyCard", () => ({
+  __esModule: true,
+  default: function MockHistoryCard() {
+    return <section data-testid="mock-history-card">History</section>;
   },
 }));
 

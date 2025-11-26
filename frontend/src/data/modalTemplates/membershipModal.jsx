@@ -36,7 +36,10 @@ function MembershipModalContent({
   const [showRejectedModal, setShowRejectedModal] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
+
   const [isProcessing, setIsProcessing] = useState(false);
+  const [noAfiliado, setNoAfiliado] = useState("");
+  const [maxNoAfiliado, setMaxNoAfiliado] = useState(0);
 
   const { getToken } = useAuth();
 
@@ -84,10 +87,6 @@ function MembershipModalContent({
       const first = focusableElements[0];
       const last = focusableElements[focusableElements.length - 1];
 
-      // Focus the first element
-      first?.focus();
-
-      // Function to catch the navigation with Tab
       const handleKeyDown = (e) => {
         if (e.key === "Tab") {
           if (e.shiftKey) {
@@ -110,28 +109,51 @@ function MembershipModalContent({
     }
   }, [open]);
 
+  useEffect(() => {
+    const fetchMaxNoAfiliado = async () => {
+      if (open) {
+        try {
+          const token = await getToken();
+          const response = await fetchWithClerk(
+            "/api/membership-applications/max-no-afiliado",
+            { method: "GET" },
+            token
+          );
+          if (response?.success) {
+            const nextVal = (parseInt(response.data, 10) || 0) + 1;
+            setMaxNoAfiliado(response.data);
+            setNoAfiliado(nextVal.toString());
+          }
+        } catch (error) {
+          console.error("Error fetching max noAfiliado:", error);
+        }
+      }
+    };
+    fetchMaxNoAfiliado();
+  }, [open, getToken]);
+
   const closePdfModal = () => {
     setPdfModalOpen(false);
     setPdfUrl(null);
   };
 
-  const downloadDocument = async (url, key) => {
-    if (!url) return;
+  const downloadDocument = async (url, filename = "document.pdf") => {
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const filename = key ? key.split("/").pop() : "document.pdf";
-      const blobUrl = URL.createObjectURL(blob);
+      const token = await getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await fetch(url, { headers });
+      if (!response.ok) throw new Error("Network response was not ok");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = filename;
+      a.download = filename || "document.pdf";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000 * 10);
+      window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error("Error descargando documento:", err);
+      // Fallback: abrir en nueva pestaña si la descarga falla
       window.open(url, "_blank", "noopener");
     }
   };
@@ -149,9 +171,34 @@ function MembershipModalContent({
     linkedin,
     paginaWeb,
     ubicacion,
+
     licenciatura,
     documentos = [],
   } = solicitud;
+
+  const fechaNacimientoRaw =
+    solicitud?.birthDate ||
+    solicitud?.fechaNacimiento ||
+    solicitud?.__raw?.birthDate ||
+    solicitud?.__raw?.fechaNacimiento ||
+    null;
+
+  const formatDate = (d) => {
+    if (!d) return null;
+    try {
+      const dt = new Date(d);
+      if (Number.isNaN(dt.getTime())) return String(d);
+      return dt.toLocaleDateString("es-MX", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+    } catch {
+      return String(d);
+    }
+  };
+
+  const fechaNacimiento = formatDate(fechaNacimientoRaw);
 
   const getMembershipId = () => {
     return (
@@ -161,6 +208,9 @@ function MembershipModalContent({
       solicitud?.__raw?.IDMembresia
     );
   };
+  // Use canonical field names from the membership application flow
+  const tipoMembresia = solicitud?.membershipType ?? null;
+  const horasFormacion = solicitud?.membershipHoursFormation ?? null;
 
   const handleConfirmApprove = async () => {
     setShowConfirmModal(false);
@@ -176,7 +226,13 @@ function MembershipModalContent({
 
       const response = await fetchWithClerk(
         `/api/membership-applications/${id}/aprobar`,
-        { method: "POST" },
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ noAfiliado }),
+        },
         token
       );
 
@@ -190,7 +246,6 @@ function MembershipModalContent({
         throw new Error(response?.message || "Error al aprobar solicitud");
       }
     } catch (err) {
-      console.error("Error aprobando solicitud:", err);
       window.alert(`No se pudo aprobar la solicitud: ${err.message}`);
     } finally {
       setIsProcessing(false);
@@ -233,7 +288,6 @@ function MembershipModalContent({
         throw new Error(response?.message || "Error al rechazar solicitud");
       }
     } catch (err) {
-      console.error("Error rechazando solicitud:", err);
       window.alert(`No se pudo rechazar la solicitud: ${err.message}`);
     } finally {
       setIsProcessing(false);
@@ -272,6 +326,19 @@ function MembershipModalContent({
                 readOnly
               />
               <FieldBox
+                label="Fecha de Nacimiento"
+                value={
+                  fechaNacimiento
+                    ? new Date(fechaNacimiento).toLocaleDateString("es-MX", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                    : "No se envió"
+                }
+                readOnly
+              />
+              <FieldBox
                 label="Facebook"
                 value={facebook || "No se envió"}
                 readOnly
@@ -301,9 +368,26 @@ function MembershipModalContent({
                 rows={2}
                 readOnly
               />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <FieldBox
                 label="Licenciatura"
                 value={licenciatura || "No se envió"}
+                readOnly
+              />
+              <FieldBox
+                label="Fecha de nacimiento"
+                value={fechaNacimiento || "No se envió"}
+                readOnly
+              />
+              <FieldBox
+                label="Tipo de membresía"
+                value={tipoMembresia || "No especificado"}
+                readOnly
+              />
+              <FieldBox
+                label="Horas de formación"
+                value={horasFormacion ? `${horasFormacion} hrs` : "No se envió"}
                 readOnly
               />
             </div>
@@ -349,7 +433,12 @@ function MembershipModalContent({
                           type="button"
                           title={row.url ? "Ver documento" : "Sin archivo"}
                           onClick={() =>
-                            row.url && window.open(row.url, "_blank", "noopener,noreferrer")
+                            row.url &&
+                            window.open(
+                              row.url,
+                              "_blank",
+                              "noopener,noreferrer"
+                            )
                           }
                           disabled={!row.url}
                           className="text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -462,6 +551,15 @@ function MembershipModalContent({
             ¿Estás seguro de que deseas aceptar a <strong>{displayName}</strong>
             ? Esta acción no se puede deshacer.
           </p>
+          <div className="mb-6 text-left">
+            <FieldBox
+              label="Número de Afiliado"
+              value={noAfiliado}
+              onChange={(e) => setNoAfiliado(e.target.value)}
+              placeholder="Ingrese el número de afiliado"
+              maxLength={6}
+            />
+          </div>
           <div className="flex justify-center gap-3">
             <Button
               label="Cancelar"

@@ -13,9 +13,17 @@ import {
   updateContent,
   softDeleteContent,
 } from "../models/content.model.js";
+import {
+  getUsuarioByClerkId,
+  getUserById,
+  getUserByMembershipId,
+  updateUserCertificate
+} from "../models/users.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
+import { createCertificate } from "../utils/certificate.js";
 import S3Service from "../services/s3Service.js";
+import { sendWelcomeEmail } from "../services/emailServices.js";
 import { sanitizeContentInput } from "../utils/sanitization.js";
 import path from "path";
 import crypto from "crypto";
@@ -542,11 +550,11 @@ export async function deleteContent(req, res) {
 
     // Delete files from S3 in parallel
     const deletePromises = [];
-    
+
     if (mainKey) {
       deletePromises.push(S3Service.deleteFile(mainKey));
     }
-    
+
     if (thumbnailKey) {
       deletePromises.push(S3Service.deleteFile(thumbnailKey));
     }
@@ -569,6 +577,79 @@ export async function deleteContent(req, res) {
       success: false,
       message: "Error al eliminar el contenido",
     });
+  }
+}
+
+/**
+   * Generate and upload member certificate
+   * @async
+   * @param {number} membershipId - ID of the membership
+   * @returns {Promise<CertificateResult>} Result of the generation
+   */
+export async function generateAndUploadCertificate(membershipId) {
+  try {
+    const membershipData = await getUserByMembershipId(membershipId);
+
+    if (!membershipData) {
+      return { generated: false, error: 'Membership not found' };
+    }
+
+    const { nombres, apellidoP, apellidoM, membresiaTipo, membresiaFechaVencimiento, membresiaNoAfiliado } = membershipData;
+
+    // Format fechaVencimiento to "Mes Año" format (e.g., "Diciembre 2025")
+    const mesesEspanol = [
+      'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+      'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+    ];
+
+    const fechaVencimiento = new Date(membresiaFechaVencimiento);
+    const mes = mesesEspanol[fechaVencimiento.getMonth()];
+    const año = fechaVencimiento.getFullYear();
+    const vigencia = `${mes} ${año}`;
+
+    // Generate the PDF
+    const pdfBytes = await createCertificate({
+      nombres,
+      apellidoP,
+      apellidoM,
+      membresiaTipo,
+      vigencia,
+      membresiaNoAfiliado
+    });
+
+    const nombreCompleto = [nombres, apellidoP, apellidoM]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    // Create a unique name for the file
+    const timestamp = Date.now();
+    const sanitizedName = nombreCompleto.replace(/\s+/g, '_').toLowerCase();
+    const fileName = "membresias";
+
+    const fileForS3 = {
+      originalname: pdfBytes.filename,
+      mimetype: pdfBytes.mimeType,
+      buffer: pdfBytes.buffer
+    };
+
+    // Upload to S3
+    const uploadResult = await S3Service.uploadFile(fileForS3, fileName);
+
+    //Update certificate
+    await updateUserCertificate(membershipId, uploadResult);
+
+    // Send Email to member
+    await sendWelcomeEmail(membershipData.correo, nombreCompleto, pdfBytes);
+
+    return {
+      generated: true,
+      url: uploadResult,
+      key: uploadResult
+    };
+
+  } catch (error) {
+    return { generated: false, error: error.message };
   }
 }
 

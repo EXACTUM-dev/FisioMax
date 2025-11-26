@@ -124,6 +124,7 @@ export default function MembershipApplicationPage() {
         method: "POST",
         body: formDataToSend,
       });
+      // FormData prepared and sent
       const result = await res.json();
 
       if (res.ok) {

@@ -71,13 +71,8 @@ export async function sendLoginErrorLog(payload) {
           errorData = { statusText: response.statusText };
         }
       }
-
       // Log the server error response for debugging
-      console.error(
-        "Failed to send login error log. Server responded:",
-        response.status,
-        errorData
-      );
+
       return;
     }
 
@@ -93,6 +88,6 @@ export async function sendLoginErrorLog(payload) {
     }
   } catch (error) {
     // Network errors or other fetch failures
-    console.error("Failed to send login error log:", error);
+    throw error;
   }
 }

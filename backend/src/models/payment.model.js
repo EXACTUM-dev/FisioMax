@@ -141,6 +141,23 @@ const Payment = {
 
     return result.affectedRows > 0;
   },
+
+  /**
+   * Update membership expiration date to one year from now.
+   * This should be called when a payment is approved.
+   * @param {number} IDMembresia - Membership ID.
+   * @return {Promise<boolean>} True if updated successfully.
+   */
+  async updateMembershipExpirationDate(IDMembresia) {
+    const [result] = await db.query(
+      `UPDATE membresia
+       SET fechaVencimiento = DATE_ADD(NOW(), INTERVAL 1 YEAR)
+       WHERE IDMembresia = ?`,
+      [IDMembresia]
+    );
+
+    return result.affectedRows > 0;
+  },
 };
 
 export default Payment;

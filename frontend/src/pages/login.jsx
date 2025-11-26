@@ -5,7 +5,12 @@
  */
 import React, { useEffect, useState, useRef } from "react";
 import { SignIn, SignUp, useUser, useClerk } from "@clerk/clerk-react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import {
+  Navigate,
+  useSearchParams,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { sendLoginErrorLog } from "../services/loginLogs.service.js";
 import MembershipInfoModal from "../overviewPage/membershipInfoModal";
 
@@ -67,7 +72,6 @@ export default function LoginPage() {
         }
       } catch (err) {
         // Do not break the UI if handling fails
-        console.error("Error handling Clerk listener event:", err);
       }
     });
 
@@ -85,7 +89,7 @@ export default function LoginPage() {
             error: event?.error,
           },
         });
-      } catch {}
+      } catch { }
     };
 
     const onUnhandledRejection = (ev) => {
@@ -98,7 +102,7 @@ export default function LoginPage() {
             "Unhandled promise rejection",
           detalles: { reason: ev?.reason },
         });
-      } catch {}
+      } catch { }
     };
 
     window.addEventListener("error", onWindowError);
@@ -115,6 +119,9 @@ export default function LoginPage() {
 
   // MutationObserver to detect visible messages inside the widget (e.g. "External Account was not found")
   const signContainerRef = useRef(null);
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const node = signContainerRef.current;
@@ -148,6 +155,15 @@ export default function LoginPage() {
 
     return () => observer.disconnect();
   }, [signContainerRef.current]);
+  useEffect(() => {
+    try {
+      const hash = location && location.hash ? location.hash : "";
+      if (!hash) return;
+      if (hash.includes("mode=")) {
+        navigate(location.pathname || "/login", { replace: true });
+      }
+    } catch (err) { }
+  }, [location, navigate]);
 
   // Display loading state while authentication status is being determined
   if (!isLoaded) {
@@ -201,7 +217,7 @@ export default function LoginPage() {
               <SignUp
                 path="/login"
                 routing="path"
-                signInUrl="/login?mode=signin"
+                signInUrl="/login"
                 afterSignUpUrl="/"
                 appearance={{
                   elements: {

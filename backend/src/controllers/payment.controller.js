@@ -19,13 +19,11 @@ const PaymentController = {
    */
   async handleWebhook(req, res) {
     try {
-      console.log('Received webhook:', JSON.stringify(req.body, null, 2));
 
       const result = await PaymentService.processWebhook(req.body);
 
       res.status(200).json(result);
     } catch (error) {
-      console.error('Webhook processing error:', error);
       res.status(500).json({
         success: false,
         message: 'Error processing webhook',
@@ -65,7 +63,6 @@ const PaymentController = {
           : null,
       });
     } catch (error) {
-      console.error('Error getting payment status:', error);
       res.status(500).json({
         success: false,
         message: 'Error retrieving payment status',
@@ -119,7 +116,6 @@ const PaymentController = {
         ...paymentStatus,
       });
     } catch (error) {
-      console.error('Error getting user payments:', error);
       res.status(500).json({
         success: false,
         message: 'Error retrieving user payments',
@@ -158,7 +154,6 @@ const PaymentController = {
         payment,
       });
     } catch (error) {
-      console.error('Error creating payment record:', error);
       res.status(500).json({
         success: false,
         message: 'Error creating payment record',
@@ -174,41 +169,29 @@ const PaymentController = {
    */
   async createPaymentPreference(req, res) {
     try {
-      console.log('[Payment Preference] Request received');
       const clerkId = req.auth?.userId;
 
       if (!clerkId) {
-        console.log('[Payment Preference] No Clerk ID found');
         return res.status(401).json({
           success: false,
           message: 'User not authenticated',
         });
       }
 
-      console.log('[Payment Preference] Fetching user for Clerk ID:', clerkId);
       // Get user from database using Clerk ID
       const user = await getUsuarioByClerkId(clerkId);
 
       if (!user) {
-        console.log('[Payment Preference] User not found in database');
         return res.status(404).json({
           success: false,
           message: 'User not found in database',
         });
       }
 
-      console.log('[Payment Preference] User found:', {
-        IDUsuario: user.IDUsuario,
-        IDMembresia: user.IDMembresia,
-        correo: user.correo ? 'present' : 'missing',
-      });
-
       const { membershipType, amount } = req.body;
-      console.log('[Payment Preference] Request body:', { membershipType, amount });
 
       // Validate required fields
       if (!user.IDMembresia) {
-        console.log('[Payment Preference] User does not have a membership');
         return res.status(400).json({
           success: false,
           message: 'User does not have a membership',
@@ -216,7 +199,6 @@ const PaymentController = {
       }
 
       if (!membershipType || !amount) {
-        console.log('[Payment Preference] Missing required fields');
         return res.status(400).json({
           success: false,
           message: 'Missing required fields: membershipType, amount',
@@ -224,14 +206,12 @@ const PaymentController = {
       }
 
       if (!user.correo) {
-        console.log('[Payment Preference] User email is missing');
         return res.status(400).json({
           success: false,
           message: 'User email is required for payment',
         });
       }
 
-      console.log('[Payment Preference] Creating payment preference...');
       // Create payment preference in Mercado Pago
       const preference = await PaymentService.createPaymentPreference({
         membershipId: user.IDMembresia,
@@ -240,14 +220,11 @@ const PaymentController = {
         userEmail: user.correo,
       });
 
-      console.log('[Payment Preference] Preference created successfully');
       res.json({
         success: true,
         preference,
       });
     } catch (error) {
-      console.error('[Payment Preference] Error:', error);
-      console.error('[Payment Preference] Error stack:', error.stack);
       res.status(500).json({
         success: false,
         message: 'Error creating payment preference',

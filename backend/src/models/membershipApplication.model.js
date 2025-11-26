@@ -142,6 +142,12 @@ class MembershipApplication {
     this.facebook = data.facebook?.trim() || null;
     this.website = data.website?.trim() || null;
     this.documents = data.documents || {};
+    this.membershipType = data.membershipType?.trim() || null;
+    this.membershipHoursFormation =
+      data.membershipHoursFormation !== undefined &&
+        data.membershipHoursFormation !== null
+        ? Number(data.membershipHoursFormation)
+        : null;
     this.id = null;
   }
 
@@ -257,7 +263,15 @@ class MembershipApplication {
       const [mres] = await conn.query(
         `INSERT INTO membresia (IDUsuario, tipo, fechaVencimiento, constanciaPago, certificado, horasFormacion, aceptado, estatusPago, createdAt)
          VALUES (?, ?, CURDATE(), ?, ?, ?, ?, ?, NOW())`,
-        [userId, "pendiente", "", "", 0, null, "pendiente"]
+        [
+          userId,
+          this.membershipType || "pendiente",
+          "",
+          "",
+          this.membershipHoursFormation || 0,
+          null,
+          "pendiente",
+        ]
       );
       this.IDMembresia = mres?.insertId || null;
 
@@ -283,7 +297,7 @@ export const getMembershipApplications = async () => {
   const conn = await db.getConnection();
   try {
     const query = `
-      SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, u.IDUsuario, 
+      SELECT m.IDMembresia, m.tipo, m.horasFormacion as horasFormacion, m.aceptado, m.estatusPago, u.IDUsuario, 
       u.nombres, u.apellidoP, u.correo, u.createdAt as createdAt
       FROM membresia m
       JOIN usuario u ON m.IDUsuario = u.IDUsuario
@@ -291,9 +305,14 @@ export const getMembershipApplications = async () => {
     `;
 
     const [rows] = await conn.execute(query);
-    return decryptApplicationsData(rows);
+    const decrypted = decryptApplicationsData(rows);
+    // Expose consistent field names for frontend
+    return decrypted.map((r) => ({
+      ...r,
+      membershipType: r.tipo || null,
+      membershipHoursFormation: r.horasFormacion ?? null,
+    }));
   } catch (error) {
-    console.error("Error en getMembershipApplications:", error);
     throw error;
   } finally {
     conn.release();
@@ -324,7 +343,7 @@ export const getMembershipApplicationById = async (id) => {
   const conn = await db.getConnection();
   try {
     const query = `
-      SELECT m.IDMembresia, m.tipo, m.aceptado, m.estatusPago, m.IDUsuario, u.*
+      SELECT m.IDMembresia, m.tipo, m.horasFormacion as horasFormacion, m.aceptado, m.estatusPago, m.IDUsuario, u.*
       FROM membresia m
       JOIN usuario u ON m.IDUsuario = u.IDUsuario
       WHERE m.IDMembresia = ? AND m.deletedAt IS NULL
@@ -413,6 +432,7 @@ export const getMembershipApplicationById = async (id) => {
     const mapped = {
       IDMembresia: row.IDMembresia,
       tipo: row.tipo,
+      membershipType: row.tipo,
       aceptado: row.aceptado,
       estatusPago: row.estatusPago,
       IDUsuario: row.IDUsuario,
@@ -440,12 +460,12 @@ export const getMembershipApplicationById = async (id) => {
       instagram: row.instagram || null,
       linkedin: row.linkedin || null,
       documentos,
+      membershipHoursFormation: row.horasFormacion || null,
       __raw: row,
     };
 
     return mapped;
   } catch (error) {
-    console.error("Error en getMembershipApplicationById:", error);
     throw error;
   } finally {
     conn.release();
@@ -459,14 +479,57 @@ export const getMembershipApplicationById = async (id) => {
  * @returns {Promise<Object|null>} Updated application detail (decrypted) or null if not found
  * @throws {Error} When database operation fails
  */
-export const approveMembershipApplicationById = async (id) => {
+export const approveMembershipApplicationById = async (id, noAfiliado) => {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
     await conn.execute(
-      `UPDATE membresia SET aceptado = 1 WHERE IDMembresia = ? AND deletedAt IS NULL`,
+      `UPDATE membresia SET aceptado = 1, noAfiliado = ? WHERE IDMembresia = ? AND deletedAt IS NULL`,
+      [noAfiliado, id]
+    );
+
+    // Get membership type and user ID
+    const [membershipRows] = await conn.execute(
+      `SELECT tipo, IDUsuario FROM membresia WHERE IDMembresia = ?`,
       [id]
     );
+
+    if (membershipRows.length > 0) {
+      const { tipo, IDUsuario } = membershipRows[0];
+
+      // Try to find a role that matches the membership type (case-insensitive)
+      const [roleRows] = await conn.execute(
+        `SELECT IDRol FROM rol WHERE nombre LIKE ? AND deletedAt IS NULL`,
+        [tipo]
+      );
+
+      if (roleRows.length > 0) {
+        const roleId = roleRows[0].IDRol;
+
+        // Check if user already has a role
+        const [userRoleRows] = await conn.execute(
+          `SELECT * FROM usuariorol WHERE IDUsuario = ? AND deletedAt IS NULL`,
+          [IDUsuario]
+        );
+
+        if (userRoleRows.length > 0) {
+          // Update existing role
+          await conn.execute(
+            `UPDATE usuariorol SET IDRol = ? WHERE IDUsuario = ?`,
+            [roleId, IDUsuario]
+          );
+        } else {
+          // Insert new role
+          await conn.execute(
+            `INSERT INTO usuariorol (IDUsuario, IDRol) VALUES (?, ?)`,
+            [IDUsuario, roleId]
+          );
+        }
+      } else {
+        // Fallback: Do nothing (keep current role or no role)
+        console.warn(`No matching role found for membership type '${tipo}'. User role unchanged.`);
+      }
+    }
 
     await conn.commit();
 
@@ -475,7 +538,6 @@ export const approveMembershipApplicationById = async (id) => {
     return detail;
   } catch (error) {
     await conn.rollback();
-    console.error("Error approving membership application:", error);
     throw error;
   } finally {
     conn.release();
@@ -515,12 +577,30 @@ export async function denyMembershipApplication(razonRechazo, id) {
     return result;
   } catch (error) {
     await conn.rollback();
-    console.error("Error en denyMembershipApplication:", error);
     throw error;
   } finally {
     conn.release();
   }
 }
+
+/**
+ * Get the maximum noAfiliado from the database.
+ * @async
+ * @returns {Promise<number>} The maximum noAfiliado found, or 0 if none.
+ */
+export const getMaxNoAfiliado = async () => {
+  const conn = await db.getConnection();
+  try {
+    const [rows] = await conn.execute(
+      `SELECT MAX(CAST(noAfiliado AS UNSIGNED)) as maxNoAfiliado FROM membresia WHERE deletedAt IS NULL`
+    );
+    return rows[0]?.maxNoAfiliado || 0;
+  } catch (error) {
+    throw error;
+  } finally {
+    conn.release();
+  }
+};
 
 /**
  * Get expired memberships.

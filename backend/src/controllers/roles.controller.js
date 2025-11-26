@@ -65,7 +65,6 @@ export async function getRoleById(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error fetching role:", error);
     res.status(500).json({
       success: false,
       error: "Error fetching role",
@@ -136,7 +135,6 @@ export async function updateRole(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error updating role:", error);
 
     // Handle unique constraint violation
     if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
@@ -145,7 +143,7 @@ export async function updateRole(req, res) {
         error: "Ya existe un rol con ese nombre",
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error.message || "Error updating role",
@@ -166,7 +164,6 @@ export async function getAllRoles(req, res) {
       data: roles,
     });
   } catch (error) {
-    console.error("Error fetching roles:", error);
     res.status(500).json({
       success: false,
       error: "Error fetching roles",
@@ -200,7 +197,6 @@ export async function getCreateRole(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error fetching privileges for role creation:", error);
     res.status(500).json({
       success: false,
       error: "Error fetching privileges for role creation",
@@ -260,7 +256,6 @@ export async function createRole(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error creating role:", error);
 
     // Handle unique constraint violation
     if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
@@ -330,7 +325,6 @@ export async function assignUserRole(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error asignando rol a usuario:", error);
     return res.status(500).json({
       success: false,
       error: error.message || "Error asignando rol a usuario",
@@ -395,8 +389,6 @@ export async function deleteRole(req, res) {
       });
     }
 
-    // Generic error handling
-    console.error("deleteRole error:", error);
     return res.status(500).json({
       success: false,
       message: "No se pudo eliminar el rol. Por favor, intente nuevamente",

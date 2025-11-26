@@ -99,7 +99,7 @@ export async function updateContent(contentId, updateData, token) {
     if (response.status === 401) {
       throw new Error("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
     }
-    
+
     // Try to get error message from response
     try {
       const error = await response.json();
@@ -138,7 +138,7 @@ export async function deleteContent(contentId, token) {
     if (response.status === 401) {
       throw new Error("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
     }
-    
+
     // Try to get error message from response
     try {
       const error = await response.json();
@@ -150,3 +150,45 @@ export async function deleteContent(contentId, token) {
 
   return response.json();
 }
+
+/**
+ * Attempts to fetch a membership certificate URL for a given user.
+ * @param {string|number} userId - Database user ID to fetch the certificate for
+ * @param {string} token - Clerk auth token
+ * @returns {Promise<string|null>} Presigned URL to the certificate PDF or null
+ */
+export async function getMembershipCertificate(userId, token) {
+  if (!userId) return null;
+
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  try {
+    const resp = await fetch(`${API_URL}/users/certificate/${userId}`, {
+      method: "GET",
+      headers
+    });
+
+    if (!resp.ok) {
+      console.warn(`Certificate not found for user ${userId}`);
+      return null;
+    }
+
+    const body = await resp.json();
+
+    // Extract certificate URL from response
+    if (body.success && body.data && body.data.certificado) {
+      return body.data.certificado;
+    }
+
+    return null;
+  } catch (err) {
+    throw err;
+  }
+}
+

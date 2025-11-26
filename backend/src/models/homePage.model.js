@@ -65,7 +65,6 @@ export async function getContentByCategories() {
       podcasts,
     };
   } catch (error) {
-    console.error("Database error in getContentByCategories:", error);
     throw new Error("Database error");
   }
 }
@@ -112,7 +111,6 @@ export async function searchAllContent(searchTerm) {
 
     return results;
   } catch (error) {
-    console.error("Database error in searchAllContent:", error);
     throw new Error("Database error");
   }
 }

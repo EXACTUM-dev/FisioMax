@@ -26,6 +26,9 @@ export default function MembershipInfoModal({
   selectedPlan,
   highlightStep = 1,
 }) {
+  const isStep1 = highlightStep === 1;
+  const isStep2 = highlightStep === 2;
+  const isStep3 = highlightStep === 3;
   return (
     <Modal open={open} onClose={onClose} size="md" position="center">
       <div className="text-left">
@@ -95,27 +98,47 @@ export default function MembershipInfoModal({
         </div>
         <div className="space-y-6">
           <div
-            className={`flex items-start gap-4 ${
-              highlightStep === 2 ? "opacity-60" : ""
-            }`}
+            className={`flex items-start gap-4 ${isStep1 ? "" : "opacity-60"}`}
           >
-            <FaRegFileAlt className="text-[#CAD00F] w-6 h-6 mt-1" />
+            <FaRegFileAlt
+              className={`${
+                isStep1 ? "text-[#CAD00F]" : "text-gray-400"
+              } w-6 h-6 mt-1`}
+            />
             <div>
-              <p className="font-semibold text-gray-800">
+              <p
+                className={`${
+                  isStep1
+                    ? "font-semibold text-gray-800"
+                    : "font-semibold text-gray-400"
+                }`}
+              >
                 1. Envía tu solicitud
               </p>
               {selectedPlan && (
-                <div className="mb-2 mt-2 px-3 py-2 rounded bg-[#CAD00F]/20 text-gray-900 font-semibold text-sm border border-[#CAD00F]/40 inline-block">
+                <div
+                  className={`mb-2 mt-2 px-3 py-2 rounded bg-[#CAD00F]/20 ${
+                    isStep1 ? "text-gray-900" : "text-gray-400"
+                  } font-semibold text-sm border border-[#CAD00F]/40 inline-block`}
+                >
                   <span className="mr-2">Tipo de membresía seleccionada:</span>
                   <span className="font-bold">{selectedPlan}</span>
                 </div>
               )}
-              <ul className="list-disc ml-5 text-gray-700 text-sm mt-1">
+              <ul
+                className={`${
+                  isStep1 ? "text-gray-700" : "text-gray-400"
+                } list-disc ml-5 text-sm mt-1`}
+              >
                 <li>Llena tus datos personales.</li>
                 <li>Escoge el tipo de membresía.</li>
                 <li>
                   Adjunta certificados PDF para{" "}
-                  <span className="underline">
+                  <span
+                    className={`${
+                      isStep1 ? "underline" : "underline text-gray-400"
+                    }`}
+                  >
                     justificar horas de formación
                   </span>{" "}
                   (si se requieren).
@@ -124,41 +147,77 @@ export default function MembershipInfoModal({
             </div>
           </div>
           <div
-            className={`flex items-start gap-4 ${
-              highlightStep === 2 ? "" : "opacity-60"
-            }`}
+            className={`flex items-start gap-4 ${isStep2 ? "" : "opacity-60"}`}
           >
             <FaRegCheckCircle
-              className={`w-6 h-6 mt-1 ${
-                highlightStep === 2 ? "text-[#CAD00F]" : "text-gray-400"
-              }`}
+              className={`${
+                isStep2 ? "text-[#CAD00F]" : "text-gray-400"
+              } w-6 h-6 mt-1`}
             />
             <div>
               <p
-                className={`font-semibold ${
-                  highlightStep === 2 ? "text-gray-800" : "text-gray-400"
+                className={`${
+                  isStep2
+                    ? "font-semibold text-gray-800"
+                    : "font-semibold text-gray-400"
                 }`}
               >
                 2. Validación
               </p>
               <p
                 className={`${
-                  highlightStep === 2 ? "text-gray-700" : "text-gray-400"
+                  isStep2 ? "text-gray-700" : "text-gray-400"
                 } text-sm mt-1`}
               >
-                SOMEFIPP revisará y verificará tu información. Este proceso
-                puede tardar algunos días.
+                SOMEFIPP revisará y verificará tu información lo antes posible.
               </p>
+              <ul
+                className={`${
+                  isStep2 ? "text-gray-700" : "text-gray-400"
+                } list-disc ml-5 text-sm mt-2`}
+              >
+                <li>
+                  Te enviaremos un correo de confirmación con el link para
+                  realizar el pago.
+                </li>
+              </ul>
             </div>
           </div>
-          <div className="flex items-start gap-4 opacity-60">
-            <FaRegCreditCard className="text-gray-400 w-6 h-6 mt-1" />
+          <div
+            className={`flex items-start gap-4 ${isStep3 ? "" : "opacity-60"}`}
+          >
+            <FaRegCreditCard
+              className={`${
+                isStep3 ? "text-[#CAD00F]" : "text-gray-400"
+              } w-6 h-6 mt-1`}
+            />
             <div>
-              <p className="font-semibold text-gray-400">3. Pago</p>
-              <p className="text-gray-400 text-sm mt-1">
-                Si tu solicitud es aprobada, recibirás un correo con la
-                información para realizar el pago.
+              <p
+                className={`${
+                  isStep3
+                    ? "font-semibold text-gray-800"
+                    : "font-semibold text-gray-400"
+                }`}
+              >
+                3. Pago
               </p>
+              <p
+                className={`${
+                  isStep3 ? "text-gray-700" : "text-gray-400"
+                } text-sm mt-1`}
+              >
+                Una vez aprobada tu solicitud, completa el pago usando el link
+                que te enviaremos.
+              </p>
+              <ul
+                className={`${
+                  isStep3 ? "text-gray-700" : "text-gray-400"
+                } list-disc ml-5 text-sm mt-2`}
+              >
+                <li>
+                  Confirma tu pago y disfruta de tus beneficios como miembro.
+                </li>
+              </ul>
             </div>
           </div>
         </div>

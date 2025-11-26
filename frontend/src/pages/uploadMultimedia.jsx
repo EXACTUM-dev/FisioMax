@@ -115,7 +115,7 @@ export default function UploadMultimedia() {
           setRoles(data.data || []);
         }
       } catch (error) {
-        console.error("Error fetching roles:", error);
+        throw error;
       }
     }
     if (isLoaded) {
@@ -256,7 +256,7 @@ export default function UploadMultimedia() {
       if (selectedThumbnail) {
         uploadData.append("thumbnail", selectedThumbnail);
       }
-      
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/content/upload`,
         {
@@ -288,7 +288,6 @@ export default function UploadMultimedia() {
         setErrorModalOpen(true);
       }
     } catch (error) {
-      console.error("Error uploading content:", error);
       setErrorMessage(
         "Error al subir el contenido. Por favor, intenta nuevamente."
       );

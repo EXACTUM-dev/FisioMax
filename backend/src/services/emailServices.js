@@ -2,7 +2,7 @@
  * @fileoverview Email service using Amazon SES 
  * @author EXACTUM-dev
  * @version 2.0.0
- * @describe Inlcudes basic SES configuration
+ * @describe Includes basic SES configuration
  */
 
 import nodemailer from "nodemailer";
@@ -19,6 +19,13 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
+ * Sends an email using Amazon SES SMTP transport
+ * @param {Object} options - Email options
+ * @param {string} options.to - Recipient email address
+ * @param {string} options.subject - Email subject line
+ * @param {string} options.html - HTML content of the email
+ * @returns {Promise<void>}
+ * @throws {Error} Logs error to console if email sending fails
  * Sends an email using Amazon SES SMTP transport
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email address
