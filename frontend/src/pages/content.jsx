@@ -137,14 +137,40 @@ export default function ContentPage() {
           setErrorType("error");
           return;
         }
-        const slides = response.content
-          .filter((item) => item.IDContenido !== activeContentId)
+        // Filter discounts by date before mapping so side lists only include active discounts
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const filteredContent = response.content.filter((item) => {
+          const tipo = (item.tipo || "").toString().toLowerCase();
+          if (tipo !== "descuento") return true;
+          const start = item.fechaInicio || item.startDate || item.start;
+          const end = item.fechaFin || item.endDate || item.end;
+          if (!start || !end) return true;
+          try {
+            const s = new Date(start);
+            s.setHours(0, 0, 0, 0);
+            const e = new Date(end);
+            e.setHours(0, 0, 0, 0);
+            return s <= today && today <= e;
+          } catch (err) {
+            return true;
+          }
+        });
+        // Normalize IDs to numbers to avoid type-mismatch filtering (string vs number)
+        const slides = filteredContent
+          .filter(
+            (item) => Number(item.IDContenido) !== Number(activeContentId)
+          )
           .map((item) => ({
-            id: item.IDContenido,
+            id: Number(item.IDContenido) || item.IDContenido,
             title: item.nombre,
             subtitle: item.descripcion?.substring(0, 100) + "...",
             imageUrl: item.thumbnailUrl || "/SOMEFIPP-Logo.jpeg",
             imageAlt: item.nombre,
+            type: item.tipo,
+            fechaInicio: item.fechaInicio || null,
+            fechaFin: item.fechaFin || null,
           }));
         if (offset === 0) {
           setRelatedContent(slides);
@@ -182,7 +208,7 @@ export default function ContentPage() {
   useEffect(() => {
     if (contentId) {
       const parsedId = parseInt(contentId);
-      if (parsedId !== activeContentId) {
+      if (parsedId !== Number(activeContentId)) {
         setActiveContentId(parsedId);
         setOffset(0);
       }
@@ -253,12 +279,15 @@ export default function ContentPage() {
                   />
                 )}
                 {isDiscount && contentData?.contentData?.thumbnailUrl && (
-                  <div className="w-full bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center" style={{ maxHeight: '600px' }}>
+                  <div
+                    className="w-full bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center"
+                    style={{ maxHeight: "600px" }}
+                  >
                     <img
                       src={contentData.contentData.thumbnailUrl}
                       alt={contentData.contentData.titulo}
                       className="w-full h-auto object-contain"
-                      style={{ maxHeight: '600px' }}
+                      style={{ maxHeight: "600px" }}
                       onError={handleContentError}
                     />
                   </div>

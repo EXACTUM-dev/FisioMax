@@ -58,6 +58,8 @@ function mapContentWithThumbnails(items) {
     descripcion: item.descripcion,
     tipo: item.tipo,
     tipoMembresia: item.tipoMembresia,
+    fechaInicio: item.fechaInicio || null,
+    fechaFin: item.fechaFin || null,
     createdAt: item.createdAt,
     thumbnailUrl: getThumbnailUrl(item.thumbnailMultimedia),
   }));

@@ -89,11 +89,14 @@ export default function SideContainer({
   completedMessage = "✓ Todos los videos cargados",
   loadMoreText = "Cargar más videos",
 }) {
+  // SideContainer no longer aplica el filtrado por fechas; el upstream
+  // (`homePage` / `content`) debe enviar solo los descuentos vigentes.
+  const visibleSlides = slides || [];
   return (
     <aside className="w-full bg-[#FAFAFA] p-6 flex flex-col gap-2">
-      {slides.length > 0 ? (
+      {visibleSlides.length > 0 ? (
         <>
-          {slides.map((slide) => (
+          {visibleSlides.map((slide) => (
             <CarouselSlideRow
               key={slide.id}
               slide={slide}
@@ -142,7 +145,7 @@ export default function SideContainer({
             </div>
           )}
 
-          {!hasMore && slides.length > 0 && (
+          {!hasMore && visibleSlides.length > 0 && (
             <div className="text-center mt-2">
               <p className="text-gray-500 text-sm">{completedMessage}</p>
             </div>

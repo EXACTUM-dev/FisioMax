@@ -53,10 +53,9 @@ export default function UploadMultimedia() {
     nombre: "",
     descripcion: "",
     tipo: "Articulo",
-    fechaInicio: "", 
-    fechaFin: "",     
+    fechaInicio: "",
+    fechaFin: "",
   });
-  
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
@@ -184,13 +183,12 @@ export default function UploadMultimedia() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar todos los campos
     const formErrors = validateContentForm({
       nombre: formData.nombre,
       descripcion: formData.descripcion,
       tipo: formData.tipo,
       roles: selectedRoles,
-      file: formData.tipo === "Descuento" ? { name: "dummy.jpg", type: "image/jpeg", size: 1024 } : selectedFile,
+      file: selectedFile,
       thumbnail: selectedThumbnail,
     });
 
@@ -218,50 +216,49 @@ export default function UploadMultimedia() {
       if (formData.tipo === "Descuento") {
         uploadData.append("fechaInicio", formData.fechaInicio);
         uploadData.append("fechaFin", formData.fechaFin);
-        uploadData.append("filekey", "discount-placeholder");
       }
-      if (formData.tipo !== "Descuento") {
+
+      // If a main file was selected (works for all types, including Descuento), presign and upload it
+      if (selectedFile) {
         const presignRes = await fetch(
-        `${import.meta.env.VITE_API_URL}/content/presign`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            fileName: selectedFile.name,
-            fileType: selectedFile.type,
-            folder: formData.tipo
-          }),
+          `${import.meta.env.VITE_API_URL}/content/presign`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              fileName: selectedFile.name,
+              fileType: selectedFile.type,
+              folder: formData.tipo,
+            }),
+          }
+        );
+
+        const presignData = await presignRes.json();
+
+        if (!presignData.success) {
+          throw new Error("No se pudo generar la URL para subir el archivo");
         }
-      );
 
-      const presignData = await presignRes.json();
+        const { uploadUrl, key: mainFileKey } = presignData;
 
-      if (!presignData.success) {
-        throw new Error("No se pudo generar la URL para subir el archivo");
-      }
+        //Upload file directly to S3 from the client
+        const uploadMainFile = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": selectedFile.type,
+          },
+          body: selectedFile,
+        });
 
-      const { uploadUrl, key: mainFileKey } = presignData;
+        if (!uploadMainFile.ok) {
+          throw new Error("Falló la subida del archivo principal a S3");
+        }
 
-      //Upload file directly to S3 from the client
-      const uploadMainFile = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": selectedFile.type,
-        },
-        body: selectedFile,
-      });
-
-      if (!uploadMainFile.ok) {
-        throw new Error("Falló la subida del archivo principal a S3");
-      } else {
         uploadData.append("filekey", mainFileKey);
       }
-  }else {
-    uploadData.append("filekey", "discount-placeholder");
-  }
       // Add thumbnail if selected
       if (selectedThumbnail) {
         uploadData.append("thumbnail", selectedThumbnail);
@@ -287,7 +284,7 @@ export default function UploadMultimedia() {
           descripcion: "",
           tipo: "Articulo",
           fechaInicio: "",
-          fechaFin: "", 
+          fechaFin: "",
         });
         setSelectedFile(null);
         setSelectedThumbnail(null);
@@ -483,30 +480,24 @@ export default function UploadMultimedia() {
                 </div>
               )}
 
-              {/* Main content file upload area with dynamic restrictions */}
-              {formData.tipo !== "Descuento" && (
-                <div className="mb-8">
-                  <FileUpload
-                    name="file"
-                    label="Archivo del contenido"
-                    limitation={`${currentFileRestrictions.label} hasta ${maxSizeDisplay}`}
-                    required={true}
-                    accept={currentFileRestrictions.accept}
-                    value={selectedFile}
-                    onChange={(e) => handleFileChange(e, "content")}
-                    error={errors.file}
-                  />
-                </div>
-              )}
+              {/* Main content file upload area (always visible). For Descuento both file + thumbnail are required. */}
+              <div className="mb-8">
+                <FileUpload
+                  name="file"
+                  label="Archivo del contenido"
+                  limitation={`${currentFileRestrictions.label} hasta ${maxSizeDisplay}`}
+                  required={true}
+                  accept={currentFileRestrictions.accept}
+                  value={selectedFile}
+                  onChange={(e) => handleFileChange(e, "content")}
+                  error={errors.file}
+                />
+              </div>
 
               <div className="mb-8">
                 <FileUpload
                   name="thumbnail"
-                  label={
-                    formData.tipo === "Descuento"
-                      ? "Imagen del descuento"
-                      : "Miniatura del contenido"
-                  }
+                  label={"Miniatura del contenido"}
                   limitation="PNG, JPG hasta 20MB"
                   required={formData.tipo === "Descuento"}
                   accept="image/png,image/jpeg,image/jpg"

@@ -11,7 +11,13 @@ import db from "../../database/db.js";
  * Valid content types that can be displayed
  * @constant {string[]}
  */
-const DISPLAYABLE_CONTENT_TYPES = ["video", "articulo", "podcast", "libro", "descuento"];
+const DISPLAYABLE_CONTENT_TYPES = [
+  "video",
+  "articulo",
+  "podcast",
+  "libro",
+  "descuento",
+];
 
 /**
  * Gets a specific content by ID with its thumbnail
@@ -130,6 +136,8 @@ export async function getAvailableContent(
       c.descripcion,
       c.tipo,
       c.tipoMembresia,
+      c.fechaInicio,
+      c.fechaFin,
       c.createdAt,
       t.IDMultimedia as thumbnailMultimedia
     FROM contenido c
@@ -196,22 +204,74 @@ export async function createContent(contentData) {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW())
   `;
 
-  try {
-    const [result] = await db.query(query, [
-      contentData.nombre,
-      contentData.descripcion,
-      contentData.tipo,
-      contentData.IDMultimedia,
-      contentData.tipoMembresia || null,
-      contentData.fechaInicio || null,
-      contentData.fechaFin || null,
-    ]);
+  // Defensive normalization of inputs
+  let tipoMembresia = contentData.tipoMembresia ?? null;
+  if (Array.isArray(tipoMembresia)) {
+    tipoMembresia = tipoMembresia.join(", ");
+  } else if (typeof tipoMembresia === "object" && tipoMembresia !== null) {
+    tipoMembresia = String(tipoMembresia);
+  }
 
+  // Ensure IDMultimedia is scalar (avoid arrays coming from duplicated form fields)
+  let idMultimedia = contentData.IDMultimedia ?? null;
+  if (Array.isArray(idMultimedia)) {
+    idMultimedia = idMultimedia[0] ?? null;
+  } else if (typeof idMultimedia === "object" && idMultimedia !== null) {
+    idMultimedia = String(idMultimedia);
+  }
+
+  const params = [
+    contentData.nombre,
+    contentData.descripcion,
+    contentData.tipo,
+    idMultimedia,
+    tipoMembresia || null,
+    contentData.fechaInicio || null,
+    contentData.fechaFin || null,
+  ];
+
+  try {
+    // Ensure params length matches the number of placeholders (7)
+    if (!Array.isArray(params) || params.length !== 7) {
+      throw new Error(
+        `Invalid parameter list for createContent; expected 7 params, got ${
+          (params && params.length) || 0
+        }`
+      );
+    }
+
+    const [result] = await db.query(query, params);
     return result.insertId;
   } catch (error) {
-    console.error("Error detallado en createContent:", error);
     throw error;
   }
+}
+
+/**
+ * Get active discounts (date range inclusive).
+ * This returns main discount records (not thumbnails).
+ */
+export async function getActiveDiscounts() {
+  // English: select discounts whose date range includes today
+  const sql = `
+    SELECT
+      c.IDContenido,
+      c.IDMultimedia,
+      c.nombre,
+      c.descripcion,
+      c.tipoMembresia,
+      c.fechaInicio,
+      c.fechaFin,
+      c.createdAt
+    FROM contenido c
+    WHERE c.tipo = 'descuento'
+      AND c.eliminado = 0
+      AND DATE(c.fechaInicio) <= CURDATE()
+      AND DATE(c.fechaFin) >= CURDATE()
+    ORDER BY c.createdAt DESC
+  `;
+  const [rows] = await dbPool.query(sql);
+  return rows;
 }
 
 /**
@@ -286,7 +346,11 @@ export async function updateContent(contentId, updateData) {
         AND deletedAt IS NULL
     `;
 
-    const [updateResult] = await db.query(updateQuery, [nombre, descripcion, contentId]);
+    const [updateResult] = await db.query(updateQuery, [
+      nombre,
+      descripcion,
+      contentId,
+    ]);
 
     if (updateResult.affectedRows === 0) {
       throw new Error("Content not found or already deleted");
@@ -302,7 +366,11 @@ export async function updateContent(contentId, updateData) {
         AND deletedAt IS NULL
     `;
 
-    await db.query(updateThumbnailQuery, [nombre, `Miniatura de ${nombre}`, oldNombre]);
+    await db.query(updateThumbnailQuery, [
+      nombre,
+      `Miniatura de ${nombre}`,
+      oldNombre,
+    ]);
 
     // Return updated content
     const [updated] = await db.query(
@@ -312,7 +380,11 @@ export async function updateContent(contentId, updateData) {
 
     return updated[0];
   } catch (error) {
-    if (error.message === "Content not found" || error.message === "Content type cannot be edited" || error.message === "Content not found or already deleted") {
+    if (
+      error.message === "Content not found" ||
+      error.message === "Content type cannot be edited" ||
+      error.message === "Content not found or already deleted"
+    ) {
       throw error;
     }
     throw new Error("Database error");
@@ -346,7 +418,10 @@ export async function softDeleteContent(contentId) {
   `;
 
   try {
-    const [rows] = await db.query(selectQuery, [contentId, DISPLAYABLE_CONTENT_TYPES]);
+    const [rows] = await db.query(selectQuery, [
+      contentId,
+      DISPLAYABLE_CONTENT_TYPES,
+    ]);
 
     if (rows.length === 0) {
       throw new Error("Content not found");

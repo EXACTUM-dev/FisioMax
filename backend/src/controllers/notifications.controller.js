@@ -4,8 +4,8 @@
  * @author EXACTUM-dev
  */
 
-import NotificationModel from '../models/notifications.model.js';
-import { getUserByClerkId } from '../models/users.model.js'; 
+import NotificationModel from "../models/notifications.model.js";
+import { getUserByClerkId } from "../models/users.model.js";
 
 class NotificationController {
   /**
@@ -14,34 +14,33 @@ class NotificationController {
    */
   static async getPendingNotifications(req, res) {
     try {
-        
-        const userID = req.query.IDUsuario;
-        const isRead = req.query.esRevisada === '1' ? true : false;
+      const userID = req.query.IDUsuario;
+      const isRead = req.query.esRevisada === "1" ? true : false;
 
-        const notifications = await NotificationModel.getByUser(userID, {
-        isRead
-        });
+      const notifications = await NotificationModel.getByUser(userID, {
+        isRead,
+      });
 
-        const formattedNotifications = notifications.map(notif => ({
+      const formattedNotifications = notifications.map((notif) => ({
         ...notif,
-        metadata: typeof notif.metadata === 'string' 
-            ? JSON.parse(notif.metadata) 
-            : notif.metadata
-        }));
+        metadata:
+          typeof notif.metadata === "string"
+            ? JSON.parse(notif.metadata)
+            : notif.metadata,
+      }));
 
-        return res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: formattedNotifications,
-        total: formattedNotifications.length
-        });
+        total: formattedNotifications.length,
+      });
     } catch (error) {
-        return res.status(500).json({
+      return res.status(500).json({
         success: false,
-        error: 'Error al obtener notificaciones'
-        });
+        error: "Error al obtener notificaciones",
+      });
     }
-    }
-
+  }
 
   /**
    * Execute daily verification
@@ -51,16 +50,18 @@ class NotificationController {
    */
   static async executeDailyVerification(req, res) {
     try {
-      const MembershipModel = (await import('../models/membershipApplication.model.js')).default;
+      const MembershipModel = (
+        await import("../models/membershipApplication.model.js")
+      ).default;
 
       const memberships = await MembershipModel.getExpiringMemberships();
 
       if (memberships.length === 0) {
         return res.status(200).json({
           success: true,
-          message: 'No hay membresías próximas a vencer',
+          message: "No hay membresías próximas a vencer",
           sent: 0,
-          skipped: 0
+          skipped: 0,
         });
       }
 
@@ -68,7 +69,8 @@ class NotificationController {
       let notificationsSkipped = 0;
 
       for (const membership of memberships) {
-        const { IDUsuario, IDMembresia, daysRemaining, fechaVencimiento } = membership;
+        const { IDUsuario, IDMembresia, daysRemaining, fechaVencimiento } =
+          membership;
 
         // Check if notification already exists today
         const exists = await NotificationModel.existsNotificationToday(
@@ -93,7 +95,7 @@ class NotificationController {
         // Create notification
         await NotificationModel.create({
           userID: IDUsuario,
-          type: 'membership_renewal',
+          type: "membership_renewal",
           priority,
           message: notificationData.message,
           metadata: {
@@ -101,8 +103,8 @@ class NotificationController {
             membershipID: IDMembresia,
             expirationDate: fechaVencimiento,
             details: notificationData.details,
-            subtext: notificationData.subtext
-          }
+            subtext: notificationData.subtext,
+          },
         });
 
         notificationsSent++;
@@ -110,15 +112,15 @@ class NotificationController {
 
       return res.status(200).json({
         success: true,
-        message: 'Verificación completada',
+        message: "Verificación completada",
         sent: notificationsSent,
         skipped: notificationsSkipped,
-        total: memberships.length
+        total: memberships.length,
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error: 'Error al ejecutar verificación'
+        error: "Error al ejecutar verificación",
       });
     }
   }
@@ -129,10 +131,10 @@ class NotificationController {
    * @returns {string} Priority level
    */
   static calculatePriority(daysRemaining) {
-    if (daysRemaining === 1) return 'urgent';
-    if (daysRemaining === 3) return 'high';
-    if (daysRemaining === 7) return 'medium';
-    return 'low'; // 15 or 30 days
+    if (daysRemaining === 1) return "urgent";
+    if (daysRemaining === 3) return "high";
+    if (daysRemaining === 7) return "medium";
+    return "low"; // 15 or 30 days
   }
 
   /**
@@ -143,29 +145,29 @@ class NotificationController {
    */
   static buildNotificationMessage(daysRemaining, fechaVencimiento) {
     const date = new Date(fechaVencimiento);
-    const formattedDate = date.toLocaleDateString('es-MX', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
+    const formattedDate = date.toLocaleDateString("es-MX", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
     });
 
-    let message = '';
-    
+    let message = "";
+
     if (daysRemaining === 1) {
-        message = 'Te queda 1 día para renovar tu membresía';
+      message = "Te queda 1 día para renovar tu membresía";
     } else {
-        message = `Te quedan ${daysRemaining} días para renovar tu membresía`;
+      message = `Te quedan ${daysRemaining} días para renovar tu membresía`;
     }
 
     return {
-        message,
-        details: `Tu membresía vence el día ${formattedDate}`,
-        subtext: 'Recuerda que puedes renovarla desde "Mi perfil"'
+      message,
+      details: `Tu membresía vence el día ${formattedDate}`,
+      subtext: 'Recuerda que puedes renovarla desde "Mi perfil"',
     };
   }
 
- /**
-   * Mark notification as read 
+  /**
+   * Mark notification as read
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    * @return {Promise<void>}
@@ -173,12 +175,11 @@ class NotificationController {
   static async markAsRead(req, res) {
     try {
       const { id: notificationID } = req.params;
-    
 
       if (!req.auth || !req.auth.userId) {
         return res.status(401).json({
           success: false,
-          error: 'No autenticado'
+          error: "No autenticado",
         });
       }
 
@@ -187,32 +188,64 @@ class NotificationController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'Usuario no encontrado'
+          error: "Usuario no encontrado",
         });
       }
 
       const mysqlUserId = user.IDUsuario;
-      const result = await NotificationModel.markAsRead(notificationID, mysqlUserId);
-
+      const result = await NotificationModel.markAsRead(
+        notificationID,
+        mysqlUserId
+      );
 
       if (!result.success) {
         return res.status(404).json({
           success: false,
-          error: 'Notificación no encontrada o no pertenece al usuario'
+          error: "Notificación no encontrada o no pertenece al usuario",
         });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Notificación marcada como leída',
-        affectedRows: result.affectedRows
+        message: "Notificación marcada como leída",
+        affectedRows: result.affectedRows,
       });
     } catch (error) {
-      console.error('Error en markAsRead:', error);
+      console.error("Error en markAsRead:", error);
       return res.status(500).json({
         success: false,
-        error: 'Error al marcar notificación como leída',
-        details: error.message
+        error: "Error al marcar notificación como leída",
+        details: error.message,
+      });
+    }
+  }
+
+  /**
+   * Trigger discount notifications manually (protected endpoint)
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  static async triggerDiscountNotifications(req, res) {
+    try {
+      // Dynamically import the cron job function to avoid circular deps
+      const { checkAndNotifyNewDiscounts } = await import(
+        "../services/notificationCronJob.js"
+      );
+
+      // Execute the notification check
+      await checkAndNotifyNewDiscounts();
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Triggered discount notifications job. Revisa logs para detalles.",
+      });
+    } catch (error) {
+      console.error("Error triggering discount notifications:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Error al disparar las notificaciones de descuentos",
+        details: error.message,
       });
     }
   }

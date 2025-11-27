@@ -35,7 +35,8 @@ export async function getActiveDiscounts(membershipType = null) {
     WHERE c.tipo = 'descuento'
       AND c.eliminado = 0
       AND c.deletedAt IS NULL
-      AND CURDATE() BETWEEN c.fechaInicio AND c.fechaFin
+      AND DATE(c.fechaInicio) <= CURDATE()
+      AND DATE(c.fechaFin) >= CURDATE()
   `;
 
   const params = [];
@@ -104,7 +105,7 @@ export async function getExpiredDiscounts() {
 
   try {
     const [rows] = await db.query(query);
-    return rows.map(row => row.IDContenido);
+    return rows.map((row) => row.IDContenido);
   } catch (error) {
     console.error("Error fetching expired discounts:", error);
     throw new Error("Database error");

@@ -9,7 +9,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { getHomePageContent, searchContent } from "../services/homePage";
-import { getActiveDiscounts } from "../services/discountService";;
+import { getActiveDiscounts } from "../services/discountService";
 
 // Atoms
 import Button from "../atoms/button";
@@ -109,7 +109,7 @@ export default function HomePage() {
       const token = await getToken();
       const data = await getHomePageContent(token);
       const discountsData = await getActiveDiscounts(token);
-      setDiscounts(discountsData);
+      setDiscounts(transformToCarouselFormat(discountsData || []));
 
       // Transform data to carousel format
       setRecentVideos(transformToCarouselFormat(data.recentVideos || []));
@@ -170,13 +170,38 @@ export default function HomePage() {
   const transformToCarouselFormat = (items) => {
     if (!items || !Array.isArray(items)) return [];
 
-    return items.map((item) => ({
+    // Filter discounts by date: if item is a discount and has fechaInicio/fechaFin,
+    // only include it when today is within [fechaInicio, fechaFin]. If dates are
+    // missing, keep the item (backwards-compatible).
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const filtered = items.filter((item) => {
+      const tipo = (item.tipo || "").toString().toLowerCase();
+      if (tipo !== "descuento") return true;
+      const start = item.fechaInicio || item.startDate || item.start;
+      const end = item.fechaFin || item.endDate || item.end;
+      if (!start || !end) return true;
+      try {
+        const s = new Date(start);
+        s.setHours(0, 0, 0, 0);
+        const e = new Date(end);
+        e.setHours(0, 0, 0, 0);
+        return s <= today && today <= e;
+      } catch (err) {
+        return true;
+      }
+    });
+
+    return filtered.map((item) => ({
       id: item.IDContenido,
       title: item.nombre,
       subtitle: item.descripcion,
       imageUrl: item.thumbnailUrl || "/SOMEFIPP-Logo.jpeg",
       imageAlt: item.nombre || "Contenido multimedia",
       type: item.tipo,
+      fechaInicio: item.fechaInicio || null,
+      fechaFin: item.fechaFin || null,
       tipoMembresia: item.tipoMembresia,
       createdAt: item.createdAt,
     }));
@@ -389,11 +414,11 @@ export default function HomePage() {
             )}
             {/* Active Discounts Carousel */}
             {discounts.length > 0 && (
-              <section className="mb-12">
-                <div className="flex items-center justify-between mb-6">
+              <section className="max-w-[70rem] mx-auto">
+                <div className="flex flex-row justify-between items-center gap-2 mb-3">
                   <Title2>Descuentos Activos</Title2>
                 </div>
-                <Carousel items={discounts} />
+                <Carousel slides={discounts} variant="row" />
               </section>
             )}
 
