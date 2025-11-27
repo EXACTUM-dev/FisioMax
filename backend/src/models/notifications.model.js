@@ -5,7 +5,7 @@
  * @description Provides operations for notifications.
  */
 
-import { dbPool } from '../../config.js';
+import { dbPool } from "../../config.js";
 
 /**
  * Get all unseen notifications from database by user.
@@ -17,7 +17,7 @@ import { dbPool } from '../../config.js';
 export async function getByUser(userID, filters = {}) {
   try {
     const { isRead = false } = filters;
-    
+
     const query = `
       SELECT 
         IDnotificacion,
@@ -66,12 +66,12 @@ export async function create(notificationData) {
       type,
       priority,
       message,
-      JSON.stringify(metadata)
+      JSON.stringify(metadata),
     ]);
 
     return {
       success: true,
-      notificationID: result.insertId
+      notificationID: result.insertId,
     };
   } catch (error) {
     throw new Error(`Error al crear notificación: ${error.message}`);
@@ -83,7 +83,7 @@ export async function create(notificationData) {
  * @param {number} userID - User ID
  * @param {number} daysRemaining - Days remaining until expiration
  * @returns {Promise<Boolean>} True if exists, false otherwise.
- */ 
+ */
 export async function existsNotificationToday(userID, daysRemaining) {
   try {
     const query = `
@@ -118,14 +118,88 @@ export async function markAsRead(notificationID, userID) {
     `;
 
     const [result] = await dbPool.query(query, [notificationID, userID]);
-    
+
     return {
       success: result.affectedRows > 0,
-      affectedRows: result.affectedRows
+      affectedRows: result.affectedRows,
     };
   } catch (error) {
     throw new Error(`Error al marcar como leída: ${error.message}`);
   }
 }
+/**
+ * Delete a notification for a user
+ * @param {number} notificationID - Notification ID
+ * @param {number} userID - User ID
+ * @returns {Promise<Object>} Result of the operation.
+ */
+export async function deleteNotification(notificationID, userID) {
+  try {
+    const query = `
+      DELETE FROM notificaciones
+      WHERE IDnotificacion = ?
+        AND IDusuario = ?
+    `;
 
-export default { getByUser, create, existsNotificationToday, markAsRead };
+    const [result] = await dbPool.query(query, [notificationID, userID]);
+
+    return {
+      success: result.affectedRows > 0,
+      affectedRows: result.affectedRows,
+    };
+  } catch (error) {
+    throw new Error(`Error al borrar notificación: ${error.message}`);
+  }
+}
+
+/**
+ * Delete notifications related to a specific content id (matching metadata)
+ * @param {number|string} contentId - Content ID
+ * @returns {Promise<Object>} Result with affectedRows
+ */
+export async function deleteByContentId(contentId) {
+  try {
+    // Aggressive matching against metadata JSON to cover several possible formats:
+    // - metadata.redirectUrl may be '/content/123' or full URL 'https://.../content/123'
+    // - metadata may include a numeric or string field contentId
+    // Use LIKE on the raw JSON to find these cases and delete matching rows.
+    const likeUrlPattern = `%/content/${contentId}%`;
+    const likeContentIdNum = `"contentId":${contentId}`;
+    const likeContentIdStr = `"contentId":"${contentId}"`;
+    const likeIDContenidoNum = `"IDContenido":${contentId}`;
+    const likeIDContenidoStr = `"IDContenido":"${contentId}"`;
+
+    const query = `
+      DELETE FROM notificaciones
+      WHERE (
+        metadata LIKE ?
+        OR metadata LIKE ?
+        OR metadata LIKE ?
+        OR metadata LIKE ?
+        OR metadata LIKE ?
+      )
+    `;
+
+    const [result] = await dbPool.query(query, [
+      likeUrlPattern,
+      `%${likeContentIdNum}%`,
+      `%${likeContentIdStr}%`,
+      `%${likeIDContenidoNum}%`,
+      `%${likeIDContenidoStr}%`,
+    ]);
+
+    return { success: true, affectedRows: result.affectedRows };
+  } catch (error) {
+    throw new Error(
+      `Error al borrar notificaciones por contenido: ${error.message}`
+    );
+  }
+}
+export default {
+  getByUser,
+  create,
+  existsNotificationToday,
+  markAsRead,
+  deleteNotification,
+  deleteByContentId,
+};

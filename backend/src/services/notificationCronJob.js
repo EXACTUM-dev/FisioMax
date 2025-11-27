@@ -373,6 +373,8 @@ async function checkAndNotifyNewDiscounts() {
                   discountId: IDContenido,
                   discountName: nombre,
                   expiresAt: fechaFin,
+                  // internal SPA route that the frontend will navigate to
+                  redirectUrl: `/content/${IDContenido}`,
                 },
               });
             } else {

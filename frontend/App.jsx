@@ -40,96 +40,99 @@ export default function App() {
     <>
       <SessionExpiredModal open={showExpiredModal} />
       <Routes>
-      <Route path="/overview" element={<OverviewPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route
-        path="/solicitud-membresia"
-        element={<MembershipApplicationPage />}
-      />
-      <Route
-        path="/content"
-        element={
-          <ProtectedRoute>
-            <ContentPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/email"
-        element={
-          <ProtectedRoute>
-            <EmailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/perfil"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile/:userId"
-        element={
-          <ProtectedRoute allowedRoles={["Admin"]}>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/panel"
-        element={
-          <ProtectedRoute
-            allowedPrivileges={["Gestión de Usuarios", "Gestión de Membresías"]}
-          >
-            <Panel />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/roles"
-        element={
-          <ProtectedRoute allowedRoles={["Admin"]}>
-            <RolesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/content/:contentId"
-        element={
-          <ProtectedRoute>
-            <ContentPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/:contentCategory"
-        element={
-          <ProtectedRoute>
-            <DedicatedContentPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/uploadMultimedia"
-        element={
-          <ProtectedRoute allowedRoles={["Admin"]}>
-            <UploadMultimediaPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/overview" element={<OverviewPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/solicitud-membresia"
+          element={<MembershipApplicationPage />}
+        />
+        <Route
+          path="/content"
+          element={
+            <ProtectedRoute>
+              <ContentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/email"
+          element={
+            <ProtectedRoute>
+              <EmailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/perfil"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/:userId"
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/panel"
+          element={
+            <ProtectedRoute
+              allowedPrivileges={[
+                "Gestión de Usuarios",
+                "Gestión de Membresías",
+              ]}
+            >
+              <Panel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/roles"
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <RolesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/content/:contentId"
+          element={
+            <ProtectedRoute>
+              <ContentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/:contentCategory"
+          element={
+            <ProtectedRoute>
+              <DedicatedContentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/uploadMultimedia"
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <UploadMultimediaPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

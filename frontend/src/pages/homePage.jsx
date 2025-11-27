@@ -417,6 +417,12 @@ export default function HomePage() {
               <section className="max-w-[70rem] mx-auto">
                 <div className="flex flex-row justify-between items-center gap-2 mb-3">
                   <Title2>Descuentos Activos</Title2>
+                  <button
+                    onClick={() => navigate("/descuentos")}
+                    className="text-sm text-[#CAD00F] hover:text-[#b8bd0d] font-medium transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    Ver más →
+                  </button>
                 </div>
                 <Carousel slides={discounts} variant="row" />
               </section>

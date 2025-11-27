@@ -64,6 +64,14 @@ export default function UploadMultimedia() {
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // Fecha mínima para inputs de tipo date (YYYY-MM-DD) - calcula fecha local
+  const getLocalToday = () => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000; // offset in ms
+    return new Date(Date.now() - tzOffset).toISOString().split("T")[0];
+  };
+  const todayStr = getLocalToday();
+
   // Modal states
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
@@ -201,6 +209,44 @@ export default function UploadMultimedia() {
       );
       setErrorModalOpen(true);
       return;
+    }
+
+    if (formData.tipo === "Descuento") {
+      const inicio = formData.fechaInicio || "";
+      const fin = formData.fechaFin || "";
+
+      if (!inicio) {
+        setErrors((prev) => ({
+          ...prev,
+          fechaInicio: "La fecha de inicio es obligatoria",
+        }));
+        setErrorMessage("La fecha de inicio es obligatoria para descuentos");
+        setErrorModalOpen(true);
+        return;
+      }
+
+      if (inicio < todayStr) {
+        setErrors((prev) => ({
+          ...prev,
+          fechaInicio: "La fecha de inicio no puede ser anterior a hoy",
+        }));
+        setErrorMessage("La fecha de inicio no puede ser anterior a hoy");
+        setErrorModalOpen(true);
+        return;
+      }
+
+      if (fin && fin < inicio) {
+        setErrors((prev) => ({
+          ...prev,
+          fechaFin:
+            "La fecha de fin no puede ser anterior a la fecha de inicio",
+        }));
+        setErrorMessage(
+          "La fecha de fin no puede ser anterior a la fecha de inicio"
+        );
+        setErrorModalOpen(true);
+        return;
+      }
     }
 
     try {
@@ -465,6 +511,7 @@ export default function UploadMultimedia() {
                     type="date"
                     value={formData.fechaInicio}
                     onChange={handleInputChange}
+                    min={todayStr}
                     required
                     error={errors.fechaInicio}
                   />
@@ -474,6 +521,7 @@ export default function UploadMultimedia() {
                     type="date"
                     value={formData.fechaFin}
                     onChange={handleInputChange}
+                    min={formData.fechaInicio || todayStr}
                     required
                     error={errors.fechaFin}
                   />

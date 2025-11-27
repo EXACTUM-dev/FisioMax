@@ -221,6 +221,57 @@ class NotificationController {
   }
 
   /**
+   * Delete a notification
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  static async deleteNotification(req, res) {
+    try {
+      const { id: notificationID } = req.params;
+
+      if (!req.auth || !req.auth.userId) {
+        return res
+          .status(401)
+          .json({ success: false, error: "No autenticado" });
+      }
+
+      const user = await getUserByClerkId(req.auth.userId);
+      if (!user) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Usuario no encontrado" });
+      }
+
+      const mysqlUserId = user.IDUsuario;
+
+      const result = await NotificationModel.deleteNotification(
+        notificationID,
+        mysqlUserId
+      );
+
+      if (!result.success) {
+        return res.status(404).json({
+          success: false,
+          error: "Notificación no encontrada o no pertenece al usuario",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Notificación eliminada",
+        affectedRows: result.affectedRows,
+      });
+    } catch (error) {
+      console.error("Error en deleteNotification:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Error al eliminar notificación",
+        details: error.message,
+      });
+    }
+  }
+
+  /**
    * Trigger discount notifications manually (protected endpoint)
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object

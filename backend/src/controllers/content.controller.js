@@ -58,18 +58,7 @@ export async function show(req, res) {
 
     let signedUrl;
     try {
-      const signed = generateSignedUrl(s3Path);
-      try {
-        const head = await fetch(signed, { method: "HEAD" });
-        if (head.ok) {
-          signedUrl = signed;
-        } else {
-          signedUrl = await S3Service.getPresignedUrl(s3Path);
-        }
-      } catch (headErr) {
-        // HEAD failed (network or CloudFront); fallback to S3 presigned URL
-        signedUrl = await S3Service.getPresignedUrl(s3Path);
-      }
+      signedUrl = generateSignedUrl(s3Path);
     } catch (urlError) {
       return res.status(500).json({
         error: "url_generation_failed",
@@ -80,26 +69,9 @@ export async function show(req, res) {
     let thumbnailUrl = null;
     if (content.thumbnailMultimedia) {
       try {
-        const signedThumb = generateSignedUrl(content.thumbnailMultimedia);
-        try {
-          const headThumb = await fetch(signedThumb, { method: "HEAD" });
-          if (headThumb.ok) {
-            thumbnailUrl = signedThumb;
-          } else {
-            thumbnailUrl = await S3Service.getPresignedUrl(
-              content.thumbnailMultimedia
-            );
-          }
-        } catch (headErr) {
-          thumbnailUrl = await S3Service.getPresignedUrl(
-            content.thumbnailMultimedia
-          );
-        }
+        thumbnailUrl = generateSignedUrl(content.thumbnailMultimedia);
       } catch (thumbError) {
-        // Thumbnail signer failed; fallback to S3 presigned URL
-        thumbnailUrl = await S3Service.getPresignedUrl(
-          content.thumbnailMultimedia
-        );
+        // Thumbnail generation failed, continue without it
       }
     }
 
@@ -164,45 +136,26 @@ export async function index(req, res) {
       finalSortBy
     );
 
-    const contentWithThumbnails = await Promise.all(
-      content.map(async (item) => {
-        let thumbnailUrl = null;
-        if (item.thumbnailMultimedia) {
-          try {
-            const signedThumb = generateSignedUrl(item.thumbnailMultimedia);
-            try {
-              const head = await fetch(signedThumb, { method: "HEAD" });
-              if (head.ok) {
-                thumbnailUrl = signedThumb;
-              } else {
-                thumbnailUrl = await S3Service.getPresignedUrl(
-                  item.thumbnailMultimedia
-                );
-              }
-            } catch (headErr) {
-              thumbnailUrl = await S3Service.getPresignedUrl(
-                item.thumbnailMultimedia
-              );
-            }
-          } catch (signErr) {
-            // Signer failed, fallback to S3 presigned URL
-            thumbnailUrl = await S3Service.getPresignedUrl(
-              item.thumbnailMultimedia
-            );
-          }
+    const contentWithThumbnails = content.map((item) => {
+      let thumbnailUrl = null;
+      if (item.thumbnailMultimedia) {
+        try {
+          thumbnailUrl = generateSignedUrl(item.thumbnailMultimedia);
+        } catch (error) {
+          // Thumbnail generation failed, continue without it
         }
+      }
 
-        return {
-          IDContenido: item.IDContenido,
-          nombre: item.nombre,
-          descripcion: item.descripcion,
-          tipo: item.tipo,
-          tipoMembresia: item.tipoMembresia,
-          createdAt: item.createdAt,
-          thumbnailUrl,
-        };
-      })
-    );
+      return {
+        IDContenido: item.IDContenido,
+        nombre: item.nombre,
+        descripcion: item.descripcion,
+        tipo: item.tipo,
+        tipoMembresia: item.tipoMembresia,
+        createdAt: item.createdAt,
+        thumbnailUrl,
+      };
+    });
 
     return res.status(200).json({
       content: contentWithThumbnails,
@@ -658,10 +611,28 @@ export async function deleteContent(req, res) {
 
     await Promise.all(deletePromises);
 
-    return res.status(200).json({
-      success: true,
-      message: "Contenido eliminado exitosamente",
-    });
+    // Also delete any notifications that reference this content
+    try {
+      const NotificationModel = (
+        await import("../models/notifications.model.js")
+      ).default;
+
+      const deleted = await NotificationModel.deleteByContentId(contentId);
+      // include number of deleted notifications in response for transparency
+      return res.status(200).json({
+        success: true,
+        message: "Contenido eliminado exitosamente",
+        deletedNotifications: deleted.affectedRows || 0,
+      });
+    } catch (notifErr) {
+      console.error("Error deleting related notifications:", notifErr);
+      // Content deleted successfully; return success but warn about notifications
+      return res.status(200).json({
+        success: true,
+        message:
+          "Contenido eliminado exitosamente (error al eliminar notificaciones relacionadas)",
+      });
+    }
   } catch (error) {
     if (error.message === "Content not found") {
       return res.status(404).json({

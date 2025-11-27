@@ -45,4 +45,10 @@ router.post(
   NotificationController.triggerDiscountNotifications
 );
 
+/**
+ * @route   DELETE /api/notifications/:id
+ * @desc    Delete a notification
+ * @access  Private
+ */
+router.delete("/:id", requireAuth, NotificationController.deleteNotification);
 export default router;

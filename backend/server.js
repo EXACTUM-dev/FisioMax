@@ -116,6 +116,7 @@ app.use("/api/statistics", statisticsRoutes);
  * Routes for video content access.
  */
 import contentRoutes from "./src/routes/content.routes.js";
+import { sendDiscountNotification } from "./src/services/emailServices.js";
 app.use("/api/content", contentRoutes);
 
 /**
@@ -244,4 +245,5 @@ if (process.env.NODE_ENV !== "test") {
       `Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`
     );
   });
+  sendDiscountNotification();
 }
