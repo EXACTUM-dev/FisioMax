@@ -18,8 +18,9 @@ import MembershipApplication, {
   denyMembershipApplication,
   getMaxNoAfiliado,
 } from "../models/membershipApplication.model.js";
-import { sendEmail, sendRejectionEmail } from "../services/emailServices.js";
+import { sendEmail, sendRejectionEmail, sendAcceptanceEmail } from "../services/emailServices.js";
 import S3Service from "../services/s3Service.js";
+import PaymentService from "../services/payment.service.js";
 import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
 
 /**
@@ -299,6 +300,19 @@ export const getMembershipById = async (req, res) => {
 };
 
 /**
+ * Membership prices in MXN (per year)
+ * @constant {Object}
+ */
+const MEMBERSHIP_PRICES = {
+  'Estudiante': 900,
+  'Licenciado en Formación': 1100,
+  'Licenciado Especializado': 1500,
+  'Fisioterapeuta Extranjero': 1800,
+  'básica': 5,
+  'Personal de la salud': 1100,
+};
+
+/**
  * Approve a specific membership application
  * @param {Object} req - Request object
  * @param {Object} res - Response object
@@ -308,12 +322,75 @@ export const approveMembership = async (req, res) => {
     const { id } = req.params;
     const { noAfiliado } = req.body;
 
+    // Get membership application details before approving
+    const membershipDetails = await getMembershipApplicationById(id);
+
+    if (!membershipDetails) {
+      return res.status(404).json({
+        success: false,
+        message: "Solicitud no encontrada",
+      });
+    }
+
     const updated = await approveMembershipApplicationById(id, noAfiliado);
     if (!updated)
       return res.status(404).json({
         success: false,
         message: "Solicitud no encontrada o no se pudo actualizar",
       });
+
+    // Send acceptance email with payment link
+    try {
+      const nombreCompleto = `${membershipDetails.firstName || ""} ${membershipDetails.lastName || ""}`.trim();
+      const email = membershipDetails.email;
+      const membershipType = membershipDetails.membershipType || 'básica';
+      const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
+
+      if (email && nombreCompleto) {
+        // Generate Mercado Pago payment link
+        let linkPago = '';
+        try {
+          console.log(`Generando link de pago para membresía ${id} tipo: ${membershipType}, monto: $${amount} MXN`);
+          const preference = await PaymentService.createPaymentPreference({
+            membershipId: id,
+            membershipType,
+            amount,
+            userEmail: email,
+          });
+          linkPago = preference.init_point;
+          console.log(`Link de pago generado: ${linkPago}`);
+
+          // Create initial payment record
+          await PaymentService.createPayment({
+            IDMembresia: id,
+            folio: preference.id,
+            cantidad: amount,
+            payment_method_id: 'pending', // Will be updated by webhook
+            response_webhook: { status: 'pending' },
+            membershipPaymentStatus: 'Pendiente'
+          });
+
+        } catch (paymentError) {
+          console.error(`Error al generar link de pago:`, paymentError.message);
+          // Continue without payment link if generation fails
+          linkPago = 'https://somefipp.com/pagos'; // Fallback URL or empty
+        }
+
+        await sendAcceptanceEmail(
+          email,
+          nombreCompleto,
+          membershipType,
+          amount,
+          linkPago
+        );
+        console.log(`Correo de aceptación enviado a ${email}`);
+      } else {
+        console.warn(`No se pudo enviar correo de aceptación: email o nombre faltante para ID ${id}`);
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the approval
+      console.error("Error enviando correo de aceptación:", emailError);
+    }
 
     return res.json({
       success: true,
