@@ -134,13 +134,6 @@ app.use('/api/notifications', notificationRoutes);
 startNotificationsCron();
 startCleanupCron();
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Cron Jobs iniciados');
-});
-
 /**
  * Routes for payment processing with Mercado Pago.
  *  */
@@ -261,5 +254,6 @@ if (process.env.NODE_ENV !== "test") {
     console.log(
       `Servidor corriendo en ${config.app.env} en http://localhost:${config.app.port}`
     );
+    console.log('Cron Jobs iniciados');
   });
 }

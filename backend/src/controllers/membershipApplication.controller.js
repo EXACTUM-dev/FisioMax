@@ -341,8 +341,9 @@ export const approveMembership = async (req, res) => {
 
     // Send acceptance email with payment link
     try {
-      const nombreCompleto = `${membershipDetails.firstName || ""} ${membershipDetails.lastName || ""}`.trim();
-      const email = membershipDetails.email;
+      const nombreCompleto = membershipDetails.nombreCompleto ||
+        `${membershipDetails.nombres || ""} ${membershipDetails.apellidoP || ""} ${membershipDetails.apellidoM || ""}`.trim();
+      const email = membershipDetails.correo;
       const membershipType = membershipDetails.membershipType || 'básica';
       const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
@@ -350,7 +351,6 @@ export const approveMembership = async (req, res) => {
         // Generate Mercado Pago payment link
         let linkPago = '';
         try {
-          console.log(`Generando link de pago para membresía ${id} tipo: ${membershipType}, monto: $${amount} MXN`);
           const preference = await PaymentService.createPaymentPreference({
             membershipId: id,
             membershipType,
@@ -358,7 +358,6 @@ export const approveMembership = async (req, res) => {
             userEmail: email,
           });
           linkPago = preference.init_point;
-          console.log(`Link de pago generado: ${linkPago}`);
 
           // Create initial payment record
           await PaymentService.createPayment({
@@ -371,7 +370,6 @@ export const approveMembership = async (req, res) => {
           });
 
         } catch (paymentError) {
-          console.error(`Error al generar link de pago:`, paymentError.message);
           // Continue without payment link if generation fails
           linkPago = 'https://somefipp.com/pagos'; // Fallback URL or empty
         }
@@ -383,13 +381,8 @@ export const approveMembership = async (req, res) => {
           amount,
           linkPago
         );
-        console.log(`Correo de aceptación enviado a ${email}`);
-      } else {
-        console.warn(`No se pudo enviar correo de aceptación: email o nombre faltante para ID ${id}`);
       }
     } catch (emailError) {
-      // Log email error but don't fail the approval
-      console.error("Error enviando correo de aceptación:", emailError);
     }
 
     return res.json({
@@ -406,6 +399,11 @@ export const approveMembership = async (req, res) => {
   }
 };
 
+/**
+ * Deny a membership application
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 /**
  * Deny a membership application
  * @param {Object} req - Express request object
@@ -438,18 +436,19 @@ export async function denyMembership(req, res) {
 
     // Send rejection email to the applicant
     try {
-      const nombreCompleto = `${membershipDetails.firstName || ""} ${membershipDetails.lastName || ""}`.trim();
-      const email = membershipDetails.email;
+      const nombreCompleto = membershipDetails.nombreCompleto ||
+        `${membershipDetails.nombres || ""} ${membershipDetails.apellidoP || ""} ${membershipDetails.apellidoM || ""}`.trim();
+      const email = membershipDetails.correo;
 
       if (email && nombreCompleto) {
-        await sendRejectionEmail(email, nombreCompleto, sanitized.razonRechazo);
-        console.log(`Correo de rechazo enviado a ${email}`);
+        const emailResult = await sendRejectionEmail(email, nombreCompleto, sanitized.razonRechazo);
+
+        if (emailResult.success) {
+        } else {
+        }
       } else {
-        console.warn(`No se pudo enviar correo de rechazo: email o nombre faltante para ID ${id}`);
       }
     } catch (emailError) {
-      // Log email error but don't fail the rejection
-      console.error("Error enviando correo de rechazo:", emailError);
     }
 
     res.status(200).json({

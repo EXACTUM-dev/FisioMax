@@ -125,7 +125,6 @@ function MembershipModalContent({
             setNoAfiliado(nextVal.toString());
           }
         } catch (error) {
-          console.error("Error fetching max noAfiliado:", error);
         }
       }
     };
@@ -263,7 +262,6 @@ function MembershipModalContent({
       if (!id) {
         throw new Error("ID de solicitud no disponible");
       }
-
       const response = await fetchWithClerk(
         `/api/membership-applications/${id}/rechazar`,
         {

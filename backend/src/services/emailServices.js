@@ -101,9 +101,10 @@ export async function sendBrevoEmailWithTemplate(
 }
 
 /**
- * Sends a welcome email with certificate attachment
+ * Sends an email using a Brevo template
  * @param {string} destinatario - Recipient email address
- * @param {string} nombreMiembro - Member's name
+ * @param {string} nombreMiembro - Recipient's name
+ * @param {number} templateId - Brevo template ID
  * @param {Object} pdfBytes - PDF certificate data
  * @param {Buffer} pdfBytes.buffer - PDF file buffer
  * @param {string} [pdfBytes.filename] - Optional custom filename for the PDF
