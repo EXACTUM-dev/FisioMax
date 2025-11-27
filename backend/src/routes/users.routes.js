@@ -7,11 +7,11 @@
 
 import express from "express";
 import multer from "multer";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser} from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser, getUserCertificate } from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
-import {authorize} from '../middlewares/rbacMiddleware.js';
+import { authorize } from '../middlewares/rbacMiddleware.js';
 
 const router = express.Router();
 
@@ -50,13 +50,6 @@ const uploadDocuments = (req, res, next) => {
   ]);
 
   uploader(req, res, (err) => {
-    if (err) {
-      console.log('=== MULTER ERROR ===');
-      console.log('Error:', err);
-      console.log('Error code:', err.code);
-      console.log('Field:', err.field);
-      console.log('Files received:', req.files ? Object.keys(req.files) : 'none');
-    }
     next(err);
   });
 };
@@ -88,14 +81,14 @@ const handleUploadError = (err, req, res, next) => {
       message: `Error al subir archivos: ${err.message}`,
     });
   }
-  
+
   if (err) {
     return res.status(400).json({
       success: false,
       message: err.message || 'Error al procesar los archivos',
     });
   }
-  
+
   next();
 };
 
@@ -221,5 +214,17 @@ router.patch(
   requireDbUser,
   updateUser
 );
+
+/**
+ * Route to get a user's certificate with presigned URL
+ * @name GET /certificate/:userId
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication.
+ * @param {function} handler - Request handler.
+ */
+router.get("/certificate/:userId", requireAuth, getUserCertificate);
 
 export default router;

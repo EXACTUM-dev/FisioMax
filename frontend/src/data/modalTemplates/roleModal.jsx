@@ -58,6 +58,28 @@ function RoleModalContent({
   } = usePrivileges(tableData);
 
   const inputRef = useRef(null);
+  const clearPrivilegesError = () => {
+    setErrors((prev) => {
+      if (!prev || !prev.privilegios) return prev;
+      const { privilegios, ...rest } = prev;
+      return rest;
+    });
+  };
+  const handleToggleAndClear = (id) => {
+    handleToggle(id);
+    clearPrivilegesError();
+  };
+
+  const handleSelectAllAndClear = () => {
+    handleSelectAll();
+    clearPrivilegesError();
+  };
+
+  useEffect(() => {
+    if ((currentSelectedIds || []).length > 0 && errors.privilegios) {
+      clearPrivilegesError();
+    }
+  }, [currentSelectedIds, errors.privilegios]);
 
   useEffect(() => {
     if (open) {
@@ -137,6 +159,14 @@ function RoleModalContent({
       return;
     }
 
+    if (!selectedPrivileges || selectedPrivileges.length === 0) {
+      setErrors((prev) => ({
+        ...prev,
+        privilegios: "Selecciona al menos un privilegio",
+      }));
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -146,7 +176,6 @@ function RoleModalContent({
         selectedPrivileges
       );
     } catch (error) {
-      console.error("Error in onConfirm:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -257,7 +286,7 @@ function RoleModalContent({
                       <CheckBox
                         ariaLabel="Seleccionar todos"
                         checked={allSelected}
-                        onChange={handleSelectAll}
+                        onChange={handleSelectAllAndClear}
                         disabled={isProcessing}
                       />
                       <span className="text-sm sm:text-base">ID</span>
@@ -271,7 +300,7 @@ function RoleModalContent({
                       <CheckBox
                         ariaLabel={`Toggle ${row.label}`}
                         checked={!!checkedPrivileges[row.id]}
-                        onChange={() => handleToggle(row.id)}
+                        onChange={() => handleToggleAndClear(row.id)}
                         disabled={isProcessing}
                       />
                       <span className="text-sm text-slate-600 min-w-[2rem]">
@@ -307,7 +336,7 @@ function RoleModalContent({
                   allSelected ? "Deseleccionar Todos" : "Seleccionar Todos"
                 }
                 variant="brand"
-                onClick={handleSelectAll}
+                onClick={handleSelectAllAndClear}
                 size="sm"
                 className="text-xs"
                 disabled={isProcessing}

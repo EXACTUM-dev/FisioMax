@@ -2,7 +2,7 @@
  * @fileoverview Email service using Amazon SES 
  * @author EXACTUM-dev
  * @version 2.0.0
- * @describe Inlcudes basic SES configuration
+ * @describe Includes basic SES configuration
  */
 
 import nodemailer from "nodemailer";
@@ -36,7 +36,7 @@ export const sendEmail = async ({ to, subject, html }) => {
       html
     });
   } catch (error) {
-    console.error("Error enviando correo:", error);
+    throw error;
   }
 };
 
@@ -53,8 +53,8 @@ const TEMPLATE_IDS = {
   BIENVENIDA: 1,
   CONFIRMACION: 2,
   RECHAZO: 3,
-  EVENTO: 5,
-  RENOVACION: 4
+  EVENTO: 4,
+  RENOVACION: 5
 };
 
 /**
@@ -94,10 +94,8 @@ export async function sendBrevoEmailWithTemplate(
 
   try {
     const response = await apiInstance.sendTransacEmail(emailData);
-    console.log('Email enviado con plantilla:', response);
     return { success: true, messageId: response.messageId };
   } catch (error) {
-    console.error('Error enviando email:', error);
     return { success: false, error: error.message };
   }
 }
@@ -131,20 +129,16 @@ export async function sendWelcomeEmail(destinatario, nombreMiembro, pdfBytes) {
  * @param {string} destinatario - Recipient email address
  * @param {string} nombreMiembro - Member's name
  * @param {string} fechaVencimiento - Expiration date for the membership
- * @param {number} diasRestantes - Days remaining until expiration
- * @param {string} [linkRenovacion=''] - Renewal link
  * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
  */
-export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVencimiento, diasRestantes, linkRenovacion = '') {
+export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVencimiento) {
   return sendBrevoEmailWithTemplate(
     destinatario,
     nombreMiembro,
     TEMPLATE_IDS.RENOVACION,
     {
-      NOMBRE_MIEMBRO: nombreMiembro,
-      FECHA_VENCIMIENTO: fechaVencimiento,
-      DIAS_RESTANTES: diasRestantes,
-      LINK_RENOVACION: linkRenovacion,
+      NOMBRE: nombreMiembro,
+      FECHA_VENCIMIENTO: fechaVencimiento
     }
   );
 }
@@ -171,25 +165,6 @@ export async function sendEventInvitation(destinatario, nombreMiembro, eventoDat
       EVENTO_FECHA: eventoData.fecha,
       EVENTO_LUGAR: eventoData.lugar,
       EVENTO_URL: eventoData.urlRegistro
-    }
-  );
-}
-
-/**
- * Sends a membership rejection email
- * @param {string} destinatario - Recipient email address
- * @param {string} nombreMiembro - Member's name
- * @param {string} razonRechazo - Reason for rejection
- * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
- */
-export async function sendRejectionEmail(destinatario, nombreMiembro, razonRechazo) {
-  return sendBrevoEmailWithTemplate(
-    destinatario,
-    nombreMiembro,
-    TEMPLATE_IDS.RECHAZO,
-    {
-      NOMBRE_MIEMBRO: nombreMiembro,
-      RAZON_RECHAZO: razonRechazo
     }
   );
 }

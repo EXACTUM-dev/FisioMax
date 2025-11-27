@@ -44,11 +44,8 @@ async function checkExpiringMemberships() {
     const memberships = await MembershipModel.getExpiringMemberships();
 
     if (memberships.length === 0) {
-      console.log('No hay membresías próximas a vencer hoy');
       return;
     }
-
-    console.log(`Encontradas ${memberships.length} membresías próximas a vencer`);
 
     let notificationsSent = 0;
     let notificationsSkipped = 0;
@@ -57,16 +54,12 @@ async function checkExpiringMemberships() {
 
     for (const membership of memberships) {
       const { IDUsuario, clerk_user_id, IDMembresia, daysRemaining, fechaVencimiento, tipo } = membership;
-
-      console.log(`   - IDUsuario: ${IDUsuario}`);
-
       const exists = await NotificationModel.existsNotificationToday(
         IDUsuario,
         daysRemaining
       );
 
       if (exists) {
-        console.log(` Notificación ya enviada hoy ${IDMembresia}`);
         notificationsSkipped++;
         continue;
       }
@@ -93,7 +86,6 @@ async function checkExpiringMemberships() {
         }
       });
 
-      console.log(`Notificación enviada al usuario con ID ${IDUsuario} con ${daysRemaining} días restantes de membresía.`);
       notificationsSent++;
 
       // Send renewal reminder email
@@ -177,16 +169,10 @@ function startNotificationsCron() {
   const scheduleExpression = '0 0 0 * * *';
 
   cron.schedule(scheduleExpression, () => {
-    console.log(`\n${'='.repeat(50)}`);
-    console.log(`[${new Date().toISOString()}] Ejecutando Cron Job`);
-    console.log('='.repeat(50));
     checkExpiringMemberships();
   }, {
     timezone: "America/Mexico_City"
   });
-
-  console.log('Cron Job de notificaciones iniciado');
-  console.log(`Programado: ${scheduleExpression} `);
 }
 
 export { startNotificationsCron, checkExpiringMemberships };

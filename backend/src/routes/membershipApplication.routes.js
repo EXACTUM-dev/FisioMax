@@ -12,6 +12,7 @@ import {
   getMembershipById,
   approveMembership,
   denyMembership,
+  getMaxNoAfiliadoController,
 } from '../controllers/membershipApplication.controller.js';
 import { authorize } from "../middlewares/rbacMiddleware.js";
 import { requireAuth } from "../middlewares/clerkAuth.js";
@@ -78,14 +79,14 @@ const handleUploadError = (err, req, res, next) => {
       message: `Error al subir archivos: ${err.message}`,
     });
   }
-  
+
   if (err) {
     return res.status(400).json({
       success: false,
       message: err.message || 'Error al procesar los archivos',
     });
   }
-  
+
   next();
 };
 
@@ -103,6 +104,13 @@ router.post('/', uploadFields, handleUploadError, createMembershipApplication);
  * @access Private
  */
 router.get('/', requireAuth, authorize(["Gestión de Usuarios"]), getMemberships);
+
+/**
+ * @route GET /api/membership-applications/max-no-afiliado
+ * @description Get the maximum noAfiliado
+ * @access Private
+ */
+router.get('/max-no-afiliado', requireAuth, authorize(["Gestión de Usuarios"]), getMaxNoAfiliadoController);
 
 /**
  * @route GET /api/membership-applications/{id}

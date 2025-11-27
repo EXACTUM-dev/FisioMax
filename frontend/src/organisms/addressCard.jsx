@@ -14,14 +14,10 @@ import SuccessErrorModal from "./successErrorModal";
 import Modal from "../molecules/modal";
 import { FIELD_MAX_LENGTHS } from "../utils/profileFormValidation";
 
-// Variables for country, state and city APIs
-const COUNTRIES_API_BASE_URL = import.meta.env.VITE_COUNTRIES_API_BASE_URL;
-const COUNTRIES_POSITIONS_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_POSITIONS_ENDPOINT;
-const COUNTRIES_STATES_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_STATES_ENDPOINT;
-const COUNTRIES_CITIES_ENDPOINT = import.meta.env
-  .VITE_COUNTRIES_CITIES_ENDPOINT;
+
+// API endpoints
+const API_KEY = import.meta.env.VITE_COUNTRIES_API_KEY;
+const BASE_URL = "https://api.countrystatecity.in/v1";
 
 /**
  * Truncates text to a maximum number of characters
@@ -66,7 +62,7 @@ export default function AddressCard({
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [form, setForm] = useState({
-    pais: data.pais || "",
+    pais: data.pais || "Mexico",
     estado: data.estado || "",
     ciudad: data.ciudad || "",
     colonia: data.colonia || "",
@@ -79,11 +75,12 @@ export default function AddressCard({
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
+  const [localData, setLocalData] = useState(null); // countries_nested.json
 
   // Reset form when data changes
   useEffect(() => {
     setForm({
-      pais: data.pais || "",
+      pais: data.pais || "Mexico",
       estado: data.estado || "",
       ciudad: data.ciudad || "",
       colonia: data.colonia || "",
@@ -96,64 +93,124 @@ export default function AddressCard({
 
   // Fetch countries on component mount
   useEffect(() => {
-    const fetchCountries = async () => {
+    async function fetchCountries() {
+      // Try to load local countries_nested.json from public/
+      const LOCAL_URL = "/countries_nested.json";
       try {
-        const res = await fetch(
-          `${COUNTRIES_API_BASE_URL}${COUNTRIES_POSITIONS_ENDPOINT}`
-        );
+        const localRes = await fetch(LOCAL_URL);
+        if (localRes.ok) {
+          const localJson = await localRes.json();
+          setLocalData(localJson);
+          const formattedLocal = localJson
+            .map((c) => ({
+              value: c.name_en || c.name_es || c.name,
+              label: c.name_en || c.name_es || c.name,
+              id: c.id,
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label));
+          setCountries(formattedLocal);
+          return;
+        }
+      } catch (err) {
+        // Silent: if it fails, fallback to API
+      }
+
+      // Fallback to remote API if local JSON doesn't exist
+      try {
+        const res = await fetch(`${BASE_URL}/countries`, {
+          headers: { "X-CSCAPI-KEY": API_KEY },
+        });
         const data = await res.json();
-        const formatted = data.data
-          .map((c) => ({ value: c.name, label: c.name }))
+        const formatted = data
+          .map((c) => ({ value: c.name, label: c.name, iso2: c.iso2 }))
           .sort((a, b) => a.label.localeCompare(b.label));
         setCountries(formatted);
       } catch (err) {
-        console.error("Error fetching countries:", err);
+        setError("Error al cargar paises. Por favor intente más tarde.");
       }
-    };
+    }
     fetchCountries();
   }, []);
 
   useEffect(() => {
     async function fetchStatesAndCities() {
-      if (isEditing && form.pais) {
+      if (isEditing && form.pais && countries.length > 0) {
+        // If we have local JSON, get states from there
+        if (localData) {
+          const selected = localData.find(
+            (c) => c.name_en === form.pais || c.name_es === form.pais
+          );
+          if (selected) {
+            const localStates = (selected.states || []).map((s) => ({
+              value: s.name_en || s.name_es || s.name,
+              label: s.name_en || s.name_es || s.name,
+              id: s.id,
+            }));
+            setStates(localStates);
+
+            // Fetch cities if state exists
+            if (form.estado) {
+              const stateObj = (selected.states || []).find(
+                (s) => s.name_en === form.estado || s.name_es === form.estado
+              );
+              if (stateObj) {
+                const localCities = (stateObj.cities || []).map((c) => ({
+                  value: c.name_en || c.name_es || c.name,
+                  label: c.name_en || c.name_es || c.name,
+                  id: c.id,
+                }));
+                setCities(localCities);
+              }
+            }
+            return;
+          }
+        }
+
+        // Fallback to remote API
         try {
+          const selectedCountry = countries.find((c) => c.value === form.pais);
+          if (!selectedCountry) return;
+
           // Fetch states
           const statesRes = await fetch(
-            `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
+            `${BASE_URL}/countries/${selectedCountry.iso2}/states`,
             {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ country: form.pais }),
+              headers: { "X-CSCAPI-KEY": API_KEY },
             }
           );
           const statesData = await statesRes.json();
           const formattedStates =
-            statesData.data?.states?.map((s) => ({
+            statesData.map((s) => ({
               value: s.name,
               label: s.name,
+              iso2: s.iso2,
             })) || [];
-          setStates(formattedStates);
+          setStates(
+            formattedStates.sort((a, b) => a.label.localeCompare(b.label))
+          );
 
           // Fetch cities if state exists
           if (form.estado) {
-            const citiesRes = await fetch(
-              `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  country: form.pais,
-                  state: form.estado,
-                }),
-              }
+            const selectedState = formattedStates.find(
+              (s) => s.value === form.estado
             );
-            const citiesData = await citiesRes.json();
-            const formattedCities =
-              citiesData.data?.map((c) => ({ value: c, label: c })) || [];
-            setCities(formattedCities);
+            if (selectedState) {
+              const citiesRes = await fetch(
+                `${BASE_URL}/countries/${selectedCountry.iso2}/states/${selectedState.iso2}/cities`,
+                {
+                  headers: { "X-CSCAPI-KEY": API_KEY },
+                }
+              );
+              const citiesData = await citiesRes.json();
+              const formattedCities =
+                citiesData.map((c) => ({ value: c.name, label: c.name })) || [];
+              setCities(
+                formattedCities.sort((a, b) => a.label.localeCompare(b.label))
+              );
+            }
           }
         } catch (err) {
-          console.error("Error fetching location data:", err);
+          setError("Error al cargar datos de ubicación. Por favor intente más tarde.");
         }
       }
 
@@ -165,7 +222,7 @@ export default function AddressCard({
     }
 
     fetchStatesAndCities();
-  }, [isEditing, form.pais, form.estado]);
+  }, [isEditing, form.pais, form.estado, countries, localData]);
 
   /**
    * Handles input field changes and updates form state.
@@ -189,26 +246,42 @@ export default function AddressCard({
 
     if (!value) return;
 
+    // If we have local JSON, get states from there
+    if (localData) {
+      const selected = localData.find(
+        (c) => c.name_en === value || c.name_es === value
+      );
+      if (!selected) return;
+      const localStates = (selected.states || []).map((s) => ({
+        value: s.name_en || s.name_es || s.name,
+        label: s.name_en || s.name_es || s.name,
+        id: s.id,
+      }));
+      setStates(localStates);
+      return;
+    }
+
+    // Fallback: call remote API
+    const selectedCountry = countries.find((c) => c.value === value);
+    if (!selectedCountry) return;
+
     try {
       const res = await fetch(
-        `${COUNTRIES_API_BASE_URL}${COUNTRIES_STATES_ENDPOINT}`,
+        `${BASE_URL}/countries/${selectedCountry.iso2}/states`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country: value }),
+          headers: { "X-CSCAPI-KEY": API_KEY },
         }
       );
       const data = await res.json();
       const formattedStates =
-        data.data?.states?.map((s) => ({ value: s.name, label: s.name })) || [];
-      setStates(formattedStates);
-
-      // If we have a state value, load cities
-      if (form.estado) {
-        handleEstadoChange(form.estado, value);
-      }
+        data.map((s) => ({
+          value: s.name,
+          label: s.name,
+          iso2: s.iso2,
+        })) || [];
+      setStates(formattedStates.sort((a, b) => a.label.localeCompare(b.label)));
     } catch (err) {
-      console.error("Error fetching states:", err);
+      setError("Error al cargar estados. Por favor intente más tarde.");
       setStates([]);
     }
   };
@@ -226,21 +299,45 @@ export default function AddressCard({
 
     if (!value || !country) return;
 
+    // If we have local JSON, get cities from there
+    if (localData) {
+      const countryObj = localData.find(
+        (c) => c.name_en === country || c.name_es === country
+      );
+      if (!countryObj) return;
+      const stateObj = (countryObj.states || []).find(
+        (s) => s.name_en === value || s.name_es === value
+      );
+      if (!stateObj) return;
+      const localCities = (stateObj.cities || []).map((c) => ({
+        value: c.name_en || c.name_es || c.name,
+        label: c.name_en || c.name_es || c.name,
+        id: c.id,
+      }));
+      setCities(localCities);
+      return;
+    }
+
+    // Fallback: use remote API
+    const selectedCountry = countries.find((c) => c.value === country);
+    if (!selectedCountry) return;
+
+    const selectedState = states.find((s) => s.value === value);
+    if (!selectedState) return;
+
     try {
       const res = await fetch(
-        `${COUNTRIES_API_BASE_URL}${COUNTRIES_CITIES_ENDPOINT}`,
+        `${BASE_URL}/countries/${selectedCountry.iso2}/states/${selectedState.iso2}/cities`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country, state: value }),
+          headers: { "X-CSCAPI-KEY": API_KEY },
         }
       );
       const data = await res.json();
       const formattedCities =
-        data.data?.map((c) => ({ value: c, label: c })) || [];
-      setCities(formattedCities);
+        data.map((c) => ({ value: c.name, label: c.name })) || [];
+      setCities(formattedCities.sort((a, b) => a.label.localeCompare(b.label)));
     } catch (err) {
-      console.error("Error fetching cities:", err);
+      setError("Error al cargar ciudades. Por favor intente más tarde.");
       setCities([]);
     }
   };
@@ -300,12 +397,12 @@ export default function AddressCard({
       setModalMessage("La dirección se ha actualizado exitosamente.");
       setShowModal(true);
     } catch (error) {
-      console.error("Error saving address:", error);
+      setError("Error al guardar la dirección. Por favor intente más tarde.");
       // Show error modal
       setModalType("error");
       setModalMessage(
         error.message ||
-          "Error al guardar la dirección. Por favor, intente nuevamente."
+        "Error al guardar la dirección. Por favor, intente nuevamente."
       );
       setShowModal(true);
     }

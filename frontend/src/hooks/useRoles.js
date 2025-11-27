@@ -38,7 +38,6 @@ export function useRoles() {
       );
     } catch (err) {
       setError(err.message || "Error al cargar roles");
-      console.error("Error cargando roles:", err);
     } finally {
       setLoading(false);
     }
@@ -61,12 +60,10 @@ export function useRoles() {
           setSelectedRole(response.data);
           return response.data; // Return the role object directly
         } else {
-          console.error("Respuesta inválida:", response);
           throw new Error("No se pudo cargar el rol");
         }
       } catch (err) {
         setError(err.message || "Error al cargar el rol");
-        console.error("Error cargando rol:", err);
         throw err;
       } finally {
         setLoading(false);
@@ -102,7 +99,6 @@ export function useRoles() {
         return result;
       } catch (err) {
         setError(err.message || "Error al actualizar el rol");
-        console.error("Error actualizando rol:", err);
         throw err;
       } finally {
         setLoading(false);
@@ -125,7 +121,7 @@ export function useRoles() {
         setRoles((prev) => prev.filter((role) => role.id !== roleId));
       } catch (err) {
         setError(err.message || "Error al eliminar el rol");
-        console.error("Error eliminando rol:", err);
+        throw err;
       } finally {
         setLoading(false);
       }
@@ -179,7 +175,6 @@ export function useCreateRole() {
       }
     } catch (err) {
       setError(err.message || "Error cargando datos para crear rol");
-      console.error("Error loading role create data:", err);
       return [];
     } finally {
       setLoading(false);
@@ -209,7 +204,6 @@ export function useCreateRole() {
         return result;
       } catch (err) {
         setError(err.message || "Error al crear el rol");
-        console.error("Error creating role:", err);
         throw err;
       } finally {
         setLoading(false);

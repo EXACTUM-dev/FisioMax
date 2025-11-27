@@ -78,8 +78,6 @@ export const autoSyncClerkId = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error("Error in autoSyncClerkId:", error);
-    // Don't block the request due to a sync error
     next();
   }
 };

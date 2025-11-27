@@ -17,7 +17,6 @@ export async function fetchUserNames() {
     const data = await response.json();
     return data.map((user) => `${user.nombres} ${user.apellidoP} ${user.apellidoM}`);
   } catch (error) {
-    console.error("Error al obtener los datos del modelo:", error);
     return ["Error al cargar nombres"];
   }
 }

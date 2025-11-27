@@ -98,7 +98,6 @@ export default function RolesPage() {
       setCreatePrivileges(mappedPrivileges);
       setCreateModalOpen(true);
     } catch (err) {
-      console.error("Error loading create role data:", err);
       setModalType("error");
       setModalMessage(
         "No se pudieron cargar los privilegios. Intente nuevamente."
@@ -127,16 +126,9 @@ export default function RolesPage() {
       setModalMessage("El rol ha sido creado exitosamente.");
       setShowModal(true);
     } catch (err) {
-      console.error("Error creating role:", err);
-      console.error("Error details:", {
-        code: err.code,
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message
-      });
 
       // Check for duplicate name error (multiple ways)
-      const isDuplicate = 
+      const isDuplicate =
         err.response?.status === 409 ||
         err.response?.data?.error?.includes("existe un rol") ||
         err.message?.includes("existe un rol") ||
@@ -156,8 +148,8 @@ export default function RolesPage() {
         // General error
         setModalType("error");
         setModalMessage(
-          err.response?.data?.error || 
-          err.message || 
+          err.response?.data?.error ||
+          err.message ||
           "No se pudo crear el rol. Por favor, intente nuevamente."
         );
         setShowModal(true);
@@ -228,7 +220,6 @@ export default function RolesPage() {
       setEditingPrivileges(mappedPrivileges);
       setModalOpen(true);
     } catch (err) {
-      console.error("Error loading role for edit:", err);
       setModalType("error");
       setModalMessage(
         "No se pudo cargar el rol para editar. Intente nuevamente."
@@ -265,16 +256,9 @@ export default function RolesPage() {
       setModalMessage("El rol ha sido actualizado exitosamente.");
       setShowModal(true);
     } catch (err) {
-      console.error("Error updating role:", err);
-      console.error("Error details:", {
-        code: err.code,
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message
-      });
 
       // Check for duplicate name error (multiple ways)
-      const isDuplicate = 
+      const isDuplicate =
         err.response?.status === 409 ||
         err.response?.data?.error?.includes("existe un rol") ||
         err.message?.includes("existe un rol") ||
@@ -294,8 +278,8 @@ export default function RolesPage() {
         // General error
         setModalType("error");
         setModalMessage(
-          err.response?.data?.error || 
-          err.message || 
+          err.response?.data?.error ||
+          err.message ||
           "No se pudo actualizar el rol. Por favor, intente nuevamente."
         );
         setShowModal(true);

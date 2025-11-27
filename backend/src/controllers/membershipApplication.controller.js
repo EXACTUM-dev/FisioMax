@@ -16,6 +16,7 @@ import MembershipApplication, {
   getMembershipApplicationById,
   approveMembershipApplicationById,
   denyMembershipApplication,
+  getMaxNoAfiliado,
 } from "../models/membershipApplication.model.js";
 import { sendEmail, sendRejectionEmail } from "../services/emailServices.js";
 import S3Service from "../services/s3Service.js";
@@ -29,6 +30,7 @@ import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
  */
 export const createMembershipApplication = async (req, res) => {
   try {
+    // (debug logs removed)
     // Sanitize input data
     const sanitized = sanitizeContentInput(req.body, {
       stringFields: [
@@ -38,6 +40,7 @@ export const createMembershipApplication = async (req, res) => {
         "professionalPhone",
         "whatsappPhone",
         "birthDate",
+        "membershipType",
         "country",
         "state",
         "city",
@@ -85,6 +88,12 @@ export const createMembershipApplication = async (req, res) => {
 
     // Sanitize email
     sanitized.email = sanitizeEmail(req.body.email);
+    // Ensure numeric hours field is normalized and available on sanitized
+    if (req.body.membershipHoursFormation !== undefined) {
+      sanitized.membershipHoursFormation = Number(
+        req.body.membershipHoursFormation
+      );
+    }
     if (!sanitized.email) {
       return res.status(400).json({
         success: false,
@@ -127,7 +136,6 @@ export const createMembershipApplication = async (req, res) => {
         extraDocs.map((file) => S3Service.uploadFile(file, "documentos-extra"))
       );
     } else {
-      console.warn("AWS S3 not configured. Files will not be uploaded.");
       // Store file names instead of URLs for development
       if (req.files?.professionalId?.[0]) {
         professionalIdUrl = req.files.professionalId[0].originalname;
@@ -167,11 +175,20 @@ export const createMembershipApplication = async (req, res) => {
         certificates: certificatesUrl,
         extra: extraDocsUrls,
       },
+      membershipType: sanitized.membershipType || null,
+      membershipHoursFormation:
+        sanitized.membershipHoursFormation !== undefined
+          ? sanitized.membershipHoursFormation
+          : null,
     };
+
+    // applicationData prepared
 
     // Send data to archive model
     const application = new MembershipApplication(applicationData);
     await application.save();
+
+    // saved detail verification removed (debug)
 
     // Create template for the email when the application is sended
     const adminEmails = ["doculili08@gmail.com"];
@@ -189,7 +206,11 @@ export const createMembershipApplication = async (req, res) => {
             `,
         });
       } catch (err) {
-        console.error(`Error sending email to ${email}:`, err.message);
+        return res.status(500).json({
+          success: false,
+          message: "Error al enviar correo electrónico",
+          error: err.message,
+        });
       }
     });
 
@@ -204,8 +225,6 @@ export const createMembershipApplication = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error creating application:", error);
-
     if (
       error.code === "ER_DUP_ENTRY" ||
       error.message.includes("Duplicate entry")
@@ -247,7 +266,6 @@ export const getMemberships = async (req, res) => {
       data: membershipApplication,
     });
   } catch (error) {
-    console.error("Error en getMemberships:", error);
     res.status(500).json({
       success: false,
       error: "Error interno del servidor",
@@ -272,7 +290,6 @@ export const getMembershipById = async (req, res) => {
     }
     res.json({ success: true, data: detail });
   } catch (error) {
-    console.error("Error en getMembershipById:", error);
     res.status(500).json({
       success: false,
       message: "Error interno del servidor",
@@ -289,8 +306,9 @@ export const getMembershipById = async (req, res) => {
 export const approveMembership = async (req, res) => {
   try {
     const { id } = req.params;
+    const { noAfiliado } = req.body;
 
-    const updated = await approveMembershipApplicationById(id);
+    const updated = await approveMembershipApplicationById(id, noAfiliado);
     if (!updated)
       return res.status(404).json({
         success: false,
@@ -303,7 +321,6 @@ export const approveMembership = async (req, res) => {
       data: updated,
     });
   } catch (err) {
-    console.error("Error aprobando solicitud:", err);
     return res.status(500).json({
       success: false,
       message: "Error interno del servidor",
@@ -364,7 +381,6 @@ export async function denyMembership(req, res) {
       id: id,
     });
   } catch (error) {
-    console.error("Error al rechazar solicitud:", error);
     res.status(500).json({
       success: false,
       error: "Error interno del servidor al rechazar la solicitud",
@@ -372,3 +388,24 @@ export async function denyMembership(req, res) {
     });
   }
 }
+
+/**
+ * Get the maximum noAfiliado
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
+export const getMaxNoAfiliadoController = async (req, res) => {
+  try {
+    const maxNoAfiliado = await getMaxNoAfiliado();
+    res.json({
+      success: true,
+      data: maxNoAfiliado,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+      error: error.message,
+    });
+  }
+};

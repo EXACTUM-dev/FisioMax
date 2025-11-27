@@ -23,6 +23,7 @@ import ProfileFormSection from "../organisms/profileFormSection";
 import AddressCard from "../organisms/addressCard";
 import MembershipCard from "../organisms/membershipCard";
 import TicketsCard from "../organisms/ticketsCard";
+import CertificateCard from "../organisms/certificateCard";
 import DocumentsCard from "../organisms/documentsCard";
 import HistoryCard from "../organisms/historyCard";
 
@@ -104,15 +105,16 @@ export default function ProfilePage() {
         try {
           // If userId is present (viewing other), pass it. Otherwise pass null (viewing self).
           const targetUserId = userId || null;
-          const paymentsData = await PaymentService.getUserPayments(getToken, targetUserId);
+          const paymentsData = await PaymentService.getUserPayments(
+            getToken,
+            targetUserId
+          );
           setPaymentTickets(paymentsData.payments || []);
         } catch (paymentErr) {
-          console.error("Error fetching payment tickets:", paymentErr);
           // Don't block the page if payments fail, just log the error
           setPaymentTickets([]);
         }
       } catch (err) {
-        console.error("Error fetching profile:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -195,7 +197,6 @@ export default function ProfilePage() {
         }
       }
     } catch (err) {
-      console.error("Error actualizando usuario:", err);
       setError(err.message || "Error al actualizar el usuario");
       // Re-throw error so components can catch it and show modals
       throw err;
@@ -302,6 +303,7 @@ export default function ProfilePage() {
                   onEditChange={setIsEditing}
                 />
                 <TicketsCard tickets={paymentTickets} />
+                <CertificateCard userId={effectiveUserId} />
               </div>
             </div>
           </div>

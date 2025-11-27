@@ -48,13 +48,12 @@ export async function getResidenceStatistics(startDate = null, endDate = null) {
     `;
 
     const [rows] = await dbPool.query(query, params);
-    
+
     return rows.map(row => ({
       label: row.label || "Sin especificar",
       value: parseInt(row.value) || 0
     }));
   } catch (error) {
-    console.error("Error al obtener estadísticas de residencia:", error);
     throw error;
   }
 }
@@ -100,13 +99,12 @@ export async function getCategoryStatistics(startDate = null, endDate = null) {
     `;
 
     const [rows] = await dbPool.query(query, params);
-    
+
     return rows.map(row => ({
       label: row.label || "Sin especificar",
       value: parseInt(row.value) || 0
     }));
   } catch (error) {
-    console.error("Error al obtener estadísticas de categoría:", error);
     throw error;
   }
 }
@@ -153,13 +151,12 @@ export async function getEducationStatistics(startDate = null, endDate = null) {
     `;
 
     const [rows] = await dbPool.query(query, params);
-    
+
     return rows.map(row => ({
       label: row.label || "Sin especificar",
       value: parseInt(row.value) || 0
     }));
   } catch (error) {
-    console.error("Error al obtener estadísticas de educación:", error);
     throw error;
   }
 }

@@ -67,7 +67,7 @@ export const useSessionTimeout = (options = {}) => {
 
       // Show modal
       setShowExpiredModal(true);
-      
+
       // Call custom timeout handler if provided
       if (onTimeoutRef.current) {
         onTimeoutRef.current();
@@ -79,7 +79,6 @@ export const useSessionTimeout = (options = {}) => {
           await signOut();
           window.location.href = '/';
         } catch (error) {
-          console.error('Error al cerrar sesión:', error);
           window.location.href = '/';
         }
       }, 2000);
@@ -106,7 +105,7 @@ export const useSessionTimeout = (options = {}) => {
     const handleActivity = () => {
       const now = Date.now();
       const timeSinceLastReset = now - lastResetRef.current;
-      
+
       // Only reset if enough time has passed (throttle)
       if (timeSinceLastReset >= THROTTLE_MS) {
         lastResetRef.current = now;
@@ -168,7 +167,6 @@ export const useSessionTimeout = (options = {}) => {
             await signOut();
             window.location.href = '/';
           } catch (error) {
-            console.error('Error al cerrar sesión:', error);
             window.location.href = '/';
           }
         }, 2000);
