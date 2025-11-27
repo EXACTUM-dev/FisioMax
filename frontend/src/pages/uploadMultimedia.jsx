@@ -542,18 +542,20 @@ export default function UploadMultimedia() {
                 />
               </div>
 
-              <div className="mb-8">
-                <FileUpload
-                  name="thumbnail"
-                  label={"Miniatura del contenido"}
-                  limitation="PNG, JPG hasta 20MB"
-                  required={formData.tipo === "Descuento"}
-                  accept="image/png,image/jpeg,image/jpg"
-                  value={selectedThumbnail}
-                  onChange={(e) => handleFileChange(e, "thumbnail")}
-                  error={errors.thumbnail}
-                />
-              </div>
+              {formData.tipo !== "Descuento" && (
+                <div className="mb-8">
+                  <FileUpload
+                    name="thumbnail"
+                    label={"Miniatura del contenido"}
+                    limitation="PNG, JPG hasta 20MB"
+                    required={false}
+                    accept="image/png,image/jpeg,image/jpg"
+                    value={selectedThumbnail}
+                    onChange={(e) => handleFileChange(e, "thumbnail")}
+                    error={errors.thumbnail}
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-3">
                 <Button

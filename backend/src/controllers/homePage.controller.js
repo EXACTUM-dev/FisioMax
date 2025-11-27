@@ -80,6 +80,7 @@ export async function getHomeContent(req, res) {
       articles: mapContentWithThumbnails(categorizedContent.articles),
       books: mapContentWithThumbnails(categorizedContent.books),
       podcasts: mapContentWithThumbnails(categorizedContent.podcasts),
+      discounts: mapContentWithThumbnails(categorizedContent.discounts),
     };
 
     return res.status(200).json(response);

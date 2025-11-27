@@ -202,6 +202,7 @@ export async function sendEventInvitation(
  * @param {string} nombreDescuento - Discount name
  * @param {string} descripcion - Discount description
  * @param {string} fechaFin - Expiration date (YYYY-MM-DD)
+ * @param {string} linkDescuento - Link to the discount content
  * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object
  */
 export async function sendDiscountNotification(
@@ -209,7 +210,8 @@ export async function sendDiscountNotification(
   nombreMiembro,
   nombreDescuento,
   descripcion,
-  fechaFin
+  fechaFin,
+  linkDescuento = ""
 ) {
   // Format date to readable Spanish format
   const fecha = new Date(fechaFin);
@@ -225,6 +227,10 @@ export async function sendDiscountNotification(
       DESCUENTO_NOMBRE: nombreDescuento,
       DESCUENTO_DESCRIPCION: descripcion,
       FECHA_EXPIRACION: fechaFormateada,
+      LINK_DESCUENTO: linkDescuento,
     }
   );
 }
+
+// Export FRONTEND_URL for use in other modules
+export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";

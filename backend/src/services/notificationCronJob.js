@@ -17,7 +17,7 @@ import {
   getDiscountsStartingToday,
   getExpiredDiscounts,
 } from "../models/discount.model.js";
-import { sendDiscountNotification } from "./emailServices.js";
+import { sendDiscountNotification, FRONTEND_URL } from "./emailServices.js";
 import { softDeleteContent } from "../models/content.model.js";
 
 /**
@@ -351,7 +351,8 @@ async function checkAndNotifyNewDiscounts() {
               nombreCompleto,
               nombre,
               descripcion,
-              fechaFin
+              fechaFin,
+              `${FRONTEND_URL}/content/${IDContenido}`
             );
 
             console.log(

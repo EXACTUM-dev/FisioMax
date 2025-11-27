@@ -9,7 +9,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { getHomePageContent, searchContent } from "../services/homePage";
-import { getActiveDiscounts } from "../services/discountService";
 
 // Atoms
 import Button from "../atoms/button";
@@ -108,10 +107,9 @@ export default function HomePage() {
     try {
       const token = await getToken();
       const data = await getHomePageContent(token);
-      const discountsData = await getActiveDiscounts(token);
-      setDiscounts(transformToCarouselFormat(discountsData || []));
-
+      
       // Transform data to carousel format
+      setDiscounts(transformToCarouselFormat(data.discounts || []));
       setRecentVideos(transformToCarouselFormat(data.recentVideos || []));
       setVideos(transformToCarouselFormat(data.videos || []));
       setArticles(transformToCarouselFormat(data.articles || []));
@@ -176,22 +174,10 @@ export default function HomePage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const filtered = items.filter((item) => {
-      const tipo = (item.tipo || "").toString().toLowerCase();
-      if (tipo !== "descuento") return true;
-      const start = item.fechaInicio || item.startDate || item.start;
-      const end = item.fechaFin || item.endDate || item.end;
-      if (!start || !end) return true;
-      try {
-        const s = new Date(start);
-        s.setHours(0, 0, 0, 0);
-        const e = new Date(end);
-        e.setHours(0, 0, 0, 0);
-        return s <= today && today <= e;
-      } catch (err) {
-        return true;
-      }
-    });
+    // El filtrado por vigencia de la oferta se realiza en el backend
+    // (getActiveDiscounts). Aquí dejamos pasar los items tal como vienen
+    // desde la API para evitar duplicar lógica y problemas de timezone.
+    const filtered = Array.isArray(items) ? items : [];
 
     return filtered.map((item) => ({
       id: item.IDContenido,

@@ -373,7 +373,6 @@ export async function upload(req, res) {
           thumbnail,
           `${folder}/thumbnails`
         );
-        // Keep thumbnail as separate content record; do not replace main content with thumbnail
         thumbnailId = await createContent({
           nombre: sanitized.nombre,
           descripcion: `Miniatura de ${sanitized.nombre}`,
@@ -381,11 +380,8 @@ export async function upload(req, res) {
           IDMultimedia: thumbnailKey,
           tipoMembresia: roleNames.join(", "),
         });
-
-        // Assign thumbnail to same privileges
         await assignContentToPrivileges(thumbnailId, allPrivilegeIds);
       } catch (thumbError) {
-        // Continue even if thumbnail fails
         console.error("Thumbnail error:", thumbError);
       }
     }

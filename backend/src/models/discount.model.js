@@ -24,7 +24,10 @@ export async function getActiveDiscounts(membershipType = null) {
       c.fechaInicio,
       c.fechaFin,
       c.createdAt,
-      t.IDMultimedia as thumbnailMultimedia
+      CASE 
+        WHEN c.tipo = 'descuento' AND t.IDMultimedia IS NULL THEN c.IDMultimedia
+        ELSE t.IDMultimedia
+      END as thumbnailMultimedia
     FROM contenido c
     LEFT JOIN contenido t 
       ON t.nombre = c.nombre
@@ -35,8 +38,8 @@ export async function getActiveDiscounts(membershipType = null) {
     WHERE c.tipo = 'descuento'
       AND c.eliminado = 0
       AND c.deletedAt IS NULL
-      AND DATE(c.fechaInicio) <= CURDATE()
-      AND DATE(c.fechaFin) >= CURDATE()
+      AND c.fechaInicio <= NOW()
+      AND c.fechaFin >= NOW()
   `;
 
   const params = [];

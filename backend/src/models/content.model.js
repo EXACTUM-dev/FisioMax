@@ -35,7 +35,10 @@ export async function getContentById(contentId) {
       c.tipo,
       c.tipoMembresia,
       c.createdAt,
-      t.IDMultimedia as thumbnailMultimedia
+      CASE 
+        WHEN c.tipo = 'descuento' AND t.IDMultimedia IS NULL THEN c.IDMultimedia
+        ELSE t.IDMultimedia
+      END as thumbnailMultimedia
     FROM contenido c
     LEFT JOIN contenido t ON t.nombre = c.nombre
                           AND t.eliminado = 0
@@ -139,7 +142,10 @@ export async function getAvailableContent(
       c.fechaInicio,
       c.fechaFin,
       c.createdAt,
-      t.IDMultimedia as thumbnailMultimedia
+      CASE 
+        WHEN c.tipo = 'descuento' AND t.IDMultimedia IS NULL THEN c.IDMultimedia
+        ELSE t.IDMultimedia
+      END as thumbnailMultimedia
     FROM contenido c
     LEFT JOIN contenido t 
       ON t.nombre = c.nombre
@@ -156,15 +162,37 @@ export async function getAvailableContent(
   `;
 
   try {
+    // Apply discount date filtering: ensure that any row with tipo='descuento'
+    // is only returned when its fechaInicio/fechaFin includes now.
+    const discountDateClause = `
+      AND (
+        c.tipo != 'descuento'
+        OR (c.fechaInicio <= NOW() AND c.fechaFin >= NOW())
+      )
+    `;
+
+    // Construct final queries by appending the date clause to the WHERE section
+    // We append it before ORDER BY / LIMIT to ensure it's part of the filtering
+    const finalCountQuery = countQuery + discountDateClause;
+    
+    // For content query, we need to insert it before ORDER BY
+    // The original contentQuery ends with ${orderBy} LIMIT ? OFFSET ?
+    // So we can just inject it before the ORDER BY clause
+    const finalContentQuery = contentQuery.replace(
+      "ORDER BY", 
+      `${discountDateClause} ORDER BY`
+    );
+
     // For count query, we need the same params except limit/offset
     const countParams = searchFilter ? [...params] : params;
-    const [[{ total }]] = await db.query(countQuery, countParams);
+    const [[{ total }]] = await db.query(finalCountQuery, countParams);
 
     // For content query, add limit and offset at the end
     const contentParams = searchFilter
       ? [...params, limit, offset]
       : [...params, limit, offset];
-    const [rows] = await db.query(contentQuery, contentParams);
+      
+    const [rows] = await db.query(finalContentQuery, contentParams);
 
     return {
       content: rows,
@@ -262,15 +290,25 @@ export async function getActiveDiscounts() {
       c.tipoMembresia,
       c.fechaInicio,
       c.fechaFin,
-      c.createdAt
+      c.createdAt,
+      CASE 
+        WHEN c.tipo = 'descuento' AND t.IDMultimedia IS NULL THEN c.IDMultimedia
+        ELSE t.IDMultimedia
+      END as thumbnailMultimedia
     FROM contenido c
+    LEFT JOIN contenido t 
+      ON t.nombre = c.nombre
+      AND t.tipo = 'imagen'
+      AND t.tipoMembresia = c.tipoMembresia
+      AND t.eliminado = 0
+      AND t.deletedAt IS NULL
     WHERE c.tipo = 'descuento'
       AND c.eliminado = 0
       AND DATE(c.fechaInicio) <= CURDATE()
       AND DATE(c.fechaFin) >= CURDATE()
     ORDER BY c.createdAt DESC
   `;
-  const [rows] = await dbPool.query(sql);
+  const [rows] = await db.query(sql);
   return rows;
 }
 

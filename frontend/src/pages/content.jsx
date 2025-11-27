@@ -137,28 +137,8 @@ export default function ContentPage() {
           setErrorType("error");
           return;
         }
-        // Filter discounts by date before mapping so side lists only include active discounts
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const filteredContent = response.content.filter((item) => {
-          const tipo = (item.tipo || "").toString().toLowerCase();
-          if (tipo !== "descuento") return true;
-          const start = item.fechaInicio || item.startDate || item.start;
-          const end = item.fechaFin || item.endDate || item.end;
-          if (!start || !end) return true;
-          try {
-            const s = new Date(start);
-            s.setHours(0, 0, 0, 0);
-            const e = new Date(end);
-            e.setHours(0, 0, 0, 0);
-            return s <= today && today <= e;
-          } catch (err) {
-            return true;
-          }
-        });
         // Normalize IDs to numbers to avoid type-mismatch filtering (string vs number)
-        const slides = filteredContent
+        const slides = response.content
           .filter(
             (item) => Number(item.IDContenido) !== Number(activeContentId)
           )
