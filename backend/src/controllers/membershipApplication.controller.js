@@ -17,7 +17,7 @@ import MembershipApplication, {
   approveMembershipApplicationById,
   denyMembershipApplication,
 } from "../models/membershipApplication.model.js";
-import { sendEmail } from "../services/emailServices.js";
+import { sendEmail, sendRejectionEmail } from "../services/emailServices.js";
 import S3Service from "../services/s3Service.js";
 import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
 
@@ -183,9 +183,8 @@ export const createMembershipApplication = async (req, res) => {
           html: `
               <h1>¡Atención!</h1>
               <p>Se ha registrado una nueva solicitud de membresía.</p>
-              <p><strong>Nombre:</strong> ${sanitized.firstName || ""} ${
-            sanitized.lastName || ""
-          } ${sanitized.middleName || ""}</p>
+              <p><strong>Nombre:</strong> ${sanitized.firstName || ""} ${sanitized.lastName || ""
+            } ${sanitized.middleName || ""}</p>
               <p><strong>Email:</strong> ${sanitized.email || ""}</p>
             `,
         });
@@ -330,8 +329,34 @@ export async function denyMembership(req, res) {
       maxLengths: { razonRechazo: 1000 },
     });
 
+    // Get membership application details before rejecting
+    const membershipDetails = await getMembershipApplicationById(id);
+
+    if (!membershipDetails) {
+      return res.status(404).json({
+        success: false,
+        message: "Solicitud no encontrada",
+      });
+    }
+
     // Update the application in the database with reason
     await denyMembershipApplication(sanitized.razonRechazo, id);
+
+    // Send rejection email to the applicant
+    try {
+      const nombreCompleto = `${membershipDetails.firstName || ""} ${membershipDetails.lastName || ""}`.trim();
+      const email = membershipDetails.email;
+
+      if (email && nombreCompleto) {
+        await sendRejectionEmail(email, nombreCompleto, sanitized.razonRechazo);
+        console.log(`Correo de rechazo enviado a ${email}`);
+      } else {
+        console.warn(`No se pudo enviar correo de rechazo: email o nombre faltante para ID ${id}`);
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the rejection
+      console.error("Error enviando correo de rechazo:", emailError);
+    }
 
     res.status(200).json({
       success: true,

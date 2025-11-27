@@ -174,3 +174,22 @@ export async function sendEventInvitation(destinatario, nombreMiembro, eventoDat
     }
   );
 }
+
+/**
+ * Sends a membership rejection email
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {string} razonRechazo - Reason for rejection
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
+ */
+export async function sendRejectionEmail(destinatario, nombreMiembro, razonRechazo) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.RECHAZO,
+    {
+      NOMBRE_MIEMBRO: nombreMiembro,
+      RAZON_RECHAZO: razonRechazo
+    }
+  );
+}
