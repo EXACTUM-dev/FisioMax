@@ -229,13 +229,20 @@ function startNotificationsCron() {
 /**
  * Check for new discounts and send notifications to eligible members
  * @async
+ * @param {Object|null} specificDiscount - Optional specific discount to notify about immediately
  * @returns {Promise<void>}
  */
-async function checkAndNotifyNewDiscounts() {
+async function checkAndNotifyNewDiscounts(specificDiscount = null) {
   try {
     console.log("[Discount Notifications] Checking for new discounts...");
 
-    const discounts = await getDiscountsStartingToday();
+    let discounts = [];
+    if (specificDiscount) {
+      discounts = [specificDiscount];
+      console.log(`[Discount Notifications] Processing specific discount: ${specificDiscount.nombre}`);
+    } else {
+      discounts = await getDiscountsStartingToday();
+    }
 
     if (discounts.length === 0) {
       console.log("[Discount Notifications] No new discounts starting today");

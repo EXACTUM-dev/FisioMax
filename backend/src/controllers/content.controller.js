@@ -27,6 +27,7 @@ import S3Service from "../services/s3Service.js";
 import { sendWelcomeEmail } from "../services/emailServices.js";
 import { sanitizeContentInput } from "../utils/sanitization.js";
 import { updateContentDates } from "../models/contentDates.model.js";
+import { checkAndNotifyNewDiscounts } from "../services/notificationCronJob.js";
 import path from "path";
 import crypto from "crypto";
 
@@ -356,6 +357,26 @@ export async function upload(req, res) {
 
       // Assign content to all collected privileges in accede table
       await assignContentToPrivileges(contentId, allPrivilegeIds);
+
+      // Notify users if content is a discount
+      if (sanitized.tipo.toLowerCase() === "descuento") {
+        // Get today's date in Mexico City timezone
+        const today = new Date().toLocaleDateString("en-CA", {
+          timeZone: "America/Mexico_City",
+        });
+
+        // Only notify if the discount starts today
+        if (fechaInicio === today) {
+          // Run notification in background to not block response
+          checkAndNotifyNewDiscounts({
+            IDContenido: contentId,
+            nombre: sanitized.nombre,
+            descripcion: sanitized.descripcion,
+            tipoMembresia: roleNames.join(", "),
+            fechaFin: fechaFin
+          }).catch(err => console.error("Error triggering discount notification:", err));
+        }
+      }
     } catch (dbError) {
       console.error("Database error details:", dbError);
       return res.status(500).json({
