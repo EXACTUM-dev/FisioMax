@@ -26,13 +26,13 @@ app.use(
   cors({
     origin: allowedOrigins
       ? (origin, callback) => {
-          // Allow non-browser requests (no Origin header)
-          if (!origin) return callback(null, true);
-          if (allowedOrigins.indexOf(origin) !== -1)
-            return callback(null, true);
-          // Explicitly disallow other origins
-          return callback(null, false);
-        }
+        // Allow non-browser requests (no Origin header)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1)
+          return callback(null, true);
+        // Explicitly disallow other origins
+        return callback(null, false);
+      }
       : true,
     credentials: true,
   })
@@ -87,7 +87,7 @@ app.use((req, res, next) => next());
 app.use((req, res, next) => {
   try {
     if (typeof global.__morganSpy === "function") global.__morganSpy(req);
-  } catch (e) {}
+  } catch (e) { }
   next();
 });
 
@@ -167,7 +167,7 @@ app.post(
       const resp = res.status(413).json({ error: "Payload demasiado grande" });
       try {
         if (typeof req.resume === "function") req.resume();
-      } catch (e) {}
+      } catch (e) { }
       return resp;
     }
 
@@ -186,7 +186,7 @@ app.post(
             .json({ error: "Payload demasiado grande" });
           try {
             if (typeof req.resume === "function") req.resume();
-          } catch (e) {}
+          } catch (e) { }
           return resp;
         }
       }
@@ -240,7 +240,6 @@ app.use((err, req, res, next) => {
   }
   if (res.headersSent) return next(err);
   // Log internal errors for the logging test
-  if (err) console.error("Error interno:", err);
   return res.status(500).json({
     error: "Error interno del servidor",
     timestamp: new Date().toISOString(),

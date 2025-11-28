@@ -29,7 +29,7 @@ const NotificationBell = () => {
   const fetchMysqlUserId = async () => {
     try {
       const token = await getToken();
-    
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/auth/profile`,
         {
@@ -39,16 +39,16 @@ const NotificationBell = () => {
           }
         }
       );
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         if (data.success && data.user && data.user.id) {
           setMysqlUserId(data.user.id);
         }
       }
     } catch (error) {
-      console.error('Error fetching user ID:', error);
+      return error;
     }
   };
 
@@ -122,11 +122,11 @@ const NotificationBell = () => {
     if (!mysqlUserId) {
       return;
     }
-    
+
     setLoading(true);
     try {
       const token = await getToken();
-      
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/notifications?IDUsuario=${mysqlUserId}&esRevisada=0`,
         {
@@ -139,7 +139,7 @@ const NotificationBell = () => {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         if (data.success && data.data && data.data.length > 0) {
           setNotifications(formatNotifications(data.data));
         } else {
@@ -149,7 +149,6 @@ const NotificationBell = () => {
         setNotifications([]);
       }
     } catch (error) {
-      console.error('Error loading notifications:', error);
       setNotifications([]);
     } finally {
       setLoading(false);
@@ -163,10 +162,10 @@ const NotificationBell = () => {
    */
   const formatNotifications = (notifs) => {
     if (!notifs || !Array.isArray(notifs)) return [];
-    
+
     return notifs.map(notif => {
-      const metadata = typeof notif.metadata === 'string' 
-        ? JSON.parse(notif.metadata) 
+      const metadata = typeof notif.metadata === 'string'
+        ? JSON.parse(notif.metadata)
         : notif.metadata || {};
 
       return {
@@ -189,7 +188,7 @@ const NotificationBell = () => {
   const getPriorityIconBg = (priority) => {
     const colors = {
       urgent: 'bg-red-500',
-      high: 'bg-orange-500', 
+      high: 'bg-orange-500',
       medium: 'bg-yellow-500',
       low: 'bg-blue-500'
     };
@@ -204,9 +203,9 @@ const NotificationBell = () => {
   const markAsRead = async (notificationID) => {
     try {
       const token = await getToken();
-      
+
       const url = `${import.meta.env.VITE_API_URL}/notifications/${notificationID}`;
-      
+
       const response = await fetch(url, {
         method: 'PATCH',
         headers: {
@@ -215,16 +214,16 @@ const NotificationBell = () => {
         },
         body: JSON.stringify({ esRevisada: 1 })
       });
-      
+
       const data = await response.json();
 
       if (response.ok) {
         setNotifications(prev => prev.filter(n => n.notificationID !== notificationID));
       } else {
-        console.error('Error en respuesta:', data);
+
       }
     } catch (error) {
-      console.error('Error marking as read:', error);
+
     }
   };
 
@@ -232,7 +231,7 @@ const NotificationBell = () => {
 
   const handleNotificationClick = (notification) => {
     markAsRead(notification.notificationID);
-    
+
     if (notification.metadata?.redirectUrl) {
       navigate(notification.metadata.redirectUrl);
     } else {
@@ -329,20 +328,20 @@ const NotificationBell = () => {
         aria-label="Notificaciones"
       >
         {/* Bell icon */}
-        <svg 
-          className="w-6 h-6 text-gray-700" 
-          fill="none" 
-          stroke="currentColor" 
+        <svg
+          className="w-6 h-6 text-gray-700"
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
           />
         </svg>
-        
+
         {/* Badge with count */}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
