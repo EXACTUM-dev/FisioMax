@@ -308,7 +308,7 @@ const MEMBERSHIP_PRICES = {
   'Licenciado en Formación': 1100,
   'Licenciado Especializado': 1500,
   'Fisioterapeuta Extranjero': 1800,
-  'básica': 5,
+  'Admin': 5,
   'Personal de la salud': 1100,
 };
 
@@ -344,7 +344,7 @@ export const approveMembership = async (req, res) => {
       const nombreCompleto = membershipDetails.nombreCompleto ||
         `${membershipDetails.nombres || ""} ${membershipDetails.apellidoP || ""} ${membershipDetails.apellidoM || ""}`.trim();
       const email = membershipDetails.correo;
-      const membershipType = membershipDetails.membershipType || 'básica';
+      const membershipType = membershipDetails.membershipType || 'Admin';
       const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
       if (email && nombreCompleto) {

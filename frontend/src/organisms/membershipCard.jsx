@@ -20,7 +20,7 @@ const MEMBERSHIP_PRICES = {
   'Licenciado en Formación': 1100,
   'Licenciado Especializado': 1500,
   'Fisioterapeuta Extranjero': 1100,
-  'básica': 5,
+  'Admin': 5,
   'Personal de la salud': 1100,
 };
 /**
@@ -170,7 +170,7 @@ export default function MembershipCard({
     try {
       setIsProcessingPayment(true);
 
-      const membershipType = data.membershipType || 'básica';
+      const membershipType = data.membershipType || 'Admin';
       const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
       // Create payment preference and redirect to Mercado Pago
@@ -200,7 +200,7 @@ export default function MembershipCard({
     { value: "Licenciado Especializado", label: "Licenciado Especializado" },
     { value: "Fisioterapeuta Extranjero", label: "Fisioterapeuta Extranjero" },
     { value: "Personal de la Salud", label: "Personal de la Salud" },
-    { value: "básica", label: "Básica" },
+    { value: "Admin", label: "Admin" },
   ];
 
   // Options for payment status dropdown

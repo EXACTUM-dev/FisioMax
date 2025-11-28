@@ -140,6 +140,7 @@ export default function AppHeader({
         <div className="absolute inset-0 bg-white flex items-center px-3 z-40">
           <SearchBar
             value={searchValue}
+            onChange={onSearchChange}
             placeholder={searchPlaceholder}
             expandable={false}
             onKeyDown={handleSearchKeyDown}

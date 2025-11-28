@@ -29,7 +29,7 @@ FisioMax es una aplicación web diseñada para modernizar la interacción entre 
 ## Características Principales
 
 *   **Gestión de Usuarios**: Registro e inicio de sesión seguro mediante Clerk.
-*   **Membresías y Pagos**: Integración completa con Mercado Pago para suscripciones (Básica, Premium, Empresarial).
+*   **Membresías y Pagos**: Integración completa con Mercado Pago para suscripciones (Admin).
 *   **Contenido Multimedia**: Visualización de videos y guías de ejercicios fisioterapéuticos.
 *   **Perfil de Usuario**: Historial de pagos, descarga de comprobantes y gestión de cuenta.
 *   **Panel Administrativo**: Visualización de usuarios y estados de pago (Role-Based Access Control).

@@ -30,7 +30,29 @@ export default function CertificateCard({ userId }) {
       try {
         const token = await getToken();
         const url = await getMembershipCertificate(userId, token);
-        if (mounted) setCertificateUrl(url);
+        
+        if (url) {
+          try {
+            // Verify if the file actually exists to avoid showing S3 XML error
+            const response = await fetch(url, { method: 'HEAD' });
+            if (response.ok) {
+              if (mounted) setCertificateUrl(url);
+            } else {
+              // If 404 (NoSuchKey) or other error, treat as no certificate
+              console.warn("Certificate file not found (404/403)");
+              if (mounted) setCertificateUrl(null);
+            }
+          } catch (e) {
+            // If verification fails (e.g. CORS), we try to show it anyway
+            // or we could assume it failed. 
+            // Since the user reported NoSuchKey, that's a 404 which doesn't throw.
+            // If fetch throws, it's likely a network/CORS issue.
+            console.warn("Error verifying certificate:", e);
+            if (mounted) setCertificateUrl(url);
+          }
+        } else {
+          if (mounted) setCertificateUrl(null);
+        }
       } catch (err) {
         if (mounted) setError(err.message || "Error al cargar certificado");
       } finally {

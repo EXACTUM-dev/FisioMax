@@ -35,7 +35,7 @@ const MEMBERSHIP_PRICES = {
   "Licenciado en Formación": 1100,
   "Licenciado Especializado": 1500,
   "Fisioterapeuta Extranjero": 1100,
-  básica: 5,
+  'Admin': 5,
   "Personal de la salud": 1100,
 };
 
@@ -115,7 +115,7 @@ async function checkExpiringMemberships() {
         // Generate Mercado Pago payment link
         let linkRenovacion = "";
         try {
-          const membershipType = tipo || "básica";
+          const membershipType = tipo || "Admin";
           const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
           const preference = await PaymentService.createPaymentPreference({
