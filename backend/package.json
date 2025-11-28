@@ -21,6 +21,8 @@
         "test:security:integration": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/integration-security.test.js",
         "test:security:routes": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/routes-security.test.js",
         "test:security:server": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/security/server-routes.test.js",
+        "test:services": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/services/",
+        "test:services:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --watch tests/services/",
         "test:coverage": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
         "test:ci": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --ci --coverage --watchAll=false"
     },
