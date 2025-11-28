@@ -251,7 +251,7 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
                   />
                 </svg>
               </div>
-              <Title2 className="mb-4">No Puedes Acceder a la Aplicación</Title2>
+              <Title2 className="mb-4">Aun falta un paso más</Title2>
               <p className="text-lg mb-4 font-semibold" style={{ color: '#CAD00F' }}>
                 Pago de Membresía Pendiente
               </p>
@@ -261,7 +261,7 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
               </p>
               <div className="bg-orange-50 border border-orange-200 rounded-md p-4 mb-6">
                 <p className="text-sm text-orange-800">
-                  <strong>Acción requerida:</strong> Contacta al administrador para obtener información sobre cómo realizar tu pago de membresía.
+                  <strong>Nota:</strong> Revisa tu buzón de correo electrónico para saber como realizar tu pago.
                 </p>
               </div>
               <Button

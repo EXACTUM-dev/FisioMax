@@ -854,7 +854,8 @@ export async function createUserWithClerkId(userData) {
 
 /**
  * Soft-deletes a user (logical deletion).
- * Marks the user as deleted by setting `eliminado` to 1 and `deletedAt` to the current timestamp.
+ * Marks the user as deleted by setting `eliminado` to 1, `deletedAt` to the current timestamp,
+ * and clears the `clerkID` to allow it to be reused by other users.
  * @async
  * @param {number|string} userId - The ID of the user to delete
  * @returns {Promise<number>} Number of affected rows (1 if successful, 0 if user not found)
@@ -863,7 +864,7 @@ export async function createUserWithClerkId(userData) {
 export async function markUserDeleted(userId) {
   const [r] = await dbPool.query(
     `UPDATE usuario
-        SET eliminado = 1, deletedAt = NOW()
+        SET eliminado = 1, deletedAt = NOW(), clerkID = NULL
       WHERE IDUsuario = ?
         AND deletedAt IS NULL
         AND (eliminado = 0 OR eliminado IS NULL)`,
