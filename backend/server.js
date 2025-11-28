@@ -33,7 +33,7 @@ import statisticsRoutes from "./src/routes/statistics.routes.js";
 
 // Initialize Express application
 const app = express();
-
+app.set('trust proxy', 1);
 //---------------------------
 // SECURITY MIDDLEWARE
 //---------------------------
