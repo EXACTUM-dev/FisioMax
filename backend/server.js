@@ -35,6 +35,16 @@ import statisticsRoutes from "./src/routes/statistics.routes.js";
 const app = express();
 
 //---------------------------
+// TRUST PROXY CONFIGURATION
+//---------------------------
+/**
+ * Configure Express to trust the first proxy.
+ * Required when behind reverse proxies (Nginx, Apache, load balancers).
+ * Allows express-rate-limit to correctly identify client IPs.
+ */
+app.set('trust proxy', 1);
+
+//---------------------------
 // SECURITY MIDDLEWARE
 //---------------------------
 /**
