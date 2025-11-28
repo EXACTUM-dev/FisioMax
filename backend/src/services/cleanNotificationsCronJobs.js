@@ -35,7 +35,7 @@ async function cleanupOldNotifications() {
 
     }
   } catch (error) {
-    console.error('Error en limpieza de notificaciones:', error);
+    return error;
   }
 }
 

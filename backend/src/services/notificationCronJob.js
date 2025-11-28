@@ -110,8 +110,6 @@ async function checkExpiringMemberships() {
           const membershipType = tipo || 'básica';
           const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
-          console.log(`   → Generando link de pago para membresía tipo: ${membershipType}, monto: $${amount} MXN`);
-
           const preference = await PaymentService.createPaymentPreference({
             membershipId: IDMembresia,
             membershipType,
@@ -120,9 +118,7 @@ async function checkExpiringMemberships() {
           });
 
           linkRenovacion = preference.init_point;
-          console.log(`   ✓ Link de pago generado: ${linkRenovacion}`);
         } catch (paymentError) {
-          console.error(`   ✗ Error al generar link de pago:`, paymentError.message);
           // Continue sending email without payment link
         }
 
@@ -136,26 +132,22 @@ async function checkExpiringMemberships() {
         );
 
         if (emailResult.success) {
-          console.log(`   ✓ Correo de renovación enviado a ${correo}`);
           emailsSent++;
         } else {
-          console.error(`   ✗ Error al enviar correo a ${correo}:`, emailResult.error);
           emailsFailed++;
         }
       } catch (emailError) {
-        console.error(`   ✗ Error al procesar/enviar correo para usuario ${IDUsuario}:`, emailError.message);
         emailsFailed++;
       }
     }
-
-    console.log(`\nProceso completado:`);
-    console.log(`- Notificaciones enviadas: ${notificationsSent}`);
-    console.log(`- Notificaciones omitidas (ya enviadas): ${notificationsSkipped}`);
-    console.log(`- Correos enviados: ${emailsSent}`);
-    console.log(`- Correos fallidos: ${emailsFailed}`);
-
+    return {
+      notificationsSent,
+      notificationsSkipped,
+      emailsSent,
+      emailsFailed
+    };
   } catch (error) {
-    console.error('Error en el Job de notificaciones:', error);
+    return error;
   }
 }
 

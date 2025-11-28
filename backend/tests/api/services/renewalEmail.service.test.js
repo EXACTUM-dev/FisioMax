@@ -51,7 +51,7 @@ jest.unstable_mockModule('../../src/services/emailServices.js', () => ({
 }));
 
 // Import the service after mocking
-const { checkExpiringMemberships } = await import('../../src/services/notificationCronJob.js');
+const { checkExpiringMemberships } = await import('../../../src/services/notificationCronJob.js');
 
 describe('Renewal Email Service Tests', () => {
     let consoleLogSpy;
