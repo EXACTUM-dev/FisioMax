@@ -150,7 +150,7 @@ export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVenc
     nombreMiembro,
     TEMPLATE_IDS.RENOVACION,
     {
-      NOMBRE_MIEMBRO: nombreMiembro,
+      NOMBRE: nombreMiembro,
       FECHA_VENCIMIENTO: fechaVencimiento,
       DIAS_RESTANTES: diasRestantes,
       LINK_RENOVACION: linkRenovacion,

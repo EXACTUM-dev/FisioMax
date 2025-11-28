@@ -6,8 +6,6 @@
 
 import NotificationModel from "../models/notifications.model.js";
 import { getUserByClerkId } from "../models/users.model.js";
-import NotificationModel from '../models/notifications.model.js';
-import { getUserByClerkId } from '../models/users.model.js';
 
 class NotificationController {
   /**
@@ -23,12 +21,8 @@ class NotificationController {
       const notifications = await NotificationModel.getByUser(userID, {
         isRead,
       });
-      const notifications = await NotificationModel.getByUser(userID, {
-        isRead
-      });
 
       const formattedNotifications = notifications.map((notif) => ({
-      const formattedNotifications = notifications.map(notif => ({
         ...notif,
         metadata: typeof notif.metadata === 'string'
           ? JSON.parse(notif.metadata)

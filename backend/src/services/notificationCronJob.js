@@ -183,7 +183,6 @@ function startNotificationsCron() {
     }
   );
 
-  console.log("Cron Job de notificaciones iniciado");
   console.log(`Programado: ${scheduleExpression} `);
 }
 
