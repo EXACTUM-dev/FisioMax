@@ -268,8 +268,9 @@ async function checkAndNotifyNewDiscounts(specificDiscount = null) {
         );
 
         // Build SQL with ORed LIKE conditions for LOWER(m.tipo)
+        // Using TRIM to handle extra spaces and ensuring case-insensitivity
         const likeConditions = parsedTypesLower
-          .map(() => `LOWER(m.tipo) LIKE ?`)
+          .map(() => `TRIM(LOWER(m.tipo)) LIKE ?`)
           .join(" OR ");
 
         // Join to membresia but evaluate tipo/aceptado/estatusPago in WHERE
@@ -285,6 +286,11 @@ async function checkAndNotifyNewDiscounts(specificDiscount = null) {
         `;
 
         const queryParams = [...likePatterns];
+
+        console.log(`[Discount Debug] Executing SQL Query for discount ${IDContenido}`);
+        console.log(`[Discount Debug] Query: ${query.replace(/\s+/g, ' ').trim()}`);
+        console.log(`[Discount Debug] Params: ${JSON.stringify(queryParams)}`);
+
         const [users] = await db.query(query, queryParams);
 
         if (Array.isArray(users) && users.length > 0) {
