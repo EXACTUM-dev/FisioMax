@@ -8,7 +8,7 @@ export default {
   testPathIgnorePatterns: ["<rootDir>/tests/**/_helpers/"],
   testMatch: ["**/tests/**/*.js", "**/?(*.)+(spec|test).js"],
   setupFiles: ["./tests/setup.js"],
-  // Configurar diferentes setups para diferentes tipos de pruebas
+  // Configure different setups for different types of tests
   projects: [
     {
       displayName: "unit",
