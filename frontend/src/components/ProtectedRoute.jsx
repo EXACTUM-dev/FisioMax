@@ -5,12 +5,12 @@
  */
 
 import React from 'react';
-import {Navigate} from 'react-router-dom';
-import {SignedIn, SignedOut, useUser, useClerk} from '@clerk/clerk-react';
-import {useDbUser} from '../hooks/useDbUser';
+import { Navigate } from 'react-router-dom';
+import { SignedIn, SignedOut, useUser, useClerk } from '@clerk/clerk-react';
+import { useDbUser } from '../hooks/useDbUser';
 import Button from '../atoms/button';
 import Modal from '../molecules/modal';
-import {Title2} from '../atoms/typography';
+import { Title2 } from '../atoms/typography';
 
 /**
  * Component that protects routes by requiring:
@@ -24,10 +24,10 @@ import {Title2} from '../atoms/typography';
  * @param {Array<string>} props.allowedRoles - List of roles that grant access.
  * @return {React.Element} The protected route component.
  */
-export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles = []}) {
-  const {isLoaded: isClerkLoaded} = useUser();
-  const {isLoading: isDbLoading, existsInDB, userData, error} = useDbUser();
-  const {signOut} = useClerk();
+export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles = [] }) {
+  const { isLoaded: isClerkLoaded } = useUser();
+  const { isLoading: isDbLoading, existsInDB, userData, error } = useDbUser();
+  const { signOut } = useClerk();
 
   /**
    * Handles user sign out and redirects to login page.
@@ -50,26 +50,26 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
   const paymentStatus = userData?.membershipPaymentStatus;
   const membershipRegisteredAt = userData?.membershipRegisteredAt;
   const membershipExpiresAt = userData?.membershipExpiresAt;
-  
+
   // Check if user has required privileges
   const hasPrivileges = allowedPrivileges.length === 0 || allowedPrivileges.some(valor => userPrivileges?.includes(valor));
-  
+
   // Check if user has required role
   const hasRole = allowedRoles.length === 0 || allowedRoles.includes(userRole);
-  
+
   // Check if payment is completed AND membership is within valid date range
   const now = new Date();
   const registeredDate = membershipRegisteredAt ? new Date(membershipRegisteredAt) : null;
   const expiresDate = membershipExpiresAt ? new Date(membershipExpiresAt) : null;
-  
+
   // Add 1 day to expiration date since the expiration date is the last valid day
   const effectiveExpiresDate = expiresDate ? new Date(expiresDate.getTime() + 24 * 60 * 60 * 1000) : null;
-  
-  const isWithinMembershipPeriod = registeredDate && effectiveExpiresDate && 
+
+  const isWithinMembershipPeriod = registeredDate && effectiveExpiresDate &&
     now >= registeredDate && now < effectiveExpiresDate;
-  
+
   const hasValidPayment = paymentStatus === 'Pagado' && isWithinMembershipPeriod;
-  
+
   // User has permission if they have the required role AND privileges AND their membership is accepted
   // Payment validation is separate to show specific messages
   const hasBasicPermission = userRole !== undefined && hasRole && hasPrivileges && userState === 1;
@@ -78,16 +78,16 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
   const isRejected = existsInDB && userState === 0;
 
   const isPending = existsInDB && (userState === null || userState === undefined);
-  
+
   // Membership expired - payment was made but membership period ended (after expiration date + 1 day)
   const isMembershipExpired = existsInDB && userState === 1 && paymentStatus === 'Pagado' && effectiveExpiresDate && now >= effectiveExpiresDate;
-  
+
   // Membership not started yet
   const isMembershipNotStarted = existsInDB && userState === 1 && paymentStatus === 'Pagado' && registeredDate && now < registeredDate;
-  
+
   // Payment pending - membership accepted but not paid or expired
   const isPaymentPending = existsInDB && userState === 1 && (paymentStatus !== 'Pagado' || !isWithinMembershipPeriod) && !isMembershipExpired && !isMembershipNotStarted;
-  
+
   return (
     <>
       {/* Redirect to login if not authenticated in Clerk */}
@@ -108,8 +108,8 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
         )}
 
         {/* Display unauthorized message if not in DB */}
-        {!isDbLoading && isClerkLoaded && !existsInDB && (
-          <Modal open={true} onClose={() => {}} size="md" className="p-6" showCloseButton={false}>
+        {!isDbLoading && isClerkLoaded && !isPending && !existsInDB && (
+          <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
             <div className="text-center">
               <div className="flex justify-center items-center mb-4">
                 <svg
@@ -150,7 +150,7 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
         )}
         {/* Request pending approval */}
         {!isDbLoading && isClerkLoaded && isPending && (
-          <Modal open={true} onClose={() => {}} size="md" className="p-6" showCloseButton={false}>
+          <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
             <div className="text-center">
               <div className="flex justify-center items-center mb-4">
                 <svg
@@ -191,7 +191,7 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
         )}
         {/* Deny request */}
         {!isDbLoading && isClerkLoaded && isRejected && (
-          <Modal open={true} onClose={() => {}} size="md" className="p-6" showCloseButton={false}>
+          <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
             <div className="text-center">
               <div className="flex justify-center items-center mb-4">
                 <svg
@@ -232,7 +232,7 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
         )}
         {/* Payment pending - membership accepted but not paid */}
         {!isDbLoading && isClerkLoaded && isPaymentPending && (
-          <Modal open={true} onClose={() => {}} size="md" className="p-6" showCloseButton={false}>
+          <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
             <div className="text-center">
               <div className="flex justify-center items-center mb-4">
                 <svg
@@ -256,7 +256,7 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
                 Pago de Membresía Pendiente
               </p>
               <p className="text-base mb-6">
-                Tu solicitud de membresía ha sido aprobada, pero aún no se ha completado el pago. 
+                Tu solicitud de membresía ha sido aprobada, pero aún no se ha completado el pago.
                 Para acceder al sistema es necesario completar el proceso de pago.
               </p>
               <div className="bg-orange-50 border border-orange-200 rounded-md p-4 mb-6">
@@ -273,10 +273,10 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
             </div>
           </Modal>
         )}
-        
+
         {/* Membership expired */}
         {!isDbLoading && isClerkLoaded && isMembershipExpired && (
-          <Modal open={true} onClose={() => {}} size="md" className="p-6" showCloseButton={false}>
+          <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
             <div className="text-center">
               <div className="flex justify-center items-center mb-4">
                 <svg
@@ -326,10 +326,10 @@ export function ProtectedRoute({children, allowedPrivileges = [], allowedRoles =
             </div>
           </Modal>
         )}
-        
+
         {/* Membership not started yet */}
         {!isDbLoading && isClerkLoaded && isMembershipNotStarted && (
-          <Modal open={true} onClose={() => {}} size="md" className="p-6" showCloseButton={false}>
+          <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
             <div className="text-center">
               <div className="flex justify-center items-center mb-4">
                 <svg

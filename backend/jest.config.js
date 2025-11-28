@@ -8,15 +8,14 @@ export default {
   testPathIgnorePatterns: ["<rootDir>/tests/**/_helpers/"],
   testMatch: ["**/tests/**/*.js", "**/?(*.)+(spec|test).js"],
   setupFiles: ["./tests/setup.js"],
-  // Configuración para pruebas de integración
-  testTimeout: 30000,
-  // Configurar diferentes setups para diferentes tipos de pruebas
+  // Configure different setups for different types of tests
   projects: [
     {
       displayName: "unit",
       testMatch: [
         "<rootDir>/tests/api/**/*.js",
         "<rootDir>/tests/security/**/*.js",
+        "<rootDir>/tests/services/**/*.js",
       ],
       setupFiles: ["./tests/setup.js"],
       testEnvironment: "node",

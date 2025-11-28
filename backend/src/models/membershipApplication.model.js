@@ -584,25 +584,6 @@ export async function denyMembershipApplication(razonRechazo, id) {
 }
 
 /**
- * Get the maximum noAfiliado from the database.
- * @async
- * @returns {Promise<number>} The maximum noAfiliado found, or 0 if none.
- */
-export const getMaxNoAfiliado = async () => {
-  const conn = await db.getConnection();
-  try {
-    const [rows] = await conn.execute(
-      `SELECT MAX(CAST(noAfiliado AS UNSIGNED)) as maxNoAfiliado FROM membresia WHERE deletedAt IS NULL`
-    );
-    return rows[0]?.maxNoAfiliado || 0;
-  } catch (error) {
-    throw error;
-  } finally {
-    conn.release();
-  }
-};
-
-/**
  * Get expired memberships.
  * @async
  * @param {string} daysArray - Days to send notifications
@@ -640,5 +621,24 @@ export async function getExpiringMemberships(daysArray = [30, 15, 7, 3, 1]) {
     throw new Error(`Error al obtener membresías: ${error.message}`);
   }
 }
+
+/**
+ * Get the maximum noAfiliado from the database.
+ * @async
+ * @returns {Promise<number>} The maximum noAfiliado found, or 0 if none.
+ */
+export const getMaxNoAfiliado = async () => {
+  const conn = await db.getConnection();
+  try {
+    const [rows] = await conn.execute(
+      `SELECT MAX(CAST(noAfiliado AS UNSIGNED)) as maxNoAfiliado FROM membresia WHERE deletedAt IS NULL`
+    );
+    return rows[0]?.maxNoAfiliado || 0;
+  } catch (error) {
+    throw error;
+  } finally {
+    conn.release();
+  }
+};
 
 export default MembershipApplication;

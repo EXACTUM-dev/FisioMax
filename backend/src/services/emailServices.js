@@ -102,18 +102,17 @@ export async function sendBrevoEmailWithTemplate(
 
   try {
     const response = await apiInstance.sendTransacEmail(emailData);
-    console.log("Email enviado con plantilla:", response);
     return { success: true, messageId: response.messageId };
   } catch (error) {
-    console.error("Error enviando email:", error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * Sends a welcome email with certificate attachment
+ * Sends an email using a Brevo template
  * @param {string} destinatario - Recipient email address
- * @param {string} nombreMiembro - Member's name
+ * @param {string} nombreMiembro - Recipient's name
+ * @param {number} templateId - Brevo template ID
  * @param {Object} pdfBytes - PDF certificate data
  * @param {Buffer} pdfBytes.buffer - PDF file buffer
  * @param {string} [pdfBytes.filename] - Optional custom filename for the PDF
@@ -145,13 +144,7 @@ export async function sendWelcomeEmail(destinatario, nombreMiembro, pdfBytes) {
  * @param {string} [linkRenovacion=''] - Renewal link
  * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
  */
-export async function sendRenewalReminder(
-  destinatario,
-  nombreMiembro,
-  fechaVencimiento,
-  diasRestantes,
-  linkRenovacion = ""
-) {
+export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVencimiento, diasRestantes, linkRenovacion = '') {
   return sendBrevoEmailWithTemplate(
     destinatario,
     nombreMiembro,
@@ -234,3 +227,46 @@ export async function sendDiscountNotification(
 
 // Export FRONTEND_URL for use in other modules
 export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
+
+/**
+ * Sends a membership rejection email
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {string} razonRechazo - Reason for rejection
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
+ */
+export async function sendRejectionEmail(destinatario, nombreMiembro, razonRechazo) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.RECHAZO,
+    {
+      NOMBRE_MIEMBRO: nombreMiembro,
+      RAZON_RECHAZO: razonRechazo
+    }
+  );
+}
+
+/**
+ * Sends a membership acceptance email with payment link
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {string} tipoMembresia - Membership type
+ * @param {number} monto - Membership amount
+ * @param {string} linkPago - Payment link
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
+ */
+export async function sendAcceptanceEmail(destinatario, nombreMiembro, tipoMembresia, monto, linkPago) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.CONFIRMACION,
+    {
+      NOMBRE_MIEMBRO: nombreMiembro,
+      TIPO_MEMBRESIA: tipoMembresia,
+      MONTO_MEMBRESIA: monto,
+      LINK_PAGO: linkPago
+    }
+  );
+}
