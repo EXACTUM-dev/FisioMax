@@ -240,6 +240,7 @@ app.use((err, req, res, next) => {
   }
   if (res.headersSent) return next(err);
   // Log internal errors for the logging test
+  if (err) console.error("Error interno:", err);
   return res.status(500).json({
     error: "Error interno del servidor",
     timestamp: new Date().toISOString(),

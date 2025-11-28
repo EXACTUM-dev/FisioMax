@@ -18,7 +18,7 @@ const mockCalculatePriority = jest.fn();
 const mockBuildNotificationMessage = jest.fn();
 
 // Mock NotificationController
-jest.unstable_mockModule('../../src/controllers/notifications.controller.js', () => ({
+jest.unstable_mockModule('../../../src/controllers/notifications.controller.js', () => ({
     default: {
         calculatePriority: mockCalculatePriority,
         buildNotificationMessage: mockBuildNotificationMessage,
@@ -26,27 +26,27 @@ jest.unstable_mockModule('../../src/controllers/notifications.controller.js', ()
 }));
 
 // Mock models
-jest.unstable_mockModule('../../src/models/membershipApplication.model.js', () => ({
+jest.unstable_mockModule('../../../src/models/membershipApplication.model.js', () => ({
     getExpiringMemberships: mockGetExpiringMemberships,
 }));
 
-jest.unstable_mockModule('../../src/models/notifications.model.js', () => ({
+jest.unstable_mockModule('../../../src/models/notifications.model.js', () => ({
     existsNotificationToday: mockExistsNotificationToday,
     create: mockCreateNotification,
 }));
 
 // Mock services
-jest.unstable_mockModule('../../src/services/encryptionService.js', () => ({
+jest.unstable_mockModule('../../../src/services/encryptionService.js', () => ({
     decryptFields: mockDecryptFields,
 }));
 
-jest.unstable_mockModule('../../src/services/payment.service.js', () => ({
+jest.unstable_mockModule('../../../src/services/payment.service.js', () => ({
     default: {
         createPaymentPreference: mockCreatePaymentPreference,
     },
 }));
 
-jest.unstable_mockModule('../../src/services/emailServices.js', () => ({
+jest.unstable_mockModule('../../../src/services/emailServices.js', () => ({
     sendRenewalReminder: mockSendRenewalReminder,
 }));
 
@@ -207,12 +207,11 @@ describe('Renewal Email Service Tests', () => {
         test('should handle database errors', async () => {
             mockGetExpiringMemberships.mockRejectedValue(new Error('DB error'));
 
-            await checkExpiringMemberships();
+            const result = await checkExpiringMemberships();
 
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-                'Error en el Job de notificaciones:',
-                expect.any(Error)
-            );
+            // Should return error object
+            expect(result).toBeInstanceOf(Error);
+            expect(result.message).toBe('DB error');
         });
     });
 });
