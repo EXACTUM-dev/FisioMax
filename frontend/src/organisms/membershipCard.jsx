@@ -17,12 +17,12 @@ import FormField from "../molecules/form";
 
 // Membership prices in MXN (per year)
 const MEMBERSHIP_PRICES = {
-  Estudiante: 900,
-  "Licenciado en Formación": 1100,
-  "Licenciado Especializado": 1500,
-  "Fisioterapeuta Extranjero": 1800,
-  "Personal de la Salud": 1300,
-  básica: 5,
+  'Estudiante': 900,
+  'Licenciado en Formación': 1100,
+  'Licenciado Especializado': 1500,
+  'Fisioterapeuta Extranjero': 1100,
+  'básica': 5,
+  'Personal de la salud': 1100,
 };
 /**
  * Displays user's membership information and payment button.
@@ -192,7 +192,7 @@ export default function MembershipCard({
     try {
       setIsProcessingPayment(true);
 
-      const membershipType = data.membershipType || "básica";
+      const membershipType = data.membershipType || 'básica';
       const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
       // Create payment preference and redirect to Mercado Pago
@@ -279,9 +279,7 @@ export default function MembershipCard({
             <div className="mt-4">
               <Button
                 size="sm"
-                label={
-                  isProcessingPayment ? "Procesando..." : "Pagar membresía"
-                }
+                label={isProcessingPayment ? "Procesando..." : "Pagar membresía"}
                 onClick={handlePayment}
                 disabled={isProcessingPayment}
                 className="cursor-pointer"

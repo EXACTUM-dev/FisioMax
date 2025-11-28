@@ -66,10 +66,12 @@ const getMembershipTypeLabel = (type) => {
   if (!type) return 'Sin tipo';
 
   const types = {
+    'Estudiante': 'Estudiante',
     'básica': 'Básica',
-    'premium': 'Premium',
-    'empresarial': 'Empresarial',
-    'ordinaria': 'Ordinaria',
+    'Licenciado en Formación': 'Licenciado en Formación',
+    'Licenciado Especializado': 'Licenciado Especializado',
+    'Fisioterapeuta Extranjero': 'Fisioterapeuta Extranjero',
+    'Personal de la salud': 'Personal de la salud',
   };
 
   return types[type.toLowerCase()] || type;

@@ -5,7 +5,7 @@
  */
 
 import NotificationModel from '../models/notifications.model.js';
-import { getUserByClerkId } from '../models/users.model.js'; 
+import { getUserByClerkId } from '../models/users.model.js';
 
 class NotificationController {
   /**
@@ -14,33 +14,33 @@ class NotificationController {
    */
   static async getPendingNotifications(req, res) {
     try {
-        
-        const userID = req.query.IDUsuario;
-        const isRead = req.query.esRevisada === '1' ? true : false;
 
-        const notifications = await NotificationModel.getByUser(userID, {
+      const userID = req.query.IDUsuario;
+      const isRead = req.query.esRevisada === '1' ? true : false;
+
+      const notifications = await NotificationModel.getByUser(userID, {
         isRead
-        });
+      });
 
-        const formattedNotifications = notifications.map(notif => ({
+      const formattedNotifications = notifications.map(notif => ({
         ...notif,
-        metadata: typeof notif.metadata === 'string' 
-            ? JSON.parse(notif.metadata) 
-            : notif.metadata
-        }));
+        metadata: typeof notif.metadata === 'string'
+          ? JSON.parse(notif.metadata)
+          : notif.metadata
+      }));
 
-        return res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: formattedNotifications,
         total: formattedNotifications.length
-        });
+      });
     } catch (error) {
-        return res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Error al obtener notificaciones'
-        });
+      });
     }
-    }
+  }
 
 
   /**
@@ -144,36 +144,36 @@ class NotificationController {
   static buildNotificationMessage(daysRemaining, fechaVencimiento) {
     const date = new Date(fechaVencimiento);
     const formattedDate = date.toLocaleDateString('es-MX', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
     });
 
     let message = '';
-    
+
     if (daysRemaining === 1) {
-        message = 'Te queda 1 día para renovar tu membresía';
+      message = 'Te queda 1 día para renovar tu membresía';
     } else {
-        message = `Te quedan ${daysRemaining} días para renovar tu membresía`;
+      message = `Te quedan ${daysRemaining} días para renovar tu membresía`;
     }
 
     return {
-        message,
-        details: `Tu membresía vence el día ${formattedDate}`,
-        subtext: 'Recuerda que puedes renovarla desde "Mi perfil"'
+      message,
+      details: `Tu membresía vence el día ${formattedDate}`,
+      subtext: 'Recuerda que puedes renovarla desde "Mi perfil"'
     };
   }
 
- /**
-   * Mark notification as read 
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   * @return {Promise<void>}
-   */
+  /**
+    * Mark notification as read 
+    * @param {Object} req - Express request object
+    * @param {Object} res - Express response object
+    * @return {Promise<void>}
+    */
   static async markAsRead(req, res) {
     try {
       const { id: notificationID } = req.params;
-    
+
 
       if (!req.auth || !req.auth.userId) {
         return res.status(401).json({
@@ -208,7 +208,6 @@ class NotificationController {
         affectedRows: result.affectedRows
       });
     } catch (error) {
-      console.error('Error en markAsRead:', error);
       return res.status(500).json({
         success: false,
         error: 'Error al marcar notificación como leída',

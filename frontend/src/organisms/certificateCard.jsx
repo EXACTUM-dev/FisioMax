@@ -32,7 +32,6 @@ export default function CertificateCard({ userId }) {
         const url = await getMembershipCertificate(userId, token);
         if (mounted) setCertificateUrl(url);
       } catch (err) {
-        console.error("Error fetching certificate:", err);
         if (mounted) setError(err.message || "Error al cargar certificado");
       } finally {
         if (mounted) setLoading(false);
@@ -67,7 +66,6 @@ export default function CertificateCard({ userId }) {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error("Error descargando certificado:", err);
       // Fallback: open in new tab
       window.open(url, "_blank", "noopener,noreferrer");
     }

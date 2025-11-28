@@ -604,7 +604,8 @@ export async function getExpiringMemberships(daysArray = [30, 15, 7, 3, 1]) {
         DATEDIFF(m.fechaVencimiento, NOW()) as daysRemaining,
         u.nombres,
         u.apellidoP,
-        u.correo
+        u.correo,
+        u.clerkID as clerk_user_id
       FROM membresia m
       INNER JOIN Usuario u ON m.IDUsuario = u.IDUsuario
       WHERE m.aceptado = 1

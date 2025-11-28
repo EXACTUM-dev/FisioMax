@@ -101,9 +101,10 @@ export async function sendBrevoEmailWithTemplate(
 }
 
 /**
- * Sends a welcome email with certificate attachment
+ * Sends an email using a Brevo template
  * @param {string} destinatario - Recipient email address
- * @param {string} nombreMiembro - Member's name
+ * @param {string} nombreMiembro - Recipient's name
+ * @param {number} templateId - Brevo template ID
  * @param {Object} pdfBytes - PDF certificate data
  * @param {Buffer} pdfBytes.buffer - PDF file buffer
  * @param {string} [pdfBytes.filename] - Optional custom filename for the PDF
@@ -129,16 +130,20 @@ export async function sendWelcomeEmail(destinatario, nombreMiembro, pdfBytes) {
  * @param {string} destinatario - Recipient email address
  * @param {string} nombreMiembro - Member's name
  * @param {string} fechaVencimiento - Expiration date for the membership
+ * @param {number} diasRestantes - Days remaining until expiration
+ * @param {string} [linkRenovacion=''] - Renewal link
  * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
  */
-export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVencimiento) {
+export async function sendRenewalReminder(destinatario, nombreMiembro, fechaVencimiento, diasRestantes, linkRenovacion = '') {
   return sendBrevoEmailWithTemplate(
     destinatario,
     nombreMiembro,
     TEMPLATE_IDS.RENOVACION,
     {
       NOMBRE: nombreMiembro,
-      FECHA_VENCIMIENTO: fechaVencimiento
+      FECHA_VENCIMIENTO: fechaVencimiento,
+      DIAS_RESTANTES: diasRestantes,
+      LINK_RENOVACION: linkRenovacion,
     }
   );
 }
@@ -165,6 +170,48 @@ export async function sendEventInvitation(destinatario, nombreMiembro, eventoDat
       EVENTO_FECHA: eventoData.fecha,
       EVENTO_LUGAR: eventoData.lugar,
       EVENTO_URL: eventoData.urlRegistro
+    }
+  );
+}
+
+/**
+ * Sends a membership rejection email
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {string} razonRechazo - Reason for rejection
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
+ */
+export async function sendRejectionEmail(destinatario, nombreMiembro, razonRechazo) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.RECHAZO,
+    {
+      NOMBRE_MIEMBRO: nombreMiembro,
+      RAZON_RECHAZO: razonRechazo
+    }
+  );
+}
+
+/**
+ * Sends a membership acceptance email with payment link
+ * @param {string} destinatario - Recipient email address
+ * @param {string} nombreMiembro - Member's name
+ * @param {string} tipoMembresia - Membership type
+ * @param {number} monto - Membership amount
+ * @param {string} linkPago - Payment link
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>} Response object with success status
+ */
+export async function sendAcceptanceEmail(destinatario, nombreMiembro, tipoMembresia, monto, linkPago) {
+  return sendBrevoEmailWithTemplate(
+    destinatario,
+    nombreMiembro,
+    TEMPLATE_IDS.CONFIRMACION,
+    {
+      NOMBRE_MIEMBRO: nombreMiembro,
+      TIPO_MEMBRESIA: tipoMembresia,
+      MONTO_MEMBRESIA: monto,
+      LINK_PAGO: linkPago
     }
   );
 }
