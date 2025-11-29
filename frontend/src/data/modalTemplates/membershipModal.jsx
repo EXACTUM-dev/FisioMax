@@ -323,19 +323,7 @@ function MembershipModalContent({
                 value={telefonoWhatsapp || telefono || "No se envió"}
                 readOnly
               />
-              <FieldBox
-                label="Fecha de Nacimiento"
-                value={
-                  fechaNacimiento
-                    ? new Date(fechaNacimiento).toLocaleDateString("es-MX", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
-                    : "No se envió"
-                }
-                readOnly
-              />
+              
               <FieldBox
                 label="Facebook"
                 value={facebook || "No se envió"}
