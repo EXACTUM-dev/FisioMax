@@ -143,7 +143,7 @@ export default function Sidebar({ current = "home", onNavigate }) {
   // Map keys to routes handled here
   const routeMap = useMemo(
     () => ({
-      home: "/",
+      home: "/home",
       profile: "/perfil",
       bolt: "/panel",
     }),

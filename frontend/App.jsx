@@ -40,7 +40,6 @@ export default function App() {
     <>
       <SessionExpiredModal open={showExpiredModal} />
       <Routes>
-        <Route path="/overview" element={<OverviewPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route
@@ -102,12 +101,9 @@ export default function App() {
         />
         <Route
           path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
+          element={<OverviewPage />}
         />
+        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route
           path="/content/:contentId"
           element={

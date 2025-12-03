@@ -22,7 +22,7 @@ export default function RegisterPage() {
             path="/register" 
             routing="path" 
             signInUrl="/login"
-            afterSignUpUrl="/"
+            afterSignUpUrl="/home"
             appearance={{
               elements: {
                 card: "shadow-none",

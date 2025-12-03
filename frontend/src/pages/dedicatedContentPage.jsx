@@ -113,7 +113,7 @@ export default function DedicatedContentPage() {
   // Redirect if invalid category
   useEffect(() => {
     if (!config) {
-      navigate("/");
+      navigate("/home");
     }
   }, [config, navigate]);
 

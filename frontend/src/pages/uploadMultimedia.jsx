@@ -615,7 +615,7 @@ export default function UploadMultimedia() {
         open={successModalOpen}
         onClose={() => {
           setSuccessModalOpen(false);
-          navigate("/");
+          navigate("/home");
         }}
         type="success"
         title="¡Contenido subido exitosamente!"

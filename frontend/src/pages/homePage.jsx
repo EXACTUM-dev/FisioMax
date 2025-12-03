@@ -227,7 +227,7 @@ export default function HomePage() {
       podcast: "/podcasts",
     };
 
-    navigate(routeMap[contentType] || "/");
+    navigate(routeMap[contentType] || "/home");
   };
 
   if (!isLoaded || loading) {
