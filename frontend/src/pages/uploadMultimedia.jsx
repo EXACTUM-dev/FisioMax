@@ -122,7 +122,10 @@ export default function UploadMultimedia() {
         });
         const data = await response.json();
         if (data.success) {
-          setRoles(data.data || []);
+          const fetchedRoles = data.data || [];
+          setRoles(fetchedRoles);
+          // Set all roles as selected by default
+          setSelectedRoles(fetchedRoles.map(role => role.IDRol));
         }
       } catch (error) {
         throw error;
@@ -253,11 +256,30 @@ export default function UploadMultimedia() {
       setUploading(true);
       const token = await getToken();
 
+      // Parse tipo and subcategoria from formData.tipo
+      let actualTipo = formData.tipo;
+      let subcategoria = null;
+
+      // Check if it's a video subcategory (format: Video-SesionesMensuales)
+      if (formData.tipo.startsWith("Video-")) {
+        actualTipo = "Video";
+        // Convert Video-SesionesMensuales to sesiones-mensuales
+        const subcatPart = formData.tipo.replace("Video-", "");
+        // Convert camelCase to kebab-case
+        subcategoria = subcatPart
+          .replace(/([A-Z])/g, "-$1")
+          .toLowerCase()
+          .substring(1); // Remove leading dash
+      }
+
       const uploadData = new FormData();
       //uploadData.append("file", selectedFile);
       uploadData.append("nombre", formData.nombre.trim());
       uploadData.append("descripcion", formData.descripcion.trim());
-      uploadData.append("tipo", formData.tipo);
+      uploadData.append("tipo", actualTipo);
+      if (subcategoria) {
+        uploadData.append("subcategoria", subcategoria);
+      }
       uploadData.append("roles", JSON.stringify(selectedRoles));
       if (formData.tipo === "Descuento") {
         uploadData.append("fechaInicio", formData.fechaInicio);
@@ -277,7 +299,8 @@ export default function UploadMultimedia() {
             body: JSON.stringify({
               fileName: selectedFile.name,
               fileType: selectedFile.type,
-              folder: formData.tipo,
+              folder: actualTipo,
+              subcategoria: subcategoria,
             }),
           }
         );

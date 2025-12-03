@@ -34,7 +34,9 @@ export default function HomePage() {
 
   const [current, setCurrent] = useState("home");
   const [recentVideos, setRecentVideos] = useState([]);
-  const [videos, setVideos] = useState([]);
+  const [sesionesMensuales, setSesionesMensuales] = useState([]);
+  const [sesionesExtraordinarias, setSesionesExtraordinarias] = useState([]);
+  const [videosSesionesConProveedores, setVideosSesionesConProveedores] = useState([]);
   const [articles, setArticles] = useState([]);
   const [books, setBooks] = useState([]);
   const [discounts, setDiscounts] = useState([]);
@@ -107,11 +109,13 @@ export default function HomePage() {
     try {
       const token = await getToken();
       const data = await getHomePageContent(token);
-      
+
       // Transform data to carousel format
       setDiscounts(transformToCarouselFormat(data.discounts || []));
       setRecentVideos(transformToCarouselFormat(data.recentVideos || []));
-      setVideos(transformToCarouselFormat(data.videos || []));
+      setSesionesMensuales(transformToCarouselFormat(data.sesionesMensuales || []));
+      setSesionesExtraordinarias(transformToCarouselFormat(data.sesionesExtraordinarias || []));
+      setVideosSesionesConProveedores(transformToCarouselFormat(data.videosSesionesConProveedores || []));
       setArticles(transformToCarouselFormat(data.articles || []));
       setBooks(transformToCarouselFormat(data.books || []));
       setPodcasts(transformToCarouselFormat(data.podcasts || []));
@@ -327,8 +331,8 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Monthly Videos */}
-            {videos.length > 0 && (
+            {/* Sesiones Mensuales */}
+            {sesionesMensuales.length > 0 && (
               <>
                 <div className="max-w-[70rem] mx-auto">
                   <div className="flex flex-row justify-between items-center gap-2 mb-3">
@@ -341,7 +345,43 @@ export default function HomePage() {
                     </button>
                   </div>
                 </div>
-                <Carousel slides={videos} variant="row" />
+                <Carousel slides={sesionesMensuales} variant="row" />
+              </>
+            )}
+
+            {/* Sesiones Extraordinarias */}
+            {sesionesExtraordinarias.length > 0 && (
+              <>
+                <div className="max-w-[70rem] mx-auto">
+                  <div className="flex flex-row justify-between items-center gap-2 mb-3">
+                    <Title2>Sesiones Extraordinarias</Title2>
+                    <button
+                      onClick={() => navigateToContentPage("video")}
+                      className="text-sm text-[#CAD00F] hover:text-[#b8bd0d] font-medium transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Ver más →
+                    </button>
+                  </div>
+                </div>
+                <Carousel slides={sesionesExtraordinarias} variant="row" />
+              </>
+            )}
+
+            {/* Sesiones con Proveedores */}
+            {videosSesionesConProveedores.length > 0 && (
+              <>
+                <div className="max-w-[70rem] mx-auto">
+                  <div className="flex flex-row justify-between items-center gap-2 mb-3">
+                    <Title2>Sesiones con Proveedores</Title2>
+                    <button
+                      onClick={() => navigateToContentPage("video")}
+                      className="text-sm text-[#CAD00F] hover:text-[#b8bd0d] font-medium transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Ver más →
+                    </button>
+                  </div>
+                </div>
+                <Carousel slides={videosSesionesConProveedores} variant="row" />
               </>
             )}
 
@@ -416,7 +456,9 @@ export default function HomePage() {
 
             {/* Show message if no content at all */}
             {recentVideos.length === 0 &&
-              videos.length === 0 &&
+              sesionesMensuales.length === 0 &&
+              sesionesExtraordinarias.length === 0 &&
+              videosSesionesConProveedores.length === 0 &&
               articles.length === 0 &&
               books.length === 0 &&
               podcasts.length === 0 && (

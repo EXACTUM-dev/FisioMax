@@ -31,6 +31,7 @@ export async function getContentByCategories() {
       c.nombre,
       c.descripcion,
       c.tipo,
+      c.subcategoria,
       c.tipoMembresia,
       c.fechaInicio,
       c.fechaFin,
@@ -52,15 +53,27 @@ export async function getContentByCategories() {
   `;
 
   try {
-    // Get 3 most recent videos for hero carousel
+    // Get 3 most recent videos for hero carousel (all subcategories)
     const [recentVideos] = await db.query(
       `${baseQuery} ORDER BY c.createdAt DESC LIMIT 3`,
       ["video"]
     );
 
-    // Get 9 videos (monthly recordings) for row carousel
-    const [videos] = await db.query(
-      `${baseQuery} ORDER BY c.createdAt DESC LIMIT 9`,
+    // Get 9 videos for "Sesiones Mensuales" carousel
+    const [sesionesMensuales] = await db.query(
+      `${baseQuery} AND c.subcategoria = 'sesiones-mensuales' ORDER BY c.createdAt DESC LIMIT 9`,
+      ["video"]
+    );
+
+    // Get 9 videos for "Sesiones Extraordinarias" carousel
+    const [sesionesExtraordinarias] = await db.query(
+      `${baseQuery} AND c.subcategoria = 'sesiones-extraordinarias' ORDER BY c.createdAt DESC LIMIT 9`,
+      ["video"]
+    );
+
+    // Get 9 videos for "Sesiones con Proveedores" carousel
+    const [videosSesionesConProveedores] = await db.query(
+      `${baseQuery} AND c.subcategoria = 'sesiones-con-proveedores' ORDER BY c.createdAt DESC LIMIT 9`,
       ["video"]
     );
 
@@ -96,7 +109,9 @@ export async function getContentByCategories() {
 
     return {
       recentVideos,
-      videos,
+      sesionesMensuales,
+      sesionesExtraordinarias,
+      videosSesionesConProveedores,
       articles,
       books,
       podcasts,
@@ -120,6 +135,7 @@ export async function searchAllContent(searchTerm) {
       c.nombre,
       c.descripcion,
       c.tipo,
+      c.subcategoria,
       c.tipoMembresia,
       c.fechaInicio,
       c.fechaFin,

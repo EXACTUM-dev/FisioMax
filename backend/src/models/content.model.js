@@ -33,6 +33,7 @@ export async function getContentById(contentId) {
       c.nombre,
       c.descripcion,
       c.tipo,
+      c.subcategoria,
       c.tipoMembresia,
       c.createdAt,
       CASE 
@@ -138,6 +139,7 @@ export async function getAvailableContent(
       c.nombre,
       c.descripcion,
       c.tipo,
+      c.subcategoria,
       c.tipoMembresia,
       c.fechaInicio,
       c.fechaFin,
@@ -174,12 +176,12 @@ export async function getAvailableContent(
     // Construct final queries by appending the date clause to the WHERE section
     // We append it before ORDER BY / LIMIT to ensure it's part of the filtering
     const finalCountQuery = countQuery + discountDateClause;
-    
+
     // For content query, we need to insert it before ORDER BY
     // The original contentQuery ends with ${orderBy} LIMIT ? OFFSET ?
     // So we can just inject it before the ORDER BY clause
     const finalContentQuery = contentQuery.replace(
-      "ORDER BY", 
+      "ORDER BY",
       `${discountDateClause} ORDER BY`
     );
 
@@ -191,7 +193,7 @@ export async function getAvailableContent(
     const contentParams = searchFilter
       ? [...params, limit, offset]
       : [...params, limit, offset];
-      
+
     const [rows] = await db.query(finalContentQuery, contentParams);
 
     return {
@@ -223,13 +225,14 @@ export async function createContent(contentData) {
       nombre,
       descripcion,
       tipo,
+      subcategoria,
       IDMultimedia,
       tipoMembresia,
       fechaInicio,
       fechaFin,
       eliminado,
       createdAt
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW())
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())
   `;
 
   // Defensive normalization of inputs
@@ -252,6 +255,7 @@ export async function createContent(contentData) {
     contentData.nombre,
     contentData.descripcion,
     contentData.tipo,
+    contentData.subcategoria || null,
     idMultimedia,
     tipoMembresia || null,
     contentData.fechaInicio || null,
@@ -259,11 +263,10 @@ export async function createContent(contentData) {
   ];
 
   try {
-    // Ensure params length matches the number of placeholders (7)
-    if (!Array.isArray(params) || params.length !== 7) {
+    // Ensure params length matches the number of placeholders (8)
+    if (!Array.isArray(params) || params.length !== 8) {
       throw new Error(
-        `Invalid parameter list for createContent; expected 7 params, got ${
-          (params && params.length) || 0
+        `Invalid parameter list for createContent; expected 8 params, got ${(params && params.length) || 0
         }`
       );
     }
@@ -287,6 +290,7 @@ export async function getActiveDiscounts() {
       c.IDMultimedia,
       c.nombre,
       c.descripcion,
+      c.subcategoria,
       c.tipoMembresia,
       c.fechaInicio,
       c.fechaFin,

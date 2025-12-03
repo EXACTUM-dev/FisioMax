@@ -64,6 +64,24 @@ export const CONTENT_FILE_RESTRICTIONS = {
     label: "PNG, JPG, JPEG",
     maxSize: 20 * 1024 * 1024, // 20MB
   },
+  "Video-SesionesMensuales": {
+    accept: ".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm",
+    types: ["video/mp4", "video/quicktime", "video/webm"],
+    label: "MP4, MOV, WEBM",
+    maxSize: 5 * 1024 * 1024 * 1024, // 5GB
+  },
+  "Video-SesionesExtraordinarias": {
+    accept: ".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm",
+    types: ["video/mp4", "video/quicktime", "video/webm"],
+    label: "MP4, MOV, WEBM",
+    maxSize: 5 * 1024 * 1024 * 1024, // 5GB
+  },
+  "Video-SesionesConProveedores": {
+    accept: ".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm",
+    types: ["video/mp4", "video/quicktime", "video/webm"],
+    label: "MP4, MOV, WEBM",
+    maxSize: 5 * 1024 * 1024 * 1024, // 5GB
+  },
 };
 
 /**
@@ -96,7 +114,9 @@ export const CONTENT_VALIDATION_RULES = {
  */
 export const CONTENT_TYPE_OPTIONS = [
   { value: "Articulo", label: "Artículo" },
-  { value: "Video", label: "Video" },
+  { value: "Video-SesionesMensuales", label: "Video: Sesiones Mensuales" },
+  { value: "Video-SesionesExtraordinarias", label: "Video: Sesiones Extraordinarias" },
+  { value: "Video-SesionesConProveedores", label: "Video: Sesiones con Proveedores" },
   { value: "Podcast", label: "Podcast" },
   { value: "Libro", label: "Libro" },
   { value: "Descuento", label: "Descuento" },

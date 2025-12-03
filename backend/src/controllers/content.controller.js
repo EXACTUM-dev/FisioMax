@@ -194,7 +194,7 @@ export async function index(req, res) {
  */
 export async function upload(req, res) {
   try {
-    const { nombre, descripcion, tipo, filekey, roles } = req.body;
+    const { nombre, descripcion, tipo, filekey, roles, subcategoria } = req.body;
     // English: extract optional dates sent from the client
     const { fechaInicio, fechaFin } = req.body;
     const file = req.files?.file?.[0];
@@ -295,15 +295,30 @@ export async function upload(req, res) {
 
     let finalS3Key;
 
-    // Map content type to folder
+    let finalSubcategoria = subcategoria || null;
+
+    // Map content type to folder, handling video subcategories
     const folderMap = {
-      Video: "videos",
+      Video: {
+        'sesiones-mensuales': 'videos/sesiones-mensuales',
+        'sesiones-extraordinarias': 'videos/sesiones-extraordinarias',
+        'sesiones-con-proveedores': 'videos/sesiones-con-proveedores',
+        'default': 'videos'
+      },
       Articulo: "articulos",
       Podcast: "podcasts",
       Libro: "libros",
+      Descuento: "descuentos",
     };
 
-    const folder = folderMap[sanitized.tipo] || "contenido";
+    let folder;
+    if (sanitized.tipo === "Video" && finalSubcategoria) {
+      folder = folderMap.Video[finalSubcategoria] || folderMap.Video.default;
+    } else if (typeof folderMap[sanitized.tipo] === 'object') {
+      folder = folderMap[sanitized.tipo].default || "contenido";
+    } else {
+      folder = folderMap[sanitized.tipo] || "contenido";
+    }
 
     if (filekey) {
       // Already uploaded from client
@@ -432,7 +447,7 @@ export async function upload(req, res) {
  */
 export async function presignUploadUrl(req, res) {
   try {
-    const { fileName, fileType, folder } = req.body;
+    const { fileName, fileType, folder, subcategoria } = req.body;
 
     if (!fileName || !fileType) {
       return res.status(400).json({
@@ -440,15 +455,31 @@ export async function presignUploadUrl(req, res) {
         message: "Nombre y tipo de archivo son requeridos",
       });
     }
-    // Map content type to folder
+    // Map content type to folder, handling video subcategories
     const folderMap = {
-      Video: "videos",
+      Video: {
+        'sesiones-mensuales': 'videos/sesiones-mensuales',
+        'sesiones-extraordinarias': 'videos/sesiones-extraordinarias',
+        'sesiones-con-proveedores': 'videos/sesiones-con-proveedores',
+        'default': 'videos'
+      },
       Articulo: "articulos",
       Podcast: "podcasts",
       Libro: "libros",
+      Descuento: "descuentos",
     };
 
-    const s3Folder = folderMap[folder] || "contenido";
+    let s3Folder;
+    if (folder === "Video" && subcategoria) {
+      // Use subcategory-specific folder for videos
+      s3Folder = folderMap.Video[subcategoria] || folderMap.Video.default;
+    } else if (typeof folderMap[folder] === 'object') {
+      // If it's an object (like Video), use default
+      s3Folder = folderMap[folder].default || "contenido";
+    } else {
+      // Use direct mapping for other types
+      s3Folder = folderMap[folder] || "contenido";
+    }
 
     /// Use your current S3 service to generate the URL
     const fileExt = path.extname(fileName);

@@ -76,7 +76,9 @@ export async function getHomeContent(req, res) {
 
     const response = {
       recentVideos: mapContentWithThumbnails(categorizedContent.recentVideos),
-      videos: mapContentWithThumbnails(categorizedContent.videos),
+      sesionesMensuales: mapContentWithThumbnails(categorizedContent.sesionesMensuales),
+      sesionesExtraordinarias: mapContentWithThumbnails(categorizedContent.sesionesExtraordinarias),
+      videosSesionesConProveedores: mapContentWithThumbnails(categorizedContent.videosSesionesConProveedores),
       articles: mapContentWithThumbnails(categorizedContent.articles),
       books: mapContentWithThumbnails(categorizedContent.books),
       podcasts: mapContentWithThumbnails(categorizedContent.podcasts),
