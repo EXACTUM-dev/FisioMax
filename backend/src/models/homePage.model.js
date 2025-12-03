@@ -56,43 +56,43 @@ export async function getContentByCategories() {
     // Get 3 most recent videos for hero carousel (all subcategories)
     const [recentVideos] = await db.query(
       `${baseQuery} ORDER BY c.createdAt DESC LIMIT 3`,
-      ["video"]
+      ["Video"]
     );
 
     // Get 9 videos for "Sesiones Mensuales" carousel
     const [sesionesMensuales] = await db.query(
       `${baseQuery} AND c.subcategoria = 'sesiones-mensuales' ORDER BY c.createdAt DESC LIMIT 9`,
-      ["video"]
+      ["Video"]
     );
 
     // Get 9 videos for "Sesiones Extraordinarias" carousel
     const [sesionesExtraordinarias] = await db.query(
       `${baseQuery} AND c.subcategoria = 'sesiones-extraordinarias' ORDER BY c.createdAt DESC LIMIT 9`,
-      ["video"]
+      ["Video"]
     );
 
     // Get 9 videos for "Sesiones con Proveedores" carousel
     const [videosSesionesConProveedores] = await db.query(
       `${baseQuery} AND c.subcategoria = 'sesiones-con-proveedores' ORDER BY c.createdAt DESC LIMIT 9`,
-      ["video"]
+      ["Video"]
     );
 
     // Get 9 articles (weekly articles) for row carousel
     const [articles] = await db.query(
       `${baseQuery} ORDER BY c.createdAt DESC LIMIT 9`,
-      ["articulo"]
+      ["Articulo"]
     );
 
     // Get 9 books/documents for row carousel
     const [books] = await db.query(
       `${baseQuery} ORDER BY c.createdAt DESC LIMIT 9`,
-      ["libro"]
+      ["Libro"]
     );
 
     // Get 9 podcasts for row carousel
     const [podcasts] = await db.query(
       `${baseQuery} ORDER BY c.createdAt DESC LIMIT 9`,
-      ["podcast"]
+      ["Podcast"]
     );
 
     // Get active discounts
@@ -104,7 +104,7 @@ export async function getContentByCategories() {
       ORDER BY c.createdAt DESC 
       LIMIT 9
     `,
-      ["descuento"]
+      ["Descuento"]
     );
 
     return {

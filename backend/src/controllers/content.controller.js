@@ -362,6 +362,7 @@ export async function upload(req, res) {
         tipo: sanitized.tipo.toLowerCase(),
         IDMultimedia: finalS3Key,
         tipoMembresia: roleNames.join(", "),
+        subcategoria: finalSubcategoria || null,
       };
       if (sanitized.tipo && sanitized.tipo.toLowerCase() === "descuento") {
         contentPayload.fechaInicio = fechaInicio;
