@@ -48,6 +48,8 @@ jest.unstable_mockModule('../../../src/services/payment.service.js', () => ({
 
 jest.unstable_mockModule('../../../src/services/emailServices.js', () => ({
     sendRenewalReminder: mockSendRenewalReminder,
+    sendDiscountNotification: jest.fn(),
+    FRONTEND_URL: 'http://localhost:3000',
 }));
 
 // Import the service after mocking

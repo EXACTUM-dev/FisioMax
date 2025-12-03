@@ -18,6 +18,7 @@ jest.unstable_mockModule(modelPath, () => ({
   assignContentToPrivileges: jest.fn(),
   updateContent: jest.fn(),
   softDeleteContent: jest.fn(),
+  getActiveDiscounts: jest.fn(),
 }));
 
 jest.unstable_mockModule(cloudfrontPath, () => ({
