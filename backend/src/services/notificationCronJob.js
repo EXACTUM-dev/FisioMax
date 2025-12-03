@@ -166,7 +166,7 @@ async function checkExpiringMemberships() {
  */
 function startNotificationsCron() {
   // Run every day at midnight (00:00)
-  const scheduleExpression = "0 0 0 * * *";
+  const scheduleExpression = "0 0 12 * * *";
 
   cron.schedule(
     scheduleExpression,
