@@ -191,7 +191,11 @@ class MembershipApplication {
         this.documents.constancias || this.documents.certificates || null;
       // Check for existing user with same email that is not deleted
       const [existingUsers] = await conn.query(
-        `SELECT * FROM usuario WHERE eliminado = 0`,
+        `SELECT u.* 
+        FROM usuario u
+        LEFT JOIN membresia m ON u.IDUsuario = m.IDUsuario
+        WHERE u.eliminado = 0
+        AND (m.aceptado IS NULL OR m.aceptado = 1)`,
         [encryptedData.correo]
       );
       const decryptUsers = decryptApplicationsData(existingUsers);

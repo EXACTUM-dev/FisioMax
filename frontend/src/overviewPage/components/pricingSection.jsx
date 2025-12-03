@@ -33,6 +33,7 @@ export default function PricingSection() {
         "Acceso a congresos con precio preferencial",
         "Publicaciones exclusivas",
         "Red de contactos",
+        "Acceso a los grupos de WhatsApp",
       ],
     },
     {
@@ -42,6 +43,7 @@ export default function PricingSection() {
         "Para personas con título y cédula profesional, con menos de 120 horas de formación.",
       features: [
         "Todo lo anterior, más:",
+        "Acceso a los grupos de WhatsApp",
         "Descuentos en formaciones especializadas en piso pélvico",
         "Oportunidad de participar en comités",
       ],
@@ -53,6 +55,7 @@ export default function PricingSection() {
         "Para personas con título y cédula profesional, con menos de 120 horas de formación.",
       features: [
         "Todo lo anterior, más:",
+        "Acceso a los grupos de WhatsApp",
         "Descuentos en formaciones especializadas en piso pélvico",
         "Oportunidad de participar en comités",
       ],
@@ -64,6 +67,7 @@ export default function PricingSection() {
         "Para personas con título y cédula profesional, con menos de 120 horas de formación.",
       features: [
         "Todo lo anterior, más:",
+        "Acceso a los grupos de WhatsApp",
         "Descuentos en formaciones especializadas en piso pélvico",
         "Oportunidad de participar en comités",
       ],
@@ -75,8 +79,9 @@ export default function PricingSection() {
         "Para profesionistas con título, cédula y más de 120 horas de formación.",
       features: [
         "Todo lo anterior, más:",
+        "Acceso a los grupos de WhatsApp",
         "Posibilidad de ser ponente en eventos y sesiones",
-        "Aparición en el directorio público de especialistas",
+        "Aparición en el directorio público de especializados",
       ],
     },
   ];

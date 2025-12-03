@@ -47,7 +47,7 @@ export default function AboutSection() {
             <p className="text-gray-700 leading-relaxed">
               Desde 2022 hemos crecido de manera sostenida, consolidándonos como
               una red nacional que impulsa el desarrollo clínico y educativo.
-              Hoy colaboramos con proveedores, especialistas y organizaciones
+              Hoy colaboramos con proveedores, especializados y organizaciones
               para fortalecer la práctica del piso pélvico en el país.
             </p>
           </div>

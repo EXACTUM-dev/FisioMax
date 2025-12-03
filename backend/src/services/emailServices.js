@@ -1,5 +1,5 @@
 /**
- * @fileoverview Email service using Amazon SES
+ * @fileoverview Email service using Brevo.
  * @author EXACTUM-dev
  * @version 2.0.0
  * @describe Includes basic SES configuration
