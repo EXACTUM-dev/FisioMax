@@ -631,13 +631,61 @@ export async function getExpiringMemberships(daysArray = [30, 15, 7, 3, 1]) {
  * @async
  * @returns {Promise<number>} The maximum noAfiliado found, or 0 if none.
  */
-export const getMaxNoAfiliado = async () => {
+export const getMaxNoAfiliado = async (membershipType = null) => {
   const conn = await db.getConnection();
   try {
-    const [rows] = await conn.execute(
-      `SELECT MAX(CAST(noAfiliado AS UNSIGNED)) as maxNoAfiliado FROM membresia WHERE deletedAt IS NULL`
-    );
-    return rows[0]?.maxNoAfiliado || 0;
+    let min = 0;
+    let max = 1000000;
+    let useRange = false;
+
+    if (membershipType) {
+      switch (membershipType) {
+        case 'Licenciado Especializado':
+          min = 1;
+          max = 199;
+          useRange = true;
+          break;
+        case 'Licenciado en Formación':
+          min = 201;
+          max = 299;
+          useRange = true;
+          break;
+        case 'Estudiante':
+          min = 301;
+          max = 399;
+          useRange = true;
+          break;
+        case 'Fisioterapeuta Extranjero':
+          min = 401;
+          max = 499;
+          useRange = true;
+          break;
+        case 'Personal de la salud':
+          min = 501;
+          max = 599;
+          useRange = true;
+          break;
+        default:
+          useRange = false;
+      }
+    }
+
+    let query = `SELECT MAX(CAST(noAfiliado AS UNSIGNED)) as maxNoAfiliado FROM membresia WHERE deletedAt IS NULL`;
+    const params = [];
+
+    if (useRange) {
+      query += ` AND CAST(noAfiliado AS UNSIGNED) >= ? AND CAST(noAfiliado AS UNSIGNED) <= ?`;
+      params.push(min, max);
+    }
+
+    const [rows] = await conn.execute(query, params);
+    const result = rows[0]?.maxNoAfiliado;
+
+    if (result === null && useRange) {
+      return min - 1;
+    }
+
+    return result !== null ? result : 0;
   } catch (error) {
     throw error;
   } finally {

@@ -303,7 +303,7 @@ export default function ProfilePage() {
                   onEditChange={setIsEditing}
                 />
                 <TicketsCard tickets={paymentTickets} />
-                <CertificateCard userId={effectiveUserId} />
+                <CertificateCard userId={effectiveUserId} canRegenerate={hasUserManagementPrivilege} />
               </div>
             </div>
           </div>

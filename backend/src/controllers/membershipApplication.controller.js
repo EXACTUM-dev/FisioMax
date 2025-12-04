@@ -472,7 +472,8 @@ export async function denyMembership(req, res) {
  */
 export const getMaxNoAfiliadoController = async (req, res) => {
   try {
-    const maxNoAfiliado = await getMaxNoAfiliado();
+    const { type } = req.query;
+    const maxNoAfiliado = await getMaxNoAfiliado(type);
     res.json({
       success: true,
       data: maxNoAfiliado,

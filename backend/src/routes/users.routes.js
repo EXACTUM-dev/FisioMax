@@ -7,7 +7,7 @@
 
 import express from "express";
 import multer from "multer";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser, getUserCertificate } from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser, getUserCertificate, regenerateUserCertificate } from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
@@ -226,5 +226,17 @@ router.patch(
  * @param {function} handler - Request handler.
  */
 router.get("/certificate/:userId", requireAuth, getUserCertificate);
+
+/**
+ * Route to regenerate a user's certificate
+ * @name POST /certificate/:userId/regenerate
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication.
+ * @param {function} handler - Request handler.
+ */
+router.post("/certificate/:userId/regenerate", requireAuth, regenerateUserCertificate);
 
 export default router;

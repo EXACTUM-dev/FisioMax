@@ -199,7 +199,7 @@ export default function MembershipCard({
     { value: "Licenciado en Formación", label: "Licenciado en Formación" },
     { value: "Licenciado Especializado", label: "Licenciado Especializado" },
     { value: "Fisioterapeuta Extranjero", label: "Fisioterapeuta Extranjero" },
-    { value: "Personal de la Salud", label: "Personal de la Salud" },
+    { value: "Personal de la salud", label: "Personal de la salud" },
     { value: "Admin", label: "Admin" },
   ];
 
