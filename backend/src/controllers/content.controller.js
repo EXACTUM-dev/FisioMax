@@ -756,13 +756,12 @@ export async function generateAndUploadCertificate(membershipId, sendEmail = tru
       .join(" ")
       .trim();
 
-    // Create a unique name for the file
-    const timestamp = Date.now();
-    const sanitizedName = nombreCompleto.replace(/\s+/g, "_").toLowerCase();
+    // Create a unique name for the file using UUID (consistent with membership payment flow)
     const fileName = "membresias";
+    const uniqueFileName = `${crypto.randomUUID()}.pdf`;
 
     const fileForS3 = {
-      originalname: `${pdfBytes.filename.replace('.pdf', '')}_${timestamp}.pdf`,
+      originalname: uniqueFileName,
       mimetype: pdfBytes.mimeType,
       buffer: pdfBytes.buffer,
     };
