@@ -20,8 +20,9 @@ const BUCKET_NAME = process.env.AWS_BUCKET_NAME;
 
 class S3Service {
   static async uploadFile(file, nombres) {
-    const fileExt = path.extname(file.originalname);
-    const key = `${nombres}/${crypto.randomUUID()}${fileExt}`;
+    // Use the original filename to preserve timestamp-based naming
+    const filename = path.basename(file.originalname);
+    const key = `${nombres}/${filename}`;
 
     const params = {
       Bucket: BUCKET_NAME,

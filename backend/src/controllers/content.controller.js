@@ -762,7 +762,7 @@ export async function generateAndUploadCertificate(membershipId, sendEmail = tru
     const fileName = "membresias";
 
     const fileForS3 = {
-      originalname: pdfBytes.filename,
+      originalname: `${pdfBytes.filename.replace('.pdf', '')}_${timestamp}.pdf`,
       mimetype: pdfBytes.mimeType,
       buffer: pdfBytes.buffer,
     };
