@@ -19,14 +19,21 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    fileSize: 20 * 1024 * 1024, // 20MB limit per file
     files: 50, // Maximum 50 parts total (includes text fields + files)
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
+    const allowedMimeTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png'
+    ];
+
+    if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files are allowed'), false);
+      cb(new Error('Solo se permiten archivos PDF, JPG, JPEG y PNG'), false);
     }
   }
 });
@@ -60,7 +67,7 @@ const handleUploadError = (err, req, res, next) => {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(413).json({
         success: false,
-        message: 'Archivo demasiado grande. El límite es 10MB por archivo.',
+        message: 'Archivo demasiado grande. El límite es 20MB por archivo.',
       });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {

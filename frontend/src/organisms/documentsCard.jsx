@@ -1,7 +1,7 @@
 /**
  * @fileoverview Documents card component for displaying user documents.
- * Provides preview and download functionality for PDFs.
- * @version 1.1.0
+ * Provides preview and download functionality for PDFs and images (JPG, JPEG, PNG).
+ * @version 1.2.0
  * @author EXACTUM-dev
  */
 
@@ -282,7 +282,8 @@ export default function DocumentsCard({
             label={label}
             value={formFiles[fieldName]}
             onChange={handleFileChange}
-            accept=".pdf"
+            accept=".pdf,.jpg,.jpeg,.png"
+            limitation="PDF, JPG, JPEG o PNG hasta 20MB"
             required={required}
           />
         </div>
@@ -464,7 +465,8 @@ export default function DocumentsCard({
                 label={`Documento adicional ${i + 1}`}
                 value={doc.file}
                 onChange={(e) => handleExtraFileChange(doc.id, e)}
-                accept=".pdf"
+                accept=".pdf,.jpg,.jpeg,.png"
+                limitation="PDF, JPG, JPEG o PNG hasta 20MB"
               />
               <button
                 type="button"
