@@ -12,6 +12,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { generateSignedUrl as generateCloudFrontUrl } from "../utils/cloudfront.js";
 import path from "path";
 import crypto from "crypto";
 
@@ -42,10 +43,10 @@ class S3Service {
   }
 
   /**
-   * Generate a presigned URL for viewing a file
+   * Generate a presigned URL for viewing a file via CloudFront
    * @param {string} key - S3 object key
    * @param {number} expiresIn - URL expiration time in seconds (default: 1 hour)
-   * @returns {Promise<string>} Presigned URL
+   * @returns {Promise<string>} Presigned CloudFront URL
    */
   static async getPresignedUrl(key, expiresIn = 3600) {
     if (!key) return null;
@@ -58,14 +59,15 @@ class S3Service {
         s3Key = url.pathname.substring(1); // Remove leading '/'
       }
 
-      const url = await getSignedUrl(
-        s3,
-        new GetObjectCommand({ Bucket: BUCKET_NAME, Key: s3Key }),
-        { expiresIn }
-      );
+      // Convert seconds to minutes for CloudFront
+      const expirationMinutes = Math.ceil(expiresIn / 60);
+
+      // Generate CloudFront signed URL instead of S3
+      const url = generateCloudFrontUrl(s3Key, expirationMinutes);
 
       return url;
     } catch (error) {
+      console.error("Error generating CloudFront URL:", error);
       return null;
     }
   }
