@@ -190,6 +190,9 @@ class MembershipApplication {
       const certificatesUrl =
         this.documents.constancias || this.documents.certificates || null;
       // Check for existing user with same email that is not deleted
+      console.log('🔍 [DUPLICATE CHECK] Starting duplicate check for email:', dataToEncrypt.correo);
+      console.log('🔍 [DUPLICATE CHECK] Encrypted email:', encryptedData.correo);
+
       const [existingUsers] = await conn.query(
         `SELECT u.* 
         FROM usuario u
@@ -198,17 +201,29 @@ class MembershipApplication {
         AND (m.aceptado IS NULL OR m.aceptado = 1)`,
         [encryptedData.correo]
       );
+
+      console.log('🔍 [DUPLICATE CHECK] Found', existingUsers.length, 'existing users (encrypted)');
       const decryptUsers = decryptApplicationsData(existingUsers);
+      console.log('🔍 [DUPLICATE CHECK] Decrypted users:', decryptUsers.map(u => ({
+        IDUsuario: u.IDUsuario,
+        correo: u.correo,
+        eliminado: u.eliminado
+      })));
 
       const existingEmail = decryptUsers.some(
         (users) => users.correo === dataToEncrypt.correo
       );
 
+      console.log('🔍 [DUPLICATE CHECK] Email exists?', existingEmail);
+
       if (existingEmail) {
+        console.log('❌ [DUPLICATE CHECK] Duplicate email detected!');
         const duplicateError = new Error("Duplicate entry");
         duplicateError.code = "ER_DUP_ENTRY";
         throw duplicateError;
       }
+
+      console.log('✅ [DUPLICATE CHECK] No duplicate found, proceeding with insert');
 
       // Insert user with encrypted data
       const [userResult] = await conn.query(

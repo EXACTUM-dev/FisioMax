@@ -21,8 +21,10 @@ const BUCKET_NAME = process.env.AWS_BUCKET_NAME;
 
 class S3Service {
   static async uploadFile(file, nombres) {
-    // Use the original filename to preserve timestamp-based naming
-    const filename = path.basename(file.originalname);
+    // Generate unique filename using UUID to avoid duplicates
+    const fileExtension = path.extname(file.originalname);
+    const uniqueId = crypto.randomUUID();
+    const filename = `${uniqueId}${fileExtension}`;
     const key = `${nombres}/${filename}`;
 
     const params = {
@@ -38,6 +40,7 @@ class S3Service {
       // Return the S3 key instead of the presigned URL
       return key;
     } catch (error) {
+      console.error('Error uploading file to S3:', error);
       throw new Error("Error al subir archivo a S3");
     }
   }

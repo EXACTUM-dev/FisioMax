@@ -31,7 +31,7 @@ import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
  */
 export const createMembershipApplication = async (req, res) => {
   try {
-    // (debug logs removed)
+    console.log('📝 [MEMBERSHIP] New application - Email:', req.body.email);
     // Sanitize input data
     const sanitized = sanitizeContentInput(req.body, {
       stringFields: [
