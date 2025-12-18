@@ -708,4 +708,26 @@ export const getMaxNoAfiliado = async (membershipType = null) => {
   }
 };
 
+/**
+ * Soft-deletes a membership application by ID.
+ * Sets deletedAt timestamp and clears potentially unique fields if necessary.
+ * @async
+ * @param {number|string} id - Membership ID to delete
+ * @returns {Promise<boolean>} True if deleted, false if not found
+ * @throws {Error} When database operation fails
+ */
+export async function deleteMembershipApplication(id) {
+  try {
+    const [result] = await dbPool.query(
+      `UPDATE membresia 
+       SET deletedAt = NOW() 
+       WHERE IDMembresia = ? AND deletedAt IS NULL`,
+      [id]
+    );
+    return result.affectedRows > 0;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export default MembershipApplication;

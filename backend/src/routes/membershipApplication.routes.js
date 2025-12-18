@@ -13,6 +13,7 @@ import {
   approveMembership,
   denyMembership,
   getMaxNoAfiliadoController,
+  deleteMembership
 } from '../controllers/membershipApplication.controller.js';
 import { authorize } from "../middlewares/rbacMiddleware.js";
 import { requireAuth } from "../middlewares/clerkAuth.js";
@@ -133,6 +134,14 @@ router.post('/:id/aprobar', requireAuth, authorize(["Gestión de Usuarios"]), ap
  * @access Private
  */
 router.post('/:id/rechazar', requireAuth, authorize(["Gestión de Usuarios"]), denyMembership);
+
+
+/**
+ * @route DELETE /api/membership-applications/{id}
+ * @description Delete a membership application
+ * @access Private
+ */
+router.delete('/:id', requireAuth, authorize(["Gestión de Usuarios"]), deleteMembership);
 
 
 export default router;

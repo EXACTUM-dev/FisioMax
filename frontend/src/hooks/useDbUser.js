@@ -6,10 +6,10 @@
  */
 
 import { useUser as useUserContext } from '../contexts/UserContext';
-import {useState, useEffect} from 'react';
-import {useAuth} from '@clerk/clerk-react';
-import {API_CONFIG, buildApiUrl} from '../config/api';
-import {sendLoginErrorLog} from '../services/loginLogs.service.js';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
+import { API_CONFIG, buildApiUrl } from '../config/api';
+import { sendLoginErrorLog } from '../services/loginLogs.service.js';
 
 /**
  * Custom hook that verifies if the Clerk authenticated user
@@ -23,12 +23,13 @@ import {sendLoginErrorLog} from '../services/loginLogs.service.js';
  * @return {string|null} return.error - Error message if any.
  */
 export function useDbUser() {
-  const {getToken, isLoaded, isSignedIn, userId} = useAuth();
+  const { getToken, isLoaded, isSignedIn, userId } = useAuth();
   const [state, setState] = useState({
     isLoading: true,
     existsInDB: false,
     userData: null,
     error: null,
+    applicationStatus: null, // 'not_submitted', 'pending_signup', or null
   });
 
   useEffect(() => {
@@ -58,21 +59,21 @@ export function useDbUser() {
 
         // Query backend endpoint
         const response = await fetch(
-            buildApiUrl(API_CONFIG.ENDPOINTS.AUTH_PROFILE),
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            }
+          buildApiUrl(API_CONFIG.ENDPOINTS.AUTH_PROFILE),
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
         );
 
-        if (response.status === 403) {
-          // User authenticated in Clerk but doesn't exist in DB
+        if (response.status === 404) {
+          // User authenticated in Clerk but doesn't exist in DB (no application submitted)
           sendLoginErrorLog({
             usuario: userId,
             codigoError: 'DB_USER_NOT_FOUND',
-            mensajeError: 'Usuario autenticado en Clerk pero no registrado en la base de datos',
+            mensajeError: 'Usuario autenticado en Clerk pero no ha enviado solicitud de membresía',
             detalles: {
               endpoint: API_CONFIG.ENDPOINTS.AUTH_PROFILE,
               status: response.status,
@@ -82,7 +83,29 @@ export function useDbUser() {
             isLoading: false,
             existsInDB: false,
             userData: null,
-            error: 'Usuario no registrado en la base de datos',
+            error: 'No has enviado una solicitud de membresía',
+            applicationStatus: 'not_submitted',
+          });
+          return;
+        }
+
+        if (response.status === 403) {
+          // User exists in DB but without clerkID (application submitted, signup pending)
+          sendLoginErrorLog({
+            usuario: userId,
+            codigoError: 'DB_USER_PENDING_SIGNUP',
+            mensajeError: 'Usuario con solicitud enviada pero sin completar registro en Clerk',
+            detalles: {
+              endpoint: API_CONFIG.ENDPOINTS.AUTH_PROFILE,
+              status: response.status,
+            },
+          });
+          setState({
+            isLoading: false,
+            existsInDB: true,
+            userData: null,
+            error: 'Debes completar tu registro en Clerk',
+            applicationStatus: 'pending_signup',
           });
           return;
         }

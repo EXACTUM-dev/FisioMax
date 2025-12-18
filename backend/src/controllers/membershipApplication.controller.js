@@ -17,6 +17,7 @@ import MembershipApplication, {
   approveMembershipApplicationById,
   denyMembershipApplication,
   getMaxNoAfiliado,
+  deleteMembershipApplication
 } from "../models/membershipApplication.model.js";
 import { sendEmail, sendRejectionEmail, sendAcceptanceEmail } from "../services/emailServices.js";
 import S3Service from "../services/s3Service.js";
@@ -483,6 +484,69 @@ export const getMaxNoAfiliadoController = async (req, res) => {
       success: false,
       message: "Error interno del servidor",
       error: error.message,
+    });
+  }
+};
+
+/**
+ * Deletes a membership application
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export const deleteMembership = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de membresía requerido"
+      });
+    }
+
+    // Retrieve application details to get file keys
+    const detail = await getMembershipApplicationById(id);
+
+    if (!detail) {
+      return res.status(404).json({
+        success: false,
+        message: "Solicitud no encontrada o ya eliminada"
+      });
+    }
+
+    // Delete files from S3 if they exist
+    if (detail.documentos && Array.isArray(detail.documentos)) {
+      try {
+        const deletePromises = detail.documentos
+          .filter(doc => doc.key)
+          .map(doc => S3Service.deleteFile(doc.key));
+
+        await Promise.all(deletePromises);
+      } catch (s3Error) {
+        console.error("Error removing files from S3:", s3Error);
+        // Continue with deletion even if S3 fails
+      }
+    }
+
+    const deleted = await deleteMembershipApplication(id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Solicitud no encontrada o ya eliminada"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Solicitud eliminada correctamente"
+    });
+  } catch (error) {
+    console.error("Error al eliminar solicitud:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al eliminar la solicitud",
+      error: error.message
     });
   }
 };

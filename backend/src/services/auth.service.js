@@ -6,7 +6,7 @@
  */
 import { clerkClient } from '@clerk/clerk-sdk-node';
 import config from '../../config.js';
-import { getUserByClerkId, getMembershipUserStateById } from '../models/users.model.js';
+import { getUserByClerkId, getUserByEmail, getMembershipUserStateById } from '../models/users.model.js';
 
 /**
  * Gets complete user information combining Clerk and DB data.
@@ -33,25 +33,37 @@ export async function getUserById(clerkUserId) {
   try {
     // 1. Get data from Clerk
     const clerkUser = await clerkClient.users.getUser(clerkUserId);
+    const clerkEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
 
     // 2. Search user in DB by clerkID
-    const dbUser = await getUserByClerkId(clerkUserId);
+    let dbUser = await getUserByClerkId(clerkUserId);
+    let existsWithoutClerkId = false;
 
-    // 3. Get membership state
-    const dbState = await getMembershipUserStateById(dbUser.IDUsuario);
+    // 3. If not found by clerkID, try searching by email
+    // This handles the case where user submitted application but hasn't completed Clerk signup
+    if (!dbUser && clerkEmail) {
+      dbUser = await getUserByEmail(clerkEmail);
+      if (dbUser) {
+        existsWithoutClerkId = true; // User exists in DB but without clerkID
+      }
+    }
 
-    // 4. Combine data
+    // 4. Get membership state if user exists in DB
+    let dbState = null;
+    if (dbUser) {
+      dbState = await getMembershipUserStateById(dbUser.IDUsuario);
+    }
+
+    // 5. Combine data
     return {
       clerkData: clerkUser,
       dbData: dbUser,
       exists: !!dbUser, // Flag to know if exists in DB
+      existsWithoutClerkId, // Flag to know if user exists but without clerkID
       // Consolidated data for easy access
       id: dbUser?.IDUsuario || null,
       clerkID: clerkUserId,
-      email:
-        clerkUser.emailAddresses?.[0]?.emailAddress ||
-        dbUser?.correo ||
-        null,
+      email: clerkEmail || dbUser?.correo || null,
       firstName: clerkUser.firstName || dbUser?.nombres || null,
       lastName: clerkUser.lastName || dbUser?.apellidoP || null,
       imageUrl: clerkUser.imageUrl || dbUser?.foto || null,
