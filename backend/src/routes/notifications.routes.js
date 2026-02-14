@@ -4,30 +4,51 @@
  * @author EXACTUM-dev
  */
 
-import express from 'express';
+import express from "express";
 const router = express.Router();
-import NotificationController from '../controllers/notifications.controller.js';
-import { requireAuth } from '../middlewares/clerkAuth.js';
+import NotificationController from "../controllers/notifications.controller.js";
+import { requireAuth } from "../middlewares/clerkAuth.js";
 
 /**
  * @route   GET /api/notifications
  * @desc    Get unread notifications for current user
  * @access  Private
  */
-router.get( '/', requireAuth, NotificationController.getPendingNotifications );
+router.get("/", requireAuth, NotificationController.getPendingNotifications);
 
 /**
  * @route   PATCH /api/notifications/:id
  * @desc    Mark notification as read
  * @access  Private
  */
-router.patch('/:id', requireAuth, NotificationController.markAsRead );
+router.patch("/:id", requireAuth, NotificationController.markAsRead);
 
 /**
  * @route   POST /api/notifications/test-job
  * @desc    Execute manual verification
  * @access  Private
  */
-router.post( '/test-job', requireAuth, NotificationController.executeDailyVerification);
+router.post(
+  "/test-job",
+  requireAuth,
+  NotificationController.executeDailyVerification
+);
 
+/**
+ * @route   POST /api/notifications/trigger-discounts
+ * @desc    Trigger discount notifications immediately (admin only)
+ * @access  Private
+ */
+router.post(
+  "/trigger-discounts",
+  requireAuth,
+  NotificationController.triggerDiscountNotifications
+);
+
+/**
+ * @route   DELETE /api/notifications/:id
+ * @desc    Delete a notification
+ * @access  Private
+ */
+router.delete("/:id", requireAuth, NotificationController.deleteNotification);
 export default router;

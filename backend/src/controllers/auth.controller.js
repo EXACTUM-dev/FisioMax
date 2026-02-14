@@ -31,14 +31,26 @@ export const getProfile = async (req, res) => {
         const userData = await getUserById(userId);
         const userPrivileges = await getUserRolesAndPermissions(userId);
 
+        // Case 1: User doesn't exist in DB at all (no application submitted)
         if (!userData.exists) {
-            return res.status(403).json({
-                error: 'Usuario no registrado en la base de datos',
-                message: 'Su cuenta de Clerk existe pero no está vinculada a la base de datos. Contacte al administrador.',
+            return res.status(404).json({
+                error: 'Solicitud de membresía no encontrada',
+                message: 'No has enviado una solicitud de membresía. Por favor, completa el formulario de solicitud.',
                 clerkData: userData.clerkData // Include Clerk data for debugging
             });
         }
 
+        // Case 2: User exists in DB but without clerkID (application submitted, signup pending)
+        if (userData.existsWithoutClerkId) {
+            return res.status(403).json({
+                error: 'Registro incompleto',
+                message: 'Tu solicitud de membresía ha sido recibida, pero aún no has completado el proceso de creación de cuenta. Por favor, completa tu registro.',
+                requiresSignup: true,
+                clerkData: userData.clerkData // Include Clerk data for debugging
+            });
+        }
+
+        // Case 3: Normal flow - user exists with clerkID
         return res.json({
             success: true,
             user: {

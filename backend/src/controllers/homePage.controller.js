@@ -58,6 +58,8 @@ function mapContentWithThumbnails(items) {
     descripcion: item.descripcion,
     tipo: item.tipo,
     tipoMembresia: item.tipoMembresia,
+    fechaInicio: item.fechaInicio || null,
+    fechaFin: item.fechaFin || null,
     createdAt: item.createdAt,
     thumbnailUrl: getThumbnailUrl(item.thumbnailMultimedia),
   }));
@@ -74,10 +76,13 @@ export async function getHomeContent(req, res) {
 
     const response = {
       recentVideos: mapContentWithThumbnails(categorizedContent.recentVideos),
-      videos: mapContentWithThumbnails(categorizedContent.videos),
+      sesionesMensuales: mapContentWithThumbnails(categorizedContent.sesionesMensuales),
+      sesionesExtraordinarias: mapContentWithThumbnails(categorizedContent.sesionesExtraordinarias),
+      videosSesionesConProveedores: mapContentWithThumbnails(categorizedContent.videosSesionesConProveedores),
       articles: mapContentWithThumbnails(categorizedContent.articles),
       books: mapContentWithThumbnails(categorizedContent.books),
       podcasts: mapContentWithThumbnails(categorizedContent.podcasts),
+      discounts: mapContentWithThumbnails(categorizedContent.discounts),
     };
 
     return res.status(200).json(response);

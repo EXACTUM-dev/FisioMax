@@ -67,7 +67,7 @@ const getMembershipTypeLabel = (type) => {
 
   const types = {
     'Estudiante': 'Estudiante',
-    'básica': 'Básica',
+    'Admin': 'Admin',
     'Licenciado en Formación': 'Licenciado en Formación',
     'Licenciado Especializado': 'Licenciado Especializado',
     'Fisioterapeuta Extranjero': 'Fisioterapeuta Extranjero',

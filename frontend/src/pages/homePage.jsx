@@ -34,9 +34,12 @@ export default function HomePage() {
 
   const [current, setCurrent] = useState("home");
   const [recentVideos, setRecentVideos] = useState([]);
-  const [videos, setVideos] = useState([]);
+  const [sesionesMensuales, setSesionesMensuales] = useState([]);
+  const [sesionesExtraordinarias, setSesionesExtraordinarias] = useState([]);
+  const [videosSesionesConProveedores, setVideosSesionesConProveedores] = useState([]);
   const [articles, setArticles] = useState([]);
   const [books, setBooks] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
   const [podcasts, setPodcasts] = useState([]);
   const [searchResults, setSearchResults] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,8 +111,11 @@ export default function HomePage() {
       const data = await getHomePageContent(token);
 
       // Transform data to carousel format
+      setDiscounts(transformToCarouselFormat(data.discounts || []));
       setRecentVideos(transformToCarouselFormat(data.recentVideos || []));
-      setVideos(transformToCarouselFormat(data.videos || []));
+      setSesionesMensuales(transformToCarouselFormat(data.sesionesMensuales || []));
+      setSesionesExtraordinarias(transformToCarouselFormat(data.sesionesExtraordinarias || []));
+      setVideosSesionesConProveedores(transformToCarouselFormat(data.videosSesionesConProveedores || []));
       setArticles(transformToCarouselFormat(data.articles || []));
       setBooks(transformToCarouselFormat(data.books || []));
       setPodcasts(transformToCarouselFormat(data.podcasts || []));
@@ -166,13 +172,26 @@ export default function HomePage() {
   const transformToCarouselFormat = (items) => {
     if (!items || !Array.isArray(items)) return [];
 
-    return items.map((item) => ({
+    // Filter discounts by date: if item is a discount and has fechaInicio/fechaFin,
+    // only include it when today is within [fechaInicio, fechaFin]. If dates are
+    // missing, keep the item (backwards-compatible).
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // El filtrado por vigencia de la oferta se realiza en el backend
+    // (getActiveDiscounts). Aquí dejamos pasar los items tal como vienen
+    // desde la API para evitar duplicar lógica y problemas de timezone.
+    const filtered = Array.isArray(items) ? items : [];
+
+    return filtered.map((item) => ({
       id: item.IDContenido,
       title: item.nombre,
       subtitle: item.descripcion,
       imageUrl: item.thumbnailUrl || "/SOMEFIPP-Logo.jpeg",
       imageAlt: item.nombre || "Contenido multimedia",
       type: item.tipo,
+      fechaInicio: item.fechaInicio || null,
+      fechaFin: item.fechaFin || null,
       tipoMembresia: item.tipoMembresia,
       createdAt: item.createdAt,
     }));
@@ -208,7 +227,7 @@ export default function HomePage() {
       podcast: "/podcasts",
     };
 
-    navigate(routeMap[contentType] || "/");
+    navigate(routeMap[contentType] || "/home");
   };
 
   if (!isLoaded || loading) {
@@ -312,8 +331,8 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Monthly Videos */}
-            {videos.length > 0 && (
+            {/* Sesiones Mensuales */}
+            {sesionesMensuales.length > 0 && (
               <>
                 <div className="max-w-[70rem] mx-auto">
                   <div className="flex flex-row justify-between items-center gap-2 mb-3">
@@ -326,7 +345,43 @@ export default function HomePage() {
                     </button>
                   </div>
                 </div>
-                <Carousel slides={videos} variant="row" />
+                <Carousel slides={sesionesMensuales} variant="row" />
+              </>
+            )}
+
+            {/* Sesiones Extraordinarias */}
+            {sesionesExtraordinarias.length > 0 && (
+              <>
+                <div className="max-w-[70rem] mx-auto">
+                  <div className="flex flex-row justify-between items-center gap-2 mb-3">
+                    <Title2>Sesiones Extraordinarias</Title2>
+                    <button
+                      onClick={() => navigateToContentPage("video")}
+                      className="text-sm text-[#CAD00F] hover:text-[#b8bd0d] font-medium transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Ver más →
+                    </button>
+                  </div>
+                </div>
+                <Carousel slides={sesionesExtraordinarias} variant="row" />
+              </>
+            )}
+
+            {/* Sesiones con Proveedores */}
+            {videosSesionesConProveedores.length > 0 && (
+              <>
+                <div className="max-w-[70rem] mx-auto">
+                  <div className="flex flex-row justify-between items-center gap-2 mb-3">
+                    <Title2>Sesiones con Proveedores</Title2>
+                    <button
+                      onClick={() => navigateToContentPage("video")}
+                      className="text-sm text-[#CAD00F] hover:text-[#b8bd0d] font-medium transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Ver más →
+                    </button>
+                  </div>
+                </div>
+                <Carousel slides={videosSesionesConProveedores} variant="row" />
               </>
             )}
 
@@ -383,10 +438,27 @@ export default function HomePage() {
                 <Carousel slides={podcasts} variant="row" />
               </>
             )}
+            {/* Active Discounts Carousel */}
+            {discounts.length > 0 && (
+              <section className="max-w-[70rem] mx-auto">
+                <div className="flex flex-row justify-between items-center gap-2 mb-3">
+                  <Title2>Descuentos Activos</Title2>
+                  <button
+                    onClick={() => navigate("/descuentos")}
+                    className="text-sm text-[#CAD00F] hover:text-[#b8bd0d] font-medium transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    Ver más →
+                  </button>
+                </div>
+                <Carousel slides={discounts} variant="row" />
+              </section>
+            )}
 
             {/* Show message if no content at all */}
             {recentVideos.length === 0 &&
-              videos.length === 0 &&
+              sesionesMensuales.length === 0 &&
+              sesionesExtraordinarias.length === 0 &&
+              videosSesionesConProveedores.length === 0 &&
               articles.length === 0 &&
               books.length === 0 &&
               podcasts.length === 0 && (

@@ -7,9 +7,9 @@
  * Validates that the Clerk authenticated user also exists in the database.
  */
 
-import {userExistsInDB} from '../services/auth.service.js';
-import {insertLoginErrorLog} from '../models/loginLogs.model.js';
-import {getRequestIp} from '../utils/request.js';
+import { userExistsInDB } from '../services/auth.service.js';
+import { insertLoginErrorLog } from '../models/loginLogs.model.js';
+import { getRequestIp } from '../utils/request.js';
 
 /**
  * Logs a login error without interrupting the main flow.
@@ -30,11 +30,11 @@ async function logLoginError(req, logData) {
       agenteUsuario: req.headers['user-agent'] || null,
       ...logData,
       detalles:
-          logData.detalles ??
-          {
-            path: req.originalUrl || req.url,
-            method: req.method,
-          },
+        logData.detalles ??
+        {
+          path: req.originalUrl || req.url,
+          method: req.method,
+        },
     });
   } catch (logError) {
 
@@ -82,7 +82,7 @@ export async function requireDbUser(req, res, next) {
       return res.status(403).json({
         error: 'Usuario no autorizado',
         message:
-            'El usuario autenticado no está registrado en la base de datos. Por favor contacte al administrador.',
+          'El usuario autenticado no está registrado en la base de datos. Por favor contacte al administrador.',
         clerkUserId: clerkUserId, // Useful for debugging
       });
     }
@@ -129,7 +129,7 @@ export async function checkDbUser(req, res, next) {
 
       if (!existsInDB) {
         console.warn(
-            `User ${clerkUserId} authenticated in Clerk but does not exist in database`
+          `User ${clerkUserId} authenticated in Clerk but does not exist in database`
         );
       }
     }

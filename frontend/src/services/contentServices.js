@@ -192,3 +192,44 @@ export async function getMembershipCertificate(userId, token) {
   }
 }
 
+
+/**
+ * Regenerates a membership certificate for a given user.
+ * @param {string|number} userId - Database user ID
+ * @param {string} token - Clerk auth token
+ * @returns {Promise<string|null>} Presigned URL to the new certificate PDF or null
+ */
+export async function regenerateMembershipCertificate(userId, token) {
+  if (!userId) return null;
+
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  try {
+    const resp = await fetch(`${API_URL}/users/certificate/${userId}/regenerate`, {
+      method: "POST",
+      headers
+    });
+
+    if (!resp.ok) {
+      const error = await resp.json();
+      throw new Error(error.message || "Error al regenerar el certificado");
+    }
+
+    const body = await resp.json();
+
+    // Extract certificate URL from response
+    if (body.success && body.data && body.data.certificado) {
+      return body.data.certificado;
+    }
+
+    return null;
+  } catch (err) {
+    throw err;
+  }
+}

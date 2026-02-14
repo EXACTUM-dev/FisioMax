@@ -43,6 +43,12 @@ const CONTENT_CONFIG = {
     sidebarKey: "articles",
     placeholder: "Buscar artículos...",
   },
+  descuentos: {
+    type: "descuento",
+    title: "Descuentos",
+    sidebarKey: "discounts",
+    placeholder: "Buscar descuentos...",
+  },
   libros: {
     type: "libro",
     title: "Libros",
@@ -86,7 +92,10 @@ export default function DedicatedContentPage() {
   // Delete modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
-  const [deleteResult, setDeleteResult] = useState({ success: false, message: "" });
+  const [deleteResult, setDeleteResult] = useState({
+    success: false,
+    message: "",
+  });
   const [contentToDelete, setContentToDelete] = useState(null);
 
   // Edit modal states
@@ -104,7 +113,7 @@ export default function DedicatedContentPage() {
   // Redirect if invalid category
   useEffect(() => {
     if (!config) {
-      navigate("/");
+      navigate("/home");
     }
   }, [config, navigate]);
 
@@ -221,7 +230,11 @@ export default function DedicatedContentPage() {
       setContent((prev) =>
         prev.map((item) =>
           item.id === contentToEdit.id
-            ? { ...item, title: editData.nombre, subtitle: editData.descripcion }
+            ? {
+                ...item,
+                title: editData.nombre,
+                subtitle: editData.descripcion,
+              }
             : item
         )
       );
@@ -233,7 +246,9 @@ export default function DedicatedContentPage() {
     } catch (error) {
       setEditResult({
         success: false,
-        message: error.message || "No se pudo actualizar el contenido. Por favor, intenta de nuevo.",
+        message:
+          error.message ||
+          "No se pudo actualizar el contenido. Por favor, intenta de nuevo.",
       });
     } finally {
       setContentToEdit(null);
@@ -260,20 +275,30 @@ export default function DedicatedContentPage() {
 
     try {
       const token = await getToken();
-      await deleteContent(contentToDelete.id, token);
+      const resp = await deleteContent(contentToDelete.id, token);
 
       // Remove from local state
-      setContent((prev) => prev.filter((item) => item.id !== contentToDelete.id));
+      setContent((prev) =>
+        prev.filter((item) => item.id !== contentToDelete.id)
+      );
       setTotal((prev) => prev - 1);
+
+      const deletedNotifications = resp?.deletedNotifications || 0;
 
       setDeleteResult({
         success: true,
-        message: "El contenido ha sido eliminado exitosamente",
+        message: `El contenido ha sido eliminado exitosamente.${
+          deletedNotifications > 0
+            ? ` Notificaciones eliminadas: ${deletedNotifications}`
+            : ""
+        }`,
       });
     } catch (error) {
       setDeleteResult({
         success: false,
-        message: error.message || "No se pudo eliminar el contenido. Por favor, intenta de nuevo.",
+        message:
+          error.message ||
+          "No se pudo eliminar el contenido. Por favor, intenta de nuevo.",
       });
     } finally {
       setContentToDelete(null);
@@ -376,7 +401,7 @@ export default function DedicatedContentPage() {
                 </div>
               ) : (
                 <>
-                  <GridCarousel 
+                  <GridCarousel
                     slides={content}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
@@ -452,14 +477,20 @@ export default function DedicatedContentPage() {
       {/* Result Modal (for both edit and delete) */}
       <SuccessErrorModal
         open={showResultModal}
-        type={(editResult.success || deleteResult.success) ? "success" : "error"}
+        type={editResult.success || deleteResult.success ? "success" : "error"}
         title={
-          editResult.message 
-            ? (editResult.success ? "¡Contenido Actualizado!" : "Error al Actualizar")
-            : (deleteResult.success ? "¡Contenido Eliminado!" : "Error al Eliminar")
+          editResult.message
+            ? editResult.success
+              ? "¡Contenido Actualizado!"
+              : "Error al Actualizar"
+            : deleteResult.success
+            ? "¡Contenido Eliminado!"
+            : "Error al Eliminar"
         }
         message={editResult.message || deleteResult.message}
-        confirmLabel={(editResult.success || deleteResult.success) ? "Entendido" : "Cerrar"}
+        confirmLabel={
+          editResult.success || deleteResult.success ? "Entendido" : "Cerrar"
+        }
         onClose={() => {
           setShowResultModal(false);
           setEditResult({ success: false, message: "" });

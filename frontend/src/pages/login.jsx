@@ -182,7 +182,7 @@ export default function LoginPage() {
 
   // Redirect authenticated users to home page
   if (isSignedIn) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   // Display login form for unauthenticated users
@@ -218,7 +218,7 @@ export default function LoginPage() {
                 path="/login"
                 routing="path"
                 signInUrl="/login"
-                afterSignUpUrl="/"
+                afterSignUpUrl="/home"
                 appearance={{
                   elements: {
                     rootBox: "w-full",
@@ -238,7 +238,7 @@ export default function LoginPage() {
                 path="/login"
                 routing="path"
                 signUpUrl="/login?mode=signup"
-                afterSignInUrl="/"
+                afterSignInUrl="/home"
                 appearance={{
                   elements: {
                     rootBox: "w-full",

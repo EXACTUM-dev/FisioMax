@@ -5,6 +5,8 @@
  * @author EXACTUM-dev
  */
 import React, { useState, useEffect, useRef } from "react";
+import PrivacyNoticeModal from "../molecules/privacyNoticeModal";
+import CheckBox from "../atoms/checkBox";
 import { useNavigate, useLocation } from "react-router-dom";
 import Button from "../atoms/button";
 import BackButton from "../atoms/backButton";
@@ -49,9 +51,10 @@ export default function MembershipApplicationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showInfoModal, setShowInfoModal] = useState(
-    (location.state?.showInfoModal && location.state?.fromOverview === true) ||
-      false
+    (location.state?.showInfoModal && location.state?.fromOverview === true) || false
   );
+  const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
+  const [privacyChecked, setPrivacyChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
   const [modalMessage, setModalMessage] = useState("");
@@ -107,6 +110,10 @@ export default function MembershipApplicationPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!privacyChecked) {
+      setShowPrivacyNotice(true);
+      return;
+    }
     if (!validateForm()) return;
 
     setIsSubmitting(true);
@@ -131,7 +138,7 @@ export default function MembershipApplicationPage() {
         setModalType("success");
         setModalMessage(
           result.message ||
-            "Tu solicitud de membresía ha sido enviada exitosamente."
+          "Tu solicitud de membresía ha sido enviada exitosamente."
         );
         setShowModal(true);
         isNavigatingRef.current = true;
@@ -294,11 +301,34 @@ export default function MembershipApplicationPage() {
                 </p>
               )}
 
-              <div className="flex justify-end space-x-4 pt-6">
-                <Button variant="brand" type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Enviando..." : "Enviar"}
-                </Button>
+              <div className="flex flex-col gap-2 pt-6">
+                <div className="flex items-center gap-2">
+                  <CheckBox
+                    checked={privacyChecked}
+                    onChange={() => setPrivacyChecked((v) => !v)}
+                    id="privacy-check"
+                  />
+                  <label htmlFor="privacy-check" className="text-sm text-gray-700 select-none cursor-pointer">
+                    He leído y acepto el
+                    <button
+                      type="button"
+                      className="ml-1 underline text-brand hover:text-brand-dark cursor-pointer"
+                      onClick={() => setShowPrivacyNotice(true)}
+                    >
+                      Aviso de Privacidad
+                    </button>
+                  </label>
+                </div>
+                <div className="flex justify-end">
+                  <Button variant="brand" type="submit" disabled={isSubmitting || !privacyChecked}>
+                    {isSubmitting ? "Enviando..." : "Enviar"}
+                  </Button>
+                </div>
               </div>
+                  <PrivacyNoticeModal
+                    open={showPrivacyNotice}
+                    onClose={() => setShowPrivacyNotice(false)}
+                  />
             </div>
           </div>
         </form>

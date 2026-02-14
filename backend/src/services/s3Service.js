@@ -12,6 +12,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { generateSignedUrl as generateCloudFrontUrl } from "../utils/cloudfront.js";
 import path from "path";
 import crypto from "crypto";
 
@@ -20,8 +21,11 @@ const BUCKET_NAME = process.env.AWS_BUCKET_NAME;
 
 class S3Service {
   static async uploadFile(file, nombres) {
-    const fileExt = path.extname(file.originalname);
-    const key = `${nombres}/${crypto.randomUUID()}${fileExt}`;
+    // Generate unique filename using UUID to avoid duplicates
+    const fileExtension = path.extname(file.originalname);
+    const uniqueId = crypto.randomUUID();
+    const filename = `${uniqueId}${fileExtension}`;
+    const key = `${nombres}/${filename}`;
 
     const params = {
       Bucket: BUCKET_NAME,
@@ -36,15 +40,16 @@ class S3Service {
       // Return the S3 key instead of the presigned URL
       return key;
     } catch (error) {
+      console.error('Error uploading file to S3:', error);
       throw new Error("Error al subir archivo a S3");
     }
   }
 
   /**
-   * Generate a presigned URL for viewing a file
+   * Generate a presigned URL for viewing a file via CloudFront
    * @param {string} key - S3 object key
    * @param {number} expiresIn - URL expiration time in seconds (default: 1 hour)
-   * @returns {Promise<string>} Presigned URL
+   * @returns {Promise<string>} Presigned CloudFront URL
    */
   static async getPresignedUrl(key, expiresIn = 3600) {
     if (!key) return null;
@@ -57,14 +62,15 @@ class S3Service {
         s3Key = url.pathname.substring(1); // Remove leading '/'
       }
 
-      const url = await getSignedUrl(
-        s3,
-        new GetObjectCommand({ Bucket: BUCKET_NAME, Key: s3Key }),
-        { expiresIn }
-      );
+      // Convert seconds to minutes for CloudFront
+      const expirationMinutes = Math.ceil(expiresIn / 60);
+
+      // Generate CloudFront signed URL instead of S3
+      const url = generateCloudFrontUrl(s3Key, expirationMinutes);
 
       return url;
     } catch (error) {
+      console.error("Error generating CloudFront URL:", error);
       return null;
     }
   }

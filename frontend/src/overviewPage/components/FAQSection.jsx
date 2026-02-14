@@ -11,7 +11,7 @@ export default function FAQSection() {
     {
       question: "¿Necesito experiencia previa para unirme?",
       answer:
-        "No. Tenemos categorías para estudiantes, fisioterapeutas titulados, especialistas y profesionales de la salud de otras áreas.",
+        "No. Tenemos categorías para estudiantes, fisioterapeutas titulados, especializados y profesionales de la salud de otras áreas.",
     },
     {
       question: "¿El contenido se actualiza constantemente?",
@@ -62,16 +62,14 @@ export default function FAQSection() {
             <details
               key={index}
               ref={detailsRefs[index]}
-              className={`bg-white rounded-lg shadow-sm overflow-hidden group transition-colors ${
-                hovered === index ? "bg-gray-100" : ""
-              }`}
+              className={`bg-white rounded-lg shadow-sm overflow-hidden group transition-colors ${hovered === index ? "bg-gray-100" : ""
+                }`}
               onMouseEnter={() => setHovered(index)}
               onMouseLeave={() => setHovered(null)}
             >
               <summary
-                className={`px-6 py-4 cursor-pointer font-semibold text-gray-900 flex justify-between items-center transition-colors ${
-                  hovered === index ? "bg-gray-100" : "hover:bg-gray-100"
-                }`}
+                className={`px-6 py-4 cursor-pointer font-semibold text-gray-900 flex justify-between items-center transition-colors ${hovered === index ? "bg-gray-100" : "hover:bg-gray-100"
+                  }`}
               >
                 {faq.question}
                 <svg
@@ -89,9 +87,8 @@ export default function FAQSection() {
                 </svg>
               </summary>
               <div
-                className={`px-6 pb-4 text-gray-700 cursor-pointer transition-colors ${
-                  hovered === index ? "bg-gray-100" : ""
-                }`}
+                className={`px-6 pb-4 text-gray-700 cursor-pointer transition-colors ${hovered === index ? "bg-gray-100" : ""
+                  }`}
                 onClick={() => handleAnswerClick(index)}
                 onMouseEnter={() => setHovered(index)}
                 onMouseLeave={() => setHovered(null)}

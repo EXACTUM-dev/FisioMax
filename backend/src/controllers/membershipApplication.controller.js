@@ -17,6 +17,7 @@ import MembershipApplication, {
   approveMembershipApplicationById,
   denyMembershipApplication,
   getMaxNoAfiliado,
+  deleteMembershipApplication
 } from "../models/membershipApplication.model.js";
 import { sendEmail, sendRejectionEmail, sendAcceptanceEmail } from "../services/emailServices.js";
 import S3Service from "../services/s3Service.js";
@@ -31,7 +32,7 @@ import { sanitizeContentInput, sanitizeEmail } from "../utils/sanitization.js";
  */
 export const createMembershipApplication = async (req, res) => {
   try {
-    // (debug logs removed)
+    console.log('📝 [MEMBERSHIP] New application - Email:', req.body.email);
     // Sanitize input data
     const sanitized = sanitizeContentInput(req.body, {
       stringFields: [
@@ -308,7 +309,7 @@ const MEMBERSHIP_PRICES = {
   'Licenciado en Formación': 1100,
   'Licenciado Especializado': 1500,
   'Fisioterapeuta Extranjero': 1800,
-  'básica': 5,
+  'Admin': 5,
   'Personal de la salud': 1100,
 };
 
@@ -344,7 +345,7 @@ export const approveMembership = async (req, res) => {
       const nombreCompleto = membershipDetails.nombreCompleto ||
         `${membershipDetails.nombres || ""} ${membershipDetails.apellidoP || ""} ${membershipDetails.apellidoM || ""}`.trim();
       const email = membershipDetails.correo;
-      const membershipType = membershipDetails.membershipType || 'básica';
+      const membershipType = membershipDetails.membershipType || 'Admin';
       const amount = MEMBERSHIP_PRICES[membershipType] || 1500;
 
       if (email && nombreCompleto) {
@@ -472,7 +473,8 @@ export async function denyMembership(req, res) {
  */
 export const getMaxNoAfiliadoController = async (req, res) => {
   try {
-    const maxNoAfiliado = await getMaxNoAfiliado();
+    const { type } = req.query;
+    const maxNoAfiliado = await getMaxNoAfiliado(type);
     res.json({
       success: true,
       data: maxNoAfiliado,
@@ -482,6 +484,69 @@ export const getMaxNoAfiliadoController = async (req, res) => {
       success: false,
       message: "Error interno del servidor",
       error: error.message,
+    });
+  }
+};
+
+/**
+ * Deletes a membership application
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export const deleteMembership = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de membresía requerido"
+      });
+    }
+
+    // Retrieve application details to get file keys
+    const detail = await getMembershipApplicationById(id);
+
+    if (!detail) {
+      return res.status(404).json({
+        success: false,
+        message: "Solicitud no encontrada o ya eliminada"
+      });
+    }
+
+    // Delete files from S3 if they exist
+    if (detail.documentos && Array.isArray(detail.documentos)) {
+      try {
+        const deletePromises = detail.documentos
+          .filter(doc => doc.key)
+          .map(doc => S3Service.deleteFile(doc.key));
+
+        await Promise.all(deletePromises);
+      } catch (s3Error) {
+        console.error("Error removing files from S3:", s3Error);
+        // Continue with deletion even if S3 fails
+      }
+    }
+
+    const deleted = await deleteMembershipApplication(id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Solicitud no encontrada o ya eliminada"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Solicitud eliminada correctamente"
+    });
+  } catch (error) {
+    console.error("Error al eliminar solicitud:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al eliminar la solicitud",
+      error: error.message
     });
   }
 };

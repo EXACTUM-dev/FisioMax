@@ -12,12 +12,13 @@ import {
   assignContentToPrivileges,
   updateContent,
   softDeleteContent,
+  getActiveDiscounts as _getActiveDiscounts,
 } from "../models/content.model.js";
 import {
   getUsuarioByClerkId,
   getUserById,
   getUserByMembershipId,
-  updateUserCertificate
+  updateUserCertificate,
 } from "../models/users.model.js";
 import { findRoleById, getPrivilegeIdsByRole } from "../models/roles.model.js";
 import { generateSignedUrl } from "../utils/cloudfront.js";
@@ -25,6 +26,8 @@ import { createCertificate } from "../utils/certificate.js";
 import S3Service from "../services/s3Service.js";
 import { sendWelcomeEmail } from "../services/emailServices.js";
 import { sanitizeContentInput } from "../utils/sanitization.js";
+import { updateContentDates } from "../models/contentDates.model.js";
+import { checkAndNotifyNewDiscounts } from "../services/notificationCronJob.js";
 import path from "path";
 import crypto from "crypto";
 
@@ -191,16 +194,20 @@ export async function index(req, res) {
  */
 export async function upload(req, res) {
   try {
-    const { nombre, descripcion, tipo, filekey, roles } = req.body;
+    const { nombre, descripcion, tipo, filekey, roles, subcategoria } = req.body;
+    // English: extract optional dates sent from the client
+    const { fechaInicio, fechaFin } = req.body;
     const file = req.files?.file?.[0];
     const thumbnail = req.files?.thumbnail?.[0];
 
-    if (!file && !filekey) {
+    if (tipo !== "Descuento" && !file && !filekey) {
       return res.status(400).json({
         success: false,
-        message: "Debes proporcionar un archivo o un s3Key previamente firmado."
+        message:
+          "Debes proporcionar un archivo o un s3Key previamente firmado.",
       });
     }
+
     // Parse roles if it's a JSON string
     let roleIds = [];
     if (roles) {
@@ -218,7 +225,7 @@ export async function upload(req, res) {
     }
 
     // Validate and sanitize input using the generic sanitization utility
-    const allowedTypes = ["Video", "Articulo", "Podcast", "Libro"];
+    const allowedTypes = ["Video", "Articulo", "Podcast", "Libro", "Descuento"];
 
     let sanitized;
     try {
@@ -288,15 +295,30 @@ export async function upload(req, res) {
 
     let finalS3Key;
 
-    // Map content type to folder
+    let finalSubcategoria = subcategoria || null;
+
+    // Map content type to folder, handling video subcategories
     const folderMap = {
-      Video: "videos",
+      Video: {
+        'sesiones-mensuales': 'videos/sesiones-mensuales',
+        'sesiones-extraordinarias': 'videos/sesiones-extraordinarias',
+        'sesiones-con-proveedores': 'videos/sesiones-con-proveedores',
+        'default': 'videos'
+      },
       Articulo: "articulos",
       Podcast: "podcasts",
       Libro: "libros",
+      Descuento: "descuentos",
     };
 
-    const folder = folderMap[sanitized.tipo] || "contenido";
+    let folder;
+    if (sanitized.tipo === "Video" && finalSubcategoria) {
+      folder = folderMap.Video[finalSubcategoria] || folderMap.Video.default;
+    } else if (typeof folderMap[sanitized.tipo] === 'object') {
+      folder = folderMap[sanitized.tipo].default || "contenido";
+    } else {
+      folder = folderMap[sanitized.tipo] || "contenido";
+    }
 
     if (filekey) {
       // Already uploaded from client
@@ -313,23 +335,70 @@ export async function upload(req, res) {
       }
     }
 
+    // English: validate discount dates if content is a discount
+    if (sanitized.tipo && sanitized.tipo.toLowerCase() === "descuento") {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (
+        !fechaInicio ||
+        !fechaFin ||
+        !dateRegex.test(fechaInicio) ||
+        !dateRegex.test(fechaFin)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "FechaInicio and FechaFin are required for Descuento and must use YYYY-MM-DD format",
+        });
+      }
+    }
+
     // Create main content
     let contentId;
     try {
-      contentId = await createContent({
+      // English: include discount date range when provided
+      const contentPayload = {
         nombre: sanitized.nombre,
         descripcion: sanitized.descripcion || "",
         tipo: sanitized.tipo.toLowerCase(),
         IDMultimedia: finalS3Key,
-        tipoMembresia: roleNames.join(", "), // Store all role names
-      });
+        tipoMembresia: roleNames.join(", "),
+        subcategoria: finalSubcategoria || null,
+      };
+      if (sanitized.tipo && sanitized.tipo.toLowerCase() === "descuento") {
+        contentPayload.fechaInicio = fechaInicio;
+        contentPayload.fechaFin = fechaFin;
+      }
+
+      contentId = await createContent(contentPayload);
 
       // Assign content to all collected privileges in accede table
       await assignContentToPrivileges(contentId, allPrivilegeIds);
+
+      // Notify users if content is a discount
+      if (sanitized.tipo.toLowerCase() === "descuento") {
+        // Get today's date in Mexico City timezone
+        const today = new Date().toLocaleDateString("en-CA", {
+          timeZone: "America/Mexico_City",
+        });
+
+        // Only notify if the discount starts today
+        if (fechaInicio === today) {
+          // Run notification in background to not block response
+          checkAndNotifyNewDiscounts({
+            IDContenido: contentId,
+            nombre: sanitized.nombre,
+            descripcion: sanitized.descripcion,
+            tipoMembresia: roleNames.join(", "),
+            fechaFin: fechaFin
+          }).catch(err => console.error("Error triggering discount notification:", err));
+        }
+      }
     } catch (dbError) {
+      console.error("Database error details:", dbError);
       return res.status(500).json({
         success: false,
         message: "Error al guardar el contenido en la base de datos",
+        detail: dbError.message,
       });
     }
 
@@ -348,11 +417,9 @@ export async function upload(req, res) {
           IDMultimedia: thumbnailKey,
           tipoMembresia: roleNames.join(", "),
         });
-
-        // Assign thumbnail to same privileges
         await assignContentToPrivileges(thumbnailId, allPrivilegeIds);
       } catch (thumbError) {
-        // Continue even if thumbnail fails
+        console.error("Thumbnail error:", thumbError);
       }
     }
 
@@ -367,6 +434,7 @@ export async function upload(req, res) {
       },
     });
   } catch (error) {
+    console.error("General upload error:", error);
     return res.status(500).json({
       success: false,
       message: "Error al procesar la solicitud",
@@ -380,7 +448,7 @@ export async function upload(req, res) {
  */
 export async function presignUploadUrl(req, res) {
   try {
-    const { fileName, fileType, folder } = req.body;
+    const { fileName, fileType, folder, subcategoria } = req.body;
 
     if (!fileName || !fileType) {
       return res.status(400).json({
@@ -388,15 +456,31 @@ export async function presignUploadUrl(req, res) {
         message: "Nombre y tipo de archivo son requeridos",
       });
     }
-    // Map content type to folder
+    // Map content type to folder, handling video subcategories
     const folderMap = {
-      Video: "videos",
+      Video: {
+        'sesiones-mensuales': 'videos/sesiones-mensuales',
+        'sesiones-extraordinarias': 'videos/sesiones-extraordinarias',
+        'sesiones-con-proveedores': 'videos/sesiones-con-proveedores',
+        'default': 'videos'
+      },
       Articulo: "articulos",
       Podcast: "podcasts",
       Libro: "libros",
+      Descuento: "descuentos",
     };
 
-    const s3Folder = folderMap[folder] || "contenido";
+    let s3Folder;
+    if (folder === "Video" && subcategoria) {
+      // Use subcategory-specific folder for videos
+      s3Folder = folderMap.Video[subcategoria] || folderMap.Video.default;
+    } else if (typeof folderMap[folder] === 'object') {
+      // If it's an object (like Video), use default
+      s3Folder = folderMap[folder].default || "contenido";
+    } else {
+      // Use direct mapping for other types
+      s3Folder = folderMap[folder] || "contenido";
+    }
 
     /// Use your current S3 service to generate the URL
     const fileExt = path.extname(fileName);
@@ -459,7 +543,8 @@ export async function editContent(req, res) {
     if (!role || role.nombre !== "Admin") {
       return res.status(403).json({
         success: false,
-        message: "No tienes permisos para editar contenido. Solo los administradores pueden realizar esta acción.",
+        message:
+          "No tienes permisos para editar contenido. Solo los administradores pueden realizar esta acción.",
       });
     }
 
@@ -508,6 +593,19 @@ export async function editContent(req, res) {
 }
 
 /**
+ * Return active discounts for homepage.
+ */
+export async function getActiveDiscounts(req, res) {
+  try {
+    const discounts = await _getActiveDiscounts();
+    return res.status(200).json({ success: true, data: discounts });
+  } catch (err) {
+    console.error("Error fetching active discounts:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+/**
  * Deletes content (soft delete in DB + physical delete in S3)
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -541,7 +639,8 @@ export async function deleteContent(req, res) {
     if (!role || role.nombre !== "Admin") {
       return res.status(403).json({
         success: false,
-        message: "No tienes permisos para eliminar contenido. Solo los administradores pueden realizar esta acción.",
+        message:
+          "No tienes permisos para eliminar contenido. Solo los administradores pueden realizar esta acción.",
       });
     }
 
@@ -561,10 +660,28 @@ export async function deleteContent(req, res) {
 
     await Promise.all(deletePromises);
 
-    return res.status(200).json({
-      success: true,
-      message: "Contenido eliminado exitosamente",
-    });
+    // Also delete any notifications that reference this content
+    try {
+      const NotificationModel = (
+        await import("../models/notifications.model.js")
+      ).default;
+
+      const deleted = await NotificationModel.deleteByContentId(contentId);
+      // include number of deleted notifications in response for transparency
+      return res.status(200).json({
+        success: true,
+        message: "Contenido eliminado exitosamente",
+        deletedNotifications: deleted.affectedRows || 0,
+      });
+    } catch (notifErr) {
+      console.error("Error deleting related notifications:", notifErr);
+      // Content deleted successfully; return success but warn about notifications
+      return res.status(200).json({
+        success: true,
+        message:
+          "Contenido eliminado exitosamente (error al eliminar notificaciones relacionadas)",
+      });
+    }
   } catch (error) {
     if (error.message === "Content not found") {
       return res.status(404).json({
@@ -581,25 +698,42 @@ export async function deleteContent(req, res) {
 }
 
 /**
-   * Generate and upload member certificate
-   * @async
-   * @param {number} membershipId - ID of the membership
-   * @returns {Promise<CertificateResult>} Result of the generation
-   */
-export async function generateAndUploadCertificate(membershipId) {
+ * Generate and upload member certificate
+ * @async
+ * @param {number} membershipId - ID of the membership
+ * @returns {Promise<CertificateResult>} Result of the generation
+ */
+export async function generateAndUploadCertificate(membershipId, sendEmail = true) {
   try {
     const membershipData = await getUserByMembershipId(membershipId);
 
     if (!membershipData) {
-      return { generated: false, error: 'Membership not found' };
+      return { generated: false, error: "Membership not found" };
     }
 
-    const { nombres, apellidoP, apellidoM, membresiaTipo, membresiaFechaVencimiento, membresiaNoAfiliado } = membershipData;
+    const {
+      nombres,
+      apellidoP,
+      apellidoM,
+      membresiaTipo,
+      membresiaFechaVencimiento,
+      membresiaNoAfiliado,
+    } = membershipData;
 
     // Format fechaVencimiento to "Mes Año" format (e.g., "Diciembre 2025")
     const mesesEspanol = [
-      'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
-      'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+      "ENERO",
+      "FEBRERO",
+      "MARZO",
+      "ABRIL",
+      "MAYO",
+      "JUNIO",
+      "JULIO",
+      "AGOSTO",
+      "SEPTIEMBRE",
+      "OCTUBRE",
+      "NOVIEMBRE",
+      "DICIEMBRE",
     ];
 
     const fechaVencimiento = new Date(membresiaFechaVencimiento);
@@ -614,23 +748,22 @@ export async function generateAndUploadCertificate(membershipId) {
       apellidoM,
       membresiaTipo,
       vigencia,
-      membresiaNoAfiliado
+      membresiaNoAfiliado,
     });
 
     const nombreCompleto = [nombres, apellidoP, apellidoM]
       .filter(Boolean)
-      .join(' ')
+      .join(" ")
       .trim();
 
-    // Create a unique name for the file
-    const timestamp = Date.now();
-    const sanitizedName = nombreCompleto.replace(/\s+/g, '_').toLowerCase();
+    // Create a unique name for the file using UUID (consistent with membership payment flow)
     const fileName = "membresias";
+    const uniqueFileName = `${crypto.randomUUID()}.pdf`;
 
     const fileForS3 = {
-      originalname: pdfBytes.filename,
+      originalname: uniqueFileName,
       mimetype: pdfBytes.mimeType,
-      buffer: pdfBytes.buffer
+      buffer: pdfBytes.buffer,
     };
 
     // Upload to S3
@@ -639,17 +772,52 @@ export async function generateAndUploadCertificate(membershipId) {
     //Update certificate
     await updateUserCertificate(membershipId, uploadResult);
 
-    // Send Email to member
-    await sendWelcomeEmail(membershipData.correo, nombreCompleto, pdfBytes);
+    // Send Email to member only if requested
+    if (sendEmail) {
+      await sendWelcomeEmail(membershipData.correo, nombreCompleto, pdfBytes);
+    }
 
     return {
       generated: true,
       url: uploadResult,
-      key: uploadResult
+      key: uploadResult,
     };
-
   } catch (error) {
     return { generated: false, error: error.message };
   }
 }
 
+/**
+ * Updates discount dates for an existing content row (admin)
+ */
+export async function updateDates(req, res) {
+  try {
+    const { contentId } = req.params;
+    const { fechaInicio, fechaFin } = req.body;
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+    if (!dateRegex.test(fechaInicio) || !dateRegex.test(fechaFin)) {
+      return res.status(400).json({
+        success: false,
+        message: "Formato de fecha inválido. Use YYYY-MM-DD",
+      });
+    }
+
+    const updated = await updateContentDates(contentId, fechaInicio, fechaFin);
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Contenido no encontrado o no editable",
+      });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Fechas actualizadas" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Error al actualizar fechas" });
+  }
+}

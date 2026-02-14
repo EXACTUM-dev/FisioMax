@@ -53,6 +53,8 @@ export default function UploadMultimedia() {
     nombre: "",
     descripcion: "",
     tipo: "Articulo",
+    fechaInicio: "",
+    fechaFin: "",
   });
 
   const [selectedFile, setSelectedFile] = useState(null);
@@ -61,6 +63,14 @@ export default function UploadMultimedia() {
   const [roles, setRoles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // Fecha mínima para inputs de tipo date (YYYY-MM-DD) - calcula fecha local
+  const getLocalToday = () => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000; // offset in ms
+    return new Date(Date.now() - tzOffset).toISOString().split("T")[0];
+  };
+  const todayStr = getLocalToday();
 
   // Modal states
   const [successModalOpen, setSuccessModalOpen] = useState(false);
@@ -112,7 +122,10 @@ export default function UploadMultimedia() {
         });
         const data = await response.json();
         if (data.success) {
-          setRoles(data.data || []);
+          const fetchedRoles = data.data || [];
+          setRoles(fetchedRoles);
+          // Set all roles as selected by default
+          setSelectedRoles(fetchedRoles.map(role => role.IDRol));
         }
       } catch (error) {
         throw error;
@@ -181,7 +194,6 @@ export default function UploadMultimedia() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar todos los campos
     const formErrors = validateContentForm({
       nombre: formData.nombre,
       descripcion: formData.descripcion,
@@ -202,56 +214,120 @@ export default function UploadMultimedia() {
       return;
     }
 
+    if (formData.tipo === "Descuento") {
+      const inicio = formData.fechaInicio || "";
+      const fin = formData.fechaFin || "";
+
+      if (!inicio) {
+        setErrors((prev) => ({
+          ...prev,
+          fechaInicio: "La fecha de inicio es obligatoria",
+        }));
+        setErrorMessage("La fecha de inicio es obligatoria para descuentos");
+        setErrorModalOpen(true);
+        return;
+      }
+
+      if (inicio < todayStr) {
+        setErrors((prev) => ({
+          ...prev,
+          fechaInicio: "La fecha de inicio no puede ser anterior a hoy",
+        }));
+        setErrorMessage("La fecha de inicio no puede ser anterior a hoy");
+        setErrorModalOpen(true);
+        return;
+      }
+
+      if (fin && fin < inicio) {
+        setErrors((prev) => ({
+          ...prev,
+          fechaFin:
+            "La fecha de fin no puede ser anterior a la fecha de inicio",
+        }));
+        setErrorMessage(
+          "La fecha de fin no puede ser anterior a la fecha de inicio"
+        );
+        setErrorModalOpen(true);
+        return;
+      }
+    }
+
     try {
       setUploading(true);
       const token = await getToken();
+
+      // Parse tipo and subcategoria from formData.tipo
+      let actualTipo = formData.tipo;
+      let subcategoria = null;
+
+      // Check if it's a video subcategory (format: Video-SesionesMensuales)
+      if (formData.tipo.startsWith("Video-")) {
+        actualTipo = "Video";
+        // Convert Video-SesionesMensuales to sesiones-mensuales
+        const subcatPart = formData.tipo.replace("Video-", "");
+        // Convert camelCase to kebab-case
+        subcategoria = subcatPart
+          .replace(/([A-Z])/g, "-$1")
+          .toLowerCase()
+          .substring(1); // Remove leading dash
+      }
 
       const uploadData = new FormData();
       //uploadData.append("file", selectedFile);
       uploadData.append("nombre", formData.nombre.trim());
       uploadData.append("descripcion", formData.descripcion.trim());
-      uploadData.append("tipo", formData.tipo);
+      uploadData.append("tipo", actualTipo);
+      if (subcategoria) {
+        uploadData.append("subcategoria", subcategoria);
+      }
       uploadData.append("roles", JSON.stringify(selectedRoles));
-
-      const presignRes = await fetch(
-        `${import.meta.env.VITE_API_URL}/content/presign`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            fileName: selectedFile.name,
-            fileType: selectedFile.type,
-            folder: formData.tipo
-          }),
-        }
-      );
-
-      const presignData = await presignRes.json();
-
-      if (!presignData.success) {
-        throw new Error("No se pudo generar la URL para subir el archivo");
+      if (formData.tipo === "Descuento") {
+        uploadData.append("fechaInicio", formData.fechaInicio);
+        uploadData.append("fechaFin", formData.fechaFin);
       }
 
-      const { uploadUrl, key: mainFileKey } = presignData;
+      // If a main file was selected (works for all types, including Descuento), presign and upload it
+      if (selectedFile) {
+        const presignRes = await fetch(
+          `${import.meta.env.VITE_API_URL}/content/presign`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              fileName: selectedFile.name,
+              fileType: selectedFile.type,
+              folder: actualTipo,
+              subcategoria: subcategoria,
+            }),
+          }
+        );
 
-      //Upload file directly to S3 from the client
-      const uploadMainFile = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": selectedFile.type,
-        },
-        body: selectedFile,
-      });
+        const presignData = await presignRes.json();
 
-      if (!uploadMainFile.ok) {
-        throw new Error("Falló la subida del archivo principal a S3");
-      } else {
+        if (!presignData.success) {
+          throw new Error("No se pudo generar la URL para subir el archivo");
+        }
+
+        const { uploadUrl, key: mainFileKey } = presignData;
+
+        //Upload file directly to S3 from the client
+        const uploadMainFile = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": selectedFile.type,
+          },
+          body: selectedFile,
+        });
+
+        if (!uploadMainFile.ok) {
+          throw new Error("Falló la subida del archivo principal a S3");
+        }
+
         uploadData.append("filekey", mainFileKey);
       }
-
       // Add thumbnail if selected
       if (selectedThumbnail) {
         uploadData.append("thumbnail", selectedThumbnail);
@@ -276,6 +352,8 @@ export default function UploadMultimedia() {
           nombre: "",
           descripcion: "",
           tipo: "Articulo",
+          fechaInicio: "",
+          fechaFin: "",
         });
         setSelectedFile(null);
         setSelectedThumbnail(null);
@@ -447,8 +525,33 @@ export default function UploadMultimedia() {
                   )}
                 </div>
               </div>
+              {/* Date fields for discounts */}
+              {formData.tipo === "Descuento" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <FormField
+                    label="Fecha de inicio"
+                    name="fechaInicio"
+                    type="date"
+                    value={formData.fechaInicio}
+                    onChange={handleInputChange}
+                    min={todayStr}
+                    required
+                    error={errors.fechaInicio}
+                  />
+                  <FormField
+                    label="Fecha de fin"
+                    name="fechaFin"
+                    type="date"
+                    value={formData.fechaFin}
+                    onChange={handleInputChange}
+                    min={formData.fechaInicio || todayStr}
+                    required
+                    error={errors.fechaFin}
+                  />
+                </div>
+              )}
 
-              {/* Main content file upload area with dynamic restrictions */}
+              {/* Main content file upload area (always visible). For Descuento both file + thumbnail are required. */}
               <div className="mb-8">
                 <FileUpload
                   name="file"
@@ -462,17 +565,20 @@ export default function UploadMultimedia() {
                 />
               </div>
 
-              <div className="mb-8">
-                <FileUpload
-                  name="thumbnail"
-                  label="Miniatura del contenido"
-                  limitation="PNG, JPG hasta 20MB"
-                  accept="image/png,image/jpeg,image/jpg"
-                  value={selectedThumbnail}
-                  onChange={(e) => handleFileChange(e, "thumbnail")}
-                  error={errors.thumbnail}
-                />
-              </div>
+              {formData.tipo !== "Descuento" && (
+                <div className="mb-8">
+                  <FileUpload
+                    name="thumbnail"
+                    label={"Miniatura del contenido"}
+                    limitation="PNG, JPG hasta 20MB"
+                    required={false}
+                    accept="image/png,image/jpeg,image/jpg"
+                    value={selectedThumbnail}
+                    onChange={(e) => handleFileChange(e, "thumbnail")}
+                    error={errors.thumbnail}
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-3">
                 <Button
@@ -483,6 +589,8 @@ export default function UploadMultimedia() {
                       nombre: "",
                       descripcion: "",
                       tipo: "Articulo",
+                      fechaInicio: "",
+                      fechaFin: "",
                     });
                     setSelectedFile(null);
                     setSelectedThumbnail(null);
@@ -507,7 +615,7 @@ export default function UploadMultimedia() {
         open={successModalOpen}
         onClose={() => {
           setSuccessModalOpen(false);
-          navigate("/");
+          navigate("/home");
         }}
         type="success"
         title="¡Contenido subido exitosamente!"

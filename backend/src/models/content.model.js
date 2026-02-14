@@ -11,7 +11,13 @@ import db from "../../database/db.js";
  * Valid content types that can be displayed
  * @constant {string[]}
  */
-const DISPLAYABLE_CONTENT_TYPES = ["video", "articulo", "podcast", "libro"];
+const DISPLAYABLE_CONTENT_TYPES = [
+  "video",
+  "articulo",
+  "podcast",
+  "libro",
+  "descuento",
+];
 
 /**
  * Gets a specific content by ID with its thumbnail
@@ -27,9 +33,13 @@ export async function getContentById(contentId) {
       c.nombre,
       c.descripcion,
       c.tipo,
+      c.subcategoria,
       c.tipoMembresia,
       c.createdAt,
-      t.IDMultimedia as thumbnailMultimedia
+      CASE 
+        WHEN c.tipo = 'descuento' AND t.IDMultimedia IS NULL THEN c.IDMultimedia
+        ELSE t.IDMultimedia
+      END as thumbnailMultimedia
     FROM contenido c
     LEFT JOIN contenido t ON t.nombre = c.nombre
                           AND t.eliminado = 0
@@ -129,9 +139,15 @@ export async function getAvailableContent(
       c.nombre,
       c.descripcion,
       c.tipo,
+      c.subcategoria,
       c.tipoMembresia,
+      c.fechaInicio,
+      c.fechaFin,
       c.createdAt,
-      t.IDMultimedia as thumbnailMultimedia
+      CASE 
+        WHEN c.tipo = 'descuento' AND t.IDMultimedia IS NULL THEN c.IDMultimedia
+        ELSE t.IDMultimedia
+      END as thumbnailMultimedia
     FROM contenido c
     LEFT JOIN contenido t 
       ON t.nombre = c.nombre
@@ -148,15 +164,37 @@ export async function getAvailableContent(
   `;
 
   try {
+    // Apply discount date filtering: ensure that any row with tipo='descuento'
+    // is only returned when its fechaInicio/fechaFin includes now.
+    const discountDateClause = `
+      AND (
+        c.tipo != 'descuento'
+        OR (c.fechaInicio <= NOW() AND c.fechaFin >= NOW())
+      )
+    `;
+
+    // Construct final queries by appending the date clause to the WHERE section
+    // We append it before ORDER BY / LIMIT to ensure it's part of the filtering
+    const finalCountQuery = countQuery + discountDateClause;
+
+    // For content query, we need to insert it before ORDER BY
+    // The original contentQuery ends with ${orderBy} LIMIT ? OFFSET ?
+    // So we can just inject it before the ORDER BY clause
+    const finalContentQuery = contentQuery.replace(
+      "ORDER BY",
+      `${discountDateClause} ORDER BY`
+    );
+
     // For count query, we need the same params except limit/offset
     const countParams = searchFilter ? [...params] : params;
-    const [[{ total }]] = await db.query(countQuery, countParams);
+    const [[{ total }]] = await db.query(finalCountQuery, countParams);
 
     // For content query, add limit and offset at the end
     const contentParams = searchFilter
       ? [...params, limit, offset]
       : [...params, limit, offset];
-    const [rows] = await db.query(contentQuery, contentParams);
+
+    const [rows] = await db.query(finalContentQuery, contentParams);
 
     return {
       content: rows,
@@ -173,9 +211,11 @@ export async function getAvailableContent(
  * @param {Object} contentData - Content data to insert
  * @param {string} contentData.nombre - Content name
  * @param {string} contentData.descripcion - Content description
- * @param {string} contentData.tipo - Content type (video, articulo, imagen, podcast, documento)
+ * @param {string} contentData.tipo - Content type (video, articulo, imagen, podcast, documento, descuento)
  * @param {string} contentData.IDMultimedia - S3 key for the multimedia file
- * @param {string} [contentData.tipoMembresia] - Membership type (Básico, Estándar, Premium)
+ * @param {string} [contentData.tipoMembresia] - Membership type
+ * @param {string} [contentData.fechaInicio] - Start date for discounts (YYYY-MM-DD)
+ * @param {string} [contentData.fechaFin] - End date for discounts (YYYY-MM-DD)
  * @returns {Promise<number>} Inserted content ID
  * @throws {Error} If database error
  */
@@ -185,26 +225,95 @@ export async function createContent(contentData) {
       nombre,
       descripcion,
       tipo,
+      subcategoria,
       IDMultimedia,
       tipoMembresia,
+      fechaInicio,
+      fechaFin,
       eliminado,
       createdAt
-    ) VALUES (?, ?, ?, ?, ?, 0, NOW())
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())
   `;
 
-  try {
-    const [result] = await db.query(query, [
-      contentData.nombre,
-      contentData.descripcion,
-      contentData.tipo,
-      contentData.IDMultimedia,
-      contentData.tipoMembresia || null,
-    ]);
+  // Defensive normalization of inputs
+  let tipoMembresia = contentData.tipoMembresia ?? null;
+  if (Array.isArray(tipoMembresia)) {
+    tipoMembresia = tipoMembresia.join(", ");
+  } else if (typeof tipoMembresia === "object" && tipoMembresia !== null) {
+    tipoMembresia = String(tipoMembresia);
+  }
 
+  // Ensure IDMultimedia is scalar (avoid arrays coming from duplicated form fields)
+  let idMultimedia = contentData.IDMultimedia ?? null;
+  if (Array.isArray(idMultimedia)) {
+    idMultimedia = idMultimedia[0] ?? null;
+  } else if (typeof idMultimedia === "object" && idMultimedia !== null) {
+    idMultimedia = String(idMultimedia);
+  }
+
+  const params = [
+    contentData.nombre,
+    contentData.descripcion,
+    contentData.tipo,
+    contentData.subcategoria || null,
+    idMultimedia,
+    tipoMembresia || null,
+    contentData.fechaInicio || null,
+    contentData.fechaFin || null,
+  ];
+
+  try {
+    // Ensure params length matches the number of placeholders (8)
+    if (!Array.isArray(params) || params.length !== 8) {
+      throw new Error(
+        `Invalid parameter list for createContent; expected 8 params, got ${(params && params.length) || 0
+        }`
+      );
+    }
+
+    const [result] = await db.query(query, params);
     return result.insertId;
   } catch (error) {
-    throw new Error("Database error");
+    throw error;
   }
+}
+
+/**
+ * Get active discounts (date range inclusive).
+ * This returns main discount records (not thumbnails).
+ */
+export async function getActiveDiscounts() {
+  // English: select discounts whose date range includes today
+  const sql = `
+    SELECT
+      c.IDContenido,
+      c.IDMultimedia,
+      c.nombre,
+      c.descripcion,
+      c.subcategoria,
+      c.tipoMembresia,
+      c.fechaInicio,
+      c.fechaFin,
+      c.createdAt,
+      CASE 
+        WHEN c.tipo = 'descuento' AND t.IDMultimedia IS NULL THEN c.IDMultimedia
+        ELSE t.IDMultimedia
+      END as thumbnailMultimedia
+    FROM contenido c
+    LEFT JOIN contenido t 
+      ON t.nombre = c.nombre
+      AND t.tipo = 'imagen'
+      AND t.tipoMembresia = c.tipoMembresia
+      AND t.eliminado = 0
+      AND t.deletedAt IS NULL
+    WHERE c.tipo = 'descuento'
+      AND c.eliminado = 0
+      AND DATE(c.fechaInicio) <= CURDATE()
+      AND DATE(c.fechaFin) >= CURDATE()
+    ORDER BY c.createdAt DESC
+  `;
+  const [rows] = await db.query(sql);
+  return rows;
 }
 
 /**
@@ -279,7 +388,11 @@ export async function updateContent(contentId, updateData) {
         AND deletedAt IS NULL
     `;
 
-    const [updateResult] = await db.query(updateQuery, [nombre, descripcion, contentId]);
+    const [updateResult] = await db.query(updateQuery, [
+      nombre,
+      descripcion,
+      contentId,
+    ]);
 
     if (updateResult.affectedRows === 0) {
       throw new Error("Content not found or already deleted");
@@ -295,7 +408,11 @@ export async function updateContent(contentId, updateData) {
         AND deletedAt IS NULL
     `;
 
-    await db.query(updateThumbnailQuery, [nombre, `Miniatura de ${nombre}`, oldNombre]);
+    await db.query(updateThumbnailQuery, [
+      nombre,
+      `Miniatura de ${nombre}`,
+      oldNombre,
+    ]);
 
     // Return updated content
     const [updated] = await db.query(
@@ -305,7 +422,11 @@ export async function updateContent(contentId, updateData) {
 
     return updated[0];
   } catch (error) {
-    if (error.message === "Content not found" || error.message === "Content type cannot be edited" || error.message === "Content not found or already deleted") {
+    if (
+      error.message === "Content not found" ||
+      error.message === "Content type cannot be edited" ||
+      error.message === "Content not found or already deleted"
+    ) {
       throw error;
     }
     throw new Error("Database error");
@@ -339,7 +460,10 @@ export async function softDeleteContent(contentId) {
   `;
 
   try {
-    const [rows] = await db.query(selectQuery, [contentId, DISPLAYABLE_CONTENT_TYPES]);
+    const [rows] = await db.query(selectQuery, [
+      contentId,
+      DISPLAYABLE_CONTENT_TYPES,
+    ]);
 
     if (rows.length === 0) {
       throw new Error("Content not found");

@@ -43,6 +43,7 @@ import MembershipModal from "../data/modalTemplates/membershipModal";
  */
 // Services (NEW): user delete service
 import { deleteUser as deleteUserService } from "../services/usersServices";
+import { deleteMembership as deleteMembershipService } from "../services/membershipServices";
 
 export default function Panel() {
   const { user, isLoaded } = useUser();
@@ -430,6 +431,30 @@ export default function Panel() {
   const membershipColumns = useMemo(
     () =>
       buildMembershipColumns({
+        onDelete: async (row) => {
+          try {
+            const id =
+              row?.id ??
+              row?.IDMembresia ??
+              row?.__raw?.IDMembresia ??
+              row?.__raw?.id;
+
+            if (!id) {
+              console.warn("Missing membership id in row:", row);
+              alert("No se pudo determinar el ID de la solicitud.");
+              return;
+            }
+
+            // Reuse the existing confirmation modal state but maybe add a flag or separate state
+            // Ideally we should have separate state for clarity but we can reuse if we are careful
+            // Let's use a new state variable for membership deletion to be clean
+            setUserToDelete({ ...row, isMembership: true, idToDelete: id }); // Duck typing to reuse userToDelete
+            setDeleteConfirmOpen(true);
+
+          } catch (err) {
+            setError(err.message || "Error al preparar eliminación de la solicitud");
+          }
+        },
         onView: (row) => {
           // Prefer explicit id fields from backend raw data, fall back to row.id
           const id =
@@ -669,36 +694,55 @@ export default function Panel() {
       {/* Confirmation modal for user deletion */}
       <ConfirmationModal
         open={deleteConfirmOpen}
-        title="¿Eliminar usuario?"
-        message={`¿Estás seguro de que deseas eliminar al usuario "${[
-          userToDelete?.nombres,
-          userToDelete?.apellidoP,
-          userToDelete?.apellidoM,
-        ]
-          .filter(Boolean)
-          .join(" ")}"? Esta acción no se puede deshacer.`}
+        title={userToDelete?.isMembership ? "¿Eliminar solicitud?" : "¿Eliminar usuario?"}
+        message={
+          userToDelete?.isMembership
+            ? `¿Estás seguro de que deseas eliminar esta solicitud de membresía de "${userToDelete?.nombre}"? Esta acción no se puede deshacer.`
+            : `¿Estás seguro de que deseas eliminar al usuario "${[
+              userToDelete?.nombres,
+              userToDelete?.apellidoP,
+              userToDelete?.apellidoM,
+            ]
+              .filter(Boolean)
+              .join(" ")}"? Esta acción no se puede deshacer.`
+        }
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
         onConfirm={async () => {
           try {
             const token = await getToken();
-            await deleteUserService(
-              userToDelete?.IDUsuario ?? userToDelete?.id,
-              token
-            );
 
-            // Optimistic UI update
-            setUserRows((prev) =>
-              prev.filter(
-                (r) => (r?.IDUsuario ?? r?.id) !== userToDelete?.IDUsuario
-              )
-            );
-            setDeleteConfirmOpen(false);
+            if (userToDelete?.isMembership) {
+              // Handle membership deletion
+              await deleteMembershipService(userToDelete.idToDelete, token);
 
-            // Show success modal
-            setSuccessModalOpen(true);
+              // Optimistic UI update
+              setMembershipRows((prev) =>
+                prev.filter(r => {
+                  const rId = r.id ?? r.IDMembresia ?? r.__raw?.IDMembresia;
+                  return String(rId) !== String(userToDelete.idToDelete);
+                })
+              );
+              setDeleteConfirmOpen(false);
+              setSuccessModalOpen(true); // Reuse success modal? Logic needs update there too.
+            } else {
+              // Handle user deletion
+              await deleteUserService(
+                userToDelete?.IDUsuario ?? userToDelete?.id,
+                token
+              );
+
+              // Optimistic UI update
+              setUserRows((prev) =>
+                prev.filter(
+                  (r) => (r?.IDUsuario ?? r?.id) !== userToDelete?.IDUsuario
+                )
+              );
+              setDeleteConfirmOpen(false);
+              setSuccessModalOpen(true);
+            }
           } catch (err) {
-            setError(err.message || "Error al eliminar el usuario");
+            setError(err.message || "Error al eliminar el registro");
           }
         }}
         onCancel={() => setDeleteConfirmOpen(false)}
@@ -728,10 +772,12 @@ export default function Panel() {
               />
             </svg>
           </div>
-          <Title2 className="mb-4">¡Usuario Eliminado!</Title2>
+          <Title2 className="mb-4">{userToDelete?.isMembership ? "¡Solicitud Eliminada!" : "¡Usuario Eliminado!"}</Title2>
           <p className="text-lg">
-            El usuario "{userToDelete?.nombres} {userToDelete?.apellidoP}" ha
-            sido eliminado con éxito.
+            {userToDelete?.isMembership
+              ? `La solicitud de "${userToDelete?.nombre}" ha sido eliminada con éxito.`
+              : `El usuario "${userToDelete?.nombres} ${userToDelete?.apellidoP}" ha sido eliminado con éxito.`
+            }
           </p>
           <Button
             label="Entendido"

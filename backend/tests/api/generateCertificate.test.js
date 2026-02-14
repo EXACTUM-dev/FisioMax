@@ -21,6 +21,7 @@ jest.unstable_mockModule("../../src/models/users.model.js", () => ({
     updateUserCertificate: mockUpdateUserCertificate,
     getUserById: jest.fn(),
     getUsuarioByClerkId: jest.fn(),
+    getUserByClerkId: jest.fn(),
 }));
 
 jest.unstable_mockModule("../../src/utils/certificate.js", () => ({
@@ -38,6 +39,13 @@ jest.unstable_mockModule("../../src/services/s3Service.js", () => ({
 jest.unstable_mockModule("../../src/services/emailServices.js", () => ({
     sendWelcomeEmail: mockSendWelcomeEmail,
     sendRejectionEmail: jest.fn(),
+    sendRenewalReminder: jest.fn(),
+    sendDiscountNotification: jest.fn(),
+    FRONTEND_URL: 'http://localhost:3000',
+}));
+
+jest.unstable_mockModule("../../src/services/notificationCronJob.js", () => ({
+    checkAndNotifyNewDiscounts: jest.fn(),
 }));
 
 // Mock other dependencies that might be imported
@@ -48,6 +56,7 @@ jest.unstable_mockModule("../../src/models/content.model.js", () => ({
     assignContentToPrivileges: jest.fn(),
     updateContent: jest.fn(),
     softDeleteContent: jest.fn(),
+    getActiveDiscounts: jest.fn(),
 }));
 
 jest.unstable_mockModule("../../src/models/roles.model.js", () => ({

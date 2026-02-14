@@ -324,7 +324,7 @@ const NotificationBell = () => {
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+        className="relative p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
         aria-label="Notificaciones"
       >
         {/* Bell icon */}

@@ -137,14 +137,20 @@ export default function ContentPage() {
           setErrorType("error");
           return;
         }
+        // Normalize IDs to numbers to avoid type-mismatch filtering (string vs number)
         const slides = response.content
-          .filter((item) => item.IDContenido !== activeContentId)
+          .filter(
+            (item) => Number(item.IDContenido) !== Number(activeContentId)
+          )
           .map((item) => ({
-            id: item.IDContenido,
+            id: Number(item.IDContenido) || item.IDContenido,
             title: item.nombre,
             subtitle: item.descripcion?.substring(0, 100) + "...",
             imageUrl: item.thumbnailUrl || "/SOMEFIPP-Logo.jpeg",
             imageAlt: item.nombre,
+            type: item.tipo,
+            fechaInicio: item.fechaInicio || null,
+            fechaFin: item.fechaFin || null,
           }));
         if (offset === 0) {
           setRelatedContent(slides);
@@ -182,7 +188,7 @@ export default function ContentPage() {
   useEffect(() => {
     if (contentId) {
       const parsedId = parseInt(contentId);
-      if (parsedId !== activeContentId) {
+      if (parsedId !== Number(activeContentId)) {
         setActiveContentId(parsedId);
         setOffset(0);
       }
@@ -215,6 +221,7 @@ export default function ContentPage() {
   const isArticle = contentData?.contentData?.tipo === "articulo";
   const isBook = contentData?.contentData?.tipo === "libro";
   const isPodcast = contentData?.contentData?.tipo === "podcast";
+  const isDiscount = contentData?.contentData?.tipo === "descuento";
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
@@ -250,6 +257,20 @@ export default function ContentPage() {
                     url={contentData?.signedUrl}
                     onError={handleContentError}
                   />
+                )}
+                {isDiscount && contentData?.contentData?.thumbnailUrl && (
+                  <div
+                    className="w-full bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center"
+                    style={{ maxHeight: "600px" }}
+                  >
+                    <img
+                      src={contentData.contentData.thumbnailUrl}
+                      alt={contentData.contentData.titulo}
+                      className="w-full h-auto object-contain"
+                      style={{ maxHeight: "600px" }}
+                      onError={handleContentError}
+                    />
+                  </div>
                 )}
               </div>
 

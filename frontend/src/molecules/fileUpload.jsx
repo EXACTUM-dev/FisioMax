@@ -1,20 +1,20 @@
 /**
- * @fileoverview Component to upload PDF
+ * @fileoverview Component to upload documents (PDF, JPG, JPEG, PNG)
  * @author EXACTUM-dev 
- * @version 1.0.0
- * @description Include the design of the component and the specification to only acept PDF
+ * @version 1.1.0
+ * @description Include the design of the component and the specification to accept PDF and image files (JPG, JPEG, PNG) up to 20MB
  */
 import React, { useState } from "react";
 
-export default function FileUpload({ 
-  name, 
+export default function FileUpload({
+  name,
   label,
-  limitation="PDF hasta 10Mb", 
-  required = false, 
-  accept = ".pdf", 
-  value, 
-  onChange, 
-  error 
+  limitation = "PDF, JPG, JPEG o PNG hasta 20MB",
+  required = false,
+  accept = ".pdf,.jpg,.jpeg,.png",
+  value,
+  onChange,
+  error
 }) {
   const [dragActive, setDragActive] = useState(false);
   const [inputKey, setInputKey] = useState(Date.now());
@@ -33,7 +33,7 @@ export default function FileUpload({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       onChange({ target: { name, files: [file] } });
@@ -57,13 +57,12 @@ export default function FileUpload({
       <label className="text-sm font-semibold text-gray-700 mb-1 block">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      
+
       <div
-        className={`relative border-2 border-dashed rounded-lg p-4 transition-colors ${
-          dragActive 
-            ? "border-[#CAD00F] bg-[#CAD00F]/10" 
-            : "border-slate-300 hover:border-[#CAD00F]"
-        } ${error ? "border-red-300 bg-red-50" : ""}`}
+        className={`relative border-2 border-dashed rounded-lg p-4 transition-colors ${dragActive
+          ? "border-[#CAD00F] bg-[#CAD00F]/10"
+          : "border-slate-300 hover:border-[#CAD00F]"
+          } ${error ? "border-red-300 bg-red-50" : ""}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -79,7 +78,7 @@ export default function FileUpload({
           className="sr-only"
           tabIndex={-1}
         />
-        
+
         {value ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -131,7 +130,7 @@ export default function FileUpload({
           </div>
         )}
       </div>
-      
+
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );

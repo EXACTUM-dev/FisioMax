@@ -158,7 +158,7 @@ export async function createCertificate({ nombres, apellidoP, apellidoM, membres
 
   // === AFFILIATE NUMBER ===
   if (membresiaNoAfiliado) {
-    const afiliadoText = `${membresiaNoAfiliado}`;
+    const afiliadoText = String(membresiaNoAfiliado).padStart(6, '0');
     const afiliadoSize = 16;
     // Fixed X position to the right of the preprinted text
     page.drawText(afiliadoText, {

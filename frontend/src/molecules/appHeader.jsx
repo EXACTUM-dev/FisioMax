@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from "react";
+import PrivacyNoticeModal from "./privacyNoticeModal";
 import { UserButton } from "@clerk/clerk-react";
 import SearchBar from "../molecules/searchBar";
 import NotificationBell from "../molecules/notificationBell.jsx";
@@ -31,6 +32,7 @@ export default function AppHeader({
   onSearchSubmit,
 }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
 
   const handleSearchKeyDown = (e) => {
     if (e.key === "Enter" && onSearchSubmit) {
@@ -86,6 +88,13 @@ export default function AppHeader({
 
           {/* notification's button */}
           <NotificationBell />
+          <button
+            type="button"
+            className="ml-3 text-xs text-gray-600 underline hover:text-brand cursor-pointer"
+            onClick={() => setShowPrivacyNotice(true)}
+          >
+            Aviso de Privacidad
+          </button>
 
         </div>
       </div>
@@ -94,6 +103,7 @@ export default function AppHeader({
 
   // Mobile header
   const mobileHeader = (
+    <>
     <header className="bg-white shadow-sm border-b border-gray-200 block sm:hidden relative z-30">
       <div className="flex items-center justify-between px-3 py-2 h-14 relative">
         {/* Logo */}
@@ -133,6 +143,13 @@ export default function AppHeader({
           )}
           {/* notification's button */}
           <NotificationBell />
+          <button
+            type="button"
+            className="ml-2 text-xs text-gray-600 underline hover:text-brand"
+            onClick={() => setShowPrivacyNotice(true)}
+          >
+            Aviso de Privacidad
+          </button>
         </div>
       </div>
       {/* Mobile search overlay */}
@@ -140,6 +157,7 @@ export default function AppHeader({
         <div className="absolute inset-0 bg-white flex items-center px-3 z-40">
           <SearchBar
             value={searchValue}
+            onChange={onSearchChange}
             placeholder={searchPlaceholder}
             expandable={false}
             onKeyDown={handleSearchKeyDown}
@@ -166,6 +184,11 @@ export default function AppHeader({
       )}
 
     </header>
+    <PrivacyNoticeModal
+      open={showPrivacyNotice}
+      onClose={() => setShowPrivacyNotice(false)}
+    />
+  </>
   );
 
   return (

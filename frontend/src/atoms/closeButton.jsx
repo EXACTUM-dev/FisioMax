@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * @fileovervieweusable checkBox component
+ * @fileoverview Reusable closeButton component
  * @author EXACTUM-dev
  * @version 1.0.0
  * @description Includes consistent styles and improved accessibility
@@ -45,9 +45,8 @@ const CloseButton = (
     "absolute flex items-center justify-center font-normal border-0 bg-transparent hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-full transition-colors duration-200 cursor-pointer z-60 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50";
 
   // Position classes derived from position prop
-  const positionClasses = `${position.top || ""} ${position.right || ""} ${
-    position.left || ""
-  } ${position.bottom || ""}`;
+  const positionClasses = `${position.top || ""} ${position.right || ""} ${position.left || ""
+    } ${position.bottom || ""}`;
 
   return (
     <button

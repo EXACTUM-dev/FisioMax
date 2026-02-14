@@ -109,13 +109,22 @@ function MembershipModalContent({
     }
   }, [open]);
 
+  // Use canonical field names from the membership application flow
+  const tipoMembresia = solicitud?.membershipType ?? null;
+  const horasFormacion = solicitud?.membershipHoursFormation ?? null;
+
   useEffect(() => {
     const fetchMaxNoAfiliado = async () => {
       if (open) {
         try {
           const token = await getToken();
+          let url = "/api/membership-applications/max-no-afiliado";
+          if (tipoMembresia) {
+            url += `?type=${encodeURIComponent(tipoMembresia)}`;
+          }
+
           const response = await fetchWithClerk(
-            "/api/membership-applications/max-no-afiliado",
+            url,
             { method: "GET" },
             token
           );
@@ -129,7 +138,7 @@ function MembershipModalContent({
       }
     };
     fetchMaxNoAfiliado();
-  }, [open, getToken]);
+  }, [open, getToken, tipoMembresia]);
 
   const closePdfModal = () => {
     setPdfModalOpen(false);
@@ -207,9 +216,7 @@ function MembershipModalContent({
       solicitud?.__raw?.IDMembresia
     );
   };
-  // Use canonical field names from the membership application flow
-  const tipoMembresia = solicitud?.membershipType ?? null;
-  const horasFormacion = solicitud?.membershipHoursFormation ?? null;
+
 
   const handleConfirmApprove = async () => {
     setShowConfirmModal(false);
@@ -323,19 +330,7 @@ function MembershipModalContent({
                 value={telefonoWhatsapp || telefono || "No se envió"}
                 readOnly
               />
-              <FieldBox
-                label="Fecha de Nacimiento"
-                value={
-                  fechaNacimiento
-                    ? new Date(fechaNacimiento).toLocaleDateString("es-MX", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
-                    : "No se envió"
-                }
-                readOnly
-              />
+
               <FieldBox
                 label="Facebook"
                 value={facebook || "No se envió"}

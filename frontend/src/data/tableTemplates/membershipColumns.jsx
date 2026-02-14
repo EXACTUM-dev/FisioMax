@@ -6,6 +6,7 @@
 
 import React from "react";
 import applicationIcon from "../../assets/icons/carta.png";
+import trashIcon from "../../assets/icons/trash-2.png";
 
 function truncateText(text = "", maxChars) {
   if (!text || text.length <= maxChars) return text;
@@ -21,7 +22,7 @@ function truncateText(text = "", maxChars) {
  * @param {Function} options.onView Callback to handle viewing membership details (optional).
  * @returns {Array} Column configuration for the table.
  */
-export function buildMembershipColumns({ onView } = {}) {
+export function buildMembershipColumns({ onView, onDelete } = {}) {
   return [
     {
       key: "nombre",
@@ -95,6 +96,33 @@ export function buildMembershipColumns({ onView } = {}) {
 
         return <span className="text-sm text-slate-400">-</span>;
       },
+    },
+    {
+      key: "eliminar",
+      label: "Eliminar",
+      className: "w-[8%]",
+      headAlign: "center",
+      align: "center",
+      isAction: true,
+      render: (row) => (
+        <div className="flex items-center justify-center w-full h-full">
+          <button
+            type="button"
+            title="Eliminar solicitud"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(row);
+            }}
+            className="inline-flex items-center justify-center w-8 h-8 rounded cursor-pointer hover:bg-red-50 transition-colors"
+          >
+            <img
+              src={trashIcon}
+              alt="Eliminar"
+              className="w-5 h-5 cursor-pointer object-contain opacity-80 cursor-pointer hover:opacity-100 transition-opacity"
+            />
+          </button>
+        </div>
+      ),
     },
     {
       key: "ver",

@@ -26,14 +26,14 @@ import rolesRoutes from "./src/routes/roles.routes.js";
 import authRoutes from "./src/routes/auth.route.js";
 import homePageRoutes from "./src/routes/homePage.route.js";
 import loginLogsRoutes from "./src/routes/loginLogs.routes.js";
-import notificationRoutes from './src/routes/notifications.routes.js';
-import { startNotificationsCron } from './src/services/notificationCronJob.js';
-import { startCleanupCron } from './src/services/cleanNotificationsCronJobs.js';
+import notificationRoutes from "./src/routes/notifications.routes.js";
+import { startNotificationsCron } from "./src/services/notificationCronJob.js";
+import { startCleanupCron } from "./src/services/cleanNotificationsCronJobs.js";
 import statisticsRoutes from "./src/routes/statistics.routes.js";
 
 // Initialize Express application
 const app = express();
-
+app.set('trust proxy', 1);
 //---------------------------
 // SECURITY MIDDLEWARE
 //---------------------------
@@ -116,6 +116,7 @@ app.use("/api/statistics", statisticsRoutes);
  * Routes for video content access.
  */
 import contentRoutes from "./src/routes/content.routes.js";
+import { sendDiscountNotification } from "./src/services/emailServices.js";
 app.use("/api/content", contentRoutes);
 
 /**

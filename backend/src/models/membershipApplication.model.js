@@ -190,21 +190,40 @@ class MembershipApplication {
       const certificatesUrl =
         this.documents.constancias || this.documents.certificates || null;
       // Check for existing user with same email that is not deleted
+      console.log('🔍 [DUPLICATE CHECK] Starting duplicate check for email:', dataToEncrypt.correo);
+      console.log('🔍 [DUPLICATE CHECK] Encrypted email:', encryptedData.correo);
+
       const [existingUsers] = await conn.query(
-        `SELECT * FROM usuario WHERE eliminado = 0`,
+        `SELECT u.* 
+        FROM usuario u
+        LEFT JOIN membresia m ON u.IDUsuario = m.IDUsuario
+        WHERE u.eliminado = 0
+        AND (m.aceptado IS NULL OR m.aceptado = 1)`,
         [encryptedData.correo]
       );
+
+      console.log('🔍 [DUPLICATE CHECK] Found', existingUsers.length, 'existing users (encrypted)');
       const decryptUsers = decryptApplicationsData(existingUsers);
+      console.log('🔍 [DUPLICATE CHECK] Decrypted users:', decryptUsers.map(u => ({
+        IDUsuario: u.IDUsuario,
+        correo: u.correo,
+        eliminado: u.eliminado
+      })));
 
       const existingEmail = decryptUsers.some(
         (users) => users.correo === dataToEncrypt.correo
       );
 
+      console.log('🔍 [DUPLICATE CHECK] Email exists?', existingEmail);
+
       if (existingEmail) {
+        console.log('❌ [DUPLICATE CHECK] Duplicate email detected!');
         const duplicateError = new Error("Duplicate entry");
         duplicateError.code = "ER_DUP_ENTRY";
         throw duplicateError;
       }
+
+      console.log('✅ [DUPLICATE CHECK] No duplicate found, proceeding with insert');
 
       // Insert user with encrypted data
       const [userResult] = await conn.query(
@@ -627,18 +646,88 @@ export async function getExpiringMemberships(daysArray = [30, 15, 7, 3, 1]) {
  * @async
  * @returns {Promise<number>} The maximum noAfiliado found, or 0 if none.
  */
-export const getMaxNoAfiliado = async () => {
+export const getMaxNoAfiliado = async (membershipType = null) => {
   const conn = await db.getConnection();
   try {
-    const [rows] = await conn.execute(
-      `SELECT MAX(CAST(noAfiliado AS UNSIGNED)) as maxNoAfiliado FROM membresia WHERE deletedAt IS NULL`
-    );
-    return rows[0]?.maxNoAfiliado || 0;
+    let min = 0;
+    let max = 1000000;
+    let useRange = false;
+
+    if (membershipType) {
+      switch (membershipType) {
+        case 'Licenciado Especializado':
+          min = 1;
+          max = 199;
+          useRange = true;
+          break;
+        case 'Licenciado en Formación':
+          min = 201;
+          max = 299;
+          useRange = true;
+          break;
+        case 'Estudiante':
+          min = 301;
+          max = 399;
+          useRange = true;
+          break;
+        case 'Fisioterapeuta Extranjero':
+          min = 401;
+          max = 499;
+          useRange = true;
+          break;
+        case 'Personal de la salud':
+          min = 501;
+          max = 599;
+          useRange = true;
+          break;
+        default:
+          useRange = false;
+      }
+    }
+
+    let query = `SELECT MAX(CAST(noAfiliado AS UNSIGNED)) as maxNoAfiliado FROM membresia WHERE deletedAt IS NULL`;
+    const params = [];
+
+    if (useRange) {
+      query += ` AND CAST(noAfiliado AS UNSIGNED) >= ? AND CAST(noAfiliado AS UNSIGNED) <= ?`;
+      params.push(min, max);
+    }
+
+    const [rows] = await conn.execute(query, params);
+    const result = rows[0]?.maxNoAfiliado;
+
+    if (result === null && useRange) {
+      return min - 1;
+    }
+
+    return result !== null ? result : 0;
   } catch (error) {
     throw error;
   } finally {
     conn.release();
   }
 };
+
+/**
+ * Soft-deletes a membership application by ID.
+ * Sets deletedAt timestamp and clears potentially unique fields if necessary.
+ * @async
+ * @param {number|string} id - Membership ID to delete
+ * @returns {Promise<boolean>} True if deleted, false if not found
+ * @throws {Error} When database operation fails
+ */
+export async function deleteMembershipApplication(id) {
+  try {
+    const [result] = await dbPool.query(
+      `UPDATE membresia 
+       SET deletedAt = NOW() 
+       WHERE IDMembresia = ? AND deletedAt IS NULL`,
+      [id]
+    );
+    return result.affectedRows > 0;
+  } catch (error) {
+    throw error;
+  }
+}
 
 export default MembershipApplication;

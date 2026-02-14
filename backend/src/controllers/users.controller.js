@@ -767,3 +767,68 @@ export async function getUserCertificate(req, res) {
     });
   }
 }
+
+/**
+ * Regenerates the user's membership certificate.
+ * Updates the certificate file in S3 and the database.
+ * Does NOT send an email notification.
+ * @param {!Object} req - Express request object with params.userId
+ * @param {!Object} res - Express response object
+ * @return {!Promise<void>} Sends JSON response with new certificate URL or error
+ */
+export async function regenerateUserCertificate(req, res) {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de usuario requerido",
+      });
+    }
+
+    const user = await getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Usuario no encontrado",
+      });
+    }
+
+    if (!user.IDMembresia) {
+      return res.status(404).json({
+        success: false,
+        error: "El usuario no tiene una membresía asociada",
+      });
+    }
+
+    // Call generateAndUploadCertificate with sendEmail = false
+    const result = await generateAndUploadCertificate(user.IDMembresia, false);
+
+    if (!result.generated) {
+      return res.status(500).json({
+        success: false,
+        error: "Error al regenerar el certificado",
+        message: result.error,
+      });
+    }
+
+    // Generate presigned URL for the new certificate
+    const certificateUrl = await S3Service.getPresignedUrl(result.key);
+
+    return res.status(200).json({
+      success: true,
+      message: "Certificado regenerado exitosamente",
+      data: {
+        certificado: certificateUrl,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: "Error al regenerar el certificado",
+      message: error.message,
+    });
+  }
+}

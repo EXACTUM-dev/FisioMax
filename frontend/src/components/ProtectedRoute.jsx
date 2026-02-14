@@ -26,7 +26,7 @@ import { Title2 } from '../atoms/typography';
  */
 export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles = [] }) {
   const { isLoaded: isClerkLoaded } = useUser();
-  const { isLoading: isDbLoading, existsInDB, userData, error } = useDbUser();
+  const { isLoading: isDbLoading, existsInDB, userData, error, applicationStatus } = useDbUser();
   const { signOut } = useClerk();
 
   /**
@@ -107,14 +107,15 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
           </div>
         )}
 
-        {/* Display unauthorized message if not in DB */}
-        {!isDbLoading && isClerkLoaded && !isPending && !existsInDB && (
+        {/* Case 1: User hasn't submitted membership application */}
+        {!isDbLoading && isClerkLoaded && !isPending && applicationStatus === 'not_submitted' && (
           <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
             <div className="text-center">
               <div className="flex justify-center items-center mb-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-16 w-16 text-red-500"
+                  className="h-16 w-16"
+                  style={{ color: '#CAD00F' }}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -123,28 +124,88 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
               </div>
-              <Title2 className="mb-4">Acceso No Autorizado</Title2>
+              <Title2 className="mb-4">Solicitud de Membresía Pendiente</Title2>
               <p className="text-lg mb-4">
-                Tu cuenta de autenticación está activa, pero no estás
-                registrado en la base de datos del sistema.
+                No hemos encontrado una solicitud de membresía asociada a tu cuenta.
               </p>
-              <p className="text-lg mb-6">
-                Por favor, contacta al administrador para completar tu
-                registro.
+              <p className="text-base mb-6">
+                Para acceder al sistema, primero debes enviar tu solicitud de membresía.
               </p>
-              {error && (
-                <p className="text-sm text-red-500 mb-4">Error: {error}</p>
-              )}
-              <Button
-                label="Regresar"
-                variant="brand"
-                fullWidth
-                onClick={handleSignOut}
-              />
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>Siguiente paso:</strong> Completa el formulario de solicitud de membresía para que podamos revisar tu aplicación.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  label="Enviar Solicitud"
+                  variant="brand"
+                  fullWidth
+                  onClick={() => window.location.href = '/solicitud-membresia'}
+                />
+                <Button
+                  label="Cerrar Sesión"
+                  variant="gray"
+                  fullWidth
+                  onClick={handleSignOut}
+                />
+              </div>
+            </div>
+          </Modal>
+        )}
+        {/* Case 2: User submitted application but hasn't completed Clerk signup */}
+        {!isDbLoading && isClerkLoaded && !isPending && applicationStatus === 'pending_signup' && (
+          <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
+            <div className="text-center">
+              <div className="flex justify-center items-center mb-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-16 w-16 text-blue-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                  />
+                </svg>
+              </div>
+              <Title2 className="mb-4">Completa tu Registro</Title2>
+              <p className="text-lg mb-4 font-semibold text-blue-600">
+                Tu solicitud ha sido recibida
+              </p>
+              <p className="text-base mb-4">
+                Hemos encontrado tu solicitud de membresía, pero aún no has completado el proceso de creación de cuenta.
+              </p>
+              <p className="text-base mb-6">
+                Para acceder al sistema, necesitas completar tu registro en nuestra plataforma.
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>Siguiente paso:</strong> Haz clic en "Crear Cuenta" para completar tu registro y vincular tu solicitud de membresía.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  label="Crear Cuenta"
+                  variant="brand"
+                  fullWidth
+                  onClick={() => window.location.href = '/login?mode=signup'}
+                />
+                <Button
+                  label="Cerrar Sesión"
+                  variant="gray"
+                  fullWidth
+                  onClick={handleSignOut}
+                />
+              </div>
             </div>
           </Modal>
         )}
@@ -251,7 +312,7 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
                   />
                 </svg>
               </div>
-              <Title2 className="mb-4">No Puedes Acceder a la Aplicación</Title2>
+              <Title2 className="mb-4">Aun falta un paso más</Title2>
               <p className="text-lg mb-4 font-semibold" style={{ color: '#CAD00F' }}>
                 Pago de Membresía Pendiente
               </p>
@@ -261,7 +322,7 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
               </p>
               <div className="bg-orange-50 border border-orange-200 rounded-md p-4 mb-6">
                 <p className="text-sm text-orange-800">
-                  <strong>Acción requerida:</strong> Contacta al administrador para obtener información sobre cómo realizar tu pago de membresía.
+                  <strong>Nota:</strong> Revisa tu buzón de correo electrónico para saber como realizar tu pago.
                 </p>
               </div>
               <Button

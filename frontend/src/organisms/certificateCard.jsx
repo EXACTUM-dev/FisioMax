@@ -7,18 +7,19 @@
 
 import React from "react";
 import { useAuth } from "@clerk/clerk-react";
-import { getMembershipCertificate } from "../services/contentServices";
+import { getMembershipCertificate, regenerateMembershipCertificate } from "../services/contentServices";
 
 /**
  * CertificateCard
  * @param {string} userId - User ID whose certificate to fetch
  * - Shows membership certificate thumbnail (or embedded PDF)
- * - Buttons: Ver (abre en nueva pestaña) y Descargar
+ * - Buttons: Ver (abre en nueva pestaña), Descargar, Regenerar
  */
 
-export default function CertificateCard({ userId }) {
+export default function CertificateCard({ userId, canRegenerate = false }) {
   const { getToken } = useAuth();
   const [loading, setLoading] = React.useState(true);
+  const [regenerating, setRegenerating] = React.useState(false);
   const [certificateUrl, setCertificateUrl] = React.useState(null);
   const [error, setError] = React.useState(null);
 
@@ -30,7 +31,29 @@ export default function CertificateCard({ userId }) {
       try {
         const token = await getToken();
         const url = await getMembershipCertificate(userId, token);
-        if (mounted) setCertificateUrl(url);
+
+        if (url) {
+          try {
+            // Verify if the file actually exists to avoid showing S3 XML error
+            const response = await fetch(url, { method: 'HEAD' });
+            if (response.ok) {
+              if (mounted) setCertificateUrl(url);
+            } else {
+              // If 404 (NoSuchKey) or other error, treat as no certificate
+              console.warn("Certificate file not found (404/403)");
+              if (mounted) setCertificateUrl(null);
+            }
+          } catch (e) {
+            // If verification fails (e.g. CORS), we try to show it anyway
+            // or we could assume it failed. 
+            // Since the user reported NoSuchKey, that's a 404 which doesn't throw.
+            // If fetch throws, it's likely a network/CORS issue.
+            console.warn("Error verifying certificate:", e);
+            if (mounted) setCertificateUrl(url);
+          }
+        } else {
+          if (mounted) setCertificateUrl(null);
+        }
       } catch (err) {
         if (mounted) setError(err.message || "Error al cargar certificado");
       } finally {
@@ -43,6 +66,7 @@ export default function CertificateCard({ userId }) {
 
     return () => (mounted = false);
   }, [userId, getToken]);
+
   // View (open in new tab) reusing DocumentsCard approach
   const handleViewDocument = (url) => {
     if (url) {
@@ -71,13 +95,33 @@ export default function CertificateCard({ userId }) {
     }
   };
 
+  const handleRegenerate = async () => {
+    if (!userId) return;
+
+    try {
+      setRegenerating(true);
+      const token = await getToken();
+      const newUrl = await regenerateMembershipCertificate(userId, token);
+
+      if (newUrl) {
+        setCertificateUrl(newUrl);
+        // Force iframe reload by appending timestamp if needed, but newUrl is usually signed and unique enough
+      }
+    } catch (err) {
+      console.error("Error regenerating certificate:", err);
+      alert("Error al regenerar el certificado: " + err.message);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   return (
     <section className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Certificados de afiliación</h3>
       </div>
 
-      <div className="h-56 md:h-44 w-full rounded-md flex items-center justify-center bg-[#FAFAFA] border border-slate-100 overflow-hidden">
+      <div className="h-56 md:h-44 w-full rounded-md flex items-center justify-center bg-[#FAFAFA] border border-slate-100 overflow-hidden relative">
         {loading ? (
           <div className="text-center text-gray-500">Cargando...</div>
         ) : certificateUrl ? (
@@ -117,14 +161,43 @@ export default function CertificateCard({ userId }) {
             </p>
           </div>
         )}
+
+        {regenerating && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
       </div>
 
       <div className="mt-3 flex items-center justify-end">
         <div className="flex items-center gap-3">
+          {canRegenerate && (
+            <button
+              onClick={handleRegenerate}
+              disabled={loading || regenerating}
+              className={`text-slate-600 hover:text-blue-600 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${(loading || regenerating) ? "opacity-40 pointer-events-none" : ""}`}
+              title="Regenerar certificado con datos actuales"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+          )}
+
           <button
             onClick={() => handleViewDocument(certificateUrl)}
-            disabled={!certificateUrl}
-            className={`text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${!certificateUrl ? "opacity-40 pointer-events-none" : ""
+            disabled={!certificateUrl || regenerating}
+            className={`text-blue-600 hover:text-blue-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${(!certificateUrl || regenerating) ? "opacity-40 pointer-events-none" : ""
               }`}
             title="Ver documento"
           >
@@ -156,8 +229,8 @@ export default function CertificateCard({ userId }) {
                 `certificado_${userId}.pdf`
               )
             }
-            disabled={!certificateUrl}
-            className={`text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${!certificateUrl ? "opacity-40 pointer-events-none" : ""
+            disabled={!certificateUrl || regenerating}
+            className={`text-slate-600 hover:text-slate-800 hover:scale-110 text-sm font-medium transition-all duration-200 cursor-pointer ${(!certificateUrl || regenerating) ? "opacity-40 pointer-events-none" : ""
               }`}
             title="Descargar documento"
           >
