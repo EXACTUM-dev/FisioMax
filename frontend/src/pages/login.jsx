@@ -133,16 +133,75 @@ export default function LoginPage() {
         for (const n of added) {
           try {
             const text = n.textContent || "";
+            // Check specifically for "External account not found" or similar messages
+            // Clerk often uses "external_account_not_found" code, but in UI it shows text.
+            // We'll check for the text message.
             if (
               text &&
               /external account|account was not found|no encontrado/i.test(text)
             ) {
+              // Extract the provider strategy if possible, or retry the last strategy
+              // Since we are in the SignIn component, we might not have the strategy directly. 
+              // However, if the user clicked a social button, Clerk's client might have the state.
+              // A common pattern for auto-registration is to just switch to SignUp mode 
+              // but we want to *automatically* authenticate if possible.
+
+              // Attempt to find which strategy was used. 
+              // If we can't find it, we at least switch to Sign Up mode.
+
+              console.log("External account not found - attempting auto-registration");
+
+              // We can try to get the last attempt from Clerk client if available
+              // or just redirect to sign-up. 
+              // For a seamless flow, we try to SignUp with the same provider.
+
+              // NOTE: This relies on the user verifying the account again or the provider 
+              // sharing the info.
+
+              // Let's try to switch to SignUp mode with the same provider if valid.
+              // If we can't determine the provider easily from the DOM, we might need 
+              // to rely on the user clicking the button again, OR we can try to 
+              // infer it from the error or previous interaction.
+
+              // SIMPLIFICATION: 
+              // 1. Log the error (keep existing logic)
               sendLoginErrorLog({
                 usuario: null,
                 codigoError: "CLERK_UI_MESSAGE",
                 mensajeError: text.trim().slice(0, 1000),
-                detalles: { source: "mutation-observer" },
+                detalles: { source: "mutation-observer", action: "auto-signup-redirect" },
               });
+
+              // 2. Redirect to SignUp. 
+              // Ideally we would trigger the specific provider, but without keeping track of 
+              // which button was clicked, we can't know for sure.
+              // However, we can switch the mode to 'signup' which will render the SignUp component.
+              // The user will have to click the provider button again, which is a safer default 
+              // than guessing. 
+
+              // BUT the requirements say "haga el registro automatico". 
+              // To do this, we need to know the strategy. 
+              // We can store the last clicked strategy in sessionStorage/state when a user clicks a button.
+              // Let's add that listener first.
+
+              const lastStrategy = sessionStorage.getItem("clerk_last_strategy");
+              if (lastStrategy) {
+                // Clean up
+                sessionStorage.removeItem("clerk_last_strategy");
+
+                // Trigger SignUp with that strategy
+                if (clerk && clerk.client && clerk.client.signUp) {
+                  clerk.client.signUp.authenticateWithRedirect({
+                    strategy: lastStrategy,
+                    redirectUrl: "/sso-callback",
+                    signInUrl: "/login?mode=signin",
+                  }).catch(err => console.error("Auto-signup failed", err));
+                  return;
+                }
+              }
+
+              // Fallback: just switch to signup mode
+              navigate("/login?mode=signup", { replace: true });
             }
           } catch (err) {
             // ignore
@@ -153,8 +212,38 @@ export default function LoginPage() {
 
     observer.observe(node, { childList: true, subtree: true });
 
-    return () => observer.disconnect();
-  }, [signContainerRef.current]);
+    // Add click listeners to social buttons to capture strategy
+    // We delegate this to the container since buttons might render later
+    const handleSocialClick = (e) => {
+      // traverse up to find the button
+      let el = e.target;
+      while (el && el !== node) {
+        if (el.tagName === 'BUTTON') {
+          // Try to guess strategy from text or class
+          // This is hacky but Clerk's buttons usually have identifiable text
+          const txt = el.textContent.toLowerCase();
+          let strategy = null;
+          if (txt.includes('google')) strategy = 'oauth_google';
+          else if (txt.includes('facebook')) strategy = 'oauth_facebook';
+          else if (txt.includes('github')) strategy = 'oauth_github';
+          // Add others as needed
+
+          if (strategy) {
+            sessionStorage.setItem("clerk_last_strategy", strategy);
+          }
+          break;
+        }
+        el = el.parentElement;
+      }
+    };
+
+    node.addEventListener('click', handleSocialClick);
+
+    return () => {
+      observer.disconnect();
+      node.removeEventListener('click', handleSocialClick);
+    };
+  }, [signContainerRef.current, clerk, navigate]);
   useEffect(() => {
     try {
       const hash = location && location.hash ? location.hash : "";
@@ -211,9 +300,28 @@ export default function LoginPage() {
             </h2>
           </div>
 
-          {/* Clerk SignIn/SignUp Component - Dynamic based on mode */}
           <div ref={signContainerRef} className="flex justify-center">
             {mode === "signin" ? (
+              <SignIn
+                path="/login"
+                routing="path"
+                signUpUrl="/login?mode=signup"
+                afterSignInUrl="/"
+                appearance={{
+                  elements: {
+                    rootBox: "w-full",
+                    card: "shadow-none w-full",
+                    formButtonPrimary:
+                      "bg-black hover:bg-gray-800 text-white rounded-md py-2",
+                    socialButtonsBlockButton:
+                      "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300",
+                    formFieldInput: "border-gray-300 rounded-md",
+                    formFieldLabel: "text-gray-700 font-medium",
+                    footer: "hidden",
+                  },
+                }}
+              />
+            ) : (
               <SignUp
                 path="/login"
                 routing="path"
@@ -232,26 +340,6 @@ export default function LoginPage() {
                     footer: "hidden",
                     headerTitle: "hidden",
                     headerSubtitle: "hidden",
-                  },
-                }}
-              />
-            ) : (
-              <SignIn
-                path="/login"
-                routing="path"
-                signUpUrl="/auth"
-                afterSignInUrl="/"
-                appearance={{
-                  elements: {
-                    rootBox: "w-full",
-                    card: "shadow-none w-full",
-                    formButtonPrimary:
-                      "bg-black hover:bg-gray-800 text-white rounded-md py-2",
-                    socialButtonsBlockButton:
-                      "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300",
-                    formFieldInput: "border-gray-300 rounded-md",
-                    formFieldLabel: "text-gray-700 font-medium",
-                    footer: "hidden",
                   },
                 }}
               />
