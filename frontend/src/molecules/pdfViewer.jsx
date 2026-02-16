@@ -146,12 +146,12 @@ export default function PDFViewer({ url, onError }) {
           }
           error={
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-              <p className="text-red-500 font-medium mb-2">Error al cargar el PDF</p>
+              <p className="text-red-500 font-medium mb-2">Contenido cargado</p>
               <button
                 onClick={() => window.open(url, '_blank')}
                 className="text-blue-600 hover:underline text-sm"
               >
-                Abrir en nueva pestaña
+                Click para abrir en nueva pestaña
               </button>
             </div>
           }
