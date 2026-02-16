@@ -8,8 +8,9 @@ import "react-pdf/dist/Page/TextLayer.css";
 // Configure worker for PDF.js
 // We use the CDN to ensure the worker is loaded correctly from the matching version
 // This avoids complex build configuration for the worker file in varied environments
-// Hardcode version to match package.json or use a known stable version if dynamic import fails
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Use local static worker file to avoid all bundler/MIME type issues
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+console.log("PDF Worker Source configured to:", pdfjs.GlobalWorkerOptions.workerSrc);
 
 export default function PDFViewer({ url, onError }) {
   const [numPages, setNumPages] = useState(null);
