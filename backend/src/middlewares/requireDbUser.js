@@ -7,9 +7,9 @@
  * Validates that the Clerk authenticated user also exists in the database.
  */
 
-import {userExistsInDB} from '../services/auth.service.js';
-import {insertLoginErrorLog} from '../models/loginLogs.model.js';
-import {getRequestIp} from '../utils/request.js';
+import { userExistsInDB, syncUserWithClerk } from '../services/auth.service.js';
+import { insertLoginErrorLog } from '../models/loginLogs.model.js';
+import { getRequestIp } from '../utils/request.js';
 
 /**
  * Logs a login error without interrupting the main flow.
@@ -30,11 +30,11 @@ async function logLoginError(req, logData) {
       agenteUsuario: req.headers['user-agent'] || null,
       ...logData,
       detalles:
-          logData.detalles ??
-          {
-            path: req.originalUrl || req.url,
-            method: req.method,
-          },
+        logData.detalles ??
+        {
+          path: req.originalUrl || req.url,
+          method: req.method,
+        },
     });
   } catch (logError) {
 
@@ -71,20 +71,28 @@ export async function requireDbUser(req, res, next) {
     }
 
     // Verify that user exists in the database
-    const existsInDB = await userExistsInDB(clerkUserId);
+    let existsInDB = await userExistsInDB(clerkUserId);
 
     if (!existsInDB) {
-      await logLoginError(req, {
-        usuario: clerkUserId,
-        codigoError: 'USER_NOT_IN_DB',
-        mensajeError: 'Usuario no autorizado',
-      });
-      return res.status(403).json({
-        error: 'Usuario no autorizado',
-        message:
+      // Trying to sync via email if not found by Clerk ID
+      // This handles migration scenarios where Clerk ID changed but Email is same
+      const synced = await syncUserWithClerk(clerkUserId);
+
+      if (synced) {
+        existsInDB = true;
+      } else {
+        await logLoginError(req, {
+          usuario: clerkUserId,
+          codigoError: 'USER_NOT_IN_DB',
+          mensajeError: 'Usuario no autorizado',
+        });
+        return res.status(403).json({
+          error: 'Usuario no autorizado',
+          message:
             'El usuario autenticado no está registrado en la base de datos. Por favor contacte al administrador.',
-        clerkUserId: clerkUserId, // Useful for debugging
-      });
+          clerkUserId: clerkUserId, // Useful for debugging
+        });
+      }
     }
 
     // User exists in DB, continue to next middleware
@@ -129,7 +137,7 @@ export async function checkDbUser(req, res, next) {
 
       if (!existsInDB) {
         console.warn(
-            `User ${clerkUserId} authenticated in Clerk but does not exist in database`
+          `User ${clerkUserId} authenticated in Clerk but does not exist in database`
         );
       }
     }

@@ -213,11 +213,11 @@ export default function LoginPage() {
 
           {/* Clerk SignIn/SignUp Component - Dynamic based on mode */}
           <div ref={signContainerRef} className="flex justify-center">
-            {mode === "signup" ? (
+            {mode === "signin" ? (
               <SignUp
                 path="/login"
                 routing="path"
-                signInUrl="/login"
+                signInUrl="/login?mode=signin"
                 afterSignUpUrl="/"
                 appearance={{
                   elements: {
@@ -230,6 +230,8 @@ export default function LoginPage() {
                     formFieldInput: "border-gray-300 rounded-md",
                     formFieldLabel: "text-gray-700 font-medium",
                     footer: "hidden",
+                    headerTitle: "hidden",
+                    headerSubtitle: "hidden",
                   },
                 }}
               />
@@ -237,7 +239,7 @@ export default function LoginPage() {
               <SignIn
                 path="/login"
                 routing="path"
-                signUpUrl="/login?mode=signup"
+                signUpUrl="/auth"
                 afterSignInUrl="/"
                 appearance={{
                   elements: {

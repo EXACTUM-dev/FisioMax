@@ -6,7 +6,7 @@
  */
 import { clerkClient } from '@clerk/clerk-sdk-node';
 import config from '../../config.js';
-import { getUserByClerkId, getMembershipUserStateById } from '../models/users.model.js';
+import { getUserByClerkId, getMembershipUserStateById, getUserByEmail, updateUserClerkId } from '../models/users.model.js';
 
 /**
  * Gets complete user information combining Clerk and DB data.
@@ -83,6 +83,43 @@ export async function userExistsInDB(clerkUserId) {
     const dbUser = await getUserByClerkId(clerkUserId);
     return !!dbUser;
   } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Tries to sync a Clerk user with a DB user by email.
+ * Used when a user exists in Clerk but not in DB with that Clerk ID.
+ *
+ * @async
+ * @param {string} clerkUserId - Clerk user ID.
+ * @return {Promise<boolean>} True if synced successfully, false otherwise.
+ */
+export async function syncUserWithClerk(clerkUserId) {
+  if (!clerkUserId) return false;
+
+  try {
+    // 1. Get email from Clerk
+    const clerkUser = await clerkClient.users.getUser(clerkUserId);
+    const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+
+    if (!email) return false;
+
+    // 2. Search user in DB by email
+    const dbUser = await getUserByEmail(email);
+
+    if (dbUser) {
+      // 3. User found by email! Update their Clerk ID to the new one.
+      // We check if the user already has a DIFFERENT clerkID to avoid overwriting if not intended,
+      // but in this migration case, we arguably WANT to overwrite the old Clerk ID.
+      console.log(`Syncing user ${dbUser.IDUsuario} (Email: ${email}) with new Clerk ID: ${clerkUserId}`);
+      const updated = await updateUserClerkId(dbUser.IDUsuario, clerkUserId);
+      return updated;
+    }
+
+    return false;
+  } catch (err) {
+    console.error('Error syncing user with Clerk:', err);
     return false;
   }
 }
