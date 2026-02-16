@@ -42,6 +42,15 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
     }
   };
 
+  const handleSendRequest = async () => {
+    try {
+      await signOut({ redirectUrl: '/solicitud-membresia' });
+    } catch (error) {
+      // Fallback to manual redirect if signOut fails
+      window.location.href = '/solicitud-membresia';
+    }
+  };
+
   //RBAC Permissions
   const userRole = userData?.role;
   const userState = userData?.accept.aceptado;
@@ -129,16 +138,20 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
               </div>
               <Title2 className="mb-4">Acceso No Autorizado</Title2>
               <p className="text-lg mb-4">
-                Tu cuenta de autenticación está activa, pero no estás
-                registrado en la base de datos del sistema.
+                Tu cuenta de autenticación está activa, pero aun no has mandado tu solicitud de ingreso.
               </p>
               <p className="text-lg mb-6">
-                Por favor, contacta al administrador para completar tu
-                registro.
+                Por favor, manda tu solicitud para completar el registro
               </p>
               {error && (
                 <p className="text-sm text-red-500 mb-4">Error: {error}</p>
               )}
+              <Button
+                label="Mandar Solicitud"
+                variant="outline"
+                fullWidth
+                onClick={handleSendRequest}
+              />
               <Button
                 label="Regresar"
                 variant="brand"
