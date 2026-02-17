@@ -24,15 +24,23 @@ export default function PDFViewer({ url, onError }) {
     setIsLoading(true);
     setShowFallback(false);
 
-    // Set a timeout to show fallback if loading takes too long
-    const timer = setTimeout(() => {
-      if (isLoading && isAndroid()) {
+    // CRITICAL: Always hide loading after max 3 seconds to prevent infinite loading
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+
+    // Show fallback download button on mobile devices after 5 seconds
+    const fallbackTimer = setTimeout(() => {
+      if (isAndroid() || isIOS()) {
         setShowFallback(true);
       }
     }, 5000);
 
-    return () => clearTimeout(timer);
-  }, [url, isLoading]);
+    return () => {
+      clearTimeout(loadingTimer);
+      clearTimeout(fallbackTimer);
+    };
+  }, [url]);
 
   if (!url) {
     return (
@@ -54,25 +62,20 @@ export default function PDFViewer({ url, onError }) {
     document.body.removeChild(link);
   };
 
-  // For Android: Use Mozilla PDF.js viewer (more reliable than Google Docs)
-  // For iOS: Direct URL works well
-  // For Desktop: Direct URL
+  // For Mobile (Android & iOS): Use Mozilla PDF.js viewer (more reliable, no size limits)
+  // For Desktop: Direct URL (browsers have good native PDF support)
   let viewerUrl;
 
-  if (isAndroid()) {
-    // Use Mozilla's PDF.js viewer hosted on CDN - works better on Android
+  if (isAndroid() || isIOS()) {
+    // Use Mozilla's PDF.js viewer hosted on CDN - works better on mobile devices
+    // Avoids "file too large" errors from native mobile PDF viewers
     viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(url)}`;
-  } else if (isIOS()) {
-    // iOS Safari handles PDFs natively very well
-    viewerUrl = url;
   } else {
-    // Desktop browsers
+    // Desktop browsers - use native PDF viewer
     viewerUrl = url;
   }
 
-  const handleIframeLoad = () => {
-    setIsLoading(false);
-  };
+
 
   const handleIframeError = (e) => {
     console.error("PDF iframe error:", e);
@@ -83,8 +86,8 @@ export default function PDFViewer({ url, onError }) {
 
   return (
     <div className="w-full">
-      {/* Download button - always visible on Android, helpful as fallback */}
-      {(isAndroid() || showFallback) && (
+      {/* Download button - always visible on mobile devices, helpful as fallback */}
+      {(isAndroid() || isIOS() || showFallback) && (
         <div className="mb-4 flex flex-col sm:flex-row gap-2 items-center justify-center bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-center gap-2 text-sm text-blue-800">
             <svg
@@ -128,21 +131,12 @@ export default function PDFViewer({ url, onError }) {
         </div>
       )}
 
-      {/* Loading indicator */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-2xl z-10">
-          <div className="flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <span className="text-gray-600 text-sm">Cargando PDF...</span>
-          </div>
-        </div>
-      )}
-
       {/* PDF Viewer */}
       <div
         className="w-full rounded-2xl overflow-hidden bg-gray-100 relative"
         style={{ height: "70vh" }}
       >
+
         <iframe
           ref={iframeRef}
           src={viewerUrl}
@@ -153,7 +147,6 @@ export default function PDFViewer({ url, onError }) {
             border: "none",
             background: "#f3f4f6",
           }}
-          onLoad={handleIframeLoad}
           onError={handleIframeError}
           // Allow PDF.js to work properly
           sandbox="allow-same-origin allow-scripts allow-forms allow-downloads"
