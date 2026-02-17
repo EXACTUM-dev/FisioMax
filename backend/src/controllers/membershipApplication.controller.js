@@ -17,6 +17,7 @@ import MembershipApplication, {
   approveMembershipApplicationById,
   denyMembershipApplication,
   getMaxNoAfiliado,
+  deleteMembershipApplicationRecord,
 } from "../models/membershipApplication.model.js";
 import { sendEmail, sendRejectionEmail, sendAcceptanceEmail } from "../services/emailServices.js";
 import S3Service from "../services/s3Service.js";
@@ -485,3 +486,75 @@ export const getMaxNoAfiliadoController = async (req, res) => {
     });
   }
 };
+
+/**
+ * Delete a membership application and all associated S3 files
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export const deleteMembershipApplication = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Get membership application details before deleting
+    const membershipDetails = await getMembershipApplicationById(id);
+
+    if (!membershipDetails) {
+      return res.status(404).json({
+        success: false,
+        message: "Solicitud no encontrada",
+      });
+    }
+
+    // Collect all S3 file keys to delete
+    const s3FilesToDelete = [];
+
+    // Add main documents if they exist
+    if (membershipDetails.__raw?.cedula) {
+      s3FilesToDelete.push(membershipDetails.__raw.cedula);
+    }
+    if (membershipDetails.__raw?.titulo) {
+      s3FilesToDelete.push(membershipDetails.__raw.titulo);
+    }
+    if (membershipDetails.__raw?.constancias) {
+      s3FilesToDelete.push(membershipDetails.__raw.constancias);
+    }
+
+    // Add additional documents
+    if (membershipDetails.documentos && membershipDetails.documentos.length > 0) {
+      membershipDetails.documentos.forEach((doc) => {
+        if (doc.key && !doc.key.startsWith("__missing_")) {
+          s3FilesToDelete.push(doc.key);
+        }
+      });
+    }
+
+    // Delete all S3 files
+    const deletePromises = s3FilesToDelete.map((key) =>
+      S3Service.deleteFile(key).catch((err) => {
+        console.error(`Failed to delete S3 file ${key}:`, err);
+        // Continue even if individual file deletion fails
+        return null;
+      })
+    );
+
+    await Promise.all(deletePromises);
+
+    // Soft delete the membership application
+    await deleteMembershipApplicationRecord(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Solicitud eliminada exitosamente",
+      filesDeleted: s3FilesToDelete.length,
+    });
+  } catch (error) {
+    console.error("Error deleting membership application:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor al eliminar la solicitud",
+      message: error.message,
+    });
+  }
+};
+

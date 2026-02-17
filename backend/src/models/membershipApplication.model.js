@@ -641,4 +641,59 @@ export const getMaxNoAfiliado = async () => {
   }
 };
 
+/**
+ * Soft delete a membership application and its associated user record.
+ * Sets deletedAt timestamp on both membresia and usuario tables.
+ * @async
+ * @param {number|string} id - Membership ID to delete
+ * @returns {Promise<boolean>} True if deleted successfully
+ * @throws {Error} When database operation fails
+ */
+export const deleteMembershipApplicationRecord = async (id) => {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // Get user ID from membership
+    const [membershipRows] = await conn.execute(
+      `SELECT IDUsuario FROM membresia WHERE IDMembresia = ? AND deletedAt IS NULL`,
+      [id]
+    );
+
+    if (membershipRows.length === 0) {
+      await conn.rollback();
+      throw new Error("Membership application not found");
+    }
+
+    const userId = membershipRows[0].IDUsuario;
+
+    // Soft delete the membership record
+    await conn.execute(
+      `UPDATE membresia SET deletedAt = NOW() WHERE IDMembresia = ?`,
+      [id]
+    );
+
+    // Soft delete the user record
+    await conn.execute(
+      `UPDATE usuario SET eliminado = 1, deletedAt = NOW() WHERE IDUsuario = ?`,
+      [userId]
+    );
+
+    // Soft delete additional documents
+    await conn.execute(
+      `UPDATE documentosadicionales SET deletedAt = NOW() WHERE IDUsuario = ?`,
+      [userId]
+    );
+
+    await conn.commit();
+    return true;
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
+  }
+};
+
 export default MembershipApplication;
+

@@ -445,8 +445,70 @@ export default function Panel() {
             setMembershipModalOpen(true);
           }
         },
+        // TEMPORARILY DISABLED: Hiding delete button from users
+        // Uncomment the code below to re-enable delete functionality
+        /* 
+        onDelete: async (row) => {
+          const id =
+            row?.id ??
+            row?.IDMembresia ??
+            row?.__raw?.IDMembresia ??
+            row?.__raw?.id;
+          const nombre = row?.nombre || "esta solicitud";
+
+          // Ask for confirmation by typing "eliminar"
+          const userInput = window.prompt(
+            `⚠️ ADVERTENCIA: Esta acción eliminará permanentemente la solicitud de ${nombre} y todos sus archivos asociados en S3.\n\nPara confirmar, escribe: eliminar`
+          );
+
+          // Check if user typed exactly "eliminar"
+          if (userInput?.trim().toLowerCase() !== "eliminar") {
+            if (userInput !== null) {
+              // User tried to type something but it wasn't correct
+              alert("Eliminación cancelada. Debes escribir exactamente 'eliminar' para confirmar.");
+            }
+            return;
+          }
+
+          try {
+            const token = await getToken();
+            const response = await fetchWithClerk(
+              `/api/membership-applications/${id}`,
+              { method: "DELETE" },
+              token
+            );
+
+            if (response?.success) {
+              // Remove from UI
+              setMembershipRows((prev) =>
+                prev.filter(
+                  (m) =>
+                    (m.id ?? m.IDMembresia) !== id &&
+                    (m.id ?? m.IDMembresia) !== row.id &&
+                    (m.id ?? m.IDMembresia) !== row.IDMembresia
+                )
+              );
+
+              // Show success message
+              alert(
+                `✓ Solicitud eliminada exitosamente. Se eliminaron ${response.filesDeleted || 0} archivo(s) de S3.`
+              );
+            } else {
+              throw new Error(
+                response?.message || "Error al eliminar la solicitud"
+              );
+            }
+          } catch (err) {
+            console.error("Error deleting membership:", err);
+            alert(
+              `Error al eliminar la solicitud: ${err.message || "Error desconocido"
+              }`
+            );
+          }
+        },
+        */
       }),
-    [fetchMembershipDetail]
+    [fetchMembershipDetail, getToken]
   );
 
   // Show loading spinner until user data is loaded
