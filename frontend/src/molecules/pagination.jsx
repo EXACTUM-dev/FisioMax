@@ -23,7 +23,7 @@ export default function Pagination({
   itemsPerPage = 20,
   totalItems = 0,
 }) {
-  
+
   if (totalPages <= 1) return null;
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
@@ -90,25 +90,40 @@ export default function Pagination({
       </div>
 
       {/* Page controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         {/* Previous button */}
         <Button
-          label="Anterior"
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="text-sm"
-        />
+          className="text-sm px-2 sm:px-4"
+          ariaLabel="Página anterior"
+        >
+          <svg
+            className="w-4 h-4 sm:mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          <span className="hidden sm:inline">Anterior</span>
+        </Button>
 
         {/* Page numbers */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {pageNumbers.map((page, index) => {
             if (page === "...") {
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className="px-2 text-slate-400"
+                  className="px-1 sm:px-2 text-slate-400 text-xs sm:text-sm"
                 >
                   ...
                 </span>
@@ -119,11 +134,10 @@ export default function Pagination({
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`min-w-[2.5rem] h-10 px-3 rounded-lg text-sm font-medium transition-colors ${
-                  currentPage === page
-                    ? "bg-brand text-white"
+                className={`min-w-[2rem] sm:min-w-[2.5rem] h-8 sm:h-10 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors ${currentPage === page
+                    ? "bg-brand text-stone-700"
                     : "text-slate-700 hover:bg-slate-100"
-                }`}
+                  }`}
                 aria-label={`Página ${page}`}
                 aria-current={currentPage === page ? "page" : undefined}
               >
@@ -135,13 +149,28 @@ export default function Pagination({
 
         {/* Next button */}
         <Button
-          label="Siguiente"
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="text-sm"
-        />
+          className="text-sm px-2 sm:px-4"
+          ariaLabel="Siguiente página"
+        >
+          <span className="hidden sm:inline">Siguiente</span>
+          <svg
+            className="w-4 h-4 sm:ml-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </Button>
       </div>
     </div>
   );
