@@ -586,7 +586,7 @@ export async function deleteContent(req, res) {
    * @param {number} membershipId - ID of the membership
    * @returns {Promise<CertificateResult>} Result of the generation
    */
-export async function generateAndUploadCertificate(membershipId) {
+export async function generateAndUploadCertificate(membershipId, sendEmail = true) {
   try {
     const membershipData = await getUserByMembershipId(membershipId);
 
@@ -636,11 +636,13 @@ export async function generateAndUploadCertificate(membershipId) {
     // Upload to S3
     const uploadResult = await S3Service.uploadFile(fileForS3, fileName);
 
-    //Update certificate
+    // Update certificate in DB
     await updateUserCertificate(membershipId, uploadResult);
 
-    // Send Email to member
-    await sendWelcomeEmail(membershipData.correo, nombreCompleto, pdfBytes);
+    // Send Email to member only if requested
+    if (sendEmail) {
+      await sendWelcomeEmail(membershipData.correo, nombreCompleto, pdfBytes);
+    }
 
     return {
       generated: true,

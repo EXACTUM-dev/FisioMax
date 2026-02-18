@@ -94,7 +94,7 @@ export default function CertificateCard({ userId, isAdmin = false }) {
         setCertificateUrl(newUrl);
         setRegenerateMessage({
           type: "success",
-          text: "Certificado regenerado exitosamente. También se envió por correo al usuario.",
+          text: "Certificado regenerado exitosamente.",
         });
       } else {
         setRegenerateMessage({
@@ -166,8 +166,8 @@ export default function CertificateCard({ userId, isAdmin = false }) {
       {regenerateMessage && (
         <div
           className={`mt-2 px-3 py-2 rounded text-sm ${regenerateMessage.type === "success"
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-red-50 text-red-700 border border-red-200"
+            ? "bg-green-50 text-green-700 border border-green-200"
+            : "bg-red-50 text-red-700 border border-red-200"
             }`}
         >
           {regenerateMessage.text}
@@ -181,8 +181,8 @@ export default function CertificateCard({ userId, isAdmin = false }) {
             onClick={handleRegenerate}
             disabled={regenerating}
             className={`flex items-center gap-1.5 text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-md border ${regenerating
-                ? "text-slate-400 border-slate-200 cursor-not-allowed"
-                : "text-amber-600 border-amber-300 hover:bg-amber-50 hover:text-amber-700 cursor-pointer"
+              ? "text-slate-400 border-slate-200 cursor-not-allowed"
+              : "text-amber-600 border-amber-300 hover:bg-amber-50 hover:text-amber-700 cursor-pointer"
               }`}
             title="Regenerar certificado"
           >

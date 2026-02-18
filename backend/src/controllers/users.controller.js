@@ -803,8 +803,8 @@ export async function regenerateCertificate(req, res) {
       });
     }
 
-    // Regenerate the certificate using the existing utility
-    const result = await generateAndUploadCertificate(user.IDMembresia);
+    // Regenerate the certificate without sending an email
+    const result = await generateAndUploadCertificate(user.IDMembresia, false);
 
     if (!result.generated) {
       return res.status(500).json({
