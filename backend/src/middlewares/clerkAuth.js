@@ -71,13 +71,15 @@ export const autoSyncClerkId = async (req, res, next) => {
       return next();
     }
 
-    // User exists in DB but has no clerkID, link automatically
-    if (!dbUser.clerkID) {
+    // User exists in DB but has no clerkID, or has a different (stale) clerkID — link/update automatically
+    if (!dbUser.clerkID || dbUser.clerkID !== clerkUserId) {
+      console.log(`[autoSyncClerkId] Updating clerkID for user ${dbUser.IDUsuario} (${normalizedEmail}): "${dbUser.clerkID || 'none'}" → "${clerkUserId}"`);
       await updateUserClerkId(dbUser.IDUsuario, clerkUserId);
     }
 
     next();
   } catch (error) {
+    console.error('[autoSyncClerkId] Error during Clerk ID sync:', error.message || error);
     next();
   }
 };
