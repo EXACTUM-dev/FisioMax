@@ -47,7 +47,11 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
   const userState = userData?.accept.aceptado;
   const rejectionReason = userData?.accept.motivoRechazo;
   const userPrivileges = userData?.userPrivileges.privilegios;
-  const paymentStatus = userData?.membershipPaymentStatus;
+  const rawPaymentStatus = userData?.membershipPaymentStatus;
+  // Normalize capitalisation: 'pendiente' → 'Pendiente', 'PAGADO' → 'Pagado', etc.
+  const paymentStatus = rawPaymentStatus
+    ? rawPaymentStatus.charAt(0).toUpperCase() + rawPaymentStatus.slice(1).toLowerCase()
+    : undefined;
   const membershipRegisteredAt = userData?.membershipRegisteredAt;
   const membershipExpiresAt = userData?.membershipExpiresAt;
 
@@ -87,6 +91,8 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
 
   // Payment pending - membership accepted but not paid or expired
   const isPaymentPending = existsInDB && userState === 1 && (paymentStatus !== 'Pagado' || !isWithinMembershipPeriod) && !isMembershipExpired && !isMembershipNotStarted;
+
+
 
   return (
     <>
