@@ -35,17 +35,38 @@ export async function getUserById(clerkUserId) {
     const clerkUser = await clerkClient.users.getUser(clerkUserId);
 
     // 2. Search user in DB by clerkID
-    const dbUser = await getUserByClerkId(clerkUserId);
+    let dbUser = await getUserByClerkId(clerkUserId);
 
-    // 3. Get membership state
-    const dbState = await getMembershipUserStateById(dbUser.IDUsuario);
+    // 3. If not found by clerkID, attempt to link by email (clerkID may be NULL in DB)
+    if (!dbUser) {
+      const email =
+        clerkUser.emailAddresses?.find(
+          (e) => e.id === clerkUser.primaryEmailAddressId
+        )?.emailAddress || clerkUser.emailAddresses?.[0]?.emailAddress;
 
-    // 4. Combine data
+      if (email) {
+        const normalizedEmail = email.toLowerCase().trim();
+        console.log(`[getUserById] clerkID "${clerkUserId}" not found in DB, retrying by email "${normalizedEmail}"...`);
+
+        const dbUserByEmail = await getUserByEmail(normalizedEmail);
+
+        if (dbUserByEmail) {
+          // Link the clerkID automatically and re-fetch fresh data
+          console.log(`[getUserById] Linking clerkID "${clerkUserId}" to user ${dbUserByEmail.IDUsuario} (${normalizedEmail})`);
+          await updateUserClerkId(dbUserByEmail.IDUsuario, clerkUserId);
+          dbUser = await getUserByClerkId(clerkUserId);
+        }
+      }
+    }
+
+    // 4. Get membership state (only if user was found)
+    const dbState = dbUser ? await getMembershipUserStateById(dbUser.IDUsuario) : null;
+
+    // 5. Combine data
     return {
       clerkData: clerkUser,
       dbData: dbUser,
-      exists: !!dbUser, // Flag to know if exists in DB
-      // Consolidated data for easy access
+      exists: !!dbUser,
       id: dbUser?.IDUsuario || null,
       clerkID: clerkUserId,
       email:
