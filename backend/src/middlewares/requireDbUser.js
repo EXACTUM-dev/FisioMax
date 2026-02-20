@@ -36,8 +36,9 @@ async function logLoginError(req, logData) {
           method: req.method,
         },
     });
+    console.error(`[Login Error - Backend] Usuario: ${logData.usuario || 'Desconocido'}, Código: ${logData.codigoError || 'N/A'}, Mensaje: ${logData.mensajeError}`);
   } catch (logError) {
-
+    console.error('[logLoginError] Error al insertar log de error:', logError);
   }
 }
 

@@ -49,6 +49,8 @@ export async function createLoginErrorLog(req, res) {
       detalles,
     });
 
+    console.error(`[Login Error - Frontend] Usuario: ${usuario || 'Desconocido'}, Código: ${codigoError || 'N/A'}, Mensaje: ${mensajeError}`);
+
     return res.status(201).json({ success: true, id: insertId });
   } catch (error) {
     const responsePayload = {

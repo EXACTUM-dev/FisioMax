@@ -39,6 +39,8 @@ export const getProfile = async (req, res) => {
             });
         }
 
+        console.log(`[Login Success] Usuario con Clerk ID ${userId} (${userData.email || 'N/A'}) accedió correctamente y fue verificado en la base de datos.`);
+
         return res.json({
             success: true,
             user: {
