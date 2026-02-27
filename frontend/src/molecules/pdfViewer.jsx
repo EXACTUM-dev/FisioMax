@@ -148,8 +148,11 @@ export default function PDFViewer({ url, onError }) {
             background: "#f3f4f6",
           }}
           onError={handleIframeError}
-          // Allow PDF.js to work properly
-          sandbox="allow-same-origin allow-scripts allow-forms allow-downloads"
+          // Only sandbox the mobile pdf.js viewer (third-party).
+          // Desktop uses Chrome's native PDF plugin which CANNOT run inside a sandboxed iframe.
+          {...((isAndroid() || isIOS()) && {
+            sandbox: "allow-same-origin allow-scripts allow-forms allow-downloads allow-popups",
+          })}
         />
       </div>
     </div>
