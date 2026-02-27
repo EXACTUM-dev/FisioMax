@@ -40,6 +40,8 @@ export const getProfile = async (req, res) => {
         }
 
         console.log(`[Login Success] Usuario con Clerk ID ${userId} (${userData.email || 'N/A'}) accedió correctamente y fue verificado en la base de datos.`);
+        console.log(userData.membershipPaymentStatus);
+        console.log(userData.membershipState);
 
         return res.json({
             success: true,
