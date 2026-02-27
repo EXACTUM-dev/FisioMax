@@ -231,11 +231,22 @@ export const createMembershipApplication = async (req, res) => {
       error.code === "ER_DUP_ENTRY" ||
       error.message.includes("Duplicate entry")
     ) {
-      return res.status(409).json({
-        success: false,
-        message: "Este usuario ya está registrado",
-        error: "DUPLICATE_ENTRY",
-      });
+      // membershipStatus comes from the model: 1 = accepted, 0/null = pending
+      const membershipStatus = error.membershipStatus;
+
+      if (membershipStatus === 1) {
+        return res.status(409).json({
+          success: false,
+          message: "Este correo ya tiene una solicitud de membresía aceptada.",
+          error: "DUPLICATE_ACCEPTED",
+        });
+      } else {
+        return res.status(409).json({
+          success: false,
+          message: "Este correo ya tiene una solicitud de membresía pendiente de revisión.",
+          error: "DUPLICATE_PENDING",
+        });
+      }
     }
 
     // Check if it's a validation error from sanitization

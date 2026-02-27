@@ -201,8 +201,26 @@ class MembershipApplication {
       );
 
       if (existingEmail) {
+        // Find the user and check their membership status for a more specific error
+        const existingUser = decryptUsers.find(
+          (u) => u.correo === dataToEncrypt.correo
+        );
+
+        let membershipStatus = null;
+        if (existingUser?.IDUsuario) {
+          const [membershipRows] = await conn.query(
+            `SELECT aceptado FROM membresia WHERE IDUsuario = ? AND deletedAt IS NULL ORDER BY createdAt DESC LIMIT 1`,
+            [existingUser.IDUsuario]
+          );
+          if (membershipRows.length > 0) {
+            membershipStatus = membershipRows[0].aceptado;
+          }
+        }
+
         const duplicateError = new Error("Duplicate entry");
         duplicateError.code = "ER_DUP_ENTRY";
+        // aceptado = 1 means accepted, null/0 means pending review
+        duplicateError.membershipStatus = membershipStatus;
         throw duplicateError;
       }
 

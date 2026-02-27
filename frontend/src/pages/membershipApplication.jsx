@@ -50,7 +50,7 @@ export default function MembershipApplicationPage() {
 
   const [showInfoModal, setShowInfoModal] = useState(
     (location.state?.showInfoModal && location.state?.fromOverview === true) ||
-      false
+    false
   );
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("success");
@@ -131,7 +131,7 @@ export default function MembershipApplicationPage() {
         setModalType("success");
         setModalMessage(
           result.message ||
-            "Tu solicitud de membresía ha sido enviada exitosamente."
+          "Tu solicitud de membresía ha sido enviada exitosamente."
         );
         setShowModal(true);
         isNavigatingRef.current = true;
@@ -140,8 +140,11 @@ export default function MembershipApplicationPage() {
           return;
         }
       } else if (res.status === 409) {
-        setModalType("error");
-        setModalMessage("Este correo o teléfono ya está registrado");
+        setModalType("warning");
+        setModalMessage(
+          result.message ||
+          "Este correo ya está asociado a una solicitud de membresía."
+        );
         setShowModal(true);
       } else {
         setModalType("error");
@@ -332,6 +335,20 @@ export default function MembershipApplicationPage() {
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
+            ) : modalType === "warning" ? (
+              <svg
+                className="h-16 w-16 text-yellow-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
             ) : (
               <svg
                 className="h-16 w-16 text-red-500"
@@ -351,7 +368,9 @@ export default function MembershipApplicationPage() {
           <h3 className="text-2xl font-bold text-gray-900 mb-2">
             {modalType === "success"
               ? "¡Solicitud enviada!"
-              : "Error al enviar"}
+              : modalType === "warning"
+                ? "Solicitud ya registrada"
+                : "Error al enviar"}
           </h3>
           <p className="text-gray-600 mb-6">{modalMessage}</p>
           <Button
@@ -364,7 +383,7 @@ export default function MembershipApplicationPage() {
             }}
             className="w-full"
           >
-            {modalType === "success" ? "Entendido" : "Intentar nuevamente"}
+            {modalType === "success" ? "Entendido" : modalType === "warning" ? "Entendido" : "Intentar nuevamente"}
           </Button>
         </div>
       </Modal>
