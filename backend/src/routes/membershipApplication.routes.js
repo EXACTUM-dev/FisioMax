@@ -16,7 +16,7 @@ import {
   deleteMembershipApplication,
 } from '../controllers/membershipApplication.controller.js';
 import { authorize } from "../middlewares/rbacMiddleware.js";
-import { requireAuth } from "../middlewares/clerkAuth.js";
+import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 
 const router = express.Router();
 
@@ -104,21 +104,21 @@ router.post('/', uploadFields, handleUploadError, createMembershipApplication);
  * @description Obtain all the membership application
  * @access Private
  */
-router.get('/', requireAuth, authorize(["Gestión de Usuarios"]), getMemberships);
+router.get('/', requireAuth, autoSyncClerkId, authorize(["Gestión de Usuarios"]), getMemberships);
 
 /**
  * @route GET /api/membership-applications/max-no-afiliado
  * @description Get the maximum noAfiliado
  * @access Private
  */
-router.get('/max-no-afiliado', requireAuth, authorize(["Gestión de Usuarios"]), getMaxNoAfiliadoController);
+router.get('/max-no-afiliado', requireAuth, autoSyncClerkId, authorize(["Gestión de Usuarios"]), getMaxNoAfiliadoController);
 
 /**
  * @route GET /api/membership-applications/{id}
  * @description Detail endpoint for a single membership application
  * @access Private
  */
-router.get('/:id', requireAuth, authorize(["Gestión de Usuarios"]), getMembershipById);
+router.get('/:id', requireAuth, autoSyncClerkId, authorize(["Gestión de Usuarios"]), getMembershipById);
 
 
 /**
@@ -126,20 +126,20 @@ router.get('/:id', requireAuth, authorize(["Gestión de Usuarios"]), getMembersh
  * @description Approve the membership application
  * @access Private
  */
-router.post('/:id/aprobar', requireAuth, authorize(["Gestión de Usuarios"]), approveMembership);
+router.post('/:id/aprobar', requireAuth, autoSyncClerkId, authorize(["Gestión de Usuarios"]), approveMembership);
 
 /**
  * @route POST /api/membership-applications/{id}/rechazar
  * @description Deny the membership application
  * @access Private
  */
-router.post('/:id/rechazar', requireAuth, authorize(["Gestión de Usuarios"]), denyMembership);
+router.post('/:id/rechazar', requireAuth, autoSyncClerkId, authorize(["Gestión de Usuarios"]), denyMembership);
 
 /**
  * @route DELETE /api/membership-applications/{id}
  * @description Delete a membership application and associated S3 files
  * @access Private
  */
-router.delete('/:id', requireAuth, authorize(["Gestión de Usuarios"]), deleteMembershipApplication);
+router.delete('/:id', requireAuth, autoSyncClerkId, authorize(["Gestión de Usuarios"]), deleteMembershipApplication);
 
 export default router;

@@ -10,7 +10,7 @@ import {
   getMembershipStatistics,
   exportMembershipStatistics,
 } from "../controllers/statistics.controller.js";
-import { requireAuth } from "../middlewares/clerkAuth.js";
+import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { authorize } from "../middlewares/rbacMiddleware.js";
 
 const router = express.Router();
@@ -23,6 +23,7 @@ const router = express.Router();
 router.get(
   "/memberships",
   requireAuth,
+  autoSyncClerkId,
   authorize(["Gestión de Usuarios"]),
   getMembershipStatistics
 );
@@ -35,6 +36,7 @@ router.get(
 router.get(
   "/memberships/export",
   requireAuth,
+  autoSyncClerkId,
   authorize(["Gestión de Usuarios"]),
   exportMembershipStatistics
 );

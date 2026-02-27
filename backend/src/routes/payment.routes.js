@@ -6,7 +6,7 @@
 
 import express from 'express';
 import PaymentController from '../controllers/payment.controller.js';
-import { requireAuth } from '../middlewares/clerkAuth.js';
+import { requireAuth, autoSyncClerkId } from '../middlewares/clerkAuth.js';
 import { requireDbUser } from '../middlewares/requireDbUser.js';
 
 const router = express.Router();
@@ -26,6 +26,7 @@ router.post('/webhook', PaymentController.handleWebhook);
 router.get(
   '/status/:paymentId',
   requireAuth,
+  autoSyncClerkId,
   requireDbUser,
   PaymentController.getPaymentStatus
 );
@@ -35,20 +36,20 @@ router.get(
  * Get all payments for the authenticated user.
  * Requires authentication.
  */
-router.get('/user', requireAuth, requireDbUser, PaymentController.getUserPayments);
+router.get('/user', requireAuth, autoSyncClerkId, requireDbUser, PaymentController.getUserPayments);
 
 /**
  * POST /api/payments
  * Create a payment record.
  * Requires authentication.
  */
-router.post('/', requireAuth, requireDbUser, PaymentController.createPaymentRecord);
+router.post('/', requireAuth, autoSyncClerkId, requireDbUser, PaymentController.createPaymentRecord);
 
 /**
  * POST /api/payments/create-preference
  * Create a payment preference in Mercado Pago.
  * Requires authentication.
  */
-router.post('/create-preference', requireAuth, requireDbUser, PaymentController.createPaymentPreference);
+router.post('/create-preference', requireAuth, autoSyncClerkId, requireDbUser, PaymentController.createPaymentPreference);
 
 export default router;

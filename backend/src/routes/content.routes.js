@@ -148,11 +148,11 @@ const uploadFields = (req, res, next) => {
 };
 
 // Protected routes - require Clerk authentication
-router.get("/", requireAuth, contentController.index);
-router.get("/available", requireAuth, contentController.index);
-router.get("/:contentId", requireAuth, contentController.show);
-router.post("/upload", requireAuth, uploadFields, contentController.upload);
-router.post("/presign", requireAuth, contentController.presignUploadUrl);
+router.get("/", requireAuth, autoSyncClerkId, contentController.index);
+router.get("/available", requireAuth, autoSyncClerkId, contentController.index);
+router.get("/:contentId", requireAuth, autoSyncClerkId, contentController.show);
+router.post("/upload", requireAuth, autoSyncClerkId, uploadFields, contentController.upload);
+router.post("/presign", requireAuth, autoSyncClerkId, contentController.presignUploadUrl);
 router.put(
   "/:contentId",
   requireAuth,

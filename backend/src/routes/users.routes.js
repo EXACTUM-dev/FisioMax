@@ -113,7 +113,7 @@ router.get("/", requireAuth, autoSyncClerkId, requireDbUser, getAllUsers);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/profile", requireAuth, getCurrentUserProfile);
+router.get("/profile", requireAuth, autoSyncClerkId, getCurrentUserProfile);
 
 /**
  * Route to get a specific user's profile by ID.
@@ -125,7 +125,7 @@ router.get("/profile", requireAuth, getCurrentUserProfile);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/:userId", requireAuth, getUserProfileById);
+router.get("/:userId", requireAuth, autoSyncClerkId, getUserProfileById);
 
 /**
  * Route to update a user's information
@@ -225,7 +225,7 @@ router.patch(
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/certificate/:userId", requireAuth, getUserCertificate);
+router.get("/certificate/:userId", requireAuth, autoSyncClerkId, getUserCertificate);
 
 /**
  * Route to regenerate a user's membership certificate

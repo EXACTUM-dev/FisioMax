@@ -6,13 +6,13 @@
  */
 
 import express from "express";
-import { requireAuth } from "../middlewares/clerkAuth.js";
+import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import * as homePageController from "../controllers/homePage.controller.js";
 
 const router = express.Router();
 
 // Protected routes - require Clerk authentication
-router.get("/home", requireAuth, homePageController.getHomeContent);
-router.get("/home/search", requireAuth, homePageController.search);
+router.get("/home", requireAuth, autoSyncClerkId, homePageController.getHomeContent);
+router.get("/home/search", requireAuth, autoSyncClerkId, homePageController.search);
 
 export default router;
