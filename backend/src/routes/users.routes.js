@@ -7,7 +7,7 @@
 
 import express from "express";
 import multer from "multer";
-import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser, getUserCertificate } from "../controllers/users.controller.js";
+import { getCurrentUserProfile, getUserProfileById, getAllUsers, updateUser, updateUserDocuments, deleteUser, getUserCertificate, regenerateCertificate } from "../controllers/users.controller.js";
 import { assignUserRole } from "../controllers/roles.controller.js";
 import { requireAuth, autoSyncClerkId } from "../middlewares/clerkAuth.js";
 import { requireDbUser } from "../middlewares/requireDbUser.js";
@@ -113,7 +113,7 @@ router.get("/", requireAuth, autoSyncClerkId, requireDbUser, getAllUsers);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/profile", requireAuth, getCurrentUserProfile);
+router.get("/profile", requireAuth, autoSyncClerkId, getCurrentUserProfile);
 
 /**
  * Route to get a specific user's profile by ID.
@@ -125,7 +125,7 @@ router.get("/profile", requireAuth, getCurrentUserProfile);
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/:userId", requireAuth, getUserProfileById);
+router.get("/:userId", requireAuth, autoSyncClerkId, getUserProfileById);
 
 /**
  * Route to update a user's information
@@ -225,6 +225,25 @@ router.patch(
  * @param {function} middleware - Express middleware for authentication.
  * @param {function} handler - Request handler.
  */
-router.get("/certificate/:userId", requireAuth, getUserCertificate);
+router.get("/certificate/:userId", requireAuth, autoSyncClerkId, getUserCertificate);
+
+/**
+ * Route to regenerate a user's membership certificate
+ * @name POST /certificate/:userId/regenerate
+ * @function
+ * @memberof module:routes/users
+ * @inner
+ * @param {string} path - Express path with userId parameter.
+ * @param {function} middleware - Express middleware for authentication and admin authorization.
+ * @param {function} handler - Request handler.
+ */
+router.post(
+  "/certificate/:userId/regenerate",
+  requireAuth,
+  authorize(["Gestión de Usuarios"]),
+  autoSyncClerkId,
+  requireDbUser,
+  regenerateCertificate
+);
 
 export default router;

@@ -1,26 +1,33 @@
 /**
  * @fileoverview React component for displaying a user's membership certificate.
- * @version 0.1.0
+ * @version 0.2.0
  * @author EXACTUM-dev
- * @description Displays a membership certificate for a user, with options to view or download the certificate.
+ * @description Displays a membership certificate for a user, with options to view,
+ * download, or regenerate (admin only) the certificate.
  */
 
 import React from "react";
 import { useAuth } from "@clerk/clerk-react";
-import { getMembershipCertificate } from "../services/contentServices";
+import {
+  getMembershipCertificate,
+  regenerateMembershipCertificate,
+} from "../services/contentServices";
 
 /**
  * CertificateCard
  * @param {string} userId - User ID whose certificate to fetch
+ * @param {boolean} isAdmin - Whether the current user is an admin (shows regenerate button)
  * - Shows membership certificate thumbnail (or embedded PDF)
- * - Buttons: Ver (abre en nueva pestaña) y Descargar
+ * - Buttons: Ver (abre en nueva pestaña), Descargar, y Regenerar (solo admin)
  */
 
-export default function CertificateCard({ userId }) {
+export default function CertificateCard({ userId, isAdmin = false }) {
   const { getToken } = useAuth();
   const [loading, setLoading] = React.useState(true);
   const [certificateUrl, setCertificateUrl] = React.useState(null);
   const [error, setError] = React.useState(null);
+  const [regenerating, setRegenerating] = React.useState(false);
+  const [regenerateMessage, setRegenerateMessage] = React.useState(null);
 
   React.useEffect(() => {
     let mounted = true;
@@ -43,14 +50,15 @@ export default function CertificateCard({ userId }) {
 
     return () => (mounted = false);
   }, [userId, getToken]);
-  // View (open in new tab) reusing DocumentsCard approach
+
+  // View (open in new tab)
   const handleViewDocument = (url) => {
     if (url) {
       window.open(url, "_blank", "noopener,noreferrer");
     }
   };
 
-  // Download document as blob (reused from DocumentsCard)
+  // Download document as blob
   const handleDownloadDocument = async (url, filename) => {
     if (!url) return;
 
@@ -68,6 +76,41 @@ export default function CertificateCard({ userId }) {
     } catch (err) {
       // Fallback: open in new tab
       window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  // Regenerate certificate (admin only)
+  const handleRegenerate = async () => {
+    if (!userId || regenerating) return;
+
+    setRegenerating(true);
+    setRegenerateMessage(null);
+
+    try {
+      const token = await getToken();
+      const newUrl = await regenerateMembershipCertificate(userId, token);
+
+      if (newUrl) {
+        setCertificateUrl(newUrl);
+        setRegenerateMessage({
+          type: "success",
+          text: "Certificado regenerado exitosamente.",
+        });
+      } else {
+        setRegenerateMessage({
+          type: "error",
+          text: "No se pudo obtener la URL del nuevo certificado.",
+        });
+      }
+    } catch (err) {
+      setRegenerateMessage({
+        type: "error",
+        text: err.message || "Error al regenerar el certificado.",
+      });
+    } finally {
+      setRegenerating(false);
+      // Auto-dismiss message after 5 seconds
+      setTimeout(() => setRegenerateMessage(null), 5000);
     }
   };
 
@@ -119,7 +162,77 @@ export default function CertificateCard({ userId }) {
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-end">
+      {/* Feedback message after regeneration */}
+      {regenerateMessage && (
+        <div
+          className={`mt-2 px-3 py-2 rounded text-sm ${regenerateMessage.type === "success"
+            ? "bg-green-50 text-green-700 border border-green-200"
+            : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+        >
+          {regenerateMessage.text}
+        </div>
+      )}
+
+      <div className="mt-3 flex items-center justify-between">
+        {/* Regenerate button — admin only */}
+        {isAdmin ? (
+          <button
+            onClick={handleRegenerate}
+            disabled={regenerating}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-md border ${regenerating
+              ? "text-slate-400 border-slate-200 cursor-not-allowed"
+              : "text-amber-600 border-amber-300 hover:bg-amber-50 hover:text-amber-700 cursor-pointer"
+              }`}
+            title="Regenerar certificado"
+          >
+            {regenerating ? (
+              <>
+                <svg
+                  className="w-4 h-4 animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+                Generando...
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                Regenerar
+              </>
+            )}
+          </button>
+        ) : (
+          <div />
+        )}
+
+        {/* View and Download buttons */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => handleViewDocument(certificateUrl)}

@@ -192,3 +192,50 @@ export async function getMembershipCertificate(userId, token) {
   }
 }
 
+/**
+ * Regenerates a membership certificate for a given user (admin only).
+ * @param {string|number} userId - Database user ID
+ * @param {string} token - Clerk auth token
+ * @returns {Promise<string|null>} Presigned URL to the new certificate PDF or null
+ */
+export async function regenerateMembershipCertificate(userId, token) {
+  if (!userId) return null;
+
+  const response = await fetch(
+    `${API_URL}/users/certificate/${userId}/regenerate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    if (response.status === 403) {
+      throw new Error(
+        "No tienes permisos para regenerar certificados. Solo los administradores pueden realizar esta acción."
+      );
+    }
+    if (response.status === 404) {
+      throw new Error(
+        "El usuario no tiene una membresía activa para generar el certificado."
+      );
+    }
+    try {
+      const error = await response.json();
+      throw new Error(error.message || error.error || "Error al regenerar el certificado");
+    } catch {
+      throw new Error("Error al regenerar el certificado. Por favor, intenta de nuevo.");
+    }
+  }
+
+  const body = await response.json();
+  if (body.success && body.data && body.data.certificado) {
+    return body.data.certificado;
+  }
+  return null;
+}
+
+

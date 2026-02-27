@@ -106,7 +106,11 @@ export default function MembershipCard({
 
   const plan = data.membershipType || "No asignado";
   const hoursFormation = data.membershipHoursFormation || 0;
-  const paymentStatus = data.membershipPaymentStatus || "Pendiente";
+  const rawPaymentStatus = data.membershipPaymentStatus || "Pendiente";
+  // Normalize capitalisation: 'pendiente' → 'Pendiente', 'PAGADO' → 'Pagado', etc.
+  const paymentStatus =
+    rawPaymentStatus.charAt(0).toUpperCase() +
+    rawPaymentStatus.slice(1).toLowerCase();
 
   const handleEdit = () => {
     setIsEditing(true);

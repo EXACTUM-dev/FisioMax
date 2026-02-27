@@ -33,13 +33,12 @@ export function buildUserRolesColumns({
     {
       key: "nombre",
       label: "Nombre",
-      className: "w-[37%]",
+      className: "w-[25%]",
       headAlign: "left",
       align: "left",
       render: (row) => {
-        const nombreCompleto = `${row?.nombres || ""} ${row?.apellidoP || ""} ${
-          row?.apellidoM || ""
-        }`.trim();
+        const nombreCompleto = `${row?.nombres || ""} ${row?.apellidoP || ""} ${row?.apellidoM || ""
+          }`.trim();
         const fullName = nombreCompleto || row?.nombre || row?.name || "";
 
         return (
@@ -54,9 +53,27 @@ export function buildUserRolesColumns({
       },
     },
     {
+      key: "correo",
+      label: "Correo",
+      className: "w-[25%]",
+      headAlign: "left",
+      align: "left",
+      render: (row) => {
+        const email = row?.correo || row?.email || "";
+        return (
+          <span
+            className="text-sm sm:text-base block break-words"
+            title={email}
+          >
+            {truncateText(email, 40)}
+          </span>
+        );
+      },
+    },
+    {
       key: "rol",
       label: "Rol",
-      className: "w-[23%]",
+      className: "w-[18%]",
       headAlign: "center",
       align: "center",
       render: (row) => {
@@ -86,7 +103,7 @@ export function buildUserRolesColumns({
     {
       key: "membresia",
       label: "Estado membresía",
-      className: "w-[22%]",
+      className: "w-[17%]",
       headAlign: "center",
       align: "center",
       render: (row) => {
@@ -120,7 +137,7 @@ export function buildUserRolesColumns({
     {
       key: "eliminar",
       label: "Eliminar",
-      className: "w-[10%]",
+      className: "w-[8%]",
       headAlign: "center",
       align: "center",
       isAction: true,
@@ -147,7 +164,7 @@ export function buildUserRolesColumns({
     {
       key: "ver",
       label: "Ver",
-      className: "w-[8%]",
+      className: "w-[7%]",
       headAlign: "center",
       align: "center",
       isAction: true,
