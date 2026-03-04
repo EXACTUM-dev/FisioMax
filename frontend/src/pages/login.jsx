@@ -25,8 +25,41 @@ export default function LoginPage() {
   const { isSignedIn, isLoaded, user } = useUser();
   const clerk = useClerk();
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get("mode") || "signin";
+  const location = useLocation();
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+
+  // ----- Mode resolution (signup vs signin) -----
+  // When Clerk navigates to a verification sub-route (e.g. /login/verify-email-address)
+  // the ?mode=signup query param is gone. We persist the signup intent in sessionStorage
+  // so the component keeps rendering <SignUp> (which owns the verification step) instead
+  // of switching to <SignIn> and breaking the flow.
+  const modeFromParam = searchParams.get("mode");
+
+  // Detect Clerk-internal sub-routes under /login/* that belong to the signup flow.
+  // Clerk uses paths like /login/verify-email-address, /login/continue, etc.
+  const isSignupSubRoute =
+    location.pathname !== "/login" &&
+    location.pathname.startsWith("/login");
+
+  // Determine effective mode:
+  //   1. If the URL has ?mode=... honour it directly (and persist signup to sessionStorage).
+  //   2. Else if we are in a Clerk sub-route, restore from sessionStorage.
+  //   3. Else default to "signin".
+  let mode;
+  if (modeFromParam) {
+    mode = modeFromParam;
+    if (modeFromParam === "signup") {
+      sessionStorage.setItem("clerk_login_mode", "signup");
+    } else {
+      sessionStorage.removeItem("clerk_login_mode");
+    }
+  } else if (isSignupSubRoute) {
+    mode = sessionStorage.getItem("clerk_login_mode") || "signin";
+  } else {
+    // Plain /login with no param → clear any stale signup session
+    sessionStorage.removeItem("clerk_login_mode");
+    mode = "signin";
+  }
 
   // True only when the user is fully signed-in AND their primary email is verified.
   // While Clerk is waiting for the email verification code it sets isSignedIn=true
@@ -130,7 +163,6 @@ export default function LoginPage() {
   const signContainerRef = useRef(null);
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const node = signContainerRef.current;
