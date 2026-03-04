@@ -6,7 +6,10 @@
  */
 
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+  // In production, nginx proxies /api → backend, so we use a relative base (empty string).
+  // In development, Vite also proxies /api → localhost:5000 via vite.config.js.
+  // VITE_API_BASE_URL should be left empty (or unset) in production .env.
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
   ENDPOINTS: {
     MEMBERSHIP_APPLICATIONS: '/api/membership-applications',
     CONTACT: '/api/contacto',
@@ -33,7 +36,7 @@ export const buildApiUrl = (endpoint) => {
  */
 export async function authenticatedFetch(url, getToken, options = {}) {
   const token = await getToken();
-  
+
   const defaultHeaders = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
