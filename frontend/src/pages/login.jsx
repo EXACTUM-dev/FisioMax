@@ -22,11 +22,20 @@ import MembershipInfoModal from "../overviewPage/membershipInfoModal";
  * @return {React.Element} The rendered login page component.
  */
 export default function LoginPage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
   const clerk = useClerk();
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode") || "signin";
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+
+  // True only when the user is fully signed-in AND their primary email is verified.
+  // While Clerk is waiting for the email verification code it sets isSignedIn=true
+  // but the email verification status is still "unverified". We must NOT redirect
+  // the user away from the login page at that point, otherwise the code-entry step
+  // is skipped and the user gets bounced back to login in a loop.
+  const isEmailVerified =
+    user?.primaryEmailAddress?.verification?.status === "verified";
+  const isFullySignedIn = isSignedIn && isEmailVerified;
 
   useEffect(() => {
     if (!clerk) return;
@@ -269,8 +278,10 @@ export default function LoginPage() {
     );
   }
 
-  // Redirect authenticated users to home page
-  if (isSignedIn) {
+  // Redirect authenticated users to home page only when email is fully verified.
+  // If isSignedIn is true but the email is not yet verified, Clerk is still waiting
+  // for the user to enter the verification code — do NOT redirect yet.
+  if (isFullySignedIn) {
     return <Navigate to="/" replace />;
   }
 
