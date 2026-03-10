@@ -30,7 +30,7 @@ if (!PUBLISHABLE_KEY) {
  * envolviendo la app con ClerkProvider para la autenticación.
  */
 ReactDOM.createRoot(document.getElementById("root")).render(
-  /*<StrictMode>*/
+  <StrictMode>
       <ClerkProvider 
         publishableKey={PUBLISHABLE_KEY}
         appearance={{
@@ -44,5 +44,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           </BrowserRouter>
         </UserProvider>
       </ClerkProvider>
-  /*</StrictMode>*/
+  </StrictMode>
 );
