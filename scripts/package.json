@@ -1,0 +1,17 @@
+{
+  "name": "fisiomax-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for FisioMax administration",
+  "type": "module",
+  "scripts": {
+    "import-users": "node clerk-import-users.mjs",
+    "manage-ids": "node clerk-manage-ids.mjs"
+  },
+  "dependencies": {
+    "csv-parse": "^5.5.6",
+    "mysql2": "^3.11.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
