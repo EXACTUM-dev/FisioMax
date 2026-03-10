@@ -29,6 +29,9 @@
  *   node clerk-manage-ids.mjs --clear --confirm --user=42
  *   node clerk-manage-ids.mjs --restore --from=./backup-2026-03-05.json
  *   node clerk-manage-ids.mjs --restore --from=./backup-2026-03-05.json --user=42
+ *
+ * To sync clerkID from the NEW Clerk instance by email (after migration), use:
+ *   node scripts/clerk-sync-ids-by-email.mjs [--secret=sk_live_xxx] [--dry-run] [--user=ID]
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
@@ -114,6 +117,9 @@ ${bold('Examples:')}
   node clerk-manage-ids.mjs --clear --confirm --user=5
   node clerk-manage-ids.mjs --restore --from=backup.json
   node clerk-manage-ids.mjs --restore --from=backup.json --user=5
+
+${bold('Sync clerkID from new Clerk instance by email (no login required):')}
+  node clerk-sync-ids-by-email.mjs --secret=sk_live_XXX [--dry-run] [--user=5]
 `);
 }
 
