@@ -149,3 +149,4 @@ package-lock.json
 
 # Base de datos
 backend/database/db.js
+scripts/*.json
