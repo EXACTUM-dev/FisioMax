@@ -1,10 +1,15 @@
 /**
  * @fileoverview Login page component using Clerk authentication.
  * @author EXACTUM-dev
- * @version 1.0.3
+ * @version 1.0.4
+ *
+ * Uses a single <SignIn withSignUp={true} /> so Clerk handles both sign-in and
+ * sign-up (and email verification) in one component tree. This avoids remounting
+ * when Clerk navigates to sub-routes like /login/verify-email-address, which
+ * was causing /prepare_verification to be called twice and duplicate verification emails.
  */
 import React, { useEffect, useState, useRef } from "react";
-import { SignIn, SignUp, useUser, useClerk } from "@clerk/clerk-react";
+import { SignIn, useUser, useClerk } from "@clerk/clerk-react";
 import {
   Navigate,
   useSearchParams,
@@ -16,8 +21,8 @@ import MembershipInfoModal from "../overviewPage/membershipInfoModal";
 
 /**
  * Login page component that handles user authentication via Clerk.
- * Supports both sign-in and sign-up modes for OAuth providers.
- * Uses URL parameter ?mode=signup to switch between modes.
+ * Renders a single SignIn component with withSignUp so users can sign in or
+ * create an account without swapping components (avoids duplicate verification emails).
  *
  * @return {React.Element} The rendered login page component.
  */
@@ -27,39 +32,6 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [showMembershipModal, setShowMembershipModal] = useState(false);
-
-  // ----- Mode resolution (signup vs signin) -----
-  // When Clerk navigates to a verification sub-route (e.g. /login/verify-email-address)
-  // the ?mode=signup query param is gone. We persist the signup intent in sessionStorage
-  // so the component keeps rendering <SignUp> (which owns the verification step) instead
-  // of switching to <SignIn> and breaking the flow.
-  const modeFromParam = searchParams.get("mode");
-
-  // Detect Clerk-internal sub-routes under /login/* that belong to the signup flow.
-  // Clerk uses paths like /login/verify-email-address, /login/continue, etc.
-  const isSignupSubRoute =
-    location.pathname !== "/login" &&
-    location.pathname.startsWith("/login");
-
-  // Determine effective mode:
-  //   1. If the URL has ?mode=... honour it directly (and persist signup to sessionStorage).
-  //   2. Else if we are in a Clerk sub-route, restore from sessionStorage.
-  //   3. Else default to "signin".
-  let mode;
-  if (modeFromParam) {
-    mode = modeFromParam;
-    if (modeFromParam === "signup") {
-      sessionStorage.setItem("clerk_login_mode", "signup");
-    } else {
-      sessionStorage.removeItem("clerk_login_mode");
-    }
-  } else if (isSignupSubRoute) {
-    mode = sessionStorage.getItem("clerk_login_mode") || "signin";
-  } else {
-    // Plain /login with no param → clear any stale signup session
-    sessionStorage.removeItem("clerk_login_mode");
-    mode = "signin";
-  }
 
   // True only when the user is fully signed-in AND their primary email is verified.
   // While Clerk is waiting for the email verification code it sets isSignedIn=true
@@ -72,7 +44,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!clerk) return;
-    if (mode === "signup" && searchParams.get("fromMembership") === "1") {
+    if (searchParams.get("fromMembership") === "1") {
       setShowMembershipModal(true);
     }
     // Broad listener: some Clerk event names vary by version.
@@ -157,7 +129,7 @@ export default function LoginPage() {
       window.removeEventListener("error", onWindowError);
       window.removeEventListener("unhandledrejection", onUnhandledRejection);
     };
-  }, [clerk, mode, searchParams]);
+  }, [clerk, searchParams]);
 
   // MutationObserver to detect visible messages inside the widget (e.g. "External Account was not found")
   const signContainerRef = useRef(null);
@@ -227,22 +199,18 @@ export default function LoginPage() {
 
               const lastStrategy = sessionStorage.getItem("clerk_last_strategy");
               if (lastStrategy) {
-                // Clean up
                 sessionStorage.removeItem("clerk_last_strategy");
-
-                // Trigger SignUp with that strategy
-                if (clerk && clerk.client && clerk.client.signUp) {
+                if (clerk?.client?.signUp) {
                   clerk.client.signUp.authenticateWithRedirect({
                     strategy: lastStrategy,
                     redirectUrl: "/sso-callback",
-                    signInUrl: "/login?mode=signin",
+                    signInUrl: "/login",
                   }).catch(err => console.error("Auto-signup failed", err));
                   return;
                 }
               }
-
-              // Fallback: just switch to signup mode
-              navigate("/login?mode=signup", { replace: true });
+              // With withSignUp, SignIn handles sign-up; stay on /login to avoid remount
+              navigate("/login", { replace: true });
             }
           } catch (err) {
             // ignore
@@ -344,49 +312,26 @@ export default function LoginPage() {
           </div>
 
           <div ref={signContainerRef} className="flex justify-center">
-            {mode === "signin" ? (
-              <SignIn
-                path="/login"
-                routing="path"
-                signUpUrl="/login?mode=signup"
-                afterSignInUrl="/"
-                appearance={{
-                  elements: {
-                    rootBox: "w-full",
-                    card: "shadow-none w-full",
-                    formButtonPrimary:
-                      "bg-black hover:bg-gray-800 text-white rounded-md py-2",
-                    socialButtonsBlockButton:
-                      "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300",
-                    formFieldInput: "border-gray-300 rounded-md",
-                    formFieldLabel: "text-gray-700 font-medium",
-                    footer: "hidden",
-                  },
-                }}
-              />
-            ) : (
-              <SignUp
-                path="/login"
-                routing="path"
-                signInUrl="/login?mode=signin"
-                afterSignUpUrl="/"
-                appearance={{
-                  elements: {
-                    rootBox: "w-full",
-                    card: "shadow-none w-full",
-                    formButtonPrimary:
-                      "bg-black hover:bg-gray-800 text-white rounded-md py-2",
-                    socialButtonsBlockButton:
-                      "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300",
-                    formFieldInput: "border-gray-300 rounded-md",
-                    formFieldLabel: "text-gray-700 font-medium",
-                    footer: "hidden",
-                    headerTitle: "hidden",
-                    headerSubtitle: "hidden",
-                  },
-                }}
-              />
-            )}
+            <SignIn
+              path="/login"
+              routing="path"
+              signUpUrl="/login"
+              afterSignInUrl="/"
+              withSignUp={true}
+              appearance={{
+                elements: {
+                  rootBox: "w-full",
+                  card: "shadow-none w-full",
+                  formButtonPrimary:
+                    "bg-black hover:bg-gray-800 text-white rounded-md py-2",
+                  socialButtonsBlockButton:
+                    "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300",
+                  formFieldInput: "border-gray-300 rounded-md",
+                  formFieldLabel: "text-gray-700 font-medium",
+                  footer: "hidden",
+                },
+              }}
+            />
           </div>
         </div>
 
