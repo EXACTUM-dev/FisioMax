@@ -113,7 +113,7 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
           </div>
         )}
 
-        {/* Display unauthorized message if not in DB */}
+        {/* Display message when user is authenticated in Clerk but has no membership request / DB record */}
         {!isDbLoading && isClerkLoaded && !isPending && !existsInDB && (
           <Modal open={true} onClose={() => { }} size="md" className="p-6" showCloseButton={false}>
             <div className="text-center">
@@ -133,24 +133,34 @@ export function ProtectedRoute({ children, allowedPrivileges = [], allowedRoles 
                   />
                 </svg>
               </div>
-              <Title2 className="mb-4">Acceso No Autorizado</Title2>
+              <Title2 className="mb-4">Solicitud de membresía no encontrada</Title2>
               <p className="text-lg mb-4">
-                Tu cuenta de autenticación está activa, pero no estás
-                registrado en la base de datos del sistema.
+                Tu cuenta de autenticación está activa, pero no hemos encontrado
+                una solicitud de membresía asociada a tu usuario.
               </p>
-              <p className="text-lg mb-6">
-                Por favor, contacta al administrador para completar tu
-                registro.
+              <p className="text-lg mb-2">
+                Para continuar, por favor envía tu solicitud de membresía desde la
+                siguiente página.
               </p>
-              {error && (
-                <p className="text-sm text-red-500 mb-4">Error: {error}</p>
-              )}
-              <Button
-                label="Regresar"
-                variant="brand"
-                fullWidth
-                onClick={handleSignOut}
-              />
+              <p className="text-sm text-gray-500 mb-6">
+                Si crees que es un error, contacta con el administrador.
+              </p>
+              <div className="space-y-3">
+                <Button
+                  label="Enviar solicitud de membresía"
+                  variant="brand"
+                  fullWidth
+                  onClick={() => {
+                    window.location.href = '/solicitud-membresia';
+                  }}
+                />
+                <Button
+                  label="Cerrar sesión"
+                  variant="gray"
+                  fullWidth
+                  onClick={handleSignOut}
+                />
+              </div>
             </div>
           </Modal>
         )}
