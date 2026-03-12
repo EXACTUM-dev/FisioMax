@@ -101,6 +101,31 @@ export default function Sidebar({ current = "home", onNavigate }) {
   const navigate = useNavigate();
   const userRole = userData?.role;
 
+  // Fast admin detection: remember last known admin status in sessionStorage
+  const [isAdminCached, setIsAdminCached] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem("fm_is_admin") === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (userRole === "Admin") {
+      setIsAdminCached(true);
+      try {
+        sessionStorage.setItem("fm_is_admin", "1");
+      } catch {}
+    } else if (userRole && userRole !== "Admin") {
+      setIsAdminCached(false);
+      try {
+        sessionStorage.setItem("fm_is_admin", "0");
+      } catch {}
+    }
+  }, [userRole]);
+
   useEffect(() => {
     setActive(current);
   }, [current]);
@@ -113,9 +138,9 @@ export default function Sidebar({ current = "home", onNavigate }) {
       { key: "logout", label: "Cerrar sesión", icon: logoutSrc },
     ];
 
-    // Only add "Panel de Control" if the user is admin
-    // Don't show loading state - just hide the button until we know
-    if (userRole === "Admin") {
+    // Only add "Panel de Control" if the user is admin.
+    // Use cached flag so the button appears quickly on subsequent navigations.
+    if (userRole === "Admin" || (!userRole && isAdminCached)) {
       baseLinks.splice(2, 0, {
         key: "bolt",
         label: "Panel de Control",
@@ -124,17 +149,18 @@ export default function Sidebar({ current = "home", onNavigate }) {
     }
 
     return baseLinks;
-  }, [userRole]);
+  }, [userRole, isAdminCached]);
 
   const mobileLinks = useMemo(() => {
-    if (userRole !== "Admin") {
+    const effectiveIsAdmin = userRole === "Admin" || (!userRole && isAdminCached);
+    if (!effectiveIsAdmin) {
       const profileLink = links.find((l) => l.key === "profile");
       const homeLink = links.find((l) => l.key === "home");
       const logout = links.find((l) => l.key === "logout");
       return [profileLink, homeLink, logout].filter(Boolean);
     }
     return links;
-  }, [links, userRole]);
+  }, [links, userRole, isAdminCached]);
 
   // Tailwind grid columns for mobile bar: support 3 or 4 columns
   const mobileGridClass =
